@@ -1,0 +1,9 @@
+/* HOME PAGE OVERRIDES */
+.page-home .intro-header {
+    padding: 4rem 1rem;
+}
+
+.page-home .logo {
+    width: 500px;
+    display: inline-block;
+}

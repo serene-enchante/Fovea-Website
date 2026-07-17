@@ -1,0 +1,86 @@
+/* BASE TOKENS + GLOBAL ELEMENT STYLES */
+:root {
+    --color-bg: #000;
+    --color-text: rgba(0, 255, 72, 0.7);
+    --overlay-bg: rgba(0, 0, 0, 0.7);
+    --color-surface: rgba(10, 10, 10, 0.86);
+    --color-heading: #ffffff;
+    --color-body: rgba(255, 255, 255, 0.88);
+    --color-border: rgba(255, 255, 255, 0.16);
+    --color-focus: #7ef7b0;
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2rem;
+    --space-7: 3rem;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --shadow-card: 0 14px 40px rgba(0, 0, 0, 0.45);
+    --transition-fast: 150ms ease;
+    --transition-med: 260ms ease;
+    --hero-bg-image: url('/images/wetlands.jpg');
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    overflow-y: auto;
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    min-height: 100vh;
+    position: relative;
+    background-image: url('');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-attachment: scroll;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='5' fill='white' /%3E%3C/svg%3E") 8 8, auto;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--color-heading);
+    margin: 0;
+}
+
+p {
+    margin: 0;
+    color: var(--color-body);
+}
+
+a {
+    color: inherit;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--overlay-bg);
+    z-index: -1;
+}

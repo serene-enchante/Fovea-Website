@@ -1,0 +1,19 @@
+/* SHARED HEADER COMPONENT */
+.intro-header {
+    text-align: center;
+    padding: 4rem 1rem;
+}
+
+.intro-header h1 {
+    color: white;
+    font-size: 3rem;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.logo {
+    max-width: 85%;
+    height: auto;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
