@@ -445,7 +445,7 @@
     border-radius: 0;
     overflow: hidden;
     aspect-ratio: 16 / 10;
-    background: #111;
+    background: #000000;
 }
 
 .zone-list-item__thumb img {

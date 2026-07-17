@@ -1,4 +1,4 @@
-const GEOJSON_PATH = "/maps/ecbc-circle-2010.geojson";
+const GEOJSON_PATH = "/geojson/Eugene-01-wgs84.geojson";
 const CIRCLE_ID = "ecbc-circle";
 const FALLBACK_HERO_IMAGE = "/images/wetlands.jpg";
 const VIEW_OPTIONS = ["map", "grid", "list"];
@@ -44,7 +44,8 @@ const state = {
 
 function getQueryState() {
     const params = new URLSearchParams(window.location.search);
-    const id = (params.get("id") || CIRCLE_ID).trim();
+    const zone = params.get("zone");
+    const id = zone ? zone.trim() : (params.get("id") || CIRCLE_ID).trim();
     const view = (params.get("view") || "map").trim().toLowerCase();
     const sort = (params.get("sort") || "title").trim().toLowerCase();
 
@@ -279,7 +280,13 @@ function updateHeroContent(subject) {
 
 function updateUrl(replace = true) {
     const url = new URL(window.location.href);
-    url.searchParams.set("id", state.query.id);
+    url.searchParams.delete("id");
+    url.searchParams.set("feature", "eugene");
+    if (state.query.id && state.query.id !== CIRCLE_ID) {
+        url.searchParams.set("zone", displayZoneId(state.query.id));
+    } else {
+        url.searchParams.delete("zone");
+    }
     url.searchParams.set("view", state.query.view);
     url.searchParams.set("sort", state.query.sort);
 
@@ -292,7 +299,9 @@ function updateUrl(replace = true) {
 
 function buildZoneHref(zoneId) {
     const url = new URL(window.location.href);
-    url.searchParams.set("id", normalizeZoneId(zoneId));
+    url.searchParams.delete("id");
+    url.searchParams.set("feature", "eugene");
+    url.searchParams.set("zone", displayZoneId(zoneId));
     url.searchParams.set("view", "map");
     url.searchParams.set("sort", state.query.sort);
     return `${url.pathname}${url.search}`;

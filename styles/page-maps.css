@@ -20,10 +20,12 @@
 }
 
 .page-maps .logo--header {
-    width: 54px;
-    max-width: none;
+    height: 52px;
+    width: auto;
+    max-width: 180px;
     margin-bottom: 0;
     display: block;
+    object-fit: contain;
 }
 
 .maps-main {
