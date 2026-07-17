@@ -248,6 +248,12 @@ body.page-maps-tile {
     background: linear-gradient(to bottom, #000000 0%, rgba(0, 0, 0, 0) 100%);
     pointer-events: none;
     z-index: 20;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.maps-tile-sidebar__header.is-scrolled::after {
+    opacity: 1;
 }
 
 .sidebar-capsules-wrapper {
@@ -778,10 +784,9 @@ body.page-maps-tile {
 /* Dark theme overrides for Leaflet controls on tile map */
 
 .maps-tile-map-container .leaflet-control-zoom {
-    border: 1px solid var(--color-border) !important;
-    border-radius: var(--radius-sm) !important;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 /* Header Logo Container */
@@ -789,7 +794,6 @@ body.page-maps-tile {
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.95)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9));
 }
 
 .header-logo-container .home-link {
@@ -799,94 +803,460 @@ body.page-maps-tile {
 }
 
 
-/* Leaflet Control Containers (Zoom, Locate, Fullscreen, Layers) */
+/* Leaflet Control Containers (Zoom, Locate, Fullscreen) Styled as transparent containers */
 .maps-tile-map-container .leaflet-control-zoom,
 .maps-tile-map-container .leaflet-control-locate,
-.maps-tile-map-container .leaflet-control-fullscreen,
+.maps-tile-map-container .leaflet-control-fullscreen {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    overflow: visible !important;
+}
+
+.maps-tile-map-container .leaflet-control-zoom,
+.maps-tile-map-container .leaflet-control-locate,
+.maps-tile-map-container .leaflet-control-fullscreen {
+    filter: drop-shadow(0 4px 10px #000000) drop-shadow(0 12px 28px #000000) drop-shadow(0 20px 48px #000000) drop-shadow(0 0 36px #000000) !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers:not(.leaflet-control-layers-expanded) .leaflet-control-layers-toggle {
+    filter: drop-shadow(0 4px 10px #000000) drop-shadow(0 12px 28px #000000) drop-shadow(0 20px 48px #000000) drop-shadow(0 0 36px #000000) !important;
+}
+
+.maps-tile-map-container .leaflet-control-zoom {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+/* Map Style Switcher (Transparent wrapper when collapsed, expanding into panel) */
 .maps-tile-map-container .leaflet-control-layers {
-    border: 1px solid var(--color-border) !important;
-    border-radius: var(--radius-sm) !important;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
-    background-color: rgba(18, 22, 20, 0.9) !important;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    width: 26px !important;
+    height: 26px !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+    transition: none !important;
+    position: relative !important;
+}
+
+/* Expanded style panel animation state (transparent container with shadow-only elements) */
+.maps-tile-map-container .leaflet-control-layers.leaflet-control-layers-expanded {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    width: 26px !important;
+    height: 26px !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    overflow: visible !important;
 }
 
 .maps-tile-map-container .leaflet-control-zoom a,
 .maps-tile-map-container .leaflet-control-locate a,
-.maps-tile-map-container .leaflet-control-fullscreen a {
-    background-color: rgba(18, 22, 20, 0.9) !important;
-    color: #ffffff !important;
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    transition: all 150ms ease;
-    border-bottom: 1px solid var(--color-border) !important;
+.maps-tile-map-container .leaflet-control-fullscreen a,
+.maps-tile-map-container .leaflet-control-layers-toggle {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 50% !important;
+    color: #d1d1d6 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 26px !important;
+    height: 26px !important;
+    transition: all var(--transition-fast) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
 }
 
-.maps-tile-map-container .leaflet-control-zoom a:last-child,
-.maps-tile-map-container .leaflet-control-locate a,
-.maps-tile-map-container .leaflet-control-fullscreen a {
-    border-bottom: none !important;
+.maps-tile-map-container .leaflet-control-layers-toggle {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    transition: opacity 0.2s ease !important;
+    z-index: 10 !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+    display: inline-flex !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    color: #30d158 !important;
+}
+
+/* Switcher option items list content */
+.maps-tile-map-container .leaflet-control-layers-list {
+    position: absolute !important;
+    bottom: 34px !important;
+    left: 0 !important;
+    width: 260px !important;
+    opacity: 0 !important;
+    transform: translateY(-8px) !important;
+    transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    pointer-events: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #000000 !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: calc(100vh - 178px) !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-expanded .leaflet-control-layers-list {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
 }
 
 .maps-tile-map-container .leaflet-control-zoom a:hover,
 .maps-tile-map-container .leaflet-control-locate a:hover,
-.maps-tile-map-container .leaflet-control-fullscreen a:hover {
-    background-color: rgba(35, 42, 38, 0.95) !important;
-    color: var(--color-focus) !important;
-}
-
-/* Layer Control Toggle Button & Expanded Panel */
-.maps-tile-map-container .leaflet-control-layers-toggle {
-    width: 30px !important;
-    height: 30px !important;
-    background-color: rgba(18, 22, 20, 0.9) !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='12 2 2 7 12 12 22 7 12 2'%3E%3C/polygon%3E%3Cpolyline points='2 17 12 22 22 17'%3E%3C/polyline%3E%3Cpolyline points='2 12 12 17 22 12'%3E%3C/polyline%3E%3C/svg%3E") !important;
-    background-size: 16px 16px !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    border-radius: var(--radius-sm) !important;
-    transition: all 150ms ease;
-}
-
+.maps-tile-map-container .leaflet-control-fullscreen a:hover,
 .maps-tile-map-container .leaflet-control-layers-toggle:hover {
-    background-color: rgba(35, 42, 38, 0.95) !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2330d158' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='12 2 2 7 12 12 22 7 12 2'%3E%3C/polygon%3E%3Cpolyline points='2 17 12 22 22 17'%3E%3C/polyline%3E%3Cpolyline points='2 12 12 17 22 12'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background: transparent !important;
+    color: #30d158 !important;
+    transform: translateY(-1px) !important;
 }
 
-.maps-tile-map-container .leaflet-control-layers-expanded {
-    padding: 12px 16px !important;
+/* Layer Control Toggle Button Custom Styling */
+.maps-tile-map-container .leaflet-control-layers-toggle svg {
+    display: block !important;
+    width: 16px !important;
+    height: 16px !important;
+    transition: stroke 0.2s ease !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-overlays label {
+    display: none !important;
+}
+
+/* Modal Header and Layout matching Sidebar Capsules and Search style */
+.maps-tile-map-container .leaflet-control-layers-header {
+    position: relative !important;
+    padding: 10px 12px 6px 12px !important;
+    border-bottom: none !important;
+    box-sizing: border-box !important;
+}
+
+.maps-tile-map-container .modal-close-btn:hover {
     color: #ffffff !important;
-    background: rgba(18, 22, 20, 0.96) !important;
-    border: 1px solid var(--color-border) !important;
-    border-radius: var(--radius-sm) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85) !important;
-    z-index: 99999 !important;
-    overflow: visible !important;
-    width: max-content !important;
-    min-width: 180px !important;
-    height: auto !important;
+    background: rgba(255, 255, 255, 0.08) !important;
 }
 
-.maps-tile-map-container .leaflet-control-layers-overlays label,
-.maps-tile-map-container .leaflet-control-layers-base label {
-    font-size: 0.9rem !important;
-    font-weight: 500 !important;
-    cursor: pointer !important;
+.maps-tile-map-container .modal-capsules-wrapper {
     display: flex !important;
     align-items: center !important;
-    gap: 8px !important;
-    margin-bottom: 8px !important;
+    justify-content: space-between !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    transition: opacity 0.2s ease, transform 0.2s ease !important;
+}
+
+.maps-tile-map-container .modal-capsules-scroll {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    overflow-x: auto !important;
     white-space: nowrap !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    scrollbar-width: none !important;
+}
+
+.maps-tile-map-container .modal-capsules-scroll::-webkit-scrollbar {
+    display: none !important;
+}
+
+.maps-tile-map-container .modal-capsule {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0.28rem 0.7rem !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: none !important;
+    outline: none !important;
+    border-radius: 20px !important;
+    color: rgba(255, 255, 255, 0.45) !important;
+    font-size: 0.74rem !important;
+    font-weight: normal !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    transition: all var(--transition-fast) !important;
+    line-height: 1.2 !important;
+}
+
+.maps-tile-map-container .modal-capsule:hover {
+    background: rgba(255, 255, 255, 0.09) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.maps-tile-map-container .modal-capsule.is-active {
+    background: rgba(48, 209, 88, 0.16) !important;
+    color: #30d158 !important;
+    font-weight: normal !important;
+}
+
+.maps-tile-map-container .modal-capsule--icon {
+    padding: 0.28rem 0.5rem !important;
+    justify-content: center !important;
+}
+
+.maps-tile-map-container .modal-search-toggle-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    transition: all var(--transition-fast) !important;
+}
+
+.maps-tile-map-container .modal-search-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+}
+
+.maps-tile-map-container .modal-search-expanded {
+    position: absolute !important;
+    inset: 0 !important;
+    padding: 0.3rem 0.6rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    background: #000000 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(-4px) !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    z-index: 30 !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-header.is-searching .modal-search-expanded {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translateY(0) !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-header.is-searching .modal-capsules-wrapper {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(4px) !important;
+}
+
+.maps-tile-map-container .modal-search-input-container {
+    flex: 1 !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.maps-tile-map-container .modal-search-input-icon {
+    position: absolute !important;
+    left: 8px !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+    pointer-events: none !important;
+}
+
+.maps-tile-map-container .modal-search-input {
+    width: 100% !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 20px !important;
+    padding: 0.3rem 0.5rem 0.3rem 1.8rem !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    outline: none !important;
+    transition: border-color var(--transition-fast) !important;
+    box-sizing: border-box !important;
+}
+
+.maps-tile-map-container .modal-search-input:focus {
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.maps-tile-map-container .modal-search-close-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    transition: color var(--transition-fast) !important;
+}
+
+.maps-tile-map-container .modal-search-close-btn:hover {
+    color: #ffffff !important;
+}
+
+/* Modal Body area with minimalist scrollbar */
+.maps-tile-map-container .leaflet-control-layers-body {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 10px 12px !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-body::-webkit-scrollbar {
+    width: 3px !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-body::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-radius: 10px !important;
+}
+
+/* Switcher Modal Tile Layout styles matching Features column */
+.maps-tile-map-container .leaflet-control-layers-list .tile-zone-item {
+    display: grid !important;
+    grid-template-columns: 64px 1fr !important; /* Slightly narrower thumbnail to fit 260px popup width nicely */
+    gap: 0.75rem !important;
+    align-items: center !important;
+    padding: 0.6rem 0.5rem !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 0 !important;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    transition: all var(--transition-fast) !important;
+    box-shadow: none !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-list .tile-zone-item:last-child {
+    border-bottom: none !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-list .tile-zone-item:has(+ .is-child) {
+    border-bottom: 1px solid transparent !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-list .tile-zone-item.is-child {
+    position: relative !important;
+    margin-left: 36px !important;
+    padding-left: 0.5rem !important;
+    overflow: visible !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-list .tile-zone-item.is-child::before {
+    content: "" !important;
+    position: absolute !important;
+    left: -20px !important;
+    top: -24px !important;
+    width: 12px !important;
+    height: calc(50% + 24px) !important;
+    border-left: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+    border-bottom: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+    border-bottom-left-radius: 4px !important;
+    pointer-events: none !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-list .tile-zone-item.is-child::after {
+    content: "" !important;
+    position: absolute !important;
+    left: -9px !important;
+    top: 50% !important;
+    width: 4px !important;
+    height: 4px !important;
+    border-right: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+    transform: translateY(-50%) rotate(45deg) !important;
+    pointer-events: none !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-list .tile-zone-item__title {
+    font-weight: 700 !important;
+    color: #b3b3b7 !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-list .tile-zone-item.is-active .tile-zone-item__title {
+    font-weight: 700 !important;
+    color: #30d158 !important;
+    text-shadow: 0 0 6px rgba(48, 209, 88, 0.5) !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-list .tile-zone-item.is-active {
+    border-radius: 12px !important;
+    border-bottom: 1px solid transparent !important;
+    box-shadow: none !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.maps-tile-map-container .leaflet-control-layers-list .tile-zone-item__thumb .thumbnail {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-size: 114% 114% !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+/* Dark Map Preview thumbnail */
+.maps-tile-map-container .leaflet-control-layers-list .dark-map-thumbnail {
+    background-image: url("../images/dark_map-02.png") !important;
+}
+
+/* Light Map Preview thumbnail (Inverse coloration of Dark Map) */
+.maps-tile-map-container .leaflet-control-layers-list .light-map-thumbnail {
+    background-image: url("../images/dark_map-02.png") !important;
+    filter: invert(1) !important;
+}
+
+/* Satellite Preview thumbnail */
+.maps-tile-map-container .leaflet-control-layers-list .satellite-thumbnail {
+    background-image: url("../images/Google_satellite-02.png") !important;
+}
+
+.maps-tile-map-container .modal-no-results {
+    text-align: center !important;
+    font-size: 0.76rem !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+    padding: 20px 0 !important;
 }
 
 .maps-tile-map-container .leaflet-control-locate.is-active a {
     color: #30d158 !important;
-    background-color: rgba(48, 209, 88, 0.2) !important;
+    background-color: transparent !important;
 }
 
 .user-location-marker {
@@ -1004,58 +1374,101 @@ body.page-maps-tile {
         animation: mobileHomeSlideDown 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* Mobile Map Frame Buttons Positioning */
-    .maps-tile-map-container .leaflet-top.leaflet-right {
-        top: 26px !important;
-        right: 14px !important;
-        margin: 0 !important;
-    }
 
-    .maps-tile-map-container .leaflet-top.leaflet-left {
-        top: 26px !important;
-        left: 14px !important;
+
+    .maps-tile-map-container .leaflet-top.leaflet-right {
+        top: 72px !important;
+        bottom: auto !important;
+        right: 20px !important;
+        left: auto !important;
         margin: 0 !important;
         position: absolute !important;
         pointer-events: none !important;
+        width: auto !important;
+        overflow: visible !important;
+    }
+
+    .maps-tile-map-container .leaflet-top.leaflet-right .leaflet-control {
+        margin: 0 !important;
+        pointer-events: auto !important;
+        overflow: visible !important;
+    }
+
+    .maps-tile-map-container .leaflet-top.leaflet-left {
+        top: auto !important;
+        bottom: 20px !important;
+        left: 20px !important;
+        right: 20px !important;
+        margin: 0 !important;
+        position: absolute !important;
+        pointer-events: none !important;
+        width: auto !important;
+        overflow: visible !important;
     }
 
     .maps-tile-map-container .leaflet-top.leaflet-left .leaflet-control {
         margin: 0 !important;
         pointer-events: auto !important;
+        overflow: visible !important;
     }
 
     .maps-tile-map-container .leaflet-control-locate,
     .maps-tile-map-container .leaflet-control-fullscreen,
     .maps-tile-map-container .leaflet-control-layers {
         position: absolute !important;
-        top: 0 !important;
-        bottom: auto !important;
-        right: auto !important;
+        bottom: 0 !important;
+        top: auto !important;
+        left: auto !important;
     }
 
-    .maps-tile-map-container .leaflet-control-layers {
-        left: 0 !important;
-    }
-
-    .maps-tile-map-container .leaflet-control-fullscreen {
-        left: 38px !important;
+    .maps-tile-map-container .leaflet-control-zoom {
+        position: static !important;
+        width: 26px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
     }
 
     .maps-tile-map-container .leaflet-control-locate {
-        left: 76px !important;
+        right: 76px !important;
+        width: 26px !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    .maps-tile-map-container .leaflet-control-fullscreen {
+        right: 0 !important;
+        width: 26px !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    .maps-tile-map-container .leaflet-control-layers {
+        right: 38px !important;
+        width: 26px !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
 
     .maps-tile-map-container .leaflet-control-layers.leaflet-control-layers-expanded {
         z-index: 99999 !important;
-        min-width: 180px !important;
-        width: max-content !important;
-        height: auto !important;
+        width: 26px !important;
+        height: 26px !important;
         position: absolute !important;
-        top: 0 !important;
-        bottom: auto !important;
-        left: 0 !important;
-        right: auto !important;
+        bottom: 0 !important;
+        top: auto !important;
+        left: auto !important;
+        right: 38px !important;
         overflow: visible !important;
+    }
+
+    .maps-tile-map-container .leaflet-control-layers-list {
+        left: auto !important;
+        right: 0 !important;
+        max-height: 300px !important;
     }
 
     .map-fullscreen-hint {
@@ -1176,72 +1589,131 @@ body.page-maps-tile {
         width: auto !important;
     }
 
+    /* Mobile actions capsule floating at top-center of map area */
     .maps-tile-header__actions {
-        margin-top: 0.25rem !important;
-    }
-}
-
-/* Mobile Only: Centered separate overlay modal */
-@media (max-width: 768px) {
-    .maps-tile-modal {
-        position: fixed !important;
-        inset: 0 !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        height: 100dvh !important;
+        position: absolute !important;
+        top: 20px !important;
+        bottom: auto !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        right: auto !important;
         z-index: 9999999999 !important;
-        display: none;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 1rem !important;
-        box-sizing: border-box !important;
-    }
-
-    .maps-tile-modal[aria-hidden="false"] {
+        margin: 0 !important;
+        padding: 4px !important;
+        width: auto !important;
+        max-width: calc(100% - 2rem) !important;
         display: flex !important;
-    }
-
-    .maps-tile-modal .modal__backdrop {
-        display: block !important;
-        position: fixed !important;
-        inset: 0 !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        background: rgba(0, 0, 0, 0.92) !important;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        z-index: 1 !important;
-    }
-
-    .maps-tile-modal .maps-tile-modal__panel {
-        position: relative !important;
-        z-index: 10 !important;
-        width: min(92vw, 460px) !important;
-        max-width: 92vw !important;
-        max-height: 85vh !important;
-        overflow-y: auto !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
         background: rgba(255, 255, 255, 0.08) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        outline: none !important;
         border-radius: 20px !important;
-        padding: 1.5rem !important;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6) !important;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        margin: auto !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    .maps-tile-header__actions .action-buttons-list {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 0.25rem !important;
+        align-items: center !important;
     }
 }
 
-/* Desktop Only: Action capsule and modals floating at top left of map frame */
+/* Shared action buttons capsule inside map area (Desktop & Mobile) */
+.maps-tile-header__actions {
+    position: absolute !important;
+    z-index: 1000 !important;
+    margin: 0 !important;
+    padding: 4px !important;
+    width: auto !important;
+    max-width: max-content !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 20px !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Animated expansion when modal is open inside capsule */
+body.has-active-modal .maps-tile-header__actions {
+    width: 380px !important;
+    max-width: calc(100% - 2rem) !important;
+    padding: 0.75rem 1rem 1.25rem 1rem !important;
+    gap: 1rem !important;
+}
+
+.maps-tile-header__actions .action-buttons-list {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    align-self: flex-start !important;
+    gap: 4px !important;
+}
+
+/* Modal element inside merged capsule (Desktop & Mobile) */
+.maps-tile-header__actions .maps-tile-modal {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: calc(100vh - 10rem) !important;
+    z-index: 1001 !important;
+    display: none;
+    overflow-y: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.maps-tile-header__actions .maps-tile-modal[aria-hidden="false"] {
+    display: block !important;
+    animation: desktopModalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.maps-tile-header__actions .maps-tile-modal .modal__backdrop {
+    display: none !important;
+}
+
+.maps-tile-header__actions .maps-tile-modal .maps-tile-modal__panel {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    gap: 1rem !important;
+}
+
+.maps-tile-header__actions .maps-tile-modal .modal__close,
+.maps-tile-header__actions .maps-tile-modal .maps-tile-modal__close,
+.maps-tile-header__actions .maps-tile-modal .maps-tile-modal__header,
+.maps-tile-header__actions .maps-tile-modal .maps-tile-modal__title {
+    display: none !important;
+}
+
+/* Desktop-only positioning overrides */
 @media (min-width: 769px) {
     .maps-tile-header {
         padding-top: 1.75rem !important;
@@ -1252,90 +1724,11 @@ body.page-maps-tile {
         padding-bottom: 0.5rem !important;
     }
 
-    /* Capsule merged container on desktop */
-    .maps-tile-map-area .maps-tile-header__actions,
-    #map-wrapper .maps-tile-header__actions {
-        position: absolute !important;
+    .maps-tile-header__actions {
         top: 1rem !important;
         left: 1rem !important;
-        z-index: 1000 !important;
-        margin: 0 !important;
-        padding: 4px !important;
-        width: auto !important;
-        max-width: max-content !important;
-        display: flex !important;
-        flex-direction: column !important;
-        box-sizing: border-box !important;
-        overflow: hidden !important;
-        background: rgba(255, 255, 255, 0.08) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        border-radius: 20px !important;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
-        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    }
-
-    /* Animated expansion when modal is open inside capsule */
-    body.has-active-modal .maps-tile-map-area .maps-tile-header__actions,
-    body.has-active-modal #map-wrapper .maps-tile-header__actions {
-        width: 380px !important;
-        max-width: calc(100% - 2rem) !important;
-        padding: 0.75rem 1rem 1.25rem 1rem !important;
-        gap: 1rem !important;
-    }
-
-    .maps-tile-header__actions .action-buttons-list {
-        display: flex;
-        align-items: center;
-        align-self: flex-start;
-        gap: 4px;
-    }
-
-    /* Modal element inside merged capsule on desktop */
-    .maps-tile-header__actions .maps-tile-modal {
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        right: auto !important;
         bottom: auto !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        height: auto !important;
-        max-height: calc(100vh - 10rem) !important;
-        z-index: 1001 !important;
-        display: none;
-        overflow-y: auto !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-    }
-
-    .maps-tile-header__actions .maps-tile-modal[aria-hidden="false"] {
-        display: block !important;
-        animation: desktopModalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    .maps-tile-header__actions .maps-tile-modal .modal__backdrop {
-        display: none !important;
-    }
-
-    .maps-tile-header__actions .maps-tile-modal .maps-tile-modal__panel {
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        background: transparent !important;
-        border: none !important;
-        outline: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        gap: 1rem !important;
+        transform: none !important;
     }
 
     .maps-tile-map-container .leaflet-top.leaflet-left {
@@ -1350,7 +1743,6 @@ body.page-maps-tile {
         opacity: 0;
         transform: translateY(4px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1943,4 +2335,279 @@ body.is-help-mode-active .mobile-help-exit-btn {
 .image-lightbox-close:hover {
     background: rgba(255, 255, 255, 0.25);
     transform: scale(1.05);
+}
+
+
+
+.is-light-map-active .action-icon-btn {
+    color: #000000 !important;
+}
+
+.is-light-map-active .action-icon-btn span {
+    color: #000000 !important;
+}
+
+.is-light-map-active .action-icon-btn svg {
+    stroke: #000000 !important;
+}
+
+.is-light-map-active .action-icon-btn:hover {
+    background: rgba(48, 209, 88, 0.22) !important;
+    color: #248a3d !important;
+}
+
+.is-light-map-active .action-icon-btn:hover span {
+    color: #248a3d !important;
+}
+
+.is-light-map-active .action-icon-btn:hover svg {
+    stroke: #248a3d !important;
+}
+
+.is-light-map-active .action-icon-btn.is-active {
+    background: rgba(48, 209, 88, 0.22) !important;
+    color: #248a3d !important;
+}
+
+.is-light-map-active .action-icon-btn.is-active span {
+    color: #248a3d !important;
+}
+
+.is-light-map-active .action-icon-btn.is-active svg {
+    stroke: #248a3d !important;
+}
+
+/* Modal Content Colors & Darkened Fills inside Toolbar Modal */
+.is-light-map-active .maps-tile-download-col {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.is-light-map-active .maps-tile-download-col__title {
+    color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.is-light-map-active .maps-tile-download-item.is-disabled {
+    background: rgba(0, 0, 0, 0.03) !important;
+    color: rgba(0, 0, 0, 0.35) !important;
+}
+
+.is-light-map-active .maps-tile-download-tag {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: rgba(0, 0, 0, 0.45) !important;
+}
+
+.is-light-map-active .maps-tile-copy-desc {
+    color: #000000 !important;
+}
+
+.is-light-map-active .maps-tile-copy-input-row {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+.is-light-map-active .maps-tile-copy-input {
+    color: #000000 !important;
+}
+
+.is-light-map-active .maps-tile-help-desc {
+    color: #000000 !important;
+}
+
+.is-light-map-active .help-toggle-card {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.is-light-map-active .help-toggle-title {
+    color: #000000 !important;
+}
+
+.is-light-map-active .help-toggle-subtitle {
+    color: rgba(0, 0, 0, 0.55) !important;
+}
+
+.is-light-map-active .help-shortcut-badge {
+    background: transparent !important;
+    border: 1px solid rgba(0, 0, 0, 0.35) !important;
+    color: #333333 !important;
+}
+
+.is-light-map-active .help-slider {
+    background-color: rgba(0, 0, 0, 0.16) !important;
+}
+
+.is-light-map-active .help-switch input:checked + .help-slider {
+    background-color: #30d158 !important;
+}
+
+.is-light-map-active .help-doc-link {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    color: #000000 !important;
+}
+
+.is-light-map-active .help-doc-link:hover {
+    background: rgba(48, 209, 88, 0.16) !important;
+    color: #248a3d !important;
+}
+
+/* Darkened Green styling overrides for internal modal elements in Light Map */
+.is-light-map-active .maps-tile-download-item.is-active {
+    background: rgba(48, 209, 88, 0.22) !important;
+    color: #248a3d !important;
+}
+
+.is-light-map-active .maps-tile-download-item.is-active:hover {
+    background: rgba(48, 209, 88, 0.32) !important;
+    color: #1e6f30 !important;
+}
+
+.is-light-map-active .maps-tile-copy-btn {
+    background: rgba(48, 209, 88, 0.22) !important;
+    color: #248a3d !important;
+}
+
+.is-light-map-active .maps-tile-copy-btn:hover {
+    background: rgba(48, 209, 88, 0.32) !important;
+    color: #1e6f30 !important;
+}
+
+/* Light Map overrides for Map Control buttons (Zoom, Locate, Fullscreen, Layers switcher toggle) */
+.is-light-map-active .maps-tile-map-container .leaflet-control-zoom a,
+.is-light-map-active .maps-tile-map-container .leaflet-control-locate a,
+.is-light-map-active .maps-tile-map-container .leaflet-control-fullscreen a,
+.is-light-map-active .maps-tile-map-container .leaflet-control-layers-toggle {
+    color: #000000 !important;
+}
+
+.is-light-map-active .maps-tile-map-container .leaflet-control-zoom a:hover,
+.is-light-map-active .maps-tile-map-container .leaflet-control-locate a:hover,
+.is-light-map-active .maps-tile-map-container .leaflet-control-fullscreen a:hover,
+.is-light-map-active .maps-tile-map-container .leaflet-control-layers-toggle:hover {
+    color: #30d158 !important;
+}
+
+.is-light-map-active .maps-tile-map-container .leaflet-control-locate.is-active a,
+.is-light-map-active .maps-tile-map-container .leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+    color: #30d158 !important;
+}
+
+/* Light Map overrides for the Left Sidebar Column */
+.is-light-map-active .logo--header {
+    filter: invert(1) !important;
+}
+
+.is-light-map-active .maps-tile-header__title {
+    color: #000000 !important;
+}
+
+.is-light-map-active .maps-tile-sidebar,
+.is-light-map-active .sidebar-about-panel,
+.is-light-map-active .sidebar-about-wrapper,
+.is-light-map-active .sidebar-about-text,
+.is-light-map-active .tile-zone-item__title,
+.is-light-map-active .tile-zone-item__meta,
+.is-light-map-active .sidebar-empty-state,
+.is-light-map-active .sidebar-empty-state__text {
+    color: #000000 !important;
+}
+
+.is-light-map-active .tile-zone-item__meta-prefix {
+    color: #248a3d !important;
+}
+
+.is-light-map-active .tile-zone-item.is-active .tile-zone-item__title {
+    color: var(--color-focus) !important;
+}
+
+.is-light-map-active .sidebar-capsule {
+    background: rgba(0, 0, 0, 0.08) !important;
+    color: rgba(0, 0, 0, 0.65) !important;
+}
+
+.is-light-map-active .sidebar-capsule:hover {
+    background: rgba(0, 0, 0, 0.14) !important;
+    color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.is-light-map-active .sidebar-capsule.is-active,
+.is-light-map-active .sidebar-capsule.is-active:hover {
+    background: rgba(48, 209, 88, 0.22) !important;
+    color: #248a3d !important;
+    font-weight: 700;
+}
+
+.is-light-map-active .sidebar-back-btn {
+    color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.is-light-map-active .sidebar-back-btn:hover {
+    color: #000000 !important;
+}
+
+.is-light-map-active .sidebar-search-toggle-btn {
+    background: rgba(0, 0, 0, 0.08) !important;
+    color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.is-light-map-active .sidebar-search-toggle-btn:hover {
+    background: rgba(0, 0, 0, 0.14) !important;
+    color: #000000 !important;
+}
+
+/* Light Map background overrides for the Left Sidebar Column */
+.is-light-map-active .maps-tile-sidebar,
+.is-light-map-active .maps-tile-header,
+.is-light-map-active .maps-tile-sidebar__header {
+    background: #e0e0e0 !important;
+}
+
+.is-light-map-active .maps-tile-sidebar::after {
+    background: linear-gradient(to top, #e0e0e0 0%, rgba(224, 224, 224, 0) 100%) !important;
+}
+
+.is-light-map-active .maps-tile-sidebar__header::after {
+    background: linear-gradient(to bottom, #e0e0e0 0%, rgba(224, 224, 224, 0) 100%) !important;
+}
+
+.is-light-map-active .tile-zone-item {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.is-light-map-active .tile-zone-item:hover,
+.is-light-map-active .tile-zone-item.is-hovered {
+    background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.is-light-map-active .tile-zone-item.is-active {
+    background: rgba(48, 209, 88, 0.09) !important;
+}
+
+.is-light-map-active .maps-tile-sidebar__scroll {
+    scrollbar-color: rgba(0, 0, 0, 0.15) transparent !important;
+}
+
+/* Light Map overrides for Map control button drop shadows & Map frame edge overlays */
+.is-light-map-active .maps-tile-map-container .leaflet-control-zoom,
+.is-light-map-active .maps-tile-map-container .leaflet-control-locate,
+.is-light-map-active .maps-tile-map-container .leaflet-control-fullscreen {
+    filter: drop-shadow(0 4px 10px #ffffff) drop-shadow(0 12px 28px #ffffff) drop-shadow(0 20px 48px #ffffff) drop-shadow(0 0 36px #ffffff) !important;
+}
+
+.is-light-map-active .maps-tile-map-container .leaflet-control-layers:not(.leaflet-control-layers-expanded) .leaflet-control-layers-toggle {
+    filter: drop-shadow(0 4px 10px #ffffff) drop-shadow(0 12px 28px #ffffff) drop-shadow(0 20px 48px #ffffff) drop-shadow(0 0 36px #ffffff) !important;
+}
+
+.is-light-map-active .map-fade-overlay {
+    display: none !important;
+}
+
+/* Light Map overrides for Eugene & Florence circle thumbnails */
+.is-light-map-active .tile-zone-item__thumb--logo {
+    background: transparent !important;
+}
+
+.is-light-map-active .tile-zone-item__thumb--logo img {
+    background-color: transparent !important;
+    filter: invert(1) !important;
 }
