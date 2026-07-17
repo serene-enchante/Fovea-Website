@@ -37,7 +37,16 @@ const state = {
     map: null,
     geoJsonLayer: null,
     featureLayersMap: new Map(), // maps zoneId/cid -> leaflet layer
-    lastZoneClickTime: 0
+    lastZoneClickTime: 0,
+    userLocationMarker: null,
+    userLocationAccuracy: null,
+    isLocating: false,
+    locateControl: null,
+    fullscreenControl: null,
+    layersControl: null,
+    focusedTileIndex: -1,
+    lastNavSource: "click",
+    baseMapsList: []
 };
 
 function normalizeZoneId(value) {
@@ -77,15 +86,21 @@ function formatArea(value) {
     return num.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 });
 }
 
-function showToast(message) {
+function showToast(message, isError = false) {
     let toast = document.getElementById("toast-notification");
     if (!toast) {
         toast = document.createElement("div");
         toast.id = "toast-notification";
         toast.className = "toast-notification";
-        document.body.appendChild(toast);
+        const mapWrapper = document.getElementById("map-wrapper");
+        (mapWrapper || document.body).appendChild(toast);
     }
     toast.textContent = message;
+    if (isError) {
+        toast.classList.add("toast-notification--disabled");
+    } else {
+        toast.classList.remove("toast-notification--disabled");
+    }
     toast.classList.add("is-visible");
     setTimeout(() => {
         toast.classList.remove("is-visible");
@@ -138,28 +153,52 @@ function updateUrl(id) {
     window.history.replaceState({}, "", url.toString());
 }
 
+function updateControlPositions() {
+    if (!state.map) return;
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+        if (state.map.zoomControl) state.map.zoomControl.setPosition("topright");
+        if (state.locateControl) state.locateControl.setPosition("topleft");
+        if (state.fullscreenControl) state.fullscreenControl.setPosition("topleft");
+        if (state.layersControl) state.layersControl.setPosition("topleft");
+    } else {
+        if (state.map.zoomControl) state.map.zoomControl.setPosition("bottomleft");
+        if (state.locateControl) state.locateControl.setPosition("bottomleft");
+        if (state.fullscreenControl) state.fullscreenControl.setPosition("bottomleft");
+        if (state.layersControl) state.layersControl.setPosition("bottomleft");
+    }
+}
+
 function updateHeaderLogo() {
-    const logoImg = document.querySelector(".intro-header .logo");
+    const logoImg = document.querySelector(".logo--header");
     const logoText = document.getElementById("header-logo-text");
     if (!logoImg) return;
 
     if (state.isCirclesFeature || state.currentFeature === "circles") {
-        logoImg.src = "/images/ccba-icon.png";
+        logoImg.src = "/images/whiteLane-Audubon-favicon-152.png";
         logoImg.alt = "Audubon Circles";
-        if (logoText) {
-            logoText.textContent = "CCBA Open Data Library";
-            logoText.classList.add("is-visible");
-        }
-    } else if (state.currentFeature === "florence") {
-        logoImg.src = "/images/florence.png";
-        logoImg.alt = "Florence CBC";
         if (logoText) {
             logoText.textContent = "";
             logoText.classList.remove("is-visible");
         }
     } else {
-        logoImg.src = "/images/logo-small.png";
-        logoImg.alt = "Eugene CBC";
+        if (state.currentFeature === "florence") {
+            logoImg.src = "/images/florence.png";
+            logoImg.alt = "Florence CBC";
+        } else {
+            logoImg.src = "/images/logo-small.png";
+            logoImg.alt = "Eugene CBC";
+        }
+
+        const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
+        let targetFeature = null;
+        if (!isCircle) {
+            targetFeature = state.allFeatures.find(f => {
+                const zid = f.properties?.zid;
+                return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
+            });
+        }
+
         if (logoText) {
             logoText.textContent = "";
             logoText.classList.remove("is-visible");
@@ -215,11 +254,13 @@ function switchToCirclesFeature() {
 }
 
 function selectSubject(id, triggerMapZoom = true) {
+    window.scrollTo(0, 0);
+    if (state.isHelpModeActive && window.innerWidth <= 768) return;
     state.currentId = id;
     const backBtn = document.getElementById("btn-capsule-back");
 
     if (state.isCirclesFeature) {
-        updateHeader("Christmas Bird Count Circles");
+        updateHeader("CCBA CBC Circles");
         if (backBtn) backBtn.classList.remove("is-visible");
         renderSidebarList();
         updateUrl(id);
@@ -241,11 +282,19 @@ function selectSubject(id, triggerMapZoom = true) {
     if (isCircle || !targetFeature) {
         const titleName = state.currentFeature === "florence" ? "Florence CBC Circle" : "Eugene CBC Circle";
         updateHeader(titleName);
-        if (backBtn) backBtn.classList.remove("is-visible");
+        if (backBtn) {
+            backBtn.classList.add("is-visible");
+            backBtn.setAttribute("aria-label", "Back to all circles");
+            backBtn.setAttribute("title", "Back to all circles");
+        }
     } else {
         const zid = displayZoneId(targetFeature.properties.zid);
         updateHeader(`Zone ${zid}`);
-        if (backBtn) backBtn.classList.add("is-visible");
+        if (backBtn) {
+            backBtn.classList.add("is-visible");
+            backBtn.setAttribute("aria-label", "Back to full circle");
+            backBtn.setAttribute("title", "Back to full circle");
+        }
     }
 
     renderSidebarList();
@@ -333,6 +382,15 @@ function renderSidebarList() {
                     <div class="tile-zone-item__title">${cid}</div>
                 </div>
             `;
+
+            item.addEventListener("mouseenter", () => {
+                const layer = state.featureLayersMap.get(cid);
+                if (layer) layer.setStyle(MAP_STYLES.hover);
+            });
+            item.addEventListener("mouseleave", () => {
+                const layer = state.featureLayersMap.get(cid);
+                if (layer) layer.setStyle(MAP_STYLES.default);
+            });
 
             item.addEventListener("click", () => {
                 if (cid === "Eugene") {
@@ -454,9 +512,77 @@ function renderSidebarList() {
             });
         }
 
+        item.addEventListener("mouseenter", () => {
+            const layer = state.featureLayersMap.get(String(props.zid));
+            const isSelected = state.currentId !== CIRCLE_ID && (String(props.zid) === state.currentId || normalizeZoneId(props.zid) === normalizeZoneId(state.currentId));
+            if (layer && !isSelected) layer.setStyle(MAP_STYLES.hover);
+        });
+        item.addEventListener("mouseleave", () => {
+            const layer = state.featureLayersMap.get(String(props.zid));
+            const isSelected = state.currentId !== CIRCLE_ID && (String(props.zid) === state.currentId || normalizeZoneId(props.zid) === normalizeZoneId(state.currentId));
+            if (layer && !isSelected) layer.setStyle(MAP_STYLES.default);
+        });
+
         item.addEventListener("click", () => selectSubject(String(props.zid)));
         listContainer.appendChild(item);
     });
+
+    if (state.lastNavSource === "keyboard") {
+        state.focusedTileIndex = 0;
+        updateKeyboardTileFocus(0);
+    } else {
+        state.focusedTileIndex = -1;
+        updateKeyboardTileFocus(-1);
+    }
+}
+
+function updateKeyboardTileFocus(newIndex) {
+    const tiles = document.querySelectorAll("#sidebar-zone-list .tile-zone-item");
+    if (!tiles || tiles.length === 0) return;
+    if (newIndex < -1) newIndex = -1;
+    if (newIndex >= tiles.length) newIndex = tiles.length - 1;
+    state.focusedTileIndex = newIndex;
+    tiles.forEach((tile, idx) => {
+        const cid = tile.getAttribute("data-id");
+        const layer = (cid && state.featureLayersMap) ? state.featureLayersMap.get(cid) : null;
+        const isSelected = layer && state.currentId !== CIRCLE_ID && (cid === state.currentId || (typeof normalizeZoneId === "function" && normalizeZoneId(cid) === normalizeZoneId(state.currentId)));
+
+        if (newIndex >= 0 && idx === newIndex) {
+            tile.classList.add("is-hovered");
+            if (layer && !isSelected) layer.setStyle(MAP_STYLES.hover);
+        } else {
+            tile.classList.remove("is-hovered");
+            if (layer && !isSelected) layer.setStyle(MAP_STYLES.default);
+        }
+    });
+}
+
+function selectMapStyleByIndex(index) {
+    if (!state.baseMapsList || state.baseMapsList.length === 0 || !state.map) return;
+    if (index < 0 || index >= state.baseMapsList.length) return;
+
+    const targetItem = state.baseMapsList[index];
+    state.baseMapsList.forEach(item => {
+        if (item === targetItem) {
+            if (!state.map.hasLayer(item.layer)) {
+                state.map.addLayer(item.layer);
+            }
+        } else {
+            if (state.map.hasLayer(item.layer)) {
+                state.map.removeLayer(item.layer);
+            }
+        }
+    });
+
+    const layersControlEl = document.querySelector('.leaflet-control-layers');
+    if (layersControlEl) {
+        const inputs = layersControlEl.querySelectorAll('input[type="radio"]');
+        if (inputs && inputs[index]) {
+            inputs[index].checked = true;
+        }
+    }
+
+    showToast(`Map Style: ${targetItem.name}`);
 }
 
 function setupMapEffectsAndFullscreen(mapWrapper) {
@@ -487,6 +613,7 @@ function setupMapEffectsAndFullscreen(mapWrapper) {
     };
 
     const handleResize = () => {
+        updateControlPositions();
         if (state.map) {
             state.map.invalidateSize();
             setTimeout(() => state.map.invalidateSize(), 50);
@@ -494,37 +621,6 @@ function setupMapEffectsAndFullscreen(mapWrapper) {
             setTimeout(() => state.map.invalidateSize(), 400);
         }
     };
-
-    const toggleFullscreen = () => {
-        if (!document.fullscreenElement && !mapWrapper.classList.contains("is-fullscreen")) {
-            if (mapWrapper.requestFullscreen) {
-                mapWrapper.requestFullscreen().catch(() => {
-                    mapWrapper.classList.add("is-fullscreen");
-                    handleResize();
-                });
-            } else {
-                mapWrapper.classList.add("is-fullscreen");
-                handleResize();
-            }
-        } else {
-            if (document.exitFullscreen && document.fullscreenElement) {
-                document.exitFullscreen().catch(() => {
-                    mapWrapper.classList.remove("is-fullscreen");
-                    triggerMobileHomeAnimation();
-                    handleResize();
-                });
-            } else {
-                mapWrapper.classList.remove("is-fullscreen");
-                triggerMobileHomeAnimation();
-                handleResize();
-            }
-        }
-    };
-
-    mapWrapper.addEventListener("dblclick", (e) => {
-        if (e.target.closest(".leaflet-control-zoom") || e.target.closest(".leaflet-control-attribution")) return;
-        toggleFullscreen();
-    });
 
     document.addEventListener("fullscreenchange", () => {
         if (!document.fullscreenElement) {
@@ -538,6 +634,78 @@ function setupMapEffectsAndFullscreen(mapWrapper) {
 
     window.addEventListener("resize", handleResize);
     window.addEventListener("orientationchange", handleResize);
+}
+
+function toggleFullscreen() {
+    const mapWrapper = document.getElementById("map-wrapper");
+    if (!mapWrapper) return;
+
+    const handleResize = () => {
+        if (state.map) {
+            state.map.invalidateSize();
+            setTimeout(() => state.map.invalidateSize(), 50);
+            setTimeout(() => state.map.invalidateSize(), 200);
+            setTimeout(() => state.map.invalidateSize(), 400);
+        }
+    };
+
+    const triggerMobileHomeAnimation = () => {
+        if (window.innerWidth <= 768) {
+            const targets = document.querySelectorAll(".intro-header, .maps-tile-header, .maps-tile-sidebar");
+            targets.forEach(el => {
+                el.classList.remove("animate-mobile-slide-down");
+                void el.offsetWidth;
+                el.classList.add("animate-mobile-slide-down");
+            });
+        }
+    };
+
+    if (!document.fullscreenElement && !mapWrapper.classList.contains("is-fullscreen")) {
+        if (mapWrapper.requestFullscreen) {
+            mapWrapper.requestFullscreen().catch(() => {
+                mapWrapper.classList.add("is-fullscreen");
+                handleResize();
+            });
+        } else {
+            mapWrapper.classList.add("is-fullscreen");
+            handleResize();
+        }
+    } else {
+        if (document.exitFullscreen && document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {
+                mapWrapper.classList.remove("is-fullscreen");
+                triggerMobileHomeAnimation();
+                handleResize();
+            });
+        } else {
+            mapWrapper.classList.remove("is-fullscreen");
+            triggerMobileHomeAnimation();
+        }
+    }
+}
+
+function highlightTileItem(key) {
+    const listContainer = document.getElementById("sidebar-zone-list");
+    if (!listContainer) return;
+    const items = listContainer.querySelectorAll(".tile-zone-item");
+    items.forEach(item => {
+        const dataId = item.getAttribute("data-id") || "";
+        const matches = dataId.toLowerCase() === key.toLowerCase() || (normalizeZoneId(dataId) === normalizeZoneId(key) && key !== CIRCLE_ID);
+        if (matches) {
+            item.classList.add("is-hovered");
+        } else {
+            item.classList.remove("is-hovered");
+        }
+    });
+}
+
+function unhighlightTileItem() {
+    const listContainer = document.getElementById("sidebar-zone-list");
+    if (!listContainer) return;
+    const items = listContainer.querySelectorAll(".tile-zone-item");
+    items.forEach(item => {
+        item.classList.remove("is-hovered");
+    });
 }
 
 function rebuildGeoJsonLayer() {
@@ -561,6 +729,7 @@ function rebuildGeoJsonLayer() {
                     if (!isSelected) {
                         l.setStyle(MAP_STYLES.hover);
                     }
+                    highlightTileItem(key);
                 },
                 mouseout: (e) => {
                     const l = e.target;
@@ -568,6 +737,7 @@ function rebuildGeoJsonLayer() {
                     if (!isSelected) {
                         l.setStyle(MAP_STYLES.default);
                     }
+                    unhighlightTileItem();
                 },
                 click: (e) => {
                     state.lastZoneClickTime = Date.now();
@@ -587,6 +757,96 @@ function rebuildGeoJsonLayer() {
             });
         }
     }).addTo(state.map);
+
+    if (state.isLocating && state.userLocationMarker) {
+        checkUserLocationZone(state.userLocationMarker.getLatLng());
+    }
+}
+
+function isPointInRing(lng, lat, ring) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const xi = ring[i][0], yi = ring[i][1];
+        const xj = ring[j][0], yj = ring[j][1];
+        const intersect = ((yi > lat) !== (yj > lat)) &&
+            (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
+function isPointInGeoJSONGeometry(lng, lat, geometry) {
+    if (!geometry) return false;
+    if (geometry.type === "Polygon") {
+        return isPointInRing(lng, lat, geometry.coordinates[0]);
+    } else if (geometry.type === "MultiPolygon") {
+        for (let poly of geometry.coordinates) {
+            if (isPointInRing(lng, lat, poly[0])) return true;
+        }
+    }
+    return false;
+}
+
+function checkUserLocationZone(latlng) {
+    const badge = document.getElementById("user-location-badge");
+    if (!badge) return;
+
+    if (!state.isLocating || !latlng) {
+        badge.classList.remove("is-visible");
+        badge.innerHTML = "";
+        return;
+    }
+
+    const lng = latlng.lng;
+    const lat = latlng.lat;
+
+    let foundFeature = null;
+    for (let f of state.allFeatures) {
+        if (isPointInGeoJSONGeometry(lng, lat, f.geometry)) {
+            foundFeature = f;
+            break;
+        }
+    }
+
+    if (foundFeature) {
+        const props = foundFeature.properties || {};
+        let zoneName = "";
+        if (state.isCirclesFeature) {
+            zoneName = props.cid || "Circle";
+        } else {
+            const zid = displayZoneId(props.zid);
+            zoneName = `Zone ${zid}`;
+        }
+        badge.innerHTML = `<span class="map-location-badge__dot"></span><span>You are in ${zoneName}</span>`;
+        badge.classList.add("is-visible");
+    } else {
+        badge.classList.remove("is-visible");
+        badge.innerHTML = "";
+    }
+}
+
+function toggleLocationTracking() {
+    if (!state.map) return;
+    const locateControlEl = document.querySelector(".leaflet-control-locate");
+
+    if (state.isLocating) {
+        state.isLocating = false;
+        state.map.stopLocate();
+        if (state.userLocationMarker) {
+            state.map.removeLayer(state.userLocationMarker);
+            state.userLocationMarker = null;
+        }
+        if (state.userLocationAccuracy) {
+            state.map.removeLayer(state.userLocationAccuracy);
+            state.userLocationAccuracy = null;
+        }
+        if (locateControlEl) locateControlEl.classList.remove("is-active");
+        checkUserLocationZone(null);
+    } else {
+        state.isLocating = true;
+        if (locateControlEl) locateControlEl.classList.add("is-active");
+        state.map.locate({ setView: true, maxZoom: 15, watch: true, enableHighAccuracy: true, timeout: 10000 });
+    }
 }
 
 function initializeMap() {
@@ -601,11 +861,121 @@ function initializeMap() {
         minZoom: 8
     }).setView([44.05, -123.11], 11);
 
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    const LocateControl = L.Control.extend({
+        options: { position: "topleft" },
+        onAdd: function () {
+            const container = L.DomUtil.create("div", "leaflet-bar leaflet-control leaflet-control-locate");
+            const button = L.DomUtil.create("a", "leaflet-control-locate-btn", container);
+            button.href = "#";
+            button.title = "Show My Location";
+            button.setAttribute("role", "button");
+            button.setAttribute("aria-label", "Show My Location");
+            button.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="8"></circle>
+                    <line x1="12" y1="2" x2="12" y2="4"></line>
+                    <line x1="12" y1="20" x2="12" y2="22"></line>
+                    <line x1="2" y1="12" x2="4" y2="12"></line>
+                    <line x1="20" y1="12" x2="22" y2="12"></line>
+                    <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
+                </svg>
+            `;
+            L.DomEvent.disableClickPropagation(button);
+            L.DomEvent.on(button, "click", function (e) {
+                L.DomEvent.stop(e);
+                toggleLocationTracking();
+            });
+            return container;
+        }
+    });
+    state.locateControl = new LocateControl().addTo(state.map);
+
+    const FullscreenControl = L.Control.extend({
+        options: { position: "topleft" },
+        onAdd: function () {
+            const container = L.DomUtil.create("div", "leaflet-bar leaflet-control leaflet-control-fullscreen");
+            const button = L.DomUtil.create("a", "leaflet-control-fullscreen-btn", container);
+            button.href = "#";
+            button.title = "Toggle Fullscreen";
+            button.setAttribute("role", "button");
+            button.setAttribute("aria-label", "Toggle Fullscreen");
+            button.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                </svg>
+            `;
+            L.DomEvent.disableClickPropagation(button);
+            L.DomEvent.on(button, "click", function (e) {
+                L.DomEvent.stop(e);
+                toggleFullscreen();
+            });
+            return container;
+        }
+    });
+    state.fullscreenControl = new FullscreenControl().addTo(state.map);
+
+    state.map.on("locationfound", (e) => {
+        if (!state.userLocationMarker) {
+            const userIcon = L.divIcon({
+                className: "user-location-marker",
+                html: '<div class="user-location-dot"></div>',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+            state.userLocationMarker = L.marker(e.latlng, { icon: userIcon }).addTo(state.map);
+            state.userLocationAccuracy = L.circle(e.latlng, {
+                radius: e.accuracy,
+                color: "#30d158",
+                fillColor: "#30d158",
+                fillOpacity: 0.15,
+                weight: 1.5
+            }).addTo(state.map);
+        } else {
+            state.userLocationMarker.setLatLng(e.latlng);
+            state.userLocationAccuracy.setLatLng(e.latlng);
+            state.userLocationAccuracy.setRadius(e.accuracy);
+        }
+        checkUserLocationZone(e.latlng);
+    });
+
+    state.map.on("locationerror", () => {
+        state.isLocating = false;
+        const locateControlEl = document.querySelector(".leaflet-control-locate");
+        if (locateControlEl) locateControlEl.classList.remove("is-active");
+        checkUserLocationZone(null);
+        showToast("Unable to access device location");
+    });
+
+    const darkTileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
         subdomains: "abcd",
         minZoom: 8,
-        maxZoom: 19
-    }).addTo(state.map);
+        maxZoom: 19,
+        detectRetina: true,
+        className: "carto-dark-tile"
+    });
+
+    const googleSatLayer = L.tileLayer("https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
+        subdomains: ["mt0", "mt1", "mt2", "mt3"],
+        minZoom: 8,
+        maxZoom: 20,
+        detectRetina: true,
+        className: "google-sat-tile"
+    });
+
+    darkTileLayer.addTo(state.map);
+
+    const baseMaps = {
+        "Dark Map": darkTileLayer,
+        "Google Satellite": googleSatLayer
+    };
+
+    state.baseMapsList = [
+        { name: "Dark Map", layer: darkTileLayer },
+        { name: "Google Satellite", layer: googleSatLayer }
+    ];
+
+    state.layersControl = L.control.layers(baseMaps, null, { position: "topleft" }).addTo(state.map);
+    updateControlPositions();
 
     state.map.on("click", () => {
         if (Date.now() - state.lastZoneClickTime < 250) {
@@ -625,8 +995,57 @@ function initializeMap() {
 function setupActionButtons() {
     const downloadModal = document.getElementById("downloads-modal");
     const copyModal = document.getElementById("copy-link-modal");
+    const helpModal = document.getElementById("help-modal");
     const downloadBtn = document.getElementById("btn-download-files");
     const copyBtn = document.getElementById("btn-copy-link");
+    const helpBtn = document.getElementById("btn-help");
+
+    const handleModalReparenting = () => {
+        const sidebarHeader = document.querySelector(".maps-tile-header");
+        const mapWrapper = document.getElementById("map-wrapper") || document.querySelector(".maps-tile-map-area");
+        const actionsRow = document.querySelector(".maps-tile-header__actions");
+        const modals = [downloadModal, copyModal, helpModal];
+
+        if (window.innerWidth <= 768) {
+            if (actionsRow && sidebarHeader && actionsRow.parentElement !== sidebarHeader) {
+                sidebarHeader.appendChild(actionsRow);
+            }
+            modals.forEach(m => {
+                if (m && m.parentElement !== document.body) {
+                    document.body.appendChild(m);
+                }
+            });
+        } else if (mapWrapper) {
+            if (actionsRow && actionsRow.parentElement !== mapWrapper) {
+                mapWrapper.appendChild(actionsRow);
+            }
+            if (actionsRow) {
+                modals.forEach(m => {
+                    if (m && m.parentElement !== actionsRow) {
+                        actionsRow.appendChild(m);
+                    }
+                });
+            }
+        }
+    };
+    handleModalReparenting();
+    window.addEventListener("resize", handleModalReparenting);
+
+    window.updateActionButtonsState = () => {
+        const isDownloadOpen = downloadModal && downloadModal.getAttribute("aria-hidden") === "false";
+        const isCopyOpen = copyModal && copyModal.getAttribute("aria-hidden") === "false";
+        const isHelpOpen = helpModal && helpModal.getAttribute("aria-hidden") === "false";
+
+        if (downloadBtn) downloadBtn.classList.toggle("is-active", !!isDownloadOpen);
+        if (copyBtn) copyBtn.classList.toggle("is-active", !!isCopyOpen);
+        if (helpBtn) helpBtn.classList.toggle("is-active", !!isHelpOpen);
+
+        if (isDownloadOpen || isCopyOpen || isHelpOpen) {
+            document.body.classList.add("has-active-modal");
+        } else {
+            document.body.classList.remove("has-active-modal");
+        }
+    };
 
     const closeAllModals = () => {
         if (downloadModal) {
@@ -637,7 +1056,21 @@ function setupActionButtons() {
             copyModal.setAttribute("aria-hidden", "true");
             copyModal.classList.remove("is-open");
         }
+        if (helpModal) {
+            helpModal.setAttribute("aria-hidden", "true");
+            helpModal.classList.remove("is-open");
+        }
+        window.updateActionButtonsState();
     };
+
+    const modalBackBtn = document.getElementById("btn-modal-back");
+    if (modalBackBtn) {
+        modalBackBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeAllModals();
+        });
+    }
 
     if (copyBtn && copyModal) {
         const copyInput = document.getElementById("copy-link-input");
@@ -646,6 +1079,7 @@ function setupActionButtons() {
 
         copyBtn.addEventListener("click", (e) => {
             e.stopPropagation();
+            if (e.currentTarget) e.currentTarget.blur();
             const isOpen = copyModal.getAttribute("aria-hidden") === "false";
             closeAllModals();
             if (!isOpen) {
@@ -653,6 +1087,7 @@ function setupActionButtons() {
                 copyModal.setAttribute("aria-hidden", "false");
                 copyModal.classList.add("is-open");
             }
+            window.updateActionButtonsState();
         });
 
         if (copyActionBtn && copyInput) {
@@ -686,15 +1121,38 @@ function setupActionButtons() {
     if (downloadBtn && downloadModal) {
         downloadBtn.addEventListener("click", (e) => {
             e.stopPropagation();
+            if (e.currentTarget) e.currentTarget.blur();
             const isOpen = downloadModal.getAttribute("aria-hidden") === "false";
             closeAllModals();
             if (!isOpen) {
                 downloadModal.setAttribute("aria-hidden", "false");
                 downloadModal.classList.add("is-open");
             }
+            window.updateActionButtonsState();
         });
 
         downloadModal.querySelectorAll("[data-modal-close]").forEach(closeEl => {
+            closeEl.addEventListener("click", (e) => {
+                e.stopPropagation();
+                closeAllModals();
+            });
+        });
+    }
+
+    if (helpBtn && helpModal) {
+        helpBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (e.currentTarget) e.currentTarget.blur();
+            const isOpen = helpModal.getAttribute("aria-hidden") === "false";
+            closeAllModals();
+            if (!isOpen) {
+                helpModal.setAttribute("aria-hidden", "false");
+                helpModal.classList.add("is-open");
+            }
+            window.updateActionButtonsState();
+        });
+
+        helpModal.querySelectorAll("[data-modal-close]").forEach(closeEl => {
             closeEl.addEventListener("click", (e) => {
                 e.stopPropagation();
                 closeAllModals();
@@ -711,6 +1169,11 @@ function setupActionButtons() {
             }
             if (copyModal && copyModal.getAttribute("aria-hidden") === "false") {
                 if (!copyModal.contains(e.target) && !copyBtn.contains(e.target)) {
+                    closeAllModals();
+                }
+            }
+            if (helpModal && helpModal.getAttribute("aria-hidden") === "false") {
+                if (!helpModal.contains(e.target) && !helpBtn.contains(e.target)) {
                     closeAllModals();
                 }
             }
@@ -734,16 +1197,28 @@ function setupActionButtons() {
     const capsuleBackBtn = document.getElementById("btn-capsule-back");
     if (capsuleBackBtn) {
         capsuleBackBtn.addEventListener("click", () => {
-            selectSubject(CIRCLE_ID);
+            if (!state.isCirclesFeature && (state.currentId === CIRCLE_ID || !state.currentId)) {
+                switchToCirclesFeature();
+            } else {
+                selectSubject(CIRCLE_ID);
+            }
         });
     }
+}
 
-    const headerCirclesBtn = document.getElementById("btn-header-circles");
-    if (headerCirclesBtn) {
-        headerCirclesBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            switchToCirclesFeature();
-        });
+async function performDirectCopyLink() {
+    const url = window.location.href;
+    try {
+        await navigator.clipboard.writeText(url);
+        showToast("Link copied to clipboard!");
+    } catch (err) {
+        const tempInput = document.createElement("input");
+        tempInput.value = url;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        showToast("Link copied to clipboard!");
     }
 }
 
@@ -758,7 +1233,8 @@ function setupSearch() {
 
     let savedHeights = null;
 
-    const openSearch = () => {
+    const openSearch = (e) => {
+        if (e) e.preventDefault();
         const mapArea = document.querySelector(".maps-tile-map-area");
         const sidebar = document.querySelector(".maps-tile-sidebar");
 
@@ -767,20 +1243,23 @@ function setupSearch() {
                 map: mapArea.style.height || "",
                 sidebar: sidebar.style.height || ""
             };
-            mapArea.style.setProperty("height", "35%", "important");
-            sidebar.style.setProperty("height", "65%", "important");
+            mapArea.style.setProperty("height", "50%", "important");
+            sidebar.style.setProperty("height", "50%", "important");
             if (state.map) {
                 setTimeout(() => state.map.invalidateSize(), 300);
             }
         }
 
+        header.classList.add("is-searching");
         header.classList.add("is-search-active");
         searchInput.value = "";
         filterList("");
-        setTimeout(() => searchInput.focus(), 50);
+        searchInput.focus();
+        setTimeout(() => searchInput.focus(), 100);
     };
 
     const closeSearch = () => {
+        header.classList.remove("is-searching");
         header.classList.remove("is-search-active");
         searchInput.value = "";
         filterList("");
@@ -818,6 +1297,10 @@ function setupSearch() {
     };
 
     toggleBtn.addEventListener("click", openSearch);
+    toggleBtn.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        openSearch(e);
+    });
     closeBtn.addEventListener("click", closeSearch);
 
     searchInput.addEventListener("input", (e) => {
@@ -944,6 +1427,415 @@ function setupMobileResizeBar() {
     window.addEventListener("touchend", stopDrag);
 }
 
+function setupHelpModeSystem() {
+    const toggleInput = document.getElementById("toggle-help-mode");
+    const tooltip = document.getElementById("help-mode-tooltip");
+    const highlight = document.getElementById("help-mode-highlight");
+
+    const setHelpMode = (active, isFromKey = false) => {
+        state.isHelpModeActive = active;
+        if (toggleInput) toggleInput.checked = active;
+        if (active) {
+            document.body.classList.add("is-help-mode-active");
+            tagElements();
+            if (isFromKey) showToast("Interactive Help Mode: Enabled");
+        } else {
+            document.body.classList.remove("is-help-mode-active");
+            if (tooltip) tooltip.setAttribute("aria-hidden", "true");
+            if (highlight) highlight.setAttribute("aria-hidden", "true");
+            if (isFromKey) showToast("Interactive Help Mode: Disabled");
+        }
+        if (window.updateActionButtonsState) window.updateActionButtonsState();
+    };
+
+    if (toggleInput) {
+        toggleInput.addEventListener("change", (e) => {
+            setHelpMode(e.target.checked, false);
+        });
+    }
+
+    document.addEventListener("mousedown", () => {
+        state.lastNavSource = "click";
+    }, true);
+
+    document.addEventListener("keydown", (e) => {
+        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : "";
+        if (activeTag === "input" || activeTag === "textarea") return;
+
+        // Open Help Modal (Shift + H)
+        if (e.shiftKey && (e.key === "h" || e.key === "H")) {
+            e.preventDefault();
+            const helpBtn = document.getElementById("btn-help");
+            if (helpBtn) helpBtn.click();
+            return;
+        }
+
+        // Toggle Interactive Help Mode (H key)
+        if (!e.shiftKey && (e.key === "h" || e.key === "H")) {
+            setHelpMode(!state.isHelpModeActive, true);
+            return;
+        }
+
+        // Open Search Field (F key)
+        if (e.key === "f" || e.key === "F") {
+            e.preventDefault();
+            const searchToggle = document.getElementById("btn-search-toggle");
+            if (searchToggle) searchToggle.click();
+            return;
+        }
+
+        // Open Download Modal (Shift + G)
+        if (e.shiftKey && (e.key === "g" || e.key === "G")) {
+            e.preventDefault();
+            const downloadBtn = document.getElementById("btn-download-files");
+            if (downloadBtn) downloadBtn.click();
+            return;
+        }
+
+        // Edit Item (Shift + X)
+        if (e.shiftKey && (e.key === "x" || e.key === "X")) {
+            e.preventDefault();
+            const editBtn = document.getElementById("btn-edit-item");
+            if (editBtn) editBtn.click();
+            return;
+        }
+
+        // Copy Link (Shift + C)
+        if (e.shiftKey && (e.key === "c" || e.key === "C")) {
+            e.preventDefault();
+            performDirectCopyLink();
+            return;
+        }
+
+        // Back Navigation (Escape key)
+        if (e.key === "Escape" || e.key === "Esc") {
+            state.lastNavSource = "keyboard";
+            const lightbox = document.getElementById("image-lightbox-modal");
+            if (lightbox && lightbox.classList.contains("is-open")) {
+                lightbox.classList.remove("is-open");
+                lightbox.setAttribute("aria-hidden", "true");
+                return;
+            }
+            const openModal = document.querySelector(".maps-tile-modal[aria-hidden='false']");
+            if (openModal) {
+                openModal.setAttribute("aria-hidden", "true");
+                return;
+            }
+            const backBtn = document.getElementById("btn-capsule-back");
+            if (backBtn) backBtn.click();
+            return;
+        }
+
+        // About Information (` key)
+        if (e.key === "`" || e.key === "~") {
+            state.lastNavSource = "keyboard";
+            const aboutTab = document.querySelector('.sidebar-capsule[data-tab="about"]');
+            if (aboutTab) aboutTab.click();
+            return;
+        }
+
+        // Class Tabs Navigation (Numbers 1-9 without Shift)
+        if (!e.shiftKey && e.key >= "1" && e.key <= "9") {
+            state.lastNavSource = "keyboard";
+            const index = parseInt(e.key, 10) - 1;
+            const classTabs = document.querySelectorAll('.sidebar-capsule:not(.sidebar-capsule--icon)');
+            if (classTabs && classTabs[index]) {
+                classTabs[index].click();
+            }
+            return;
+        }
+
+        // Shift + 1-9 Map Style Navigation
+        if (e.shiftKey && (e.code.startsWith("Digit") || (e.key >= "1" && e.key <= "9") || "!@#$%^&*(".includes(e.key))) {
+            let digitNum = 0;
+            if (e.code.startsWith("Digit")) {
+                digitNum = parseInt(e.code.replace("Digit", ""), 10);
+            } else if (e.key >= "1" && e.key <= "9") {
+                digitNum = parseInt(e.key, 10);
+            } else {
+                const shiftMap = { "!": 1, "@": 2, "#": 3, "$": 4, "%": 5, "^": 6, "&": 7, "*": 8, "(": 9 };
+                digitNum = shiftMap[e.key] || 0;
+            }
+            if (digitNum >= 1 && digitNum <= 9) {
+                e.preventDefault();
+                selectMapStyleByIndex(digitNum - 1);
+                return;
+            }
+        }
+
+        // Map Zoom (+, -, Shift+E zoom in, Shift+Q zoom out)
+        const k = e.key.toLowerCase();
+        if (e.key === "+" || e.key === "=" || (e.shiftKey && k === "e")) {
+            e.preventDefault();
+            if (state.map) state.map.zoomIn();
+            return;
+        }
+        if (e.key === "-" || e.key === "_" || (e.shiftKey && k === "q")) {
+            e.preventDefault();
+            if (state.map) state.map.zoomOut();
+            return;
+        }
+
+        // WASD & Arrow Feature Tile Navigation OR Shift + WASD/Arrow Map Panning
+        if (k === "w" || e.key === "ArrowUp") {
+            e.preventDefault();
+            if (e.shiftKey) {
+                if (state.map) state.map.panBy([0, -120], { animate: true });
+                return;
+            }
+            state.lastNavSource = "keyboard";
+            if (state.focusedTileIndex === -1) {
+                const tiles = document.querySelectorAll("#sidebar-zone-list .tile-zone-item");
+                updateKeyboardTileFocus(tiles ? tiles.length - 1 : 0);
+            } else {
+                updateKeyboardTileFocus(state.focusedTileIndex - 1);
+            }
+            return;
+        }
+        if (k === "s" || e.key === "ArrowDown") {
+            e.preventDefault();
+            if (e.shiftKey) {
+                if (state.map) state.map.panBy([0, 120], { animate: true });
+                return;
+            }
+            state.lastNavSource = "keyboard";
+            if (state.focusedTileIndex === -1) {
+                updateKeyboardTileFocus(0);
+            } else {
+                updateKeyboardTileFocus(state.focusedTileIndex + 1);
+            }
+            return;
+        }
+        if (k === "a" || e.key === "ArrowLeft") {
+            e.preventDefault();
+            if (e.shiftKey) {
+                if (state.map) state.map.panBy([-120, 0], { animate: true });
+                return;
+            }
+            state.lastNavSource = "keyboard";
+            const backBtn = document.getElementById("btn-capsule-back");
+            if (backBtn) backBtn.click();
+            return;
+        }
+        if (k === "d" || e.key === "ArrowRight") {
+            e.preventDefault();
+            if (e.shiftKey) {
+                if (state.map) state.map.panBy([120, 0], { animate: true });
+                return;
+            }
+            state.lastNavSource = "keyboard";
+            const tiles = document.querySelectorAll("#sidebar-zone-list .tile-zone-item");
+            if (tiles && tiles.length > 0) {
+                const targetIdx = state.focusedTileIndex >= 0 ? state.focusedTileIndex : 0;
+                if (tiles[targetIdx]) tiles[targetIdx].click();
+            }
+            return;
+        }
+    });
+
+    const helpDictionary = [
+        { selector: "#header-logo-container, .logo--header", title: "Organization Logo", desc: "Click the organization logo to navigate to the home directory of the organization which the currently selected feature belongs to." },
+        { selector: "#header-title", title: "Selection Title", desc: "Displays the name of the currently selected feature." },
+        { selector: "#btn-copy-link", title: "Copy Link", desc: "Generates and copies a direct URL share link for the current view.", shortcut: "Shift + C" },
+        { selector: "#btn-download-files", title: "Download Files", desc: "Access spatial GIS, PDF maps, and survey dataset files for this selection.", shortcut: "Shift + G" },
+        { selector: "#btn-edit-item", title: "Edit Item", desc: "Opens the spatial data editor interface for updating boundaries.", shortcut: "Shift + X" },
+        { selector: "#btn-help", title: "Help & Guide", desc: "Opens user documentation and toggles Interactive Tooltip Mode.", shortcut: "Shift + H" },
+        { selector: "#btn-capsule-back", title: "Back Navigation", desc: "Return to the previous higher-level overview (circle or list).", shortcut: "Esc or A / Left Arrow" },
+        { selector: '[data-tab="about"]', title: "About Tab", desc: "View detailed descriptions, spatial summaries, and photographs.", shortcut: "` (Backtick)" },
+        { selector: '.sidebar-capsule:not(.sidebar-capsule--icon)', title: "Class Tab", desc: "Class tabs filter the subfeatures of the current selection by type, which is reflected in the feature tiles column.", shortcut: "1 - 9" },
+        { selector: "#btn-search-toggle", title: "Search Tool", desc: "Expand full-row search bar to filter count circles and survey zones.", shortcut: "F" },
+        { selector: "#mobile-resize-bar", title: "Resize Handle", desc: "Drag vertically to adjust split screen map and list proportions." },
+        { selector: ".leaflet-control-zoom", title: "Zoom Controls", desc: "Zoom in (+) or out (-) on the interactive map view.", shortcut: "+ / - or Shift + E / Q" },
+        { selector: ".leaflet-control-locate", title: "Location Tracking", desc: "Locate your current live GPS position on the survey map." },
+        { selector: ".leaflet-control-fullscreen", title: "Fullscreen Toggle", desc: "Expand map view to fill your entire screen display." },
+        { selector: ".leaflet-control-layers", title: "Map Style", desc: "Select the basemap used for the map frame.", shortcut: "Shift + 1 - 9" },
+        { selector: ".tile-zone-item", title: "Feature Tile", desc: "A feature tile represents a sub feature of the currently selected item. Click it to select the feature.", shortcut: "WASD or Arrows (W/S to navigate, D to select)" },
+        { selector: "#tile-map, #map-wrapper", title: "Map Frame", desc: "Interactive spatial map view showing bird count circles and survey zone boundaries.", shortcut: "Pan: Shift + WASD / Arrows | Zoom: + / - or Shift + E / Q | Style: Shift + 1 - 9" }
+    ];
+
+    const tagElements = () => {
+        helpDictionary.forEach(item => {
+            const els = document.querySelectorAll(item.selector);
+            els.forEach(el => {
+                el.setAttribute("data-help-title", item.title);
+                el.setAttribute("data-help-desc", item.desc);
+                if (item.shortcut) {
+                    el.setAttribute("data-help-shortcut", item.shortcut);
+                } else {
+                    el.removeAttribute("data-help-shortcut");
+                }
+            });
+        });
+    };
+
+    tagElements();
+
+    const observer = new MutationObserver(() => {
+        if (state.isHelpModeActive) {
+            tagElements();
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    const resolveHelpTarget = (eventTarget) => {
+        let target = eventTarget.closest("[data-help-title]");
+        let title = target ? target.getAttribute("data-help-title") : null;
+        let desc = target ? target.getAttribute("data-help-desc") : null;
+        let shortcut = target ? target.getAttribute("data-help-shortcut") : null;
+
+        if (!target) {
+            for (const item of helpDictionary) {
+                const matched = eventTarget.closest(item.selector);
+                if (matched) {
+                    target = matched;
+                    title = item.title;
+                    desc = item.desc;
+                    shortcut = item.shortcut || null;
+                    target.setAttribute("data-help-title", title);
+                    target.setAttribute("data-help-desc", desc);
+                    if (shortcut) target.setAttribute("data-help-shortcut", shortcut);
+                    break;
+                }
+            }
+        }
+        if (target && (target.id === "tile-map" || target.id === "map-wrapper" || title === "Map Frame")) {
+            if (eventTarget.closest(".leaflet-control-container, .leaflet-top, .leaflet-left, .leaflet-right, .leaflet-bottom")) {
+                return { target: null, title: null, desc: null, shortcut: null };
+            }
+        }
+
+        return { target, title, desc, shortcut };
+    };
+
+    const isTouchDevice = () => {
+        return window.matchMedia("(pointer: coarse)").matches || ('ontouchstart' in window && navigator.maxTouchPoints > 0) || window.innerWidth <= 768;
+    };
+
+    document.addEventListener("mousemove", (e) => {
+        if (!state.isHelpModeActive || isTouchDevice()) return;
+
+        const { target, title, desc, shortcut } = resolveHelpTarget(e.target);
+        if (target) {
+            if (tooltip) {
+                tooltip.innerHTML = `
+                    <div class="help-mode-tooltip__title">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <span>${title}</span>
+                    </div>
+                    <p class="help-mode-tooltip__desc">${desc}</p>
+                    ${shortcut ? `
+                        <div class="help-mode-tooltip__shortcut">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M18 12h.01M8 16h8"></path></svg>
+                            <span class="help-mode-tooltip__shortcut-label">Shortcut:</span>
+                            <span class="help-mode-tooltip__shortcut-val">${shortcut}</span>
+                        </div>
+                    ` : ""}
+                `;
+
+                tooltip.setAttribute("aria-hidden", "false");
+
+                const tooltipWidth = tooltip.offsetWidth || 240;
+                const tooltipHeight = tooltip.offsetHeight || 80;
+
+                let posX = e.clientX + 15;
+                let posY = e.clientY + 15;
+
+                if (posX + tooltipWidth > window.innerWidth - 10) {
+                    posX = e.clientX - tooltipWidth - 15;
+                }
+                if (posY + tooltipHeight > window.innerHeight - 10) {
+                    posY = e.clientY - tooltipHeight - 15;
+                }
+
+                tooltip.style.left = `${posX}px`;
+                tooltip.style.top = `${posY}px`;
+            }
+
+            if (highlight) {
+                const rect = target.getBoundingClientRect();
+                const pad = 3;
+                highlight.style.left = `${rect.left - pad}px`;
+                highlight.style.top = `${rect.top - pad}px`;
+                highlight.style.width = `${rect.width + pad * 2}px`;
+                highlight.style.height = `${rect.height + pad * 2}px`;
+                highlight.setAttribute("aria-hidden", "false");
+            }
+        } else {
+            if (tooltip) tooltip.setAttribute("aria-hidden", "true");
+            if (highlight) highlight.setAttribute("aria-hidden", "true");
+        }
+    });
+
+    const mobileExitBtn = document.getElementById("mobile-help-exit-btn");
+    if (mobileExitBtn) {
+        mobileExitBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setHelpMode(false, false);
+        });
+    }
+
+    const handleHelpClick = (e) => {
+        if (!state.isHelpModeActive || !isTouchDevice()) return;
+
+        const helpModal = document.getElementById("help-modal");
+        if (helpModal && helpModal.contains(e.target)) return;
+        if (mobileExitBtn && mobileExitBtn.contains(e.target)) return;
+
+        const { target, title, desc, shortcut } = resolveHelpTarget(e.target);
+        if (target) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            if (tooltip) {
+                tooltip.innerHTML = `
+                    <div class="help-mode-tooltip__title">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <span>${title}</span>
+                    </div>
+                    <p class="help-mode-tooltip__desc">${desc}</p>
+                    ${shortcut ? `
+                        <div class="help-mode-tooltip__shortcut">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M18 12h.01M8 16h8"></path></svg>
+                            <span class="help-mode-tooltip__shortcut-label">Shortcut:</span>
+                            <span class="help-mode-tooltip__shortcut-val">${shortcut}</span>
+                        </div>
+                    ` : ""}
+                `;
+                tooltip.setAttribute("aria-hidden", "false");
+
+                const rect = target.getBoundingClientRect();
+                const tooltipWidth = tooltip.offsetWidth || 240;
+                const tooltipHeight = tooltip.offsetHeight || 80;
+
+                let posX = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+                let posY = rect.bottom + 10;
+
+                if (posX < 10) posX = 10;
+                if (posX + tooltipWidth > window.innerWidth - 10) posX = window.innerWidth - tooltipWidth - 10;
+                if (posY + tooltipHeight > window.innerHeight - 10) posY = rect.top - tooltipHeight - 10;
+                if (posY < 10) posY = 10;
+
+                tooltip.style.left = `${posX}px`;
+                tooltip.style.top = `${posY}px`;
+            }
+
+            if (highlight) {
+                const rect = target.getBoundingClientRect();
+                const pad = 3;
+                highlight.style.left = `${rect.left - pad}px`;
+                highlight.style.top = `${rect.top - pad}px`;
+                highlight.style.width = `${rect.width + pad * 2}px`;
+                highlight.style.height = `${rect.height + pad * 2}px`;
+                highlight.setAttribute("aria-hidden", "false");
+            }
+        }
+    };
+
+    document.addEventListener("click", handleHelpClick, true);
+}
+
 async function init() {
     try {
         const [circlesRes, eugeneRes, florenceRes] = await Promise.all([
@@ -979,6 +1871,7 @@ async function init() {
         setupCapsules();
         setupImageLightbox();
         setupMobileResizeBar();
+        setupHelpModeSystem();
 
         selectSubject(initialId, true);
     } catch (err) {

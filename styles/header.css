@@ -11,6 +11,10 @@
     min-height: 72px;
 }
 
+.intro-header--center {
+    justify-content: center !important;
+}
+
 .intro-header h1 {
     color: #ffffff;
     font-size: 2rem;

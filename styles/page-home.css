@@ -1,9 +1,16 @@
 /* HOME PAGE OVERRIDES */
 .page-home .intro-header {
-    padding: 4rem 1rem;
+    padding: 2.5rem 1.5rem;
+    min-height: auto;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .page-home .logo {
-    width: 500px;
+    max-height: 135px !important;
+    max-width: min(550px, calc(100vw - 3rem)) !important;
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain;
     display: inline-block;
 }
