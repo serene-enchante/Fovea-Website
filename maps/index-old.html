@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maps</title>
+
+    <link rel="stylesheet" href="/styles/base.css">
+    <link rel="stylesheet" href="/styles/layout.css">
+    <link rel="stylesheet" href="/styles/header.css">
+    <link rel="stylesheet" href="/styles/cards.css">
+    <link rel="stylesheet" href="/styles/maps-components.css">
+    <link rel="stylesheet" href="/styles/page-maps.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/images/logo-fav.png">
+</head>
+<body class="page-maps">
+    <header class="intro-header intro-header--lean">
+        <a href="/" class="home-link" aria-label="Go to homepage">
+            <img src="/images/logo-small.png" alt="ECBC Home" class="logo logo--header">
+        </a>
+    </header>
+
+    <main class="page-main maps-main">
+        <section class="subject-hero section-shell" aria-labelledby="subject-title">
+            <div class="subject-hero__bg" aria-hidden="true"></div>
+            <div class="subject-hero__overlay" aria-hidden="true"></div>
+
+            <div class="subject-hero__inner">
+                <div class="subject-hero__map-frame">
+                    <div id="hero-map" class="subject-hero__map" role="img" aria-label="Preview map of current subject"></div>
+                </div>
+
+                <div class="subject-hero__meta">
+                    <h1 id="subject-title" class="subject-title">Loading...</h1>
+
+                    <dl class="subject-stats">
+                        <div class="subject-stats__row">
+                            <dt>Modified</dt>
+                            <dd id="subject-modified">-</dd>
+                        </div>
+                        <div class="subject-stats__row">
+                            <dt>Founded</dt>
+                            <dd id="subject-founded">-</dd>
+                        </div>
+                        <div class="subject-stats__row">
+                            <dt>Sq Miles</dt>
+                            <dd id="subject-area">-</dd>
+                        </div>
+                    </dl>
+
+                    <button type="button" class="button button--download spotlight-interactive" data-modal-open="downloads-modal">
+                        Download Data
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="subject-interface section-shell" aria-label="Subject data interface">
+            <div class="subject-interface__header">
+                <div class="interface-controls">
+                    <div class="view-switcher" role="tablist" aria-label="View switcher">
+                        <button class="view-switcher__btn spotlight-interactive" data-view="map" role="tab" aria-selected="true" aria-label="Map view" title="Map view">
+                            <svg class="view-switcher__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M3 6.5L9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20V6.5zM9 4v13.5M15 6.5V20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                        <button class="view-switcher__btn spotlight-interactive" data-view="grid" role="tab" aria-selected="false" aria-label="Grid view" title="Grid view">
+                            <svg class="view-switcher__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                        <button class="view-switcher__btn spotlight-interactive" data-view="list" role="tab" aria-selected="false" aria-label="List view" title="List view">
+                            <svg class="view-switcher__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M7 6h13M7 12h13M7 18h13M4 6h.01M4 12h.01M4 18h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <label class="sort-control" for="sort-select">
+                        <span>Sort</span>
+                        <select id="sort-select" name="sort">
+                            <option value="title">Title</option>
+                            <option value="modified">Modified</option>
+                            <option value="founded">Founded</option>
+                            <option value="area">Sq Miles</option>
+                        </select>
+                    </label>
+
+                    <button type="button" id="back-to-circle" class="circle-reset-btn">
+                        Back to Circle
+                    </button>
+                </div>
+            </div>
+
+            <p id="interface-note" class="interface-note" aria-live="polite"></p>
+
+            <div class="subject-interface__panes">
+                <section id="pane-map" class="interface-pane is-active" data-pane="map" aria-label="Map view">
+                    <div id="section2-map" class="section2-map"></div>
+                </section>
+
+                <section id="pane-grid" class="interface-pane" data-pane="grid" aria-label="Grid view">
+                    <div id="zone-grid" class="card-grid"></div>
+                </section>
+
+                <section id="pane-list" class="interface-pane" data-pane="list" aria-label="List view">
+                    <div id="zone-list" class="zone-list"></div>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <div id="downloads-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="downloads-title">
+        <div class="modal__backdrop" data-modal-close="downloads-modal"></div>
+        <div class="modal__panel">
+            <button type="button" class="modal__close spotlight-interactive" aria-label="Close download modal" data-modal-close="downloads-modal">x</button>
+            <h2 id="downloads-title">Download Data</h2>
+
+            <div class="download-grid">
+                <section class="download-column download-column--raster" aria-labelledby="raster-title">
+                    <h3 id="raster-title">Raster</h3>
+                    <a href="#" class="download-link is-disabled spotlight-interactive" aria-disabled="true">geoPDF</a>
+                    <a href="#" class="download-link is-disabled spotlight-interactive" aria-disabled="true">geoTIFF</a>
+                </section>
+
+                <section class="download-column download-column--vector" aria-labelledby="vector-title">
+                    <h3 id="vector-title">Vector</h3>
+                    <a href="#" class="download-link spotlight-interactive" id="download-geojson">geojson</a>
+                    <a href="#" class="download-link is-disabled spotlight-interactive" aria-disabled="true">kmz</a>
+                    <a href="#" class="download-link is-disabled spotlight-interactive" aria-disabled="true">gpx</a>
+                </section>
+            </div> 
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="/scripts/maps.js"></script>
+</body>
+</html>
