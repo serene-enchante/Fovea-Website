@@ -6,20 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Directory</title>
 
-    <link rel="stylesheet" href="/styles/header.css">
-    <link rel="stylesheet" href="/styles/page-home.css">
-    <link rel="stylesheet" href="/styles/base.css">
-    <link rel="stylesheet" href="/styles/layout.css">
-    <link rel="stylesheet" href="/styles/cards.css">
+    <link rel="stylesheet" href="styles/header.css">
+    <link rel="stylesheet" href="styles/page-home.css">
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/cards.css">
 
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="/images/logo-fav.png">
+    <link rel="icon" type="image/png" href="images/logo-fav.png">
 </head>
 
 <body class="page-home">
 
     <header class="intro-header intro-header--center">
-        <a href="/" class="home-link" aria-label="Go to homepage">
+        <a href="./" class="home-link" aria-label="Go to homepage">
             <img src="images/logo-wide.png" alt="Hori Logo" class="logo">
             <span id="header-logo-text" class="header-logo-text"></span>
         </a>
@@ -28,13 +28,13 @@
     <main class="container">
         <div class="card-grid" id="json-content"></div>
     </main>
-    <script src="/scripts/cards.js"></script>
+    <script src="scripts/cards.js"></script>
     <script>
         const homeTiles = [
             {
                 "id": 1,
                 "image": "images/wetlands.jpg",
-                "link": "/maps/",
+                "link": "maps/",
                 "category": "Spatial Data",
                 "name": "Maps",
                 "description": "View and access maps and spatial data files pertaining to the Eugene Christmas Bird Count."
@@ -42,7 +42,7 @@
             {
                 "id": 2,
                 "image": "images/info.png",
-                "link": "/info/",
+                "link": "info/",
                 "category": "Resources",
                 "name": "Information",
                 "description": "Read about the organization's impact in citizen lead ornithology and how you can get involved."
@@ -50,7 +50,7 @@
             {
                 "id": 3,
                 "image": "images/osprey.jpg",
-                "link": "/results/",
+                "link": "results/",
                 "category": "Data",
                 "name": "Results",
                 "description": "View and access historical species records created by members of the Eugene Christmas Bird Count."

@@ -1,8 +1,8 @@
-const EUGENE_GEOJSON_PATH = "/geojson/Eugene-01-wgs84.geojson";
-const FLORENCE_GEOJSON_PATH = "/geojson/Florence-00-wgs84.geojson";
-const CIRCLES_GEOJSON_PATH = "/geojson/circles-wgs84.geojson";
+const EUGENE_GEOJSON_PATH = "../geojson/Eugene-01-wgs84.geojson";
+const FLORENCE_GEOJSON_PATH = "../geojson/Florence-00-wgs84.geojson";
+const CIRCLES_GEOJSON_PATH = "../geojson/circles-wgs84.geojson";
 const CIRCLE_ID = "ecbc-circle";
-const FALLBACK_IMAGE = "/images/wetlands.jpg";
+const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
 const MAP_STYLES = {
     default: {
@@ -90,12 +90,12 @@ function zoneImagePath(zoneId) {
     let zid = displayZoneId(zoneId);
     if (!zid) return FALLBACK_IMAGE;
 
-    if (zid === "6A" || zid === "6B" || zid === "06A" || zid === "06B") return "/images/zone-images/z06-01.jpg";
-    if (zid === "8" || zid === "08") return "/images/zone-images/z08A-01.jpg";
-    if (zid === "20B") return "/images/zone-images/20B-01.jpg";
+    if (zid === "6A" || zid === "6B" || zid === "06A" || zid === "06B") return "../images/zone-images/z06-01.jpg";
+    if (zid === "8" || zid === "08") return "../images/zone-images/z08A-01.jpg";
+    if (zid === "20B") return "../images/zone-images/20B-01.jpg";
     if (zid === "1") zid = "01";
 
-    return `/images/zone-images/z${zid}-01.jpg`;
+    return `../images/zone-images/z${zid}-01.jpg`;
 }
 
 function formatDate(value) {
@@ -200,7 +200,7 @@ function updateHeaderLogo() {
     if (!logoImg) return;
 
     if (state.isCirclesFeature || state.currentFeature === "circles") {
-        logoImg.src = "/images/whiteLane-Audubon-favicon-152.png";
+        logoImg.src = "../images/whiteLane-Audubon-favicon-152.png";
         logoImg.alt = "Audubon Circles";
         if (logoText) {
             logoText.textContent = "";
@@ -208,10 +208,10 @@ function updateHeaderLogo() {
         }
     } else {
         if (state.currentFeature === "florence") {
-            logoImg.src = "/images/florence.png";
+            logoImg.src = "../images/florence.png";
             logoImg.alt = "Florence CBC";
         } else {
-            logoImg.src = "/images/logo-small.png";
+            logoImg.src = "../images/logo-small.png";
             logoImg.alt = "Eugene CBC";
         }
 
@@ -370,7 +370,7 @@ function renderSidebarList() {
             aboutEl.innerHTML = `
                 <div class="sidebar-about-content">
                     <div class="sidebar-about-media">
-                        <img src="/images/wetlands.jpg" alt="Audubon Circles" loading="lazy" />
+                        <img src="../images/wetlands.jpg" alt="Audubon Circles" loading="lazy" />
                     </div>
                     <p class="sidebar-about-text">Audubon Christmas Bird Count regional count circles. Click a circle to explore its subdivided survey zones.</p>
                 </div>
@@ -392,13 +392,13 @@ function renderSidebarList() {
             item.className = "tile-zone-item";
             item.setAttribute("data-id", cid);
 
-            let thumbImg = "/images/wetlands.jpg";
+            let thumbImg = "../images/wetlands.jpg";
             let isLogo = false;
             if (cid === "Eugene") {
-                thumbImg = "/images/logo-small.png";
+                thumbImg = "../images/logo-small.png";
                 isLogo = true;
             } else if (cid === "Florence") {
-                thumbImg = "/images/florence.png";
+                thumbImg = "../images/florence.png";
                 isLogo = true;
             }
 
@@ -454,7 +454,7 @@ function renderSidebarList() {
         if (isCircle || !targetFeature) {
             const circleTitle = state.currentFeature === "florence" ? "Florence Christmas Bird Count" : "Eugene Christmas Bird Count";
             descText = `The ${circleTitle} circle is a 15-mile diameter count circle in Oregon. Explore the survey zones to view spatial boundaries, detailed historical summaries, and field maps.`;
-            imgSrc = "/images/wetlands.jpg";
+            imgSrc = "../images/wetlands.jpg";
             imgAlt = `${circleTitle} Overview`;
         } else {
             const props = targetFeature.properties || {};
@@ -1080,14 +1080,14 @@ function initializeMap() {
                         id: "circles",
                         name: "CCBA CBC Circles",
                         isChild: false,
-                        image: "/images/wetlands.jpg",
+                        image: "../images/wetlands.jpg",
                         isLogo: false,
                         action: () => selectSubject(CIRCLE_ID, true)
                     });
                 } else {
                     const isFlorence = state.currentFeature === "florence";
                     const circleName = isFlorence ? "Florence CBC Circle" : "Eugene CBC Circle";
-                    const circleImg = isFlorence ? "/images/florence.png" : "/images/logo-small.png";
+                    const circleImg = isFlorence ? "../images/florence.png" : "../images/logo-small.png";
                     layers.push({
                         id: "circle",
                         name: circleName,

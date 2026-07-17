@@ -21,7 +21,7 @@
     --shadow-card: 0 14px 40px rgba(0, 0, 0, 0.45);
     --transition-fast: 150ms ease;
     --transition-med: 260ms ease;
-    --hero-bg-image: url('/images/wetlands.jpg');
+    --hero-bg-image: url('../images/wetlands.jpg');
 }
 
 * {

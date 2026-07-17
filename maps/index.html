@@ -7,18 +7,18 @@
     <title>Maps Tile View - ECBC</title>
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="/styles/base.css">
-    <link rel="stylesheet" href="/styles/layout.css">
-    <link rel="stylesheet" href="/styles/header.css">
-    <link rel="stylesheet" href="/styles/cards.css">
-    <link rel="stylesheet" href="/styles/maps-components.css">
-    <link rel="stylesheet" href="/styles/page-maps-tile.css">
+    <link rel="stylesheet" href="../styles/base.css">
+    <link rel="stylesheet" href="../styles/layout.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <link rel="stylesheet" href="../styles/cards.css">
+    <link rel="stylesheet" href="../styles/maps-components.css">
+    <link rel="stylesheet" href="../styles/page-maps-tile.css">
 
     <!-- Leaflet & Fonts -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="/images/logo-fav.png">
+    <link rel="icon" type="image/png" href="../images/logo-fav.png">
 </head>
 
 <body class="page-maps-tile">
@@ -38,8 +38,8 @@
                 <div class="maps-tile-header">
                     <div class="maps-tile-header__left">
                         <div id="header-logo-container" class="header-logo-container">
-                            <a href="/" class="home-link" aria-label="Go to homepage">
-                                <img src="/images/logo-small.png" alt="ECBC Home" class="logo logo--header">
+                            <a href="../" class="home-link" aria-label="Go to homepage">
+                                <img src="../images/logo-small.png" alt="ECBC Home" class="logo logo--header">
                                 <span id="header-logo-text" class="header-logo-text"></span>
                             </a>
                         </div>
@@ -115,7 +115,7 @@
                             <section class="download-column maps-tile-download-col" aria-labelledby="vector-title">
                                 <h3 id="vector-title" class="maps-tile-download-col__title">Vector Formats</h3>
                                 <div class="maps-tile-download-list">
-                                    <a href="/geojson/Eugene-01-wgs84.geojson" download="Eugene-01-wgs84.geojson"
+                                    <a href="../geojson/Eugene-01-wgs84.geojson" download="Eugene-01-wgs84.geojson"
                                         class="download-link maps-tile-download-item is-active"
                                         id="download-geojson">
                                         <span>GeoJSON</span>
@@ -220,7 +220,7 @@
                                 </label>
                             </div>
 
-                            <a href="/help/" class="help-doc-link" target="_blank" rel="noopener">
+                            <a href="../help/" class="help-doc-link" target="_blank" rel="noopener">
                                 <span>Documentation & User Guide</span>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -331,7 +331,7 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="/scripts/maps-tile.js"></script>
+    <script src="../scripts/maps-tile.js"></script>
 </body>
 
 </html>

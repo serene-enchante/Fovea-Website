@@ -1,6 +1,6 @@
-const GEOJSON_PATH = "/geojson/Eugene-01-wgs84.geojson";
+const GEOJSON_PATH = "../geojson/Eugene-01-wgs84.geojson";
 const CIRCLE_ID = "ecbc-circle";
-const FALLBACK_HERO_IMAGE = "/images/wetlands.jpg";
+const FALLBACK_HERO_IMAGE = "../images/wetlands.jpg";
 const VIEW_OPTIONS = ["map", "grid", "list"];
 const SORT_OPTIONS = ["title", "modified", "founded", "area"];
 const MAP_STYLE_CIRCLE_BLACK = {
@@ -120,7 +120,7 @@ function formatArea(value) {
 }
 
 function zoneImagePath(zoneId) {
-    return `/images/zone-images/z${displayZoneId(zoneId)}-01.jpg`;
+    return `../images/zone-images/z${displayZoneId(zoneId)}-01.jpg`;
 }
 
 function attachImageFallback(imageElement) {
