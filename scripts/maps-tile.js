@@ -962,26 +962,16 @@ function initializeMap() {
         className: "carto-light-tile"
     });
 
-    const googleSatLayer = L.tileLayer("https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
-        subdomains: ["mt0", "mt1", "mt2", "mt3"],
-        minZoom: 8,
-        maxZoom: 20,
-        detectRetina: true,
-        className: "google-sat-tile"
-    });
-
     darkTileLayer.addTo(state.map);
 
     const baseMaps = {
         "Dark Map": darkTileLayer,
-        "Light Map": lightTileLayer,
-        "Google Satellite": googleSatLayer
+        "Light Map": lightTileLayer
     };
 
     state.baseMapsList = [
         { name: "Dark Map", layer: darkTileLayer },
-        { name: "Light Map", layer: lightTileLayer },
-        { name: "Google Satellite", layer: googleSatLayer }
+        { name: "Light Map", layer: lightTileLayer }
     ];
 
     // Custom Map Style Control (Custom Reimplementation)
@@ -1160,8 +1150,7 @@ function initializeMap() {
                     // Populate "Basemaps"
                     const basemaps = [
                         { id: "dark", name: "Dark Map", thumbnailClass: "dark-map-thumbnail" },
-                        { id: "light", name: "Light Map", thumbnailClass: "light-map-thumbnail" },
-                        { id: "satellite", name: "Google Satellite", thumbnailClass: "satellite-thumbnail" }
+                        { id: "light", name: "Light Map", thumbnailClass: "light-map-thumbnail" }
                     ];
 
                     const filtered = basemaps.filter(b => b.name.toLowerCase().includes(query));
@@ -1183,7 +1172,6 @@ function initializeMap() {
                                 L.DomEvent.stop(e);
                                 
                                 if (b.id === "dark") {
-                                    state.map.removeLayer(googleSatLayer);
                                     state.map.removeLayer(lightTileLayer);
                                     if (!state.map.hasLayer(darkTileLayer)) {
                                         darkTileLayer.addTo(state.map);
@@ -1191,18 +1179,10 @@ function initializeMap() {
                                     state.currentBaseLayer = "dark";
                                 } else if (b.id === "light") {
                                     state.map.removeLayer(darkTileLayer);
-                                    state.map.removeLayer(googleSatLayer);
                                     if (!state.map.hasLayer(lightTileLayer)) {
                                         lightTileLayer.addTo(state.map);
                                     }
                                     state.currentBaseLayer = "light";
-                                } else {
-                                    state.map.removeLayer(darkTileLayer);
-                                    state.map.removeLayer(lightTileLayer);
-                                    if (!state.map.hasLayer(googleSatLayer)) {
-                                        googleSatLayer.addTo(state.map);
-                                    }
-                                    state.currentBaseLayer = "satellite";
                                 }
 
                                 if (state.currentBaseLayer === "light") {
