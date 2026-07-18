@@ -26,14 +26,6 @@ const MAP_STYLES = {
 };
 
 function getDefaultStyle() {
-    if (state.currentBaseLayer === "light") {
-        return {
-            color: "#000000",
-            weight: 1.0,
-            fillColor: "#000000",
-            fillOpacity: 0.07
-        };
-    }
     return MAP_STYLES.default;
 }
 
@@ -954,24 +946,24 @@ function initializeMap() {
         className: "carto-dark-tile"
     });
 
-    const lightTileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        subdomains: "abcd",
+    const esriSatLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        attribution: "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
         minZoom: 8,
         maxZoom: 19,
         detectRetina: true,
-        className: "carto-light-tile"
+        className: "esri-sat-tile"
     });
 
     darkTileLayer.addTo(state.map);
 
     const baseMaps = {
         "Dark Map": darkTileLayer,
-        "Light Map": lightTileLayer
+        "Satellite Map": esriSatLayer
     };
 
     state.baseMapsList = [
         { name: "Dark Map", layer: darkTileLayer },
-        { name: "Light Map", layer: lightTileLayer }
+        { name: "Satellite Map", layer: esriSatLayer }
     ];
 
     // Custom Map Style Control (Custom Reimplementation)
@@ -1150,7 +1142,7 @@ function initializeMap() {
                     // Populate "Basemaps"
                     const basemaps = [
                         { id: "dark", name: "Dark Map", thumbnailClass: "dark-map-thumbnail" },
-                        { id: "light", name: "Light Map", thumbnailClass: "light-map-thumbnail" }
+                        { id: "satellite", name: "Satellite Map", thumbnailClass: "satellite-thumbnail" }
                     ];
 
                     const filtered = basemaps.filter(b => b.name.toLowerCase().includes(query));
@@ -1172,24 +1164,20 @@ function initializeMap() {
                                 L.DomEvent.stop(e);
                                 
                                 if (b.id === "dark") {
-                                    state.map.removeLayer(lightTileLayer);
+                                    state.map.removeLayer(esriSatLayer);
                                     if (!state.map.hasLayer(darkTileLayer)) {
                                         darkTileLayer.addTo(state.map);
                                     }
                                     state.currentBaseLayer = "dark";
-                                } else if (b.id === "light") {
+                                } else if (b.id === "satellite") {
                                     state.map.removeLayer(darkTileLayer);
-                                    if (!state.map.hasLayer(lightTileLayer)) {
-                                        lightTileLayer.addTo(state.map);
+                                    if (!state.map.hasLayer(esriSatLayer)) {
+                                        esriSatLayer.addTo(state.map);
                                     }
-                                    state.currentBaseLayer = "light";
+                                    state.currentBaseLayer = "satellite";
                                 }
 
-                                if (state.currentBaseLayer === "light") {
-                                    document.body.classList.add("is-light-map-active");
-                                } else {
-                                    document.body.classList.remove("is-light-map-active");
-                                }
+                                document.body.classList.remove("is-light-map-active");
 
                                 updateAllFeatureStyles();
                                 renderContent();
