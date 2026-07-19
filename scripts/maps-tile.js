@@ -1926,6 +1926,58 @@ function setupCapsules() {
     });
 }
 
+function setupSwipeNavigation() {
+    const scrollContainer = document.querySelector(".sidebar-capsules-scroll");
+    if (!scrollContainer) return;
+
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+
+    scrollContainer.addEventListener("touchstart", (e) => {
+        if (window.innerWidth > 768) return;
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        startTime = Date.now();
+    }, { passive: true });
+
+    scrollContainer.addEventListener("touchend", (e) => {
+        if (window.innerWidth > 768) return;
+        const touch = e.changedTouches[0];
+        const diffX = touch.clientX - startX;
+        const diffY = touch.clientY - startY;
+        const elapsedTime = Date.now() - startTime;
+
+        // Swipe threshold: 40px horizontal change, less than 40px vertical change, < 300ms
+        if (Math.abs(diffX) > 40 && Math.abs(diffY) < 40 && elapsedTime < 300) {
+            const tabs = Array.from(scrollContainer.querySelectorAll(".sidebar-capsule"));
+            if (tabs.length <= 1) return;
+
+            const activeIndex = tabs.findIndex(tab => tab.classList.contains("is-active"));
+            if (activeIndex === -1) return;
+
+            let newIndex = activeIndex;
+            if (diffX < 0) {
+                // Swiped left (finger moves right to left) -> next tab
+                newIndex = activeIndex + 1;
+            } else {
+                // Swiped right (finger moves left to right) -> previous tab
+                newIndex = activeIndex - 1;
+            }
+
+            if (newIndex >= 0 && newIndex < tabs.length) {
+                tabs[newIndex].click();
+                tabs[newIndex].scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                    inline: "center"
+                });
+            }
+        }
+    }, { passive: true });
+}
+
 function openImageLightbox(src, alt = "Enlarged view", text = "") {
     const modal = document.getElementById("image-lightbox-modal");
     const img = document.getElementById("lightbox-img");
@@ -2482,6 +2534,7 @@ async function init() {
         setupActionButtons();
         setupSearch();
         setupCapsules();
+        setupSwipeNavigation();
         setupImageLightbox();
         setupMobileResizeBar();
         setupHelpModeSystem();
