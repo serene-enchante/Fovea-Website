@@ -204,16 +204,33 @@ function updateUrl(id) {
 function updateControlPositions() {
     if (!state.map) return;
     const isMobile = window.innerWidth <= 768;
+    const topLeft = document.querySelector(".map-ctrl-container .map-ctrl-panel.map-ctrl-panel--left");
+    const topRight = document.querySelector(".map-ctrl-container .map-ctrl-panel.map-ctrl-panel--right");
+    const zoomCtrl = document.querySelector(".map-ctrl-zoom");
+    const locateCtrl = document.querySelector(".map-ctrl-locate");
+    const fsCtrl = document.querySelector(".map-ctrl-fullscreen");
+    const layersCtrl = document.querySelector(".map-ctrl-styles");
+
     if (isMobile) {
-        if (state.map.zoomControl) state.map.zoomControl.setPosition("topright");
-        if (state.locateControl) state.locateControl.setPosition("topleft");
-        if (state.fullscreenControl) state.fullscreenControl.setPosition("topleft");
-        if (state.layersControl) state.layersControl.setPosition("topleft");
+        // Zoom → top-right panel
+        if (topRight && zoomCtrl && zoomCtrl.parentElement !== topRight) {
+            topRight.appendChild(zoomCtrl);
+        }
+        // Locate, map styles, fullscreen → bottom-right row (left-to-right order)
+        if (topLeft) {
+            if (locateCtrl && locateCtrl.parentElement !== topLeft) topLeft.appendChild(locateCtrl);
+            if (layersCtrl && layersCtrl.parentElement !== topLeft) topLeft.appendChild(layersCtrl);
+            if (fsCtrl && fsCtrl.parentElement !== topLeft) topLeft.appendChild(fsCtrl);
+        }
     } else {
-        if (state.map.zoomControl) state.map.zoomControl.setPosition("bottomleft");
-        if (state.locateControl) state.locateControl.setPosition("bottomleft");
-        if (state.fullscreenControl) state.fullscreenControl.setPosition("bottomleft");
-        if (state.layersControl) state.layersControl.setPosition("bottomleft");
+        // All → bottom-left, stacked vertically. With flex-direction:column-reverse,
+        // first appended = visually bottom. So append zoom first = zoom at bottom.
+        if (topLeft) {
+            if (zoomCtrl && zoomCtrl.parentElement !== topLeft) topLeft.appendChild(zoomCtrl);
+            if (locateCtrl && locateCtrl.parentElement !== topLeft) topLeft.appendChild(locateCtrl);
+            if (fsCtrl && fsCtrl.parentElement !== topLeft) topLeft.appendChild(fsCtrl);
+            if (layersCtrl && layersCtrl.parentElement !== topLeft) topLeft.appendChild(layersCtrl);
+        }
     }
 }
 
@@ -622,7 +639,7 @@ function selectMapStyleByIndex(index) {
         }
     });
 
-    const layersControlEl = document.querySelector('.leaflet-control-layers');
+    const layersControlEl = document.querySelector('.map-ctrl-styles');
     if (layersControlEl) {
         const inputs = layersControlEl.querySelectorAll('input[type="radio"]');
         if (inputs && inputs[index]) {
@@ -940,7 +957,7 @@ function checkUserLocationZone(latlng) {
 
 function toggleLocationTracking() {
     if (!state.map) return;
-    const locateControlEl = document.querySelector(".leaflet-control-locate");
+    const locateControlEl = document.querySelector(".map-ctrl-locate");
 
     if (state.isLocating) {
         state.isLocating = false;
@@ -1049,30 +1066,30 @@ function initializeMap() {
     ];
 
     // Create custom controls container
-    let controlContainer = document.querySelector(".leaflet-control-container");
+    let controlContainer = document.querySelector(".map-ctrl-container");
     if (!controlContainer) {
         controlContainer = document.createElement("div");
-        controlContainer.className = "leaflet-control-container";
+        controlContainer.className = "map-ctrl-container";
 
         const topLeft = document.createElement("div");
-        topLeft.className = "leaflet-top leaflet-left";
+        topLeft.className = "map-ctrl-panel map-ctrl-panel--left";
         controlContainer.appendChild(topLeft);
 
         const topRight = document.createElement("div");
-        topRight.className = "leaflet-top leaflet-right";
+        topRight.className = "map-ctrl-panel map-ctrl-panel--right";
         controlContainer.appendChild(topRight);
 
         mapContainer.appendChild(controlContainer);
     }
 
-    const topLeft = controlContainer.querySelector(".leaflet-top.leaflet-left");
+    const topLeft = controlContainer.querySelector(".map-ctrl-panel.map-ctrl-panel--left");
 
     // 1. Zoom Control
     const zoomDiv = document.createElement("div");
-    zoomDiv.className = "leaflet-control-zoom leaflet-bar leaflet-control";
+    zoomDiv.className = "map-ctrl-zoom map-ctrl-bar map-ctrl";
     
     const zoomInBtn = document.createElement("a");
-    zoomInBtn.className = "leaflet-control-zoom-in";
+    zoomInBtn.className = "map-ctrl-zoom-in";
     zoomInBtn.href = "#";
     zoomInBtn.title = "Zoom in";
     zoomInBtn.role = "button";
@@ -1085,7 +1102,7 @@ function initializeMap() {
     });
     
     const zoomOutBtn = document.createElement("a");
-    zoomOutBtn.className = "leaflet-control-zoom-out";
+    zoomOutBtn.className = "map-ctrl-zoom-out";
     zoomOutBtn.href = "#";
     zoomOutBtn.title = "Zoom out";
     zoomOutBtn.role = "button";
@@ -1103,10 +1120,10 @@ function initializeMap() {
 
     // 2. Locate Control
     const locateDiv = document.createElement("div");
-    locateDiv.className = "leaflet-bar leaflet-control leaflet-control-locate";
+    locateDiv.className = "map-ctrl-bar map-ctrl map-ctrl-locate";
     
     const locateBtn = document.createElement("a");
-    locateBtn.className = "leaflet-control-locate-btn";
+    locateBtn.className = "map-ctrl-locate-btn";
     locateBtn.href = "#";
     locateBtn.title = "Show My Location";
     locateBtn.role = "button";
@@ -1131,10 +1148,10 @@ function initializeMap() {
 
     // 3. Fullscreen Control
     const fsDiv = document.createElement("div");
-    fsDiv.className = "leaflet-bar leaflet-control leaflet-control-fullscreen";
+    fsDiv.className = "map-ctrl-bar map-ctrl map-ctrl-fullscreen";
     
     const fsBtn = document.createElement("a");
-    fsBtn.className = "leaflet-control-fullscreen-btn";
+    fsBtn.className = "map-ctrl-fullscreen-btn";
     fsBtn.href = "#";
     fsBtn.title = "Toggle Fullscreen";
     fsBtn.role = "button";
@@ -1154,10 +1171,10 @@ function initializeMap() {
 
     // 4. Map Style Control (Custom Reimplementation)
     const layersDiv = document.createElement("div");
-    layersDiv.className = "leaflet-bar leaflet-control leaflet-control-layers";
+    layersDiv.className = "map-ctrl-bar map-ctrl map-ctrl-styles";
     
     const layersBtn = document.createElement("a");
-    layersBtn.className = "leaflet-control-layers-toggle";
+    layersBtn.className = "map-ctrl-styles__toggle";
     layersBtn.href = "#";
     layersBtn.title = "Map Elements";
     layersBtn.role = "button";
@@ -1172,9 +1189,9 @@ function initializeMap() {
     layersDiv.appendChild(layersBtn);
 
     const listContainer = document.createElement("div");
-    listContainer.className = "leaflet-control-layers-list";
+    listContainer.className = "map-ctrl-styles__list";
     listContainer.innerHTML = `
-        <div class="leaflet-control-layers-header">
+        <div class="map-ctrl-styles__header">
             <div class="modal-title-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-left: 2px;">
                 <span class="modal-title" style="font-size: 0.95rem; font-weight: 700; color: #ffffff; text-transform: none; letter-spacing: normal;">Map Elements</span>
                 <button type="button" class="modal-close-btn" aria-label="Close Map Elements" style="background: transparent; border: none; padding: 4px; cursor: pointer; color: rgba(255, 255, 255, 0.45); display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; border-radius: 50%;">
@@ -1218,7 +1235,7 @@ function initializeMap() {
                 </button>
             </div>
         </div>
-        <div class="leaflet-control-layers-body"></div>
+        <div class="map-ctrl-styles__body"></div>
     `;
     layersDiv.appendChild(listContainer);
     topLeft.appendChild(layersDiv);
@@ -1226,8 +1243,8 @@ function initializeMap() {
     let activeTab = "basemaps";
     let searchQuery = "";
 
-    const headerEl = listContainer.querySelector(".leaflet-control-layers-header");
-    const bodyEl = listContainer.querySelector(".leaflet-control-layers-body");
+    const headerEl = listContainer.querySelector(".map-ctrl-styles__header");
+    const bodyEl = listContainer.querySelector(".map-ctrl-styles__body");
     const searchInput = listContainer.querySelector(".modal-search-input");
     const searchToggleBtn = listContainer.querySelector(".modal-search-toggle-btn");
     const searchCloseBtn = listContainer.querySelector(".modal-search-close-btn");
@@ -1363,11 +1380,11 @@ function initializeMap() {
     layersBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         e.preventDefault();
-        const isExpanded = layersDiv.classList.contains("leaflet-control-layers-expanded");
+        const isExpanded = layersDiv.classList.contains("map-ctrl-styles--expanded");
         if (isExpanded) {
-            layersDiv.classList.remove("leaflet-control-layers-expanded");
+            layersDiv.classList.remove("map-ctrl-styles--expanded");
         } else {
-            layersDiv.classList.add("leaflet-control-layers-expanded");
+            layersDiv.classList.add("map-ctrl-styles--expanded");
             renderContent();
         }
     });
@@ -1377,7 +1394,7 @@ function initializeMap() {
         closeBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             e.preventDefault();
-            layersDiv.classList.remove("leaflet-control-layers-expanded");
+            layersDiv.classList.remove("map-ctrl-styles--expanded");
         });
     }
 
@@ -1429,7 +1446,7 @@ function initializeMap() {
 
     document.addEventListener("click", (e) => {
         if (!layersDiv.contains(e.target)) {
-            layersDiv.classList.remove("leaflet-control-layers-expanded");
+            layersDiv.classList.remove("map-ctrl-styles--expanded");
             headerEl.classList.remove("is-searching");
             if (searchInput) {
                 searchInput.value = "";
@@ -2122,11 +2139,11 @@ function setupHelpModeSystem() {
         { selector: '.sidebar-capsule:not(.sidebar-capsule--icon)', title: "Class Tab", desc: "Class tabs filter the subfeatures of the current selection by type, which is reflected in the feature tiles column.", shortcut: "1 - 9" },
         { selector: "#btn-search-toggle", title: "Search Tool", desc: "Expand full-row search bar to filter count circles and survey zones.", shortcut: "F" },
         { selector: "#mobile-resize-bar", title: "Resize Handle", desc: "Drag vertically to adjust split screen map and list proportions." },
-        { selector: ".leaflet-control-zoom", title: "Zoom Controls", desc: "Zoom in (+) or out (-) on the interactive map view.", shortcut: "+ / - or Shift + E / Q" },
-        { selector: ".leaflet-control-locate", title: "Location Tracking", desc: "Locate your current live GPS position on the survey map." },
-        { selector: ".leaflet-control-fullscreen", title: "Fullscreen Toggle", desc: "Expand map view to fill your entire screen display.", shortcut: "Shift + F" },
-        { selector: ".leaflet-control-layers", title: "Map Elements", desc: "Select the basemap and toggle overlay layers for the map frame.", shortcut: "Shift + 1 - 9" },
-        { selector: ".leaflet-control-layers-list .tile-zone-item", title: "Map Element Option", desc: "Select this basemap or overlay layer to update the active map display." },
+        { selector: ".map-ctrl-zoom", title: "Zoom Controls", desc: "Zoom in (+) or out (-) on the interactive map view.", shortcut: "+ / - or Shift + E / Q" },
+        { selector: ".map-ctrl-locate", title: "Location Tracking", desc: "Locate your current live GPS position on the survey map." },
+        { selector: ".map-ctrl-fullscreen", title: "Fullscreen Toggle", desc: "Expand map view to fill your entire screen display.", shortcut: "Shift + F" },
+        { selector: ".map-ctrl-styles", title: "Map Elements", desc: "Select the basemap and toggle overlay layers for the map frame.", shortcut: "Shift + 1 - 9" },
+        { selector: ".map-ctrl-styles__list .tile-zone-item", title: "Map Element Option", desc: "Select this basemap or overlay layer to update the active map display." },
         { selector: '.modal-capsule[data-tab="basemaps"]', title: "Basemaps Tab", desc: "View and select the underlying style of the interactive map." },
         { selector: '.modal-capsule[data-tab="layers"]', title: "Class Tab", desc: "Class tabs filter the subfeatures of the current selection by type, which is reflected in the feature tiles column.", shortcut: "1 - 9" },
         { selector: ".modal-search-toggle-btn", title: "Element Search", desc: "Toggle a text search box to filter the visible list items below." },
@@ -2181,7 +2198,7 @@ function setupHelpModeSystem() {
             }
         }
         if (target && (target.id === "tile-map" || target.id === "map-wrapper" || title === "Map Frame")) {
-            if (eventTarget.closest(".leaflet-control-container, .leaflet-top, .leaflet-left, .leaflet-right, .leaflet-bottom")) {
+            if (eventTarget.closest(".map-ctrl-container, .map-ctrl-panel")) {
                 return { target: null, title: null, desc: null, shortcut: null };
             }
         }
