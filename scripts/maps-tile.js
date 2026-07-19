@@ -288,10 +288,10 @@ function getFitPadding(extra = 0) {
     if (mobile) {
         // The floating toolbar is at top: 20px, height: 36px, so its bottom edge is at Y = 56px.
         // We center the fitted feature in the remaining space from Y = 56px to the bottom of the map.
-        // We use a base margin of 50px + extra for visual breathing room and to clear bottom controls.
+        // We nudge the vertical center up slightly by adjusting the top offset to 36px (from 56px).
         const baseMargin = 50 + extra;
         return {
-            top: 56 + baseMargin,
+            top: 36 + baseMargin,
             bottom: baseMargin,
             left: 40 + extra,
             right: 40 + extra
