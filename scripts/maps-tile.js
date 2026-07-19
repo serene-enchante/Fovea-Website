@@ -278,6 +278,18 @@ function updateHeader(subjectTitle) {
     updateHeaderLogo();
 }
 
+/**
+ * Returns fitBounds padding that keeps selections clear of the toolbar (top),
+ * map controls (bottom/sides), and gives generous visual breathing room.
+ * On mobile the toolbar is taller and controls sit at the bottom.
+ */
+function getFitPadding(extra = 0) {
+    const mobile = window.innerWidth <= 768;
+    return mobile
+        ? { top: 80 + extra, bottom: 90 + extra, left: 36 + extra, right: 36 + extra }
+        : { top: 60 + extra, bottom: 70 + extra, left: 60 + extra, right: 60 + extra };
+}
+
 function switchToFeature(featureName, circleLayer) {
     if (!state.map) return;
 
@@ -300,7 +312,7 @@ function switchToFeature(featureName, circleLayer) {
         state.map.once("moveend", performSwap);
         state.map.fitBounds(circleLayer, {
             duration: 900,
-            padding: [30, 30]
+            padding: getFitPadding()
         });
         setTimeout(performSwap, 1000);
     } else {
@@ -329,7 +341,7 @@ function selectSubject(id, triggerMapZoom = true) {
         renderSidebarList();
         updateUrl(id);
         if (triggerMapZoom && state.map) {
-            state.map.fitBounds(getBbox(state.allFeatures), { padding: 30 });
+            state.map.fitBounds(getBbox(state.allFeatures), { padding: getFitPadding() });
         }
         updateAllFeatureStyles();
         return;
@@ -368,9 +380,9 @@ function selectSubject(id, triggerMapZoom = true) {
 
     if (triggerMapZoom && state.map) {
         if (isCircle || !targetFeature) {
-            state.map.fitBounds(getBbox(state.allFeatures), { padding: 30 });
+            state.map.fitBounds(getBbox(state.allFeatures), { padding: getFitPadding() });
         } else {
-            state.map.fitBounds(getBbox([targetFeature]), { padding: 50, maxZoom: 14 });
+            state.map.fitBounds(getBbox([targetFeature]), { padding: getFitPadding(20), maxZoom: 14 });
         }
     }
 
