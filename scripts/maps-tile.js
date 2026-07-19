@@ -283,7 +283,7 @@ function switchToFeature(featureName, circleLayer) {
     if (circleLayer) {
         state.map.once("moveend", performSwap);
         state.map.fitBounds(circleLayer, {
-            duration: 0.9,
+            duration: 900,
             padding: [30, 30]
         });
         setTimeout(performSwap, 1000);
@@ -312,9 +312,10 @@ function selectSubject(id, triggerMapZoom = true) {
         if (backBtn) backBtn.classList.remove("is-visible");
         renderSidebarList();
         updateUrl(id);
-        if (triggerMapZoom && state.map && state.geoJsonLayer) {
+        if (triggerMapZoom && state.map) {
             state.map.fitBounds(getBbox(state.allFeatures), { padding: 30 });
         }
+        updateAllFeatureStyles();
         return;
     }
 
@@ -347,26 +348,13 @@ function selectSubject(id, triggerMapZoom = true) {
 
     renderSidebarList();
 
-    state.featureLayersMap.forEach((layer, zid) => {
-        const isSelected = targetFeature && (zid === String(targetFeature.properties.zid) || normalizeZoneId(zid) === normalizeZoneId(targetFeature.properties.zid));
-        if (isSelected) {
-            layer.setStyle(MAP_STYLES.selected);
-            layer.bringToFront();
-        } else {
-            if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: false});
-        }
-    });
+    updateAllFeatureStyles();
 
     if (triggerMapZoom && state.map) {
         if (isCircle || !targetFeature) {
-            if (state.geoJsonLayer) {
-                state.map.fitBounds(getBbox(state.allFeatures), { padding: 30 });
-            }
+            state.map.fitBounds(getBbox(state.allFeatures), { padding: 30 });
         } else {
-            const selectedLayer = state.featureLayersMap.get(String(targetFeature.properties.zid));
-            if (selectedLayer) {
-                state.map.fitBounds(getBbox([targetFeature]), { padding: 50, maxZoom: 14 });
-            }
+            state.map.fitBounds(getBbox([targetFeature]), { padding: 50, maxZoom: 14 });
         }
     }
 
@@ -435,21 +423,23 @@ function renderSidebarList() {
             `;
 
             item.addEventListener("mouseenter", () => {
-                const layer = state.featureLayersMap.get(cid);
-                if (layer) if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: true});
+                if (state.map && state.map.getSource('zones')) {
+                    state.map.setFeatureState({ source: 'zones', id: cid }, { hover: true });
+                }
             });
             item.addEventListener("mouseleave", () => {
-                const layer = state.featureLayersMap.get(cid);
-                if (layer) if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: false});
+                if (state.map && state.map.getSource('zones')) {
+                    state.map.setFeatureState({ source: 'zones', id: cid }, { hover: false });
+                }
             });
 
             item.addEventListener("click", () => {
+                const feature = state.circlesFeatures.find(f => f.properties.cid === cid);
+                const bbox = feature ? getBbox(feature) : null;
                 if (cid === "Eugene") {
-                    const layer = state.featureLayersMap.get("Eugene");
-                    switchToFeature("eugene", layer);
+                    switchToFeature("eugene", bbox);
                 } else if (cid === "Florence") {
-                    const layer = state.featureLayersMap.get("Florence");
-                    switchToFeature("florence", layer);
+                    switchToFeature("florence", bbox);
                 }
             });
             listContainer.appendChild(item);
@@ -564,14 +554,18 @@ function renderSidebarList() {
         }
 
         item.addEventListener("mouseenter", () => {
-            const layer = state.featureLayersMap.get(String(props.zid));
-            const isSelected = state.currentId !== CIRCLE_ID && (String(props.zid) === state.currentId || normalizeZoneId(props.zid) === normalizeZoneId(state.currentId));
-            if (layer && !isSelected) if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: true});
+            const featureId = String(props.zid || "");
+            const isSelected = state.currentId !== CIRCLE_ID && (featureId === state.currentId || normalizeZoneId(featureId) === normalizeZoneId(state.currentId));
+            if (!isSelected && state.map && state.map.getSource('zones')) {
+                state.map.setFeatureState({ source: 'zones', id: featureId }, { hover: true });
+            }
         });
         item.addEventListener("mouseleave", () => {
-            const layer = state.featureLayersMap.get(String(props.zid));
-            const isSelected = state.currentId !== CIRCLE_ID && (String(props.zid) === state.currentId || normalizeZoneId(props.zid) === normalizeZoneId(state.currentId));
-            if (layer && !isSelected) if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: false});
+            const featureId = String(props.zid || "");
+            const isSelected = state.currentId !== CIRCLE_ID && (featureId === state.currentId || normalizeZoneId(featureId) === normalizeZoneId(state.currentId));
+            if (!isSelected && state.map && state.map.getSource('zones')) {
+                state.map.setFeatureState({ source: 'zones', id: featureId }, { hover: false });
+            }
         });
 
         item.addEventListener("click", () => selectSubject(String(props.zid)));
@@ -595,15 +589,18 @@ function updateKeyboardTileFocus(newIndex) {
     state.focusedTileIndex = newIndex;
     tiles.forEach((tile, idx) => {
         const cid = tile.getAttribute("data-id");
-        const layer = (cid && state.featureLayersMap) ? state.featureLayersMap.get(cid) : null;
-        const isSelected = layer && state.currentId !== CIRCLE_ID && (cid === state.currentId || (typeof normalizeZoneId === "function" && normalizeZoneId(cid) === normalizeZoneId(state.currentId)));
+        const isSelected = state.currentId !== CIRCLE_ID && (cid === state.currentId || (typeof normalizeZoneId === "function" && normalizeZoneId(cid) === normalizeZoneId(state.currentId)));
 
         if (newIndex >= 0 && idx === newIndex) {
             tile.classList.add("is-hovered");
-            if (layer && !isSelected) if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: true});
+            if (!isSelected && state.map && state.map.getSource('zones')) {
+                state.map.setFeatureState({ source: 'zones', id: cid }, { hover: true });
+            }
         } else {
             tile.classList.remove("is-hovered");
-            if (layer && !isSelected) if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: false});
+            if (!isSelected && state.map && state.map.getSource('zones')) {
+                state.map.setFeatureState({ source: 'zones', id: cid }, { hover: false });
+            }
         }
     });
 }
@@ -865,15 +862,17 @@ function rebuildGeoJsonLayer() {
                         switchToFeature("florence", getBbox([e.features[0]]));
                     }
                 } else {
-                    selectSubject(featureId, false);
+                    selectSubject(featureId, true);
                 }
             }
         });
     }
 
     if (state.isLocating && state.userLocationMarker) {
-        checkUserLocationZone(state.userLocationMarker.getLatLng());
+        checkUserLocationZone(state.userLocationMarker.getLngLat());
     }
+
+    updateAllFeatureStyles();
 }
 
 function isPointInRing(lng, lat, ring) {
