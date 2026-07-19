@@ -681,8 +681,8 @@ body.page-maps-tile {
     width: 100%;
     position: relative;
     background: #090b0a;
-    border-radius: 0;
-    overflow: hidden;
+    border-radius: 16px !important;
+    overflow: hidden !important;
     box-shadow: none;
     border: none;
 }
