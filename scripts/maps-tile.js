@@ -487,9 +487,13 @@ function renderSidebarList() {
             return;
         }
 
+        const NO_DATA_CIRCLES = new Set(["Oakridge", "Cottage Grove"]);
         const sortedCircles = [...state.circlesFeatures].sort((a, b) => {
             const cidA = String(a.properties?.cid || "");
             const cidB = String(b.properties?.cid || "");
+            const noDataA = NO_DATA_CIRCLES.has(cidA) ? 1 : 0;
+            const noDataB = NO_DATA_CIRCLES.has(cidB) ? 1 : 0;
+            if (noDataA !== noDataB) return noDataA - noDataB;
             return cidA.localeCompare(cidB, undefined, { sensitivity: "base" });
         });
 
