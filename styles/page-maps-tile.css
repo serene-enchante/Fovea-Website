@@ -694,6 +694,7 @@ body.page-maps-tile {
     flex-direction: column;
     min-height: 0;
     position: relative;
+    overflow: hidden; /* Clips the map as the back bar expands */
 }
 
 /* Desktop back-to-home bar sitting in the gap above the map frame */
@@ -709,21 +710,23 @@ body.page-maps-tile {
     text-decoration: none;
     color: var(--color-text-muted, rgba(255,255,255,0.45));
     cursor: pointer;
-    transition: color 0.18s ease, background 0.18s ease;
+    transition: color 0.18s ease, background 0.18s ease, height 0.5s cubic-bezier(0.25, 1, 0.5, 1), margin-bottom 0.5s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: height, margin-bottom, border-radius;
 }
 
 #desktop-back-bar svg {
     width: 16px;
     height: 16px;
     display: block;
+    transition: opacity 0.3s ease;
 }
 
 #desktop-back-bar:hover {
-    color: var(--color-text, rgba(255,255,255,0.85));
-    background: #2e2e2e;
+    color: rgba(255, 255, 255, 0.85);
+    background: #1c1c1c;
 }
 
-/* Page transition overlay: black curtain that pulls down from the top */
+/* Page transition overlay: black curtain that fades in */
 #page-transition-overlay {
     position: fixed;
     inset: 0;
@@ -731,15 +734,25 @@ body.page-maps-tile {
     height: 100%;
     background: #000;
     z-index: 99999;
-    transform: translateY(-100%);
-    transition: transform 0.22s cubic-bezier(0.55, 0, 1, 0.45);
+    opacity: 0;
+    transition: opacity 0.5s ease;
     pointer-events: none;
-    will-change: transform;
+    will-change: opacity;
 }
 
 #page-transition-overlay.is-active {
-    transform: translateY(0);
+    opacity: 1;
     pointer-events: all;
+}
+
+/* Transition states when back bar is clicked */
+body.is-transitioning #desktop-back-bar {
+    height: 100% !important;
+    margin-bottom: 0 !important;
+}
+
+body.is-transitioning #desktop-back-bar svg {
+    opacity: 0 !important;
 }
 
 /* Leaflet Window Container extending to edges */

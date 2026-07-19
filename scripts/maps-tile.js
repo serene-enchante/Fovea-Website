@@ -2509,7 +2509,7 @@ function setupSidebarScrollListener() {
 
 document.addEventListener("DOMContentLoaded", init);
 
-// Desktop back bar: black curtain pull-down transition before navigating home
+// Desktop back bar: page transition animation sequence before navigating home
 (function () {
     const bar = document.getElementById("desktop-back-bar");
     const overlay = document.getElementById("page-transition-overlay");
@@ -2519,12 +2519,19 @@ document.addEventListener("DOMContentLoaded", init);
         e.preventDefault();
         const dest = bar.getAttribute("href") || "../";
 
-        // Trigger the curtain
+        // Step 1: Simultaneously trigger grey bar pull down and whole screen fade to black
+        document.body.classList.add("is-transitioning");
         overlay.classList.add("is-active");
 
-        // Navigate after animation completes (matches 0.22s CSS transition)
+        // Step 2: Navigate after the combined 500ms transitions finish
         setTimeout(function () {
             window.location.href = dest;
-        }, 220);
+        }, 500);
+    });
+
+    // Reset page states if user navigates back using browser Back button (bfcache reset)
+    window.addEventListener("pageshow", function (event) {
+        document.body.classList.remove("is-transitioning");
+        overlay.classList.remove("is-active");
     });
 })();
