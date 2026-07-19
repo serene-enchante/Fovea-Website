@@ -2316,6 +2316,10 @@ body.is-help-mode-active .mobile-help-exit-btn {
     }
 }
 
+.swipe-back-indicator {
+    display: none;
+}
+
 @media (max-width: 768px) {
     body.is-help-mode-active .mobile-help-exit-btn {
         bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
@@ -2340,6 +2344,9 @@ body.is-help-mode-active .mobile-help-exit-btn {
     /* Mobile-only sidebar zone list swiping transition animation classes */
     #sidebar-zone-list {
         will-change: transform, opacity;
+        background: #000000 !important; /* solid background to cover indicator */
+        position: relative !important;
+        z-index: 5 !important; /* render strictly above the indicator which has z-index: 1 */
     }
 
     #sidebar-zone-list.fly-out-right {
@@ -2358,6 +2365,51 @@ body.is-help-mode-active .mobile-help-exit-btn {
         transform: translateX(0) !important;
         opacity: 1 !important;
         transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    .swipe-back-indicator {
+        position: absolute !important;
+        left: 24px !important;
+        top: 60% !important; /* centered vertically in scrolling zone list */
+        transform: translateY(-50%) !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        color: rgba(255, 255, 255, 0.4) !important; /* soft grey */
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        pointer-events: none !important;
+        z-index: 1 !important; /* sits behind #sidebar-zone-list */
+        opacity: 0;
+    }
+
+    .swipe-back-indicator.is-visible {
+        opacity: 1 !important;
+        animation: swipeBackIndicatorIntro 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+    }
+
+    @keyframes swipeBackIndicatorIntro {
+        0% {
+            opacity: 0;
+            transform: translate(-20px, -50%) rotate(0deg);
+        }
+        40% {
+            opacity: 1;
+            transform: translate(0, -50%) rotate(0deg);
+        }
+        55% {
+            transform: translate(0, -50%) rotate(-8deg); /* tilt left */
+        }
+        70% {
+            transform: translate(0, -50%) rotate(6deg);  /* tilt right */
+        }
+        85% {
+            transform: translate(0, -50%) rotate(-3deg); /* tilt left minor */
+        }
+        100% {
+            opacity: 1;
+            transform: translate(0, -50%) rotate(0deg);  /* return upright */
+        }
     }
 }
 

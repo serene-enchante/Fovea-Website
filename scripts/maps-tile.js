@@ -81,6 +81,7 @@ const state = {
     isCirclesFeature: false,
     currentId: CIRCLE_ID,
     activeTab: "items",
+    isSwipeTransitionActive: false,
     map: null,
     geoJsonLayer: null,
     featureLayersMap: new Map(), // maps zoneId/cid -> leaflet layer
@@ -2012,31 +2013,142 @@ function setupListSwipeBack() {
 
     let startX = 0;
     let startY = 0;
-    let startTime = 0;
+    let isTracking = false;
+    let listWidth = 0;
+    let indicatorTimer = null;
 
     listContainer.addEventListener("touchstart", (e) => {
         if (window.innerWidth > 768) return;
+        
+        const backBtn = document.getElementById("btn-capsule-back");
+        if (!backBtn || !backBtn.classList.contains("is-visible")) {
+            isTracking = false;
+            return;
+        }
+
         const touch = e.touches[0];
         startX = touch.clientX;
         startY = touch.clientY;
-        startTime = Date.now();
+        listWidth = listContainer.offsetWidth;
+        isTracking = false;
+        
+        if (indicatorTimer) {
+            clearTimeout(indicatorTimer);
+            indicatorTimer = null;
+        }
+        const indicator = document.getElementById("swipe-back-indicator");
+        if (indicator) indicator.classList.remove("is-visible");
+        
+        listContainer.style.transition = "none";
     }, { passive: true });
+
+    listContainer.addEventListener("touchmove", (e) => {
+        if (window.innerWidth > 768) return;
+        const touch = e.touches[0];
+        const diffX = touch.clientX - startX;
+        const diffY = touch.clientY - startY;
+
+        if (!isTracking) {
+            const backBtn = document.getElementById("btn-capsule-back");
+            const canGoBack = backBtn && backBtn.classList.contains("is-visible");
+            
+            if (canGoBack && diffX > 10 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+                isTracking = true;
+            }
+        }
+
+        if (isTracking) {
+            if (e.cancelable) {
+                e.preventDefault();
+            }
+            const translateX = Math.max(0, diffX);
+            const opacity = Math.max(0.3, 1 - (translateX / (listWidth || 300)));
+            
+            listContainer.style.transform = `translateX(${translateX}px)`;
+            listContainer.style.opacity = opacity;
+
+            // Show indicator only when dragged 1/4 (25%) of the list width AND held for 0.1s
+            const threshold = Math.min(80, listWidth * 0.25);
+            const indicator = document.getElementById("swipe-back-indicator");
+            if (indicator) {
+                if (translateX >= threshold) {
+                    if (!indicatorTimer) {
+                        indicatorTimer = setTimeout(() => {
+                            if (isTracking) {
+                                indicator.classList.add("is-visible");
+                            }
+                        }, 100);
+                    }
+                } else {
+                    if (indicatorTimer) {
+                        clearTimeout(indicatorTimer);
+                        indicatorTimer = null;
+                    }
+                    indicator.classList.remove("is-visible");
+                }
+            }
+        }
+    }, { passive: false });
 
     listContainer.addEventListener("touchend", (e) => {
         if (window.innerWidth > 768) return;
+        
+        if (indicatorTimer) {
+            clearTimeout(indicatorTimer);
+            indicatorTimer = null;
+        }
+        const indicator = document.getElementById("swipe-back-indicator");
+        if (indicator) indicator.classList.remove("is-visible");
+
+        if (!isTracking) return;
+        isTracking = false;
+        
         const touch = e.changedTouches[0];
         const diffX = touch.clientX - startX;
-        const diffY = touch.clientY - startY;
-        const elapsedTime = Date.now() - startTime;
+        const threshold = Math.min(80, listWidth * 0.25);
 
-        // Swipe right: finger drags left-to-right (diffX > 50),
-        // vertical drag is small (diffY < 40) to differentiate from vertical scrolling,
-        // swipe duration is fast (elapsedTime < 300ms)
-        if (diffX > 50 && Math.abs(diffY) < 40 && elapsedTime < 300) {
-            const backBtn = document.getElementById("btn-capsule-back");
-            if (backBtn && backBtn.classList.contains("is-visible")) {
-                backBtn.click();
-            }
+        if (diffX > threshold) {
+            // Commit navigation
+            listContainer.style.transition = "transform 0.2s ease-out, opacity 0.2s ease-out";
+            listContainer.style.transform = "translateX(100%)";
+            listContainer.style.opacity = "0";
+
+            setTimeout(() => {
+                const backBtn = document.getElementById("btn-capsule-back");
+                if (backBtn) {
+                    state.isSwipeTransitionActive = true;
+                    backBtn.click();
+                    state.isSwipeTransitionActive = false;
+                }
+
+                // Animate the new content from the left
+                listContainer.style.transition = "none";
+                listContainer.style.transform = "translateX(-100%)";
+                listContainer.style.opacity = "0";
+
+                listContainer.offsetHeight; // force reflow
+
+                listContainer.style.transition = "transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1)";
+                listContainer.style.transform = "translateX(0)";
+                listContainer.style.opacity = "1";
+
+                setTimeout(() => {
+                    listContainer.style.transition = "";
+                    listContainer.style.transform = "";
+                    listContainer.style.opacity = "";
+                }, 250);
+            }, 200);
+        } else {
+            // Cancel and bounce back
+            listContainer.style.transition = "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1)";
+            listContainer.style.transform = "translateX(0)";
+            listContainer.style.opacity = "1";
+
+            setTimeout(() => {
+                listContainer.style.transition = "";
+                listContainer.style.transform = "";
+                listContainer.style.opacity = "";
+            }, 200);
         }
     }, { passive: true });
 }
