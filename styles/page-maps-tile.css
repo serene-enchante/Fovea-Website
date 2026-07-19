@@ -738,7 +738,7 @@ body.page-maps-tile {
 
 .desktop-nav-tab__icon {
     display: block;
-    filter: invert(1) brightness(0.45);  /* match the muted text colour */
+    filter: invert(1) brightness(0.45) grayscale(100%);  /* match the muted text colour and desaturate */
     transition: opacity 0.3s ease, filter 0.18s ease;
 }
 
@@ -754,7 +754,7 @@ body.page-maps-tile {
 }
 
 .desktop-nav-tab:hover .desktop-nav-tab__icon {
-    filter: invert(1) brightness(0.85);
+    filter: invert(1) brightness(0.85) grayscale(100%);
 }
 
 .desktop-nav-tab:hover {
@@ -2818,4 +2818,102 @@ body.is-help-mode-active .mobile-help-exit-btn {
 .is-light-map-active .tile-zone-item__thumb--logo img {
     background-color: transparent !important;
     filter: invert(1) !important;
+}
+
+.sidebar-list-container {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Hidden on desktop */
+.mobile-nav-tabs {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    /* Stack vertical nav tabs on the right side of the list column */
+    .mobile-nav-tabs {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        position: absolute;
+        right: 0;
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px)); /* floating safe-area height raised to clear browser toolbar */
+        z-index: 990;
+        width: 32px;
+        box-shadow: -2px 4px 12px rgba(0, 0, 0, 0.45);
+        box-sizing: border-box;
+        background: #000000; /* black fill under the 2px gaps */
+        border-radius: 24px 0 0 24px; /* match outer corners of top and bottom tabs - straight right side */
+        overflow: hidden; /* clip child tabs to match the rounded bounds */
+        
+        /* Establish initial state for transitions to prevent snapping */
+        transform: translateX(0);
+        opacity: 1;
+        will-change: transform, opacity;
+        
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    }
+
+    .mobile-nav-tabs.is-hidden {
+        transform: translateX(42px); /* slide off-screen right */
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .mobile-nav-tab {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 48px; /* static height so it does not stretch when list is resized */
+        background: #0f0f0f;
+        text-decoration: none;
+        color: var(--color-text-muted, rgba(255,255,255,0.45));
+        cursor: pointer;
+        transition: color 0.18s ease, background 0.18s ease;
+        box-sizing: border-box;
+        border-radius: 0; /* straight borders; clipped by parent overflow:hidden */
+    }
+
+    #mobile-nav-tab-tools {
+        border-radius: 0;
+    }
+
+    #mobile-nav-tab-home {
+        border-radius: 0;
+    }
+
+    #mobile-nav-tab-settings {
+        border-radius: 0;
+    }
+
+    .mobile-nav-tab__icon {
+        display: block;
+        filter: invert(1) brightness(0.45) grayscale(100%);
+        transition: opacity 0.3s ease, filter 0.18s ease;
+     }
+
+    .mobile-nav-tab__icon--home {
+        width: 11px;
+        height: 11px;
+    }
+
+    .mobile-nav-tab__icon--tools,
+    .mobile-nav-tab__icon--settings {
+        width: 14px;
+        height: 14px;
+    }
+
+    .mobile-nav-tab:active {
+        background: #1c1c1c;
+        color: #ffffff;
+    }
+
+    .mobile-nav-tab:active .mobile-nav-tab__icon {
+        filter: invert(1) brightness(0.85) grayscale(100%);
+    }
 }

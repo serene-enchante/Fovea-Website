@@ -2722,9 +2722,9 @@ function setupHelpModeSystem() {
     });
 
     const helpDictionary = [
-        { selector: "#desktop-nav-tab-home", title: "Home Tab", desc: "Click this bar to navigate back to the Fovea homepage." },
-        { selector: "#desktop-nav-tab-tools", title: "Tools Tab", desc: "Access various tools to assist with bird data collection, processing, and spatial analysis." },
-        { selector: "#desktop-nav-tab-settings", title: "Settings Tab", desc: "Configure options, visual display preferences, and map style layers." },
+        { selector: "#desktop-nav-tab-home, #mobile-nav-tab-home", title: "Home Tab", desc: "Click this bar to navigate back to the Fovea homepage." },
+        { selector: "#desktop-nav-tab-tools, #mobile-nav-tab-tools", title: "Tools Tab", desc: "Access various tools to assist with bird data collection, processing, and spatial analysis." },
+        { selector: "#desktop-nav-tab-settings, #mobile-nav-tab-settings", title: "Settings Tab", desc: "Configure options, visual display preferences, and map style layers." },
         { selector: "#header-logo-container, .logo--header", title: "Organization Logo", desc: "Click the organization logo to navigate to the home directory of the organization which the currently selected feature belongs to." },
         { selector: "#header-title", title: "Selection Title", desc: "Displays the name of the currently selected feature." },
         { selector: "#btn-copy-link", title: "Copy Link", desc: "Generates and copies a direct URL share link for the current view.", shortcut: "Shift + C" },
@@ -2982,12 +2982,27 @@ async function init() {
 function setupSidebarScrollListener() {
     const scrollBox = document.getElementById("sidebar-zone-list");
     const header = document.getElementById("sidebar-header");
+    const mobileTabs = document.querySelector(".mobile-nav-tabs");
+    
     if (scrollBox && header) {
+        let lastScrollTop = 0;
+        
         scrollBox.addEventListener("scroll", () => {
-            if (scrollBox.scrollTop > 0) {
+            const scrollTop = scrollBox.scrollTop;
+            
+            if (scrollTop > 0) {
                 header.classList.add("is-scrolled");
             } else {
                 header.classList.remove("is-scrolled");
+            }
+            
+            // Show tabs only when at the top of the list
+            if (mobileTabs) {
+                if (scrollTop <= 5) {
+                    mobileTabs.classList.remove("is-hidden");
+                } else {
+                    mobileTabs.classList.add("is-hidden");
+                }
             }
         });
     }
@@ -2995,24 +3010,29 @@ function setupSidebarScrollListener() {
 
 document.addEventListener("DOMContentLoaded", init);
 
-// Desktop back bar: page transition animation sequence before navigating home
+// Desktop & mobile back home transition listener
 (function () {
-    const bar = document.getElementById("desktop-nav-tab-home");
+    const bars = [
+        document.getElementById("desktop-nav-tab-home"),
+        document.getElementById("mobile-nav-tab-home")
+    ].filter(Boolean);
     const overlay = document.getElementById("page-transition-overlay");
-    if (!bar || !overlay) return;
+    if (bars.length === 0 || !overlay) return;
 
-    bar.addEventListener("click", function (e) {
-        e.preventDefault();
-        const dest = bar.getAttribute("href") || "../";
+    bars.forEach(bar => {
+        bar.addEventListener("click", function (e) {
+            e.preventDefault();
+            const dest = bar.getAttribute("href") || "../";
 
-        // Step 1: Simultaneously trigger grey bar pull down and whole screen fade to black
-        document.body.classList.add("is-transitioning");
-        overlay.classList.add("is-active");
+            // Step 1: Simultaneously trigger grey bar pull down and whole screen fade to black
+            document.body.classList.add("is-transitioning");
+            overlay.classList.add("is-active");
 
-        // Step 2: Navigate after the combined 500ms transitions finish
-        setTimeout(function () {
-            window.location.href = dest;
-        }, 500);
+            // Step 2: Navigate after the combined 500ms transitions finish
+            setTimeout(function () {
+                window.location.href = dest;
+            }, 500);
+        });
     });
 
     // Reset page states if user navigates back using browser Back button (bfcache reset)
