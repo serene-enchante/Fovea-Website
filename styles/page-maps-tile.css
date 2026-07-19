@@ -2794,3 +2794,86 @@ body.is-help-mode-active .mobile-help-exit-btn {
     background-color: transparent !important;
     filter: invert(1) !important;
 }
+
+/* ─── Mobile Bottom Navigation Bar ──────────────────────────────────────── */
+
+/* Hidden on desktop – only shows on mobile */
+.mobile-bottom-nav {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    /* Push content above the fixed bottom nav */
+    .maps-tile-main {
+        padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .mobile-bottom-nav {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-around;
+        /* Fixed to viewport bottom – works even with body position:fixed */
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        background: #000000;
+        height: calc(28px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        /* sit on top of map controls but under modals */
+        z-index: 1500;
+    }
+
+    /* Gradient bleed extending above the nav bar into the map */
+    .mobile-bottom-nav::before {
+        content: "";
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        right: 0;
+        height: 40px;
+        background: linear-gradient(to bottom, transparent, #000000);
+        pointer-events: none;
+    }
+
+    .mobile-bottom-nav__item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 3px;
+        flex: 1;
+        height: 100%;
+        background: none;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        color: rgba(255, 255, 255, 0.45);
+        padding: 7px 0 2px 0;
+        -webkit-tap-highlight-color: transparent;
+        transition: color 0.15s ease;
+    }
+
+    .mobile-bottom-nav__item:active {
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .mobile-bottom-nav__icon {
+        width: 18px;
+        height: 18px;
+        display: block;
+        /* brightness(0) normalises any coloured SVG to black before invert+dim */
+        filter: brightness(0) invert(1) brightness(0.45);
+        transition: filter 0.15s ease;
+    }
+
+    .mobile-bottom-nav__item:active .mobile-bottom-nav__icon {
+        filter: brightness(0) invert(1) brightness(0.85);
+    }
+
+    .mobile-bottom-nav__label {
+        display: none;
+    }
+}
