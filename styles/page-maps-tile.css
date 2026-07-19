@@ -2336,6 +2336,29 @@ body.is-help-mode-active .mobile-help-exit-btn {
             transform: translate(-50%, 0);
         }
     }
+
+    /* Mobile-only sidebar zone list swiping transition animation classes */
+    #sidebar-zone-list {
+        will-change: transform, opacity;
+    }
+
+    #sidebar-zone-list.fly-out-right {
+        transform: translateX(100%) !important;
+        opacity: 0 !important;
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    #sidebar-zone-list.fly-in-left-start {
+        transform: translateX(-100%) !important;
+        opacity: 0 !important;
+        transition: none !important;
+    }
+
+    #sidebar-zone-list.fly-in-left-active {
+        transform: translateX(0) !important;
+        opacity: 1 !important;
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
 }
 
 /* Image Lightbox Modal Styles */

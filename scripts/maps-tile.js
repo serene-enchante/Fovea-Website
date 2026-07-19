@@ -1796,13 +1796,41 @@ function setupActionButtons() {
 
     const capsuleBackBtn = document.getElementById("btn-capsule-back");
     if (capsuleBackBtn) {
-        capsuleBackBtn.addEventListener("click", () => {
-            if (!state.isCirclesFeature && (state.currentId === CIRCLE_ID || !state.currentId)) {
-                switchToCirclesFeature();
+        capsuleBackBtn.addEventListener("click", (e) => {
+            const list = document.getElementById("sidebar-zone-list");
+            
+            // On mobile, if we have the list container and aren't already animating, trigger the transition
+            if (window.innerWidth <= 768 && list && !list.classList.contains("fly-out-right") && !list.classList.contains("fly-in-left-active")) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                list.classList.add("fly-out-right");
+                
+                setTimeout(() => {
+                    executeBackNavigation();
+                    
+                    // Reset class and trigger fly-in from left
+                    list.classList.remove("fly-out-right");
+                    list.classList.add("fly-in-left-start");
+                    list.offsetHeight; // Force reflow
+                    list.classList.add("fly-in-left-active");
+                    
+                    setTimeout(() => {
+                        list.classList.remove("fly-in-left-start", "fly-in-left-active");
+                    }, 250);
+                }, 200);
             } else {
-                selectSubject(CIRCLE_ID);
+                executeBackNavigation();
             }
         });
+    }
+
+    function executeBackNavigation() {
+        if (!state.isCirclesFeature && (state.currentId === CIRCLE_ID || !state.currentId)) {
+            switchToCirclesFeature();
+        } else {
+            selectSubject(CIRCLE_ID);
+        }
     }
 }
 
@@ -1973,6 +2001,41 @@ function setupSwipeNavigation() {
                     block: "nearest",
                     inline: "center"
                 });
+            }
+        }
+    }, { passive: true });
+}
+
+function setupListSwipeBack() {
+    const listContainer = document.getElementById("sidebar-zone-list");
+    if (!listContainer) return;
+
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+
+    listContainer.addEventListener("touchstart", (e) => {
+        if (window.innerWidth > 768) return;
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        startTime = Date.now();
+    }, { passive: true });
+
+    listContainer.addEventListener("touchend", (e) => {
+        if (window.innerWidth > 768) return;
+        const touch = e.changedTouches[0];
+        const diffX = touch.clientX - startX;
+        const diffY = touch.clientY - startY;
+        const elapsedTime = Date.now() - startTime;
+
+        // Swipe right: finger drags left-to-right (diffX > 50),
+        // vertical drag is small (diffY < 40) to differentiate from vertical scrolling,
+        // swipe duration is fast (elapsedTime < 300ms)
+        if (diffX > 50 && Math.abs(diffY) < 40 && elapsedTime < 300) {
+            const backBtn = document.getElementById("btn-capsule-back");
+            if (backBtn && backBtn.classList.contains("is-visible")) {
+                backBtn.click();
             }
         }
     }, { passive: true });
@@ -2535,6 +2598,7 @@ async function init() {
         setupSearch();
         setupCapsules();
         setupSwipeNavigation();
+        setupListSwipeBack();
         setupImageLightbox();
         setupMobileResizeBar();
         setupHelpModeSystem();
