@@ -1583,7 +1583,7 @@ body.is-transitioning #desktop-back-bar svg {
         height: calc(50% - 9px) !important;
         padding: 0 6px !important;
         margin: 0 !important; /* Reset desktop margins on mobile */
-        transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        transition: height 0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
 
     /* Hide the desktop-only back bar on mobile */
@@ -1636,7 +1636,7 @@ body.is-transitioning #desktop-back-bar svg {
         position: relative !important;
         display: flex !important;
         flex-direction: column !important;
-        transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        transition: height 0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
 
     .maps-tile-header {
@@ -1692,6 +1692,10 @@ body.is-transitioning #desktop-back-bar svg {
         backdrop-filter: blur(20px) !important;
         -webkit-backdrop-filter: blur(20px) !important;
         box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    body.is-selection-full .maps-tile-header__actions {
+        display: none !important;
     }
 
     .maps-tile-header__actions .action-buttons-list {

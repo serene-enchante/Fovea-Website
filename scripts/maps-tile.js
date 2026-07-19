@@ -95,7 +95,8 @@ const state = {
     focusedTileIndex: -1,
     lastNavSource: "click",
     baseMapsList: [],
-    currentBaseLayer: "dark"
+    currentBaseLayer: "dark",
+    snapState: "default"
 };
 
 function normalizeZoneId(value) {
@@ -1955,6 +1956,55 @@ function setupCapsules() {
     });
 }
 
+function setMobileSnapState(snapState, animate = true) {
+    const mapArea = document.querySelector(".maps-tile-map-area");
+    const sidebar = document.querySelector(".maps-tile-sidebar");
+    const resizeBar = document.getElementById("mobile-resize-bar");
+    const headerEl = document.querySelector(".maps-tile-header");
+    const sidebarHeaderEl = document.getElementById("sidebar-header");
+    
+    if (!mapArea || !sidebar || !resizeBar || !headerEl || !sidebarHeaderEl) return;
+
+    state.snapState = snapState;
+
+    if (animate) {
+        mapArea.style.setProperty("transition", "height 0.32s cubic-bezier(0.16, 1, 0.3, 1)", "important");
+        sidebar.style.setProperty("transition", "height 0.32s cubic-bezier(0.16, 1, 0.3, 1)", "important");
+    } else {
+        mapArea.style.setProperty("transition", "none", "important");
+        sidebar.style.setProperty("transition", "none", "important");
+    }
+
+    if (snapState === "selection-full") {
+        sidebar.classList.add("is-selection-full");
+        document.body.classList.add("is-selection-full");
+        const resizeBarHeight = resizeBar.offsetHeight || 18;
+        mapArea.style.setProperty("height", "0px", "important");
+        sidebar.style.setProperty("height", `calc(100% - ${resizeBarHeight}px)`, "important");
+    } else if (snapState === "map-full") {
+        sidebar.classList.remove("is-selection-full");
+        document.body.classList.remove("is-selection-full");
+        const headerHeight = headerEl.offsetHeight || 80;
+        const subHeaderHeight = sidebarHeaderEl.offsetHeight || 50;
+        const totalHeaderHeight = headerHeight + subHeaderHeight;
+        const resizeBarHeight = resizeBar.offsetHeight || 18;
+        
+        sidebar.style.setProperty("height", `${totalHeaderHeight}px`, "important");
+        mapArea.style.setProperty("height", `calc(100% - ${totalHeaderHeight + resizeBarHeight}px)`, "important");
+    } else {
+        sidebar.classList.remove("is-selection-full");
+        document.body.classList.remove("is-selection-full");
+        mapArea.style.setProperty("height", "calc(50% - 9px)", "important");
+        sidebar.style.setProperty("height", "calc(50% - 9px)", "important");
+    }
+
+    setTimeout(() => {
+        if (state.map) {
+            state.map.invalidateSize();
+        }
+    }, animate ? 350 : 0);
+}
+
 function setupSwipeNavigation() {
     const headerEl = document.querySelector(".maps-tile-header");
     const sidebarHeaderEl = document.getElementById("sidebar-header");
@@ -1966,6 +2016,7 @@ function setupSwipeNavigation() {
     let startX = 0;
     let startY = 0;
     let startTime = 0;
+    let isVerticalSwiping = false;
 
     const handleTouchStart = (e) => {
         if (window.innerWidth > 768) return;
@@ -1973,6 +2024,26 @@ function setupSwipeNavigation() {
         startX = touch.clientX;
         startY = touch.clientY;
         startTime = Date.now();
+        isVerticalSwiping = false;
+    };
+
+    const handleTouchMove = (e) => {
+        if (window.innerWidth > 768) return;
+        if (!startX || !startY) return;
+        
+        const touch = e.touches[0];
+        const diffX = touch.clientX - startX;
+        const diffY = touch.clientY - startY;
+
+        if (!isVerticalSwiping && Math.abs(diffY) > 10 && Math.abs(diffY) > Math.abs(diffX) * 1.5) {
+            isVerticalSwiping = true;
+        }
+
+        if (isVerticalSwiping) {
+            if (e.cancelable) {
+                e.preventDefault();
+            }
+        }
     };
 
     const handleTouchEnd = (e) => {
@@ -1982,7 +2053,37 @@ function setupSwipeNavigation() {
         const diffY = touch.clientY - startY;
         const elapsedTime = Date.now() - startTime;
 
-        // Swipe threshold: 40px horizontal change, less than 40px vertical change, < 300ms
+        startX = 0;
+        startY = 0;
+
+        // Vertical swipe to change snap states
+        if (Math.abs(diffY) > 40 && Math.abs(diffY) > Math.abs(diffX) * 1.5 && elapsedTime < 300) {
+            let currentState = state.snapState || "default";
+            let newState = currentState;
+
+            if (diffY < 0) {
+                // Swipe UP -> gives more space to selection column
+                if (currentState === "map-full") {
+                    newState = "default";
+                } else if (currentState === "default" || currentState === "custom") {
+                    newState = "selection-full";
+                }
+            } else {
+                // Swipe DOWN -> gives more space to map frame
+                if (currentState === "selection-full") {
+                    newState = "default";
+                } else if (currentState === "default" || currentState === "custom") {
+                    newState = "map-full";
+                }
+            }
+
+            if (newState !== currentState) {
+                setMobileSnapState(newState, true);
+            }
+            return;
+        }
+
+        // Horizontal swipe to change class tabs
         if (Math.abs(diffX) > 40 && Math.abs(diffY) < 40 && elapsedTime < 300) {
             if (!scrollContainer) return;
             const tabs = Array.from(scrollContainer.querySelectorAll(".sidebar-capsule"));
@@ -2013,6 +2114,7 @@ function setupSwipeNavigation() {
 
     targets.forEach(el => {
         el.addEventListener("touchstart", handleTouchStart, { passive: true });
+        el.addEventListener("touchmove", handleTouchMove, { passive: false });
         el.addEventListener("touchend", handleTouchEnd, { passive: true });
     });
 }
@@ -2235,6 +2337,9 @@ function setupMobileResizeBar() {
 
         mapArea.style.setProperty("height", `${mapPercentage.toFixed(2)}%`, "important");
         sidebar.style.setProperty("height", `${sidebarPercentage.toFixed(2)}%`, "important");
+        state.snapState = "custom";
+        sidebar.classList.remove("is-selection-full");
+        document.body.classList.remove("is-selection-full");
 
         if (state.map) {
             state.map.invalidateSize();
