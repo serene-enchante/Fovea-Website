@@ -715,11 +715,24 @@ body.page-maps-tile {
     will-change: height, margin-bottom, border-radius;
 }
 
-#desktop-back-bar svg {
+#desktop-back-bar svg,
+#desktop-back-bar .desktop-back-bar__home-icon {
     width: 16px;
     height: 16px;
     display: block;
     transition: opacity 0.3s ease;
+}
+
+#desktop-back-bar .desktop-back-bar__home-icon {
+    width: 11px;
+    height: 11px;
+    filter: invert(1) brightness(0.45);  /* match the muted text colour */
+    margin-right: 6px;
+    transition: opacity 0.3s ease, filter 0.18s ease;
+}
+
+#desktop-back-bar:hover .desktop-back-bar__home-icon {
+    filter: invert(1) brightness(0.85);
 }
 
 #desktop-back-bar:hover {
@@ -752,7 +765,8 @@ body.is-transitioning #desktop-back-bar {
     margin-bottom: 0 !important;
 }
 
-body.is-transitioning #desktop-back-bar svg {
+body.is-transitioning #desktop-back-bar svg,
+body.is-transitioning #desktop-back-bar .desktop-back-bar__home-icon {
     opacity: 0 !important;
 }
 
