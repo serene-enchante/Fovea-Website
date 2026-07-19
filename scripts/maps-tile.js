@@ -449,20 +449,41 @@ function renderSidebarList() {
             item.className = "tile-zone-item";
             item.setAttribute("data-id", cid);
 
-            let thumbImg = "../images/wetlands.jpg";
+            let thumbImg = "";
             let isLogo = false;
+            let isNotAvailable = false;
             if (cid === "Eugene") {
                 thumbImg = "../images/logo-small.png";
                 isLogo = true;
             } else if (cid === "Florence") {
                 thumbImg = "../images/florence.png";
                 isLogo = true;
+            } else if (cid === "Oakridge" || cid === "Cottage Grove") {
+                isNotAvailable = true;
+            } else {
+                thumbImg = "../images/wetlands.jpg";
+            }
+
+            let thumbHtml = "";
+            if (isNotAvailable) {
+                thumbHtml = `
+                    <div class="tile-zone-item__thumb-placeholder" title="No data available">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                        </svg>
+                    </div>
+                `;
+            } else {
+                thumbHtml = `
+                    <div class="tile-zone-item__thumb ${isLogo ? "tile-zone-item__thumb--logo" : ""}">
+                        <img src="${thumbImg}" alt="${cid}" loading="lazy">
+                    </div>
+                `;
             }
 
             item.innerHTML = `
-                <div class="tile-zone-item__thumb ${isLogo ? "tile-zone-item__thumb--logo" : ""}">
-                    <img src="${thumbImg}" alt="${cid}" loading="lazy">
-                </div>
+                ${thumbHtml}
                 <div class="tile-zone-item__info">
                     <div class="tile-zone-item__title">${cid}</div>
                 </div>

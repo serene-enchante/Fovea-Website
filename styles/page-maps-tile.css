@@ -581,6 +581,24 @@ body.page-maps-tile {
     background: #000000;
 }
 
+.tile-zone-item__thumb-placeholder {
+    aspect-ratio: 4 / 3;
+    border-radius: 4px;
+    overflow: hidden;
+    background: transparent;
+    color: #ffffff;
+    opacity: 0.35;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.tile-zone-item__thumb-placeholder svg {
+    width: 22px;
+    height: 22px;
+}
+
 .tile-zone-item__thumb img {
     width: 100%;
     height: 100%;
