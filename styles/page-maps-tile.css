@@ -771,6 +771,74 @@ body.page-maps-tile {
     position: relative;
 }
 
+/* Custom control overlay container — fills the map, pointer-events pass-through */
+.maps-tile-map-container .leaflet-control-container {
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    z-index: 1000 !important;
+    overflow: visible !important;
+}
+
+/* leaflet-top panels: fill full width/height so children can be anchored */
+.maps-tile-map-container .leaflet-top {
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    pointer-events: none !important;
+    overflow: visible !important;
+}
+.maps-tile-map-container .leaflet-top.leaflet-left {
+    left: 0 !important;
+    right: auto !important;
+}
+.maps-tile-map-container .leaflet-top.leaflet-right {
+    right: 0 !important;
+    left: auto !important;
+}
+.maps-tile-map-container .leaflet-top .leaflet-control {
+    pointer-events: auto !important;
+}
+
+/* Desktop: controls sit at bottom-left, 20px from edge */
+.maps-tile-map-container .leaflet-control-zoom {
+    position: absolute !important;
+    bottom: 20px !important;
+    left: 20px !important;
+    top: auto !important;
+    right: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+.maps-tile-map-container .leaflet-control-locate {
+    position: absolute !important;
+    bottom: 20px !important;
+    left: 56px !important;
+    top: auto !important;
+    right: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.maps-tile-map-container .leaflet-control-fullscreen {
+    position: absolute !important;
+    bottom: 20px !important;
+    left: 90px !important;
+    top: auto !important;
+    right: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.maps-tile-map-container .leaflet-control-layers {
+    position: absolute !important;
+    bottom: 20px !important;
+    left: 124px !important;
+    top: auto !important;
+    right: auto !important;
+}
+
 /* Dark Mode palette tuning for Carto tiles */
 .maps-tile-map-container .carto-dark-tile {
     filter: brightness(1.18) contrast(1.12) hue-rotate(195deg) saturate(1.4);
@@ -827,11 +895,6 @@ body.page-maps-tile {
     filter: drop-shadow(0 4px 10px #000000) drop-shadow(0 12px 28px #000000) drop-shadow(0 20px 48px #000000) drop-shadow(0 0 36px #000000) !important;
 }
 
-.maps-tile-map-container .leaflet-control-zoom {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 8px !important;
-}
 
 /* Map Style Switcher (Transparent wrapper when collapsed, expanding into panel) */
 .maps-tile-map-container .leaflet-control-layers {
@@ -847,7 +910,6 @@ body.page-maps-tile {
     overflow: visible !important;
     box-sizing: border-box !important;
     transition: none !important;
-    position: relative !important;
 }
 
 /* Expanded style panel animation state (transparent container with shadow-only elements) */
@@ -877,6 +939,12 @@ body.page-maps-tile {
     justify-content: center !important;
     width: 26px !important;
     height: 26px !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
+    font-size: 18px !important;
+    font-weight: 400 !important;
+    line-height: 1 !important;
+    text-decoration: none !important;
     transition: all var(--transition-fast) !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
@@ -1732,8 +1800,6 @@ body.has-active-modal .maps-tile-header__actions {
     }
 
     .maps-tile-map-container .leaflet-top.leaflet-left {
-        top: 4rem !important;
-        left: 1rem !important;
         z-index: 900 !important;
     }
 }

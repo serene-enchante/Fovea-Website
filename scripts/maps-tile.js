@@ -938,253 +938,54 @@ function checkUserLocationZone(latlng) {
 }
 
 
-class CustomMapStyleControl {
-    onAdd(map) {
-        this.map = map;
-        this.container = document.createElement("div");
-        this.container.className = "maplibregl-ctrl maplibregl-ctrl-group leaflet-control-layers";
+function toggleLocationTracking() {
+    if (!state.map) return;
+    const locateControlEl = document.querySelector(".leaflet-control-locate");
+
+    if (state.isLocating) {
+        state.isLocating = false;
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+        }
+        if (state.userLocationMarker) {
+            state.userLocationMarker.remove();
+            state.userLocationMarker = null;
+        }
+        if (state.map.getSource('user-accuracy-source')) {
+            if (state.map.getLayer('user-accuracy-layer')) state.map.removeLayer('user-accuracy-layer');
+            state.map.removeSource('user-accuracy-source');
+        }
+        if (locateControlEl) locateControlEl.classList.remove("is-active");
+        checkUserLocationZone(null);
+    } else {
+        state.isLocating = true;
+        if (locateControlEl) locateControlEl.classList.add("is-active");
         
-        const button = document.createElement("a");
-        button.className = "leaflet-control-layers-toggle";
-        button.href = "#";
-        button.title = "Map Elements";
-        button.setAttribute("role", "button");
-        button.setAttribute("aria-label", "Map Elements");
-        button.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 12 17 22 12"></polyline>
-            </svg>
-        `;
-        this.container.appendChild(button);
-
-        const listContainer = document.createElement("div");
-        listContainer.className = "leaflet-control-layers-list";
-        listContainer.innerHTML = `
-            <div class="leaflet-control-layers-header">
-                <div class="modal-title-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-left: 2px;">
-                    <span class="modal-title" style="font-size: 0.95rem; font-weight: 700; color: #ffffff; text-transform: none; letter-spacing: normal;">Map Elements</span>
-                    <button type="button" class="modal-close-btn" aria-label="Close Map Elements" style="background: transparent; border: none; padding: 4px; cursor: pointer; color: rgba(255, 255, 255, 0.45); display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; border-radius: 50%;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
-                </div>
-                <div class="modal-capsules-wrapper">
-                    <div class="modal-capsules-scroll">
-                        <button type="button" class="modal-capsule modal-capsule--icon is-active" data-tab="basemaps" title="Select Basemaps">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                                <polyline points="2 17 12 22 22 17"></polyline>
-                                <polyline points="2 12 12 17 22 12"></polyline>
-                            </svg>
-                        </button>
-                        <button type="button" class="modal-capsule" data-tab="layers">Our Layers</button>
-                    </div>
-                    <button type="button" class="modal-search-toggle-btn" aria-label="Search items">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </button>
-                </div>
-                <div class="modal-search-expanded">
-                    <div class="modal-search-input-container">
-                        <svg class="modal-search-input-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        <input type="text" class="modal-search-input" placeholder="Search items..." autocomplete="off" />
-                    </div>
-                    <button type="button" class="modal-search-close-btn" aria-label="Close search">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <div class="leaflet-control-layers-body"></div>
-        `;
-        this.container.appendChild(listContainer);
-
-        let activeTab = "basemaps";
-        let searchQuery = "";
-
-        const headerEl = listContainer.querySelector(".leaflet-control-layers-header");
-        const bodyEl = listContainer.querySelector(".leaflet-control-layers-body");
-        const searchInput = listContainer.querySelector(".modal-search-input");
-        const searchToggleBtn = listContainer.querySelector(".modal-search-toggle-btn");
-        const searchCloseBtn = listContainer.querySelector(".modal-search-close-btn");
-
-        const renderContent = () => {
-            if (!bodyEl) return;
-            bodyEl.innerHTML = "";
-            const query = searchQuery.toLowerCase().trim();
-
-            const layers = [];
-            if (state.isCirclesFeature || state.currentFeature === "circles") {
-                layers.push({
-                    id: "circles", name: "CCBA CBC Circles", isChild: false, image: "../images/wetlands.jpg", isLogo: false,
-                    action: () => selectSubject(CIRCLE_ID, true)
-                });
-            } else {
-                const isFlorence = state.currentFeature === "florence";
-                layers.push({
-                    id: "circle", name: isFlorence ? "Florence CBC Circle" : "Eugene CBC Circle", isChild: false, 
-                    image: isFlorence ? "../images/florence.png" : "../images/logo-small.png", isLogo: true,
-                    action: () => selectSubject(CIRCLE_ID, true)
-                });
-                if (state.currentId && state.currentId !== CIRCLE_ID) {
-                    const targetZone = state.allFeatures.find(f => {
-                        const zid = f.properties?.zid;
-                        return zid && (String(zid).toLowerCase() === String(state.currentId).toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
-                    });
-                    const zidDisplay = targetZone ? displayZoneId(targetZone.properties.zid) : state.currentId;
-                    layers.push({
-                        id: "selected-zone", name: `Zone ${zidDisplay}`, isChild: true, image: zoneImagePath(state.currentId), isLogo: false,
-                        action: () => selectSubject(state.currentId, true)
-                    });
-                }
-            }
-
-            const maxItems = Math.max(layers.length, 3);
-            const estimatedHeight = 76 + 20 + (maxItems * 68);
-            listContainer.style.setProperty("height", `${estimatedHeight}px`, "important");
-
-            if (activeTab === "layers") {
-                const filtered = layers.filter(l => l.name.toLowerCase().includes(query));
-                if (filtered.length === 0) bodyEl.innerHTML = `<div class="modal-no-results">No layers found</div>`;
-                else filtered.forEach(l => {
-                    const isCircleOverview = !state.currentId || state.currentId === CIRCLE_ID;
-                    const isRowActive = l.id === "selected-zone" || (l.id === "circle" && isCircleOverview) || (l.id === "circles" && state.isCirclesFeature);
-                    
-                    const row = document.createElement("div");
-                    row.className = `tile-zone-item ${l.isChild ? 'is-child' : ''} ${isRowActive ? 'is-active' : ''}`;
-                    row.innerHTML = `
-                        <div class="tile-zone-item__thumb ${l.isLogo ? 'tile-zone-item__thumb--logo' : ''}">
-                            <img src="${l.image}" alt="${l.name}" loading="lazy">
-                        </div>
-                        <div class="tile-zone-item__info">
-                            <div class="tile-zone-item__title">${l.name}</div>
-                        </div>
-                    `;
-                    row.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); l.action(); });
-                    bodyEl.appendChild(row);
-                });
-            } else {
-                const basemaps = [
-                    { id: "dark", name: "Dark Map", thumbnailClass: "dark-map-thumbnail" },
-                    { id: "satellite", name: "Satellite Map", thumbnailClass: "satellite-thumbnail" }
-                ];
-                const filtered = basemaps.filter(b => b.name.toLowerCase().includes(query));
-                if (filtered.length === 0) bodyEl.innerHTML = `<div class="modal-no-results">No basemaps found</div>`;
-                else filtered.forEach(b => {
-                    const isSelected = state.currentBaseLayer === b.id;
-                    const row = document.createElement("div");
-                    row.className = `tile-zone-item ${isSelected ? 'is-active' : ''}`;
-                    row.innerHTML = `
-                        <div class="tile-zone-item__thumb">
-                            <span class="thumbnail ${b.thumbnailClass}"></span>
-                        </div>
-                        <div class="tile-zone-item__info">
-                            <div class="tile-zone-item__title">${b.name}</div>
-                        </div>
-                    `;
-                    row.addEventListener("click", (e) => {
-                        e.preventDefault(); e.stopPropagation();
-                        
-                        if (b.id === "dark") {
-                            this.map.setLayoutProperty("base-satellite", "visibility", "none");
-                            this.map.setLayoutProperty("base-dark", "visibility", "visible");
-                            state.currentBaseLayer = "dark";
-                        } else if (b.id === "satellite") {
-                            this.map.setLayoutProperty("base-dark", "visibility", "none");
-                            this.map.setLayoutProperty("base-satellite", "visibility", "visible");
-                            state.currentBaseLayer = "satellite";
-                        }
-                        renderContent();
-                    });
-                    bodyEl.appendChild(row);
-                });
-            }
-        };
-
-        state.refreshLayersModal = renderContent;
-        renderContent();
-
-        button.addEventListener("click", (e) => {
-            e.preventDefault(); e.stopPropagation();
-            this.container.classList.toggle("leaflet-control-layers-expanded");
-            if (this.container.classList.contains("leaflet-control-layers-expanded")) renderContent();
-        });
-
-        const closeBtn = listContainer.querySelector(".modal-close-btn");
-        if (closeBtn) {
-            closeBtn.addEventListener("click", (e) => {
-                e.preventDefault(); e.stopPropagation();
-                this.container.classList.remove("leaflet-control-layers-expanded");
-            });
+        if (!navigator.geolocation) {
+            showToast("Geolocation is not supported by your browser");
+            state.isLocating = false;
+            if (locateControlEl) locateControlEl.classList.remove("is-active");
+            return;
         }
 
-        const capsules = listContainer.querySelectorAll(".modal-capsule");
-        capsules.forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                e.preventDefault(); e.stopPropagation();
-                const tab = btn.getAttribute("data-tab");
-                if (tab === activeTab) return;
-                activeTab = tab;
-                capsules.forEach(c => c.classList.toggle("is-active", c.getAttribute("data-tab") === tab));
-                renderContent();
-            });
-        });
-
-        searchToggleBtn.addEventListener("click", (e) => {
-            e.preventDefault(); e.stopPropagation();
-            headerEl.classList.add("is-searching");
-            if (searchInput) searchInput.focus();
-        });
-
-        searchCloseBtn.addEventListener("click", (e) => {
-            e.preventDefault(); e.stopPropagation();
-            headerEl.classList.remove("is-searching");
-            if (searchInput) searchInput.value = "";
-            searchQuery = "";
-            renderContent();
-        });
-
-        searchInput.addEventListener("input", () => {
-            searchQuery = searchInput.value;
-            renderContent();
-        });
-
-        document.addEventListener("click", (e) => {
-            if (!this.container.contains(e.target)) {
-                this.container.classList.remove("leaflet-control-layers-expanded");
-                headerEl.classList.remove("is-searching");
-                if (searchInput) searchInput.value = "";
-                searchQuery = "";
-            }
-        });
-
-        this.container.addEventListener('mousedown', e => e.stopPropagation());
-        this.container.addEventListener('touchstart', e => e.stopPropagation());
-        this.container.addEventListener('dblclick', e => e.stopPropagation());
-        this.container.addEventListener('wheel', e => e.stopPropagation());
-
-        return this.container;
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const lng = position.coords.longitude;
+                const lat = position.coords.latitude;
+                const accuracy = position.coords.accuracy;
+                updateUserLocationOnMap(lng, lat, accuracy);
+            },
+            (error) => {
+                console.error("Location error:", error);
+                state.isLocating = false;
+                if (locateControlEl) locateControlEl.classList.remove("is-active");
+                checkUserLocationZone(null);
+                showToast("Unable to access device location");
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
     }
-
-    onRemove() {
-        this.container.parentNode.removeChild(this.container);
-        this.map = undefined;
-    }
-}
-
-function toggleLocationTracking() {
-    // MapLibre handles this with GeolocateControl automatically
 }
 
 function initializeMap() {
@@ -1199,15 +1000,22 @@ function initializeMap() {
             sources: {
                 "dark-tiles": {
                     type: "raster",
-                    tiles: ["https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"],
+                    tiles: [
+                        "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+                        "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+                        "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+                        "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+                    ],
                     tileSize: 256,
                     attribution: "&copy; <a href='https://carto.com/'>CARTO</a>"
                 },
                 "satellite-tiles": {
                     type: "raster",
-                    tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+                    tiles: [
+                        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                    ],
                     tileSize: 256,
-                    attribution: "Tiles &copy; Esri"
+                    attribution: "Tiles &copy; Esri &mdash; Source: Esri"
                 }
             },
             layers: [
@@ -1235,26 +1043,408 @@ function initializeMap() {
         attributionControl: false
     });
 
-    state.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-left');
-    state.map.addControl(new maplibregl.FullscreenControl(), 'bottom-left');
+    state.baseMapsList = [
+        { id: "dark", name: "Dark Map", layerId: "base-dark" },
+        { id: "satellite", name: "Satellite Map", layerId: "base-satellite" }
+    ];
+
+    // Create custom controls container
+    let controlContainer = document.querySelector(".leaflet-control-container");
+    if (!controlContainer) {
+        controlContainer = document.createElement("div");
+        controlContainer.className = "leaflet-control-container";
+
+        const topLeft = document.createElement("div");
+        topLeft.className = "leaflet-top leaflet-left";
+        controlContainer.appendChild(topLeft);
+
+        const topRight = document.createElement("div");
+        topRight.className = "leaflet-top leaflet-right";
+        controlContainer.appendChild(topRight);
+
+        mapContainer.appendChild(controlContainer);
+    }
+
+    const topLeft = controlContainer.querySelector(".leaflet-top.leaflet-left");
+
+    // 1. Zoom Control
+    const zoomDiv = document.createElement("div");
+    zoomDiv.className = "leaflet-control-zoom leaflet-bar leaflet-control";
     
-    const geolocate = new maplibregl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        trackUserLocation: true
+    const zoomInBtn = document.createElement("a");
+    zoomInBtn.className = "leaflet-control-zoom-in";
+    zoomInBtn.href = "#";
+    zoomInBtn.title = "Zoom in";
+    zoomInBtn.role = "button";
+    zoomInBtn.setAttribute("aria-label", "Zoom in");
+    zoomInBtn.textContent = "+";
+    zoomInBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (state.map) state.map.zoomIn();
     });
-    state.map.addControl(geolocate, 'bottom-left');
     
-    geolocate.on('geolocate', (e) => {
-        checkUserLocationZone({ lng: e.coords.longitude, lat: e.coords.latitude });
+    const zoomOutBtn = document.createElement("a");
+    zoomOutBtn.className = "leaflet-control-zoom-out";
+    zoomOutBtn.href = "#";
+    zoomOutBtn.title = "Zoom out";
+    zoomOutBtn.role = "button";
+    zoomOutBtn.setAttribute("aria-label", "Zoom out");
+    zoomOutBtn.innerHTML = "&#x2212;";
+    zoomOutBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (state.map) state.map.zoomOut();
     });
 
-    state.layersControl = new CustomMapStyleControl();
-    state.map.addControl(state.layersControl, 'bottom-left');
+    zoomDiv.appendChild(zoomInBtn);
+    zoomDiv.appendChild(zoomOutBtn);
+    topLeft.appendChild(zoomDiv);
 
-    state.map.on('click', (e) => {
+    // 2. Locate Control
+    const locateDiv = document.createElement("div");
+    locateDiv.className = "leaflet-bar leaflet-control leaflet-control-locate";
+    
+    const locateBtn = document.createElement("a");
+    locateBtn.className = "leaflet-control-locate-btn";
+    locateBtn.href = "#";
+    locateBtn.title = "Show My Location";
+    locateBtn.role = "button";
+    locateBtn.setAttribute("aria-label", "Show My Location");
+    locateBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="8"></circle>
+            <line x1="12" y1="2" x2="12" y2="4"></line>
+            <line x1="12" y1="20" x2="12" y2="22"></line>
+            <line x1="2" y1="12" x2="4" y2="12"></line>
+            <line x1="20" y1="12" x2="22" y2="12"></line>
+            <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
+        </svg>
+    `;
+    locateBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleLocationTracking();
+    });
+    locateDiv.appendChild(locateBtn);
+    topLeft.appendChild(locateDiv);
+
+    // 3. Fullscreen Control
+    const fsDiv = document.createElement("div");
+    fsDiv.className = "leaflet-bar leaflet-control leaflet-control-fullscreen";
+    
+    const fsBtn = document.createElement("a");
+    fsBtn.className = "leaflet-control-fullscreen-btn";
+    fsBtn.href = "#";
+    fsBtn.title = "Toggle Fullscreen";
+    fsBtn.role = "button";
+    fsBtn.setAttribute("aria-label", "Toggle Fullscreen");
+    fsBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+        </svg>
+    `;
+    fsBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFullscreen();
+    });
+    fsDiv.appendChild(fsBtn);
+    topLeft.appendChild(fsDiv);
+
+    // 4. Map Style Control (Custom Reimplementation)
+    const layersDiv = document.createElement("div");
+    layersDiv.className = "leaflet-bar leaflet-control leaflet-control-layers";
+    
+    const layersBtn = document.createElement("a");
+    layersBtn.className = "leaflet-control-layers-toggle";
+    layersBtn.href = "#";
+    layersBtn.title = "Map Elements";
+    layersBtn.role = "button";
+    layersBtn.setAttribute("aria-label", "Map Elements");
+    layersBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+    `;
+    layersDiv.appendChild(layersBtn);
+
+    const listContainer = document.createElement("div");
+    listContainer.className = "leaflet-control-layers-list";
+    listContainer.innerHTML = `
+        <div class="leaflet-control-layers-header">
+            <div class="modal-title-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-left: 2px;">
+                <span class="modal-title" style="font-size: 0.95rem; font-weight: 700; color: #ffffff; text-transform: none; letter-spacing: normal;">Map Elements</span>
+                <button type="button" class="modal-close-btn" aria-label="Close Map Elements" style="background: transparent; border: none; padding: 4px; cursor: pointer; color: rgba(255, 255, 255, 0.45); display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; border-radius: 50%;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-capsules-wrapper">
+                <div class="modal-capsules-scroll">
+                    <button type="button" class="modal-capsule modal-capsule--icon is-active" data-tab="basemaps" title="Select Basemaps">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                    </button>
+                    <button type="button" class="modal-capsule" data-tab="layers">Our Layers</button>
+                </div>
+                <button type="button" class="modal-search-toggle-btn" aria-label="Search items">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-search-expanded">
+                <div class="modal-search-input-container">
+                    <svg class="modal-search-input-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" class="modal-search-input" placeholder="Search items..." autocomplete="off" />
+                </div>
+                <button type="button" class="modal-search-close-btn" aria-label="Close search">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="leaflet-control-layers-body"></div>
+    `;
+    layersDiv.appendChild(listContainer);
+    topLeft.appendChild(layersDiv);
+
+    let activeTab = "basemaps";
+    let searchQuery = "";
+
+    const headerEl = listContainer.querySelector(".leaflet-control-layers-header");
+    const bodyEl = listContainer.querySelector(".leaflet-control-layers-body");
+    const searchInput = listContainer.querySelector(".modal-search-input");
+    const searchToggleBtn = listContainer.querySelector(".modal-search-toggle-btn");
+    const searchCloseBtn = listContainer.querySelector(".modal-search-close-btn");
+
+    const renderContent = () => {
+        if (!bodyEl) return;
+        bodyEl.innerHTML = "";
+        const query = searchQuery.toLowerCase().trim();
+
+        const layers = [];
+        if (state.isCirclesFeature || state.currentFeature === "circles") {
+            layers.push({
+                id: "circles", name: "CCBA CBC Circles", isChild: false, image: "../images/wetlands.jpg", isLogo: false,
+                action: () => selectSubject(CIRCLE_ID, true)
+            });
+        } else {
+            const isFlorence = state.currentFeature === "florence";
+            layers.push({
+                id: "circle", name: isFlorence ? "Florence CBC Circle" : "Eugene CBC Circle", isChild: false, 
+                image: isFlorence ? "../images/florence.png" : "../images/logo-small.png", isLogo: true,
+                action: () => selectSubject(CIRCLE_ID, true)
+            });
+            if (state.currentId && state.currentId !== CIRCLE_ID) {
+                const targetZone = state.allFeatures.find(f => {
+                    const zid = f.properties?.zid;
+                    return zid && (String(zid).toLowerCase() === String(state.currentId).toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
+                });
+                const zidDisplay = targetZone ? displayZoneId(targetZone.properties.zid) : state.currentId;
+                const zoneImg = zoneImagePath(state.currentId);
+                layers.push({
+                    id: "selected-zone",
+                    name: `Zone ${zidDisplay}`,
+                    isChild: true,
+                    image: zoneImg,
+                    isLogo: false,
+                    action: () => selectSubject(state.currentId, true)
+                });
+            }
+        }
+
+        const maxItems = Math.max(layers.length, 3);
+        const estimatedHeight = 76 + 20 + (maxItems * 68);
+        listContainer.style.setProperty("height", `${estimatedHeight}px`, "important");
+
+        if (activeTab === "layers") {
+            const filtered = layers.filter(l => l.name.toLowerCase().includes(query));
+            if (filtered.length === 0) {
+                bodyEl.innerHTML = `<div class="modal-no-results">No layers found</div>`;
+            } else {
+                filtered.forEach(l => {
+                    const isCircleOverview = !state.currentId || state.currentId === CIRCLE_ID;
+                    const isRowActive = l.id === "selected-zone" || (l.id === "circle" && isCircleOverview) || (l.id === "circles" && state.isCirclesFeature);
+                    
+                    const row = document.createElement("div");
+                    row.className = `tile-zone-item ${l.isChild ? 'is-child' : ''} ${isRowActive ? 'is-active' : ''}`;
+                    row.innerHTML = `
+                        <div class="tile-zone-item__thumb ${l.isLogo ? 'tile-zone-item__thumb--logo' : ''}">
+                            <img src="${l.image}" alt="${l.name}" loading="lazy">
+                        </div>
+                        <div class="tile-zone-item__info">
+                            <div class="tile-zone-item__title">${l.name}</div>
+                        </div>
+                    `;
+
+                    const img = row.querySelector("img");
+                    if (img) {
+                        img.addEventListener("error", () => {
+                            img.src = FALLBACK_IMAGE;
+                        });
+                    }
+
+                    row.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        l.action();
+                    });
+                    bodyEl.appendChild(row);
+                });
+            }
+        } else {
+            const basemaps = [
+                { id: "dark", name: "Dark Map", thumbnailClass: "dark-map-thumbnail" },
+                { id: "satellite", name: "Satellite Map", thumbnailClass: "satellite-thumbnail" }
+            ];
+
+            const filtered = basemaps.filter(b => b.name.toLowerCase().includes(query));
+            if (filtered.length === 0) {
+                bodyEl.innerHTML = `<div class="modal-no-results">No basemaps found</div>`;
+            } else {
+                filtered.forEach(b => {
+                    const isSelected = state.currentBaseLayer === b.id;
+                    const row = document.createElement("div");
+                    row.className = `tile-zone-item ${isSelected ? 'is-active' : ''}`;
+                    row.innerHTML = `
+                        <div class="tile-zone-item__thumb">
+                            <span class="thumbnail ${b.thumbnailClass}"></span>
+                        </div>
+                        <div class="tile-zone-item__info">
+                            <div class="tile-zone-item__title">${b.name}</div>
+                        </div>
+                    `;
+                    row.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        
+                        if (b.id === "dark") {
+                            state.map.setLayoutProperty('base-satellite', 'visibility', 'none');
+                            state.map.setLayoutProperty('base-dark', 'visibility', 'visible');
+                            state.currentBaseLayer = "dark";
+                        } else if (b.id === "satellite") {
+                            state.map.setLayoutProperty('base-dark', 'visibility', 'none');
+                            state.map.setLayoutProperty('base-satellite', 'visibility', 'visible');
+                            state.currentBaseLayer = "satellite";
+                        }
+
+                        document.body.classList.remove("is-light-map-active");
+
+                        updateAllFeatureStyles();
+                        renderContent();
+                    });
+                    bodyEl.appendChild(row);
+                });
+            }
+        }
+    };
+
+    state.refreshLayersModal = () => {
+        renderContent();
+    };
+
+    renderContent();
+
+    layersBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const isExpanded = layersDiv.classList.contains("leaflet-control-layers-expanded");
+        if (isExpanded) {
+            layersDiv.classList.remove("leaflet-control-layers-expanded");
+        } else {
+            layersDiv.classList.add("leaflet-control-layers-expanded");
+            renderContent();
+        }
+    });
+
+    const closeBtn = listContainer.querySelector(".modal-close-btn");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            layersDiv.classList.remove("leaflet-control-layers-expanded");
+        });
+    }
+
+    const capsules = listContainer.querySelectorAll(".modal-capsule");
+    capsules.forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            const tab = btn.getAttribute("data-tab");
+            if (tab === activeTab) return;
+
+            activeTab = tab;
+            capsules.forEach(c => {
+                if (c.getAttribute("data-tab") === tab) {
+                    c.classList.add("is-active");
+                } else {
+                    c.classList.remove("is-active");
+                }
+            });
+
+            renderContent();
+        });
+    });
+
+    searchToggleBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        headerEl.classList.add("is-searching");
+        if (searchInput) {
+            searchInput.focus();
+        }
+    });
+
+    searchCloseBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        headerEl.classList.remove("is-searching");
+        if (searchInput) {
+            searchInput.value = "";
+        }
+        searchQuery = "";
+        renderContent();
+    });
+
+    searchInput.addEventListener("input", () => {
+        searchQuery = searchInput.value;
+        renderContent();
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!layersDiv.contains(e.target)) {
+            layersDiv.classList.remove("leaflet-control-layers-expanded");
+            headerEl.classList.remove("is-searching");
+            if (searchInput) {
+                searchInput.value = "";
+            }
+            searchQuery = "";
+        }
+    });
+
+    updateControlPositions();
+
+    state.map.on("click", (e) => {
         if (Date.now() - state.lastZoneClickTime < 250) {
             return;
         }
+        
         const features = state.map.queryRenderedFeatures(e.point, { layers: ['zones-fill'] });
         if (features.length === 0) {
             if (!state.isCirclesFeature && state.currentId === CIRCLE_ID) {
@@ -1265,7 +1455,7 @@ function initializeMap() {
         }
     });
 
-    state.map.on('load', () => {
+    state.map.on("load", () => {
         rebuildGeoJsonLayer();
     });
 
