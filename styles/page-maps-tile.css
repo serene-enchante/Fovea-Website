@@ -1586,12 +1586,25 @@ body.is-transitioning #desktop-back-bar svg {
         transition: height 0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
 
+    .maps-tile-map-container {
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    #tile-map {
+        height: 100vh !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+    }
+
     /* Hide the desktop-only back bar on mobile */
     #desktop-back-bar {
         display: none !important;
     }
 
-    .maps-tile-map-container .map-ctrl-panel {
+    .maps-tile-map-container .map-ctrl-panel.map-ctrl-panel--right {
         top: calc(0.25rem + env(safe-area-inset-top, 0px)) !important;
     }
 

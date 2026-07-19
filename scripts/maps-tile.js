@@ -4,6 +4,13 @@ const CIRCLES_GEOJSON_PATH = "../geojson/circles-wgs84.geojson";
 const CIRCLE_ID = "ecbc-circle";
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
+// MapLibre prototype polyfill for Leaflet legacy compatibility
+if (typeof maplibregl !== 'undefined' && maplibregl.Map) {
+    maplibregl.Map.prototype.invalidateSize = function() {
+        this.resize();
+    };
+}
+
 const MAP_STYLES = {
     default: {
         color: "#ffffff",
@@ -339,13 +346,15 @@ function updateHeader(subjectTitle) {
 function getFitPadding(extra = 0) {
     const mobile = window.innerWidth <= 768;
     if (mobile) {
-        // The floating toolbar is at top: 20px, height: 36px, so its bottom edge is at Y = 56px.
-        // We center the fitted feature in the remaining space from Y = 56px to the bottom of the map.
-        // We nudge the vertical center up slightly by adjusting the top offset to 36px (from 56px).
+        // The visible area of the map is the space above the sidebar card.
+        // The bottom portion of the 100vh map canvas is covered by the sidebar.
+        // We read the current height of the sidebar to offset fitted elements into the visible space.
+        const sidebar = document.querySelector(".maps-tile-sidebar");
+        const hiddenHeight = sidebar ? sidebar.offsetHeight : (window.innerHeight * 0.5);
         const baseMargin = 50 + extra;
         return {
             top: 36 + baseMargin,
-            bottom: baseMargin,
+            bottom: hiddenHeight + baseMargin,
             left: 40 + extra,
             right: 40 + extra
         };
@@ -1194,7 +1203,7 @@ function initializeMap() {
         topRight.className = "map-ctrl-panel map-ctrl-panel--right";
         controlContainer.appendChild(topRight);
 
-        mapContainer.appendChild(controlContainer);
+        mapWrapper.appendChild(controlContainer);
     }
 
     const topLeft = controlContainer.querySelector(".map-ctrl-panel.map-ctrl-panel--left");
@@ -2000,7 +2009,7 @@ function setMobileSnapState(snapState, animate = true) {
 
     setTimeout(() => {
         if (state.map) {
-            state.map.invalidateSize();
+            state.map.resize();
         }
     }, animate ? 350 : 0);
 }
@@ -2061,19 +2070,36 @@ function setupSwipeNavigation() {
             let currentState = state.snapState || "default";
             let newState = currentState;
 
+            const mapArea = document.querySelector(".maps-tile-map-area");
+            const main = document.querySelector(".maps-tile-main");
+
             if (diffY < 0) {
-                // Swipe UP -> gives more space to selection column
+                // Swipe UP -> moves drawer UP (less map space)
                 if (currentState === "map-full") {
                     newState = "default";
-                } else if (currentState === "default" || currentState === "custom") {
+                } else if (currentState === "default") {
                     newState = "selection-full";
+                } else if (currentState === "custom" && mapArea && main) {
+                    const defaultHeight = (main.offsetHeight * 0.5) - 9;
+                    if (mapArea.offsetHeight > defaultHeight + 10) {
+                        newState = "default";
+                    } else {
+                        newState = "selection-full";
+                    }
                 }
             } else {
-                // Swipe DOWN -> gives more space to map frame
+                // Swipe DOWN -> moves drawer DOWN (more map space)
                 if (currentState === "selection-full") {
                     newState = "default";
-                } else if (currentState === "default" || currentState === "custom") {
+                } else if (currentState === "default") {
                     newState = "map-full";
+                } else if (currentState === "custom" && mapArea && main) {
+                    const defaultHeight = (main.offsetHeight * 0.5) - 9;
+                    if (mapArea.offsetHeight < defaultHeight - 10) {
+                        newState = "default";
+                    } else {
+                        newState = "map-full";
+                    }
                 }
             }
 
@@ -2313,10 +2339,33 @@ function setupMobileResizeBar() {
     if (!resizeBar || !mapArea || !sidebar || !main) return;
 
     let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let initialMapHeight = 0;
+    let initialSidebarHeight = 0;
+    let isVerticalDragApproved = false;
 
     const startDrag = (e) => {
         if (window.innerWidth > 768) return;
+        
+        // Prevent drag initialization when clicking actual buttons or tabs
+        if (e.target.closest('.action-btn') || e.target.closest('.sidebar-capsule')) {
+            return;
+        }
+
         isDragging = true;
+        const touch = e.touches ? e.touches[0] : e;
+        dragStartX = touch.clientX;
+        dragStartY = touch.clientY;
+        
+        initialMapHeight = mapArea.offsetHeight;
+        initialSidebarHeight = sidebar.offsetHeight;
+        
+        // If they touched the resize bar directly, vertical drag is approved immediately.
+        // Otherwise (selection title or tabs), we wait for a gesture direction threshold.
+        const isResizeBar = e.currentTarget === resizeBar;
+        isVerticalDragApproved = isResizeBar;
+
         document.body.style.userSelect = "none";
         document.body.style.cursor = "ns-resize";
         mapArea.style.setProperty("transition", "none", "important");
@@ -2326,23 +2375,77 @@ function setupMobileResizeBar() {
     const doDrag = (e) => {
         if (!isDragging || window.innerWidth > 768) return;
 
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const touch = e.touches ? e.touches[0] : e;
+        const clientX = touch.clientX;
+        const clientY = touch.clientY;
+
+        const deltaX = clientX - dragStartX;
+        const deltaY = clientY - dragStartY;
+
+        // If not yet approved, check threshold
+        if (!isVerticalDragApproved) {
+            if (Math.abs(deltaY) > 8 && Math.abs(deltaY) > Math.abs(deltaX) * 1.3) {
+                isVerticalDragApproved = true;
+                // Reset dragStartY to current touch point to avoid a jump
+                dragStartY = clientY;
+                return;
+            }
+            if (Math.abs(deltaX) > 8) {
+                // If it is a clear horizontal gesture, cancel vertical dragging to let horizontal scroll work
+                isDragging = false;
+                return;
+            }
+            return;
+        }
+
+        // Prevent browser scrolling while dragging vertical drawer
+        if (e.cancelable) {
+            e.preventDefault();
+        }
+
+        const headerEl = document.querySelector(".maps-tile-header");
+        const sidebarHeaderEl = document.getElementById("sidebar-header");
+        if (!headerEl || !sidebarHeaderEl) return;
+
         const mainRect = main.getBoundingClientRect();
 
-        const relativeY = clientY - mainRect.top;
-        let mapPercentage = (relativeY / mainRect.height) * 100;
+        // Calculate new map height relative to dragStartY
+        const currentDeltaY = clientY - dragStartY;
+        const targetMapHeight = initialMapHeight + currentDeltaY;
+        
+        const headerHeight = headerEl.offsetHeight || 80;
+        const subHeaderHeight = sidebarHeaderEl.offsetHeight || 50;
+        const totalHeaderHeight = headerHeight + subHeaderHeight;
+        const resizeBarHeight = resizeBar.offsetHeight || 18;
 
-        mapPercentage = Math.max(20, Math.min(75, mapPercentage));
-        const sidebarPercentage = Math.max(15, 95 - mapPercentage);
+        const maxMapHeight = mainRect.height - totalHeaderHeight - resizeBarHeight;
+        const clampedMapHeight = Math.max(0, Math.min(maxMapHeight, targetMapHeight));
 
-        mapArea.style.setProperty("height", `${mapPercentage.toFixed(2)}%`, "important");
-        sidebar.style.setProperty("height", `${sidebarPercentage.toFixed(2)}%`, "important");
-        state.snapState = "custom";
-        sidebar.classList.remove("is-selection-full");
-        document.body.classList.remove("is-selection-full");
+        let mapPercentage = (clampedMapHeight / mainRect.height) * 100;
+        let sidebarPercentage = ((mainRect.height - clampedMapHeight - resizeBarHeight) / mainRect.height) * 100;
+
+        if (mapPercentage < 5) {
+            mapArea.style.setProperty("height", "0px", "important");
+            sidebar.style.setProperty("height", `calc(100% - ${resizeBarHeight}px)`, "important");
+            sidebar.classList.add("is-selection-full");
+            document.body.classList.add("is-selection-full");
+            state.snapState = "selection-full";
+        } else if (clampedMapHeight >= maxMapHeight - 15) {
+            sidebar.style.setProperty("height", `${totalHeaderHeight}px`, "important");
+            mapArea.style.setProperty("height", `calc(100% - ${totalHeaderHeight + resizeBarHeight}px)`, "important");
+            sidebar.classList.remove("is-selection-full");
+            document.body.classList.remove("is-selection-full");
+            state.snapState = "map-full";
+        } else {
+            mapArea.style.setProperty("height", `${mapPercentage.toFixed(2)}%`, "important");
+            sidebar.style.setProperty("height", `${sidebarPercentage.toFixed(2)}%`, "important");
+            sidebar.classList.remove("is-selection-full");
+            document.body.classList.remove("is-selection-full");
+            state.snapState = "custom";
+        }
 
         if (state.map) {
-            state.map.invalidateSize();
+            state.map.resize();
         }
     };
 
@@ -2354,16 +2457,23 @@ function setupMobileResizeBar() {
             mapArea.style.removeProperty("transition");
             sidebar.style.removeProperty("transition");
             if (state.map) {
-                state.map.invalidateSize();
+                state.map.resize();
             }
         }
     };
 
-    resizeBar.addEventListener("mousedown", startDrag);
-    resizeBar.addEventListener("touchstart", startDrag, { passive: true });
+    // Attach startDrag to all mobile resize triggers
+    const headerEl = document.querySelector(".maps-tile-header");
+    const sidebarHeaderEl = document.getElementById("sidebar-header");
+
+    const triggers = [resizeBar, headerEl, sidebarHeaderEl].filter(Boolean);
+    triggers.forEach(el => {
+        el.addEventListener("mousedown", startDrag);
+        el.addEventListener("touchstart", startDrag, { passive: true });
+    });
 
     window.addEventListener("mousemove", doDrag);
-    window.addEventListener("touchmove", doDrag, { passive: true });
+    window.addEventListener("touchmove", doDrag, { passive: false });
 
     window.addEventListener("mouseup", stopDrag);
     window.addEventListener("touchend", stopDrag);
