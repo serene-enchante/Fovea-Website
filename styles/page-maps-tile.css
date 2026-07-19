@@ -2156,10 +2156,10 @@ body.has-active-modal .maps-tile-header__actions {
     position: fixed;
     pointer-events: none;
     z-index: 99999999 !important;
-    background: rgba(10, 14, 12, 0.96) !important;
-    border: 1px solid rgba(48, 209, 88, 0.5) !important;
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.9), 0 0 20px rgba(48, 209, 88, 0.2) !important;
-    border-radius: 8px !important;
+    background: #000000 !important;
+    border: 1px solid #333333 !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.9) !important;
+    border-radius: 20px !important;
     padding: 0.65rem 0.9rem !important;
     max-width: 280px !important;
     color: #ffffff !important;

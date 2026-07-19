@@ -2241,6 +2241,7 @@ function setupHelpModeSystem() {
     });
 
     const helpDictionary = [
+        { selector: "#desktop-back-bar", title: "Home Tab", desc: "Click this bar to navigate back to the Fovea homepage." },
         { selector: "#header-logo-container, .logo--header", title: "Organization Logo", desc: "Click the organization logo to navigate to the home directory of the organization which the currently selected feature belongs to." },
         { selector: "#header-title", title: "Selection Title", desc: "Displays the name of the currently selected feature." },
         { selector: "#btn-copy-link", title: "Copy Link", desc: "Generates and copies a direct URL share link for the current view.", shortcut: "Shift + C" },
