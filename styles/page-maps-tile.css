@@ -83,9 +83,10 @@ body.page-maps-tile {
 
 .maps-tile-header__title {
     margin: 0 !important;
-    font-family: Georgia, serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 1.25rem;
     font-weight: 700;
+    letter-spacing: 0.04em;
     color: var(--color-heading);
     line-height: 1.2;
     flex: 1;

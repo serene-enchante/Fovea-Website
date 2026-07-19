@@ -306,10 +306,24 @@ function adjustHeaderFontSize() {
     titleEl.style.overflow = savedOverflow;
 }
 
+function balancedHeaderHTML(title) {
+    const words = title.trim().split(/\s+/);
+    if (words.length <= 3) {
+        // Short title: single line, no break needed
+        return words.map(w => w.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')).join(' ');
+    }
+    // Split at ceiling of midpoint so top line gets slightly more words
+    const splitAt = Math.ceil(words.length / 2);
+    const line1 = words.slice(0, splitAt);
+    const line2 = words.slice(splitAt);
+    const escape = w => w.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return line1.map(escape).join(' ') + '<br>' + line2.map(escape).join(' ');
+}
+
 function updateHeader(subjectTitle) {
     const titleEl = document.getElementById("header-title");
     if (titleEl) {
-        titleEl.textContent = subjectTitle;
+        titleEl.innerHTML = balancedHeaderHTML(subjectTitle);
     }
     updateHeaderLogo();
     adjustHeaderFontSize();
