@@ -1575,10 +1575,6 @@ body.page-maps-tile {
         width: auto !important;
     }
 
-    .maps-tile-map-container {
-        border-radius: 16px 16px 0 0 !important;
-    }
-
     /* Mobile actions capsule floating at top-center of map area */
     .maps-tile-header__actions {
         position: absolute !important;
