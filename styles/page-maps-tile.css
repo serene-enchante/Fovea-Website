@@ -83,15 +83,18 @@ body.page-maps-tile {
 
 .maps-tile-header__title {
     margin: 0 !important;
+    font-family: Georgia, serif;
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--color-heading);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     line-height: 1.2;
     flex: 1;
     min-width: 0;
+    white-space: normal;
+    word-break: break-word;
+    overflow: hidden;
+    /* Cap at 2 lines: 2 * line-height (1.2em) */
+    max-height: calc(1.2em * 2);
 }
 
 /* Header Action Icon Buttons pill container */

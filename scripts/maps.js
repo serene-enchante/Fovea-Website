@@ -257,7 +257,7 @@ function getSubjectSummary(features, subjectFeature) {
 
     return {
         type: "circle",
-        title: "ECBC Circle",
+        title: "Eugene Christmas Bird Count Circle",
         kicker: "Full Circle",
         zid: CIRCLE_ID,
         founded: allFounded[0],
@@ -275,7 +275,7 @@ function updateHeroContent(subject) {
     setText("subject-modified", formatDate(subject.modified));
     setText("subject-founded", formatDate(subject.founded));
     setText("subject-area", formatArea(subject.areaSqMi));
-    document.title = `${subject.title} | ECBC Maps`;
+    document.title = `${subject.title} | Eugene Christmas Bird Count Maps`;
 }
 
 function updateUrl(replace = true) {
@@ -566,7 +566,7 @@ function coerceViewForSubject() {
     const isCircle = state.subject?.type === "circle";
     if (!isCircle && state.query.view !== "map") {
         state.query.view = "map";
-        setInterfaceNote("Grid and List are available only for the full ECBC Circle context.");
+        setInterfaceNote("Grid and List are available only for the full Eugene Christmas Bird Count Circle context.");
     } else {
         setInterfaceNote("");
     }

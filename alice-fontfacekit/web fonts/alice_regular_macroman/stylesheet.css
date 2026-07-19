@@ -1,0 +1,13 @@
+@font-face {
+    font-family: 'aliceregular';
+    src: url('Alice-Regular-webfont.eot');
+    src: url('Alice-Regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('Alice-Regular-webfont.woff2') format('woff2'),
+         url('Alice-Regular-webfont.woff') format('woff'),
+         url('Alice-Regular-webfont.ttf') format('truetype'),
+         url('Alice-Regular-webfont.svg#aliceregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+

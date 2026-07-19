@@ -248,10 +248,10 @@ function updateHeaderLogo() {
     } else {
         if (state.currentFeature === "florence") {
             logoImg.src = "../images/florence.png";
-            logoImg.alt = "Florence CBC";
+            logoImg.alt = "Florence Christmas Bird Count";
         } else {
             logoImg.src = "../images/logo-small.png";
-            logoImg.alt = "Eugene CBC";
+            logoImg.alt = "Eugene Christmas Bird Count";
         }
 
         const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
@@ -270,12 +270,49 @@ function updateHeaderLogo() {
     }
 }
 
+function adjustHeaderFontSize() {
+    const titleEl = document.getElementById("header-title");
+    if (!titleEl) return;
+
+    // Reset to default first
+    titleEl.style.fontSize = "1.25rem";
+
+    // Only adjust if visible
+    if (titleEl.offsetParent === null && titleEl.offsetHeight === 0) return;
+
+    const minSize = 0.55;
+    let currentSize = 1.25;
+    const decrement = 0.05;
+
+    // Temporarily bypass the CSS max-height cap so we can measure true text height
+    const savedMaxHeight = titleEl.style.maxHeight;
+    const savedOverflow = titleEl.style.overflow;
+    titleEl.style.maxHeight = "none";
+    titleEl.style.overflow = "visible";
+
+    const getTwoLineBudget = () => {
+        const lh = parseFloat(window.getComputedStyle(titleEl).lineHeight);
+        return lh * 2;
+    };
+
+    // Scale down until the natural scrollHeight fits within 2-line budget
+    while (titleEl.scrollHeight > getTwoLineBudget() + 1 && currentSize > minSize) {
+        currentSize = Math.max(minSize, currentSize - decrement);
+        titleEl.style.fontSize = `${currentSize}rem`;
+    }
+
+    // Restore capping
+    titleEl.style.maxHeight = savedMaxHeight;
+    titleEl.style.overflow = savedOverflow;
+}
+
 function updateHeader(subjectTitle) {
     const titleEl = document.getElementById("header-title");
     if (titleEl) {
         titleEl.textContent = subjectTitle;
     }
     updateHeaderLogo();
+    adjustHeaderFontSize();
 }
 
 /**
@@ -354,7 +391,7 @@ function selectSubject(id, triggerMapZoom = true) {
     const backBtn = document.getElementById("btn-capsule-back");
 
     if (state.isCirclesFeature) {
-        updateHeader("CCBA CBC Circles");
+        updateHeader("Coast to Cascades Bird Alliance");
         if (backBtn) backBtn.classList.remove("is-visible");
         renderSidebarList();
         updateUrl(id);
@@ -375,7 +412,7 @@ function selectSubject(id, triggerMapZoom = true) {
     }
 
     if (isCircle || !targetFeature) {
-        const titleName = state.currentFeature === "florence" ? "Florence CBC Circle" : "Eugene CBC Circle";
+        const titleName = state.currentFeature === "florence" ? "Florence Christmas Bird Count Circle" : "Eugene Christmas Bird Count Circle";
         updateHeader(titleName);
         if (backBtn) {
             backBtn.classList.add("is-visible");
@@ -731,6 +768,7 @@ function setupMapEffectsAndFullscreen(mapWrapper) {
 
     const handleResize = () => {
         updateControlPositions();
+        adjustHeaderFontSize();
         if (state.map) {
             state.map.invalidateSize();
             setTimeout(() => state.map.invalidateSize(), 50);
@@ -1314,13 +1352,13 @@ function initializeMap() {
         const layers = [];
         if (state.isCirclesFeature || state.currentFeature === "circles") {
             layers.push({
-                id: "circles", name: "CCBA CBC Circles", isChild: false, image: "../images/wetlands.jpg", isLogo: false,
+                id: "circles", name: "Coast to Cascades Bird Alliance", isChild: false, image: "../images/wetlands.jpg", isLogo: false,
                 action: () => selectSubject(CIRCLE_ID, true)
             });
         } else {
             const isFlorence = state.currentFeature === "florence";
             layers.push({
-                id: "circle", name: isFlorence ? "Florence CBC Circle" : "Eugene CBC Circle", isChild: false, 
+                id: "circle", name: isFlorence ? "Florence Christmas Bird Count Circle" : "Eugene Christmas Bird Count Circle", isChild: false, 
                 image: isFlorence ? "../images/florence.png" : "../images/logo-small.png", isLogo: true,
                 action: () => selectSubject(CIRCLE_ID, true)
             });
