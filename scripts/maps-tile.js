@@ -2111,10 +2111,34 @@ function setupSwipeNavigation() {
 
         // Horizontal swipe to change class tabs
         if (Math.abs(diffX) > 40 && Math.abs(diffY) < 40 && elapsedTime < 300) {
+            const header = document.getElementById("sidebar-header");
+            const isSearching = header && header.classList.contains("is-searching");
+
             if (!scrollContainer) return;
             const tabs = Array.from(scrollContainer.querySelectorAll(".sidebar-capsule"));
-            if (tabs.length <= 1) return;
+            if (tabs.length === 0) return;
 
+            if (isSearching) {
+                if (diffX > 0) {
+                    // Swiped right -> escape search and go to the last class tab
+                    const searchClose = document.getElementById("btn-search-close");
+                    if (searchClose) {
+                        searchClose.click();
+                    }
+                    const lastTab = tabs[tabs.length - 1];
+                    if (lastTab) {
+                        lastTab.click();
+                        lastTab.scrollIntoView({
+                            behavior: "smooth",
+                            block: "nearest",
+                            inline: "center"
+                        });
+                    }
+                }
+                return;
+            }
+
+            if (tabs.length <= 1) return;
             const activeIndex = tabs.findIndex(tab => tab.classList.contains("is-active"));
             if (activeIndex === -1) return;
 
@@ -2134,6 +2158,11 @@ function setupSwipeNavigation() {
                     block: "nearest",
                     inline: "center"
                 });
+            } else if (newIndex === tabs.length) {
+                const searchToggle = document.getElementById("btn-search-toggle");
+                if (searchToggle) {
+                    searchToggle.click();
+                }
             }
         }
     };
