@@ -1956,22 +1956,26 @@ function setupCapsules() {
 }
 
 function setupSwipeNavigation() {
+    const headerEl = document.querySelector(".maps-tile-header");
+    const sidebarHeaderEl = document.getElementById("sidebar-header");
     const scrollContainer = document.querySelector(".sidebar-capsules-scroll");
-    if (!scrollContainer) return;
+    
+    const targets = [headerEl, sidebarHeaderEl].filter(Boolean);
+    if (targets.length === 0) return;
 
     let startX = 0;
     let startY = 0;
     let startTime = 0;
 
-    scrollContainer.addEventListener("touchstart", (e) => {
+    const handleTouchStart = (e) => {
         if (window.innerWidth > 768) return;
         const touch = e.touches[0];
         startX = touch.clientX;
         startY = touch.clientY;
         startTime = Date.now();
-    }, { passive: true });
+    };
 
-    scrollContainer.addEventListener("touchend", (e) => {
+    const handleTouchEnd = (e) => {
         if (window.innerWidth > 768) return;
         const touch = e.changedTouches[0];
         const diffX = touch.clientX - startX;
@@ -1980,6 +1984,7 @@ function setupSwipeNavigation() {
 
         // Swipe threshold: 40px horizontal change, less than 40px vertical change, < 300ms
         if (Math.abs(diffX) > 40 && Math.abs(diffY) < 40 && elapsedTime < 300) {
+            if (!scrollContainer) return;
             const tabs = Array.from(scrollContainer.querySelectorAll(".sidebar-capsule"));
             if (tabs.length <= 1) return;
 
@@ -2004,7 +2009,12 @@ function setupSwipeNavigation() {
                 });
             }
         }
-    }, { passive: true });
+    };
+
+    targets.forEach(el => {
+        el.addEventListener("touchstart", handleTouchStart, { passive: true });
+        el.addEventListener("touchend", handleTouchEnd, { passive: true });
+    });
 }
 
 function setupListSwipeBack() {
