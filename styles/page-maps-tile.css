@@ -744,7 +744,7 @@ body.page-maps-tile {
 }
 
 .maps-tile-map-container.is-fullscreen #tile-map,
-.maps-tile-map-container.is-fullscreen .leaflet-container {
+.maps-tile-map-container.is-fullscreen .maplibregl-map {
     width: 100vw !important;
     height: 100vh !important;
     height: 100dvh !important;
@@ -757,10 +757,9 @@ body.page-maps-tile {
 
 .maps-tile-map-container,
 .maps-tile-map-container #tile-map,
-.maps-tile-map-container .leaflet-container,
-.maps-tile-map-container .leaflet-pane,
-.maps-tile-map-container .leaflet-tile-pane,
-.maps-tile-map-container .leaflet-tile-container {
+.maps-tile-map-container .maplibregl-map,
+.maps-tile-map-container .maplibregl-canvas-container,
+.maps-tile-map-container .maplibregl-canvas {
     background-color: #000000 !important;
     background: #000000 !important;
 }
@@ -783,7 +782,7 @@ body.page-maps-tile {
 
 /* Dark theme overrides for Leaflet controls on tile map */
 
-.maps-tile-map-container .leaflet-control-zoom {
+.maps-tile-map-container .maplibregl-ctrl-zoom {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
@@ -804,9 +803,9 @@ body.page-maps-tile {
 
 
 /* Leaflet Control Containers (Zoom, Locate, Fullscreen) Styled as transparent containers */
-.maps-tile-map-container .leaflet-control-zoom,
-.maps-tile-map-container .leaflet-control-locate,
-.maps-tile-map-container .leaflet-control-fullscreen {
+.maps-tile-map-container .maplibregl-ctrl-zoom,
+.maps-tile-map-container .maplibregl-ctrl-geolocate,
+.maps-tile-map-container .maplibregl-ctrl-fullscreen {
     background: transparent !important;
     border: none !important;
     border-radius: 0 !important;
@@ -817,9 +816,9 @@ body.page-maps-tile {
     overflow: visible !important;
 }
 
-.maps-tile-map-container .leaflet-control-zoom,
-.maps-tile-map-container .leaflet-control-locate,
-.maps-tile-map-container .leaflet-control-fullscreen {
+.maps-tile-map-container .maplibregl-ctrl-zoom,
+.maps-tile-map-container .maplibregl-ctrl-geolocate,
+.maps-tile-map-container .maplibregl-ctrl-fullscreen {
     filter: drop-shadow(0 4px 10px #000000) drop-shadow(0 12px 28px #000000) drop-shadow(0 20px 48px #000000) drop-shadow(0 0 36px #000000) !important;
 }
 
@@ -827,7 +826,7 @@ body.page-maps-tile {
     filter: drop-shadow(0 4px 10px #000000) drop-shadow(0 12px 28px #000000) drop-shadow(0 20px 48px #000000) drop-shadow(0 0 36px #000000) !important;
 }
 
-.maps-tile-map-container .leaflet-control-zoom {
+.maps-tile-map-container .maplibregl-ctrl-zoom {
     display: flex !important;
     flex-direction: column !important;
     gap: 8px !important;
@@ -864,9 +863,9 @@ body.page-maps-tile {
     overflow: visible !important;
 }
 
-.maps-tile-map-container .leaflet-control-zoom a,
-.maps-tile-map-container .leaflet-control-locate a,
-.maps-tile-map-container .leaflet-control-fullscreen a,
+.maps-tile-map-container .maplibregl-ctrl-zoom a,
+.maps-tile-map-container .maplibregl-ctrl-geolocate a,
+.maps-tile-map-container .maplibregl-ctrl-fullscreen a,
 .maps-tile-map-container .leaflet-control-layers-toggle {
     background: transparent !important;
     border: none !important;
@@ -929,9 +928,9 @@ body.page-maps-tile {
     pointer-events: auto !important;
 }
 
-.maps-tile-map-container .leaflet-control-zoom a:hover,
-.maps-tile-map-container .leaflet-control-locate a:hover,
-.maps-tile-map-container .leaflet-control-fullscreen a:hover,
+.maps-tile-map-container .maplibregl-ctrl-zoom a:hover,
+.maps-tile-map-container .maplibregl-ctrl-geolocate a:hover,
+.maps-tile-map-container .maplibregl-ctrl-fullscreen a:hover,
 .maps-tile-map-container .leaflet-control-layers-toggle:hover {
     background: transparent !important;
     color: #30d158 !important;
@@ -1254,7 +1253,7 @@ body.page-maps-tile {
     padding: 20px 0 !important;
 }
 
-.maps-tile-map-container .leaflet-control-locate.is-active a {
+.maps-tile-map-container .maplibregl-ctrl-geolocate.is-active a {
     color: #30d158 !important;
     background-color: transparent !important;
 }
@@ -1412,8 +1411,8 @@ body.page-maps-tile {
         overflow: visible !important;
     }
 
-    .maps-tile-map-container .leaflet-control-locate,
-    .maps-tile-map-container .leaflet-control-fullscreen,
+    .maps-tile-map-container .maplibregl-ctrl-geolocate,
+    .maps-tile-map-container .maplibregl-ctrl-fullscreen,
     .maps-tile-map-container .leaflet-control-layers {
         position: absolute !important;
         bottom: 0 !important;
@@ -1421,7 +1420,7 @@ body.page-maps-tile {
         left: auto !important;
     }
 
-    .maps-tile-map-container .leaflet-control-zoom {
+    .maps-tile-map-container .maplibregl-ctrl-zoom {
         position: static !important;
         width: 26px !important;
         display: flex !important;
@@ -1429,7 +1428,7 @@ body.page-maps-tile {
         align-items: center !important;
     }
 
-    .maps-tile-map-container .leaflet-control-locate {
+    .maps-tile-map-container .maplibregl-ctrl-geolocate {
         right: 76px !important;
         width: 26px !important;
         display: flex !important;
@@ -1437,7 +1436,7 @@ body.page-maps-tile {
         align-items: center !important;
     }
 
-    .maps-tile-map-container .leaflet-control-fullscreen {
+    .maps-tile-map-container .maplibregl-ctrl-fullscreen {
         right: 0 !important;
         width: 26px !important;
         display: flex !important;
@@ -2473,21 +2472,21 @@ body.is-help-mode-active .mobile-help-exit-btn {
 }
 
 /* Light Map overrides for Map Control buttons (Zoom, Locate, Fullscreen, Layers switcher toggle) */
-.is-light-map-active .maps-tile-map-container .leaflet-control-zoom a,
-.is-light-map-active .maps-tile-map-container .leaflet-control-locate a,
-.is-light-map-active .maps-tile-map-container .leaflet-control-fullscreen a,
+.is-light-map-active .maps-tile-map-container .maplibregl-ctrl-zoom a,
+.is-light-map-active .maps-tile-map-container .maplibregl-ctrl-geolocate a,
+.is-light-map-active .maps-tile-map-container .maplibregl-ctrl-fullscreen a,
 .is-light-map-active .maps-tile-map-container .leaflet-control-layers-toggle {
     color: #000000 !important;
 }
 
-.is-light-map-active .maps-tile-map-container .leaflet-control-zoom a:hover,
-.is-light-map-active .maps-tile-map-container .leaflet-control-locate a:hover,
-.is-light-map-active .maps-tile-map-container .leaflet-control-fullscreen a:hover,
+.is-light-map-active .maps-tile-map-container .maplibregl-ctrl-zoom a:hover,
+.is-light-map-active .maps-tile-map-container .maplibregl-ctrl-geolocate a:hover,
+.is-light-map-active .maps-tile-map-container .maplibregl-ctrl-fullscreen a:hover,
 .is-light-map-active .maps-tile-map-container .leaflet-control-layers-toggle:hover {
     color: #30d158 !important;
 }
 
-.is-light-map-active .maps-tile-map-container .leaflet-control-locate.is-active a,
+.is-light-map-active .maps-tile-map-container .maplibregl-ctrl-geolocate.is-active a,
 .is-light-map-active .maps-tile-map-container .leaflet-control-layers-expanded .leaflet-control-layers-toggle {
     color: #30d158 !important;
 }
@@ -2588,9 +2587,9 @@ body.is-help-mode-active .mobile-help-exit-btn {
 }
 
 /* Light Map overrides for Map control button drop shadows & Map frame edge overlays */
-.is-light-map-active .maps-tile-map-container .leaflet-control-zoom,
-.is-light-map-active .maps-tile-map-container .leaflet-control-locate,
-.is-light-map-active .maps-tile-map-container .leaflet-control-fullscreen {
+.is-light-map-active .maps-tile-map-container .maplibregl-ctrl-zoom,
+.is-light-map-active .maps-tile-map-container .maplibregl-ctrl-geolocate,
+.is-light-map-active .maps-tile-map-container .maplibregl-ctrl-fullscreen {
     filter: drop-shadow(0 4px 10px #ffffff) drop-shadow(0 12px 28px #ffffff) drop-shadow(0 20px 48px #ffffff) drop-shadow(0 0 36px #ffffff) !important;
 }
 

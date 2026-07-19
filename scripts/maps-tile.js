@@ -25,19 +25,50 @@ const MAP_STYLES = {
     }
 };
 
+
+function getBbox(features) {
+    let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+    const processCoord = (coord) => {
+        if (coord[0] < minLng) minLng = coord[0];
+        if (coord[1] < minLat) minLat = coord[1];
+        if (coord[0] > maxLng) maxLng = coord[0];
+        if (coord[1] > maxLat) maxLat = coord[1];
+    };
+    const processGeom = (geom) => {
+        if (!geom) return;
+        if (geom.type === "Polygon") {
+            geom.coordinates[0].forEach(processCoord);
+        } else if (geom.type === "MultiPolygon") {
+            geom.coordinates.forEach(poly => poly[0].forEach(processCoord));
+        } else if (geom.type === "Point") {
+            processCoord(geom.coordinates);
+        }
+    };
+    if (Array.isArray(features)) {
+        features.forEach(f => processGeom(f.geometry));
+    } else {
+        processGeom(features.geometry);
+    }
+    if (minLng === Infinity) return [[-123.3, 43.9], [-122.9, 44.2]];
+    return [[minLng, minLat], [maxLng, maxLat]];
+}
+
 function getDefaultStyle() {
     return MAP_STYLES.default;
 }
 
 function updateAllFeatureStyles() {
-    if (!state.featureLayersMap) return;
-    state.featureLayersMap.forEach((layer, key) => {
+    if (!state.map || !state.map.getSource('zones')) return;
+    
+    // We update all features state based on currentId
+    state.allFeatures.forEach(feature => {
+        const props = feature.properties || {};
+        const key = state.isCirclesFeature ? String(props.cid || "") : String(props.zid || "");
         const isSelected = state.currentId !== CIRCLE_ID && (key === state.currentId || normalizeZoneId(key) === normalizeZoneId(state.currentId));
-        if (isSelected) {
-            layer.setStyle(MAP_STYLES.selected);
-        } else {
-            layer.setStyle(getDefaultStyle());
-        }
+        state.map.setFeatureState(
+            { source: 'zones', id: key },
+            { selected: isSelected }
+        );
     });
 }
 
@@ -251,7 +282,7 @@ function switchToFeature(featureName, circleLayer) {
 
     if (circleLayer) {
         state.map.once("moveend", performSwap);
-        state.map.flyToBounds(circleLayer.getBounds(), {
+        state.map.fitBounds(circleLayer, {
             duration: 0.9,
             padding: [30, 30]
         });
@@ -282,7 +313,7 @@ function selectSubject(id, triggerMapZoom = true) {
         renderSidebarList();
         updateUrl(id);
         if (triggerMapZoom && state.map && state.geoJsonLayer) {
-            state.map.fitBounds(state.geoJsonLayer.getBounds(), { padding: [30, 30] });
+            state.map.fitBounds(getBbox(state.allFeatures), { padding: 30 });
         }
         return;
     }
@@ -322,19 +353,19 @@ function selectSubject(id, triggerMapZoom = true) {
             layer.setStyle(MAP_STYLES.selected);
             layer.bringToFront();
         } else {
-            layer.setStyle(getDefaultStyle());
+            if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: false});
         }
     });
 
     if (triggerMapZoom && state.map) {
         if (isCircle || !targetFeature) {
             if (state.geoJsonLayer) {
-                state.map.fitBounds(state.geoJsonLayer.getBounds(), { padding: [30, 30] });
+                state.map.fitBounds(getBbox(state.allFeatures), { padding: 30 });
             }
         } else {
             const selectedLayer = state.featureLayersMap.get(String(targetFeature.properties.zid));
             if (selectedLayer) {
-                state.map.fitBounds(selectedLayer.getBounds(), { padding: [50, 50], maxZoom: 14 });
+                state.map.fitBounds(getBbox([targetFeature]), { padding: 50, maxZoom: 14 });
             }
         }
     }
@@ -405,11 +436,11 @@ function renderSidebarList() {
 
             item.addEventListener("mouseenter", () => {
                 const layer = state.featureLayersMap.get(cid);
-                if (layer) layer.setStyle(MAP_STYLES.hover);
+                if (layer) if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: true});
             });
             item.addEventListener("mouseleave", () => {
                 const layer = state.featureLayersMap.get(cid);
-                if (layer) layer.setStyle(getDefaultStyle());
+                if (layer) if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: false});
             });
 
             item.addEventListener("click", () => {
@@ -535,12 +566,12 @@ function renderSidebarList() {
         item.addEventListener("mouseenter", () => {
             const layer = state.featureLayersMap.get(String(props.zid));
             const isSelected = state.currentId !== CIRCLE_ID && (String(props.zid) === state.currentId || normalizeZoneId(props.zid) === normalizeZoneId(state.currentId));
-            if (layer && !isSelected) layer.setStyle(MAP_STYLES.hover);
+            if (layer && !isSelected) if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: true});
         });
         item.addEventListener("mouseleave", () => {
             const layer = state.featureLayersMap.get(String(props.zid));
             const isSelected = state.currentId !== CIRCLE_ID && (String(props.zid) === state.currentId || normalizeZoneId(props.zid) === normalizeZoneId(state.currentId));
-            if (layer && !isSelected) layer.setStyle(getDefaultStyle());
+            if (layer && !isSelected) if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: false});
         });
 
         item.addEventListener("click", () => selectSubject(String(props.zid)));
@@ -569,10 +600,10 @@ function updateKeyboardTileFocus(newIndex) {
 
         if (newIndex >= 0 && idx === newIndex) {
             tile.classList.add("is-hovered");
-            if (layer && !isSelected) layer.setStyle(MAP_STYLES.hover);
+            if (layer && !isSelected) if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: true});
         } else {
             tile.classList.remove("is-hovered");
-            if (layer && !isSelected) layer.setStyle(getDefaultStyle());
+            if (layer && !isSelected) if(state.map && state.map.getSource('zones')) state.map.setFeatureState({source: 'zones', id: cid}, {hover: false});
         }
     });
 }
@@ -705,6 +736,8 @@ function toggleFullscreen() {
 }
 
 function highlightTileItem(key) {
+    if (key == null) return;
+    key = String(key);
     const listContainer = document.getElementById("sidebar-zone-list");
     if (!listContainer) return;
     const items = listContainer.querySelectorAll(".tile-zone-item");
@@ -730,53 +763,113 @@ function unhighlightTileItem() {
 
 function rebuildGeoJsonLayer() {
     if (!state.map) return;
-    if (state.geoJsonLayer) {
-        state.map.removeLayer(state.geoJsonLayer);
-    }
-    state.featureLayersMap.clear();
+    
+    state.allFeatures.forEach(f => {
+        const props = f.properties || {};
+        const newId = state.isCirclesFeature ? String(props.cid || "") : String(props.zid || "");
+        props.feature_id = newId;
+        f.id = newId;
+    });
+    
+    const geojsonData = {
+        type: "FeatureCollection",
+        features: state.allFeatures
+    };
 
-    state.geoJsonLayer = L.geoJSON(state.allFeatures, {
-        style: () => getDefaultStyle(),
-        onEachFeature: (feature, layer) => {
-            const props = feature.properties || {};
-            const key = state.isCirclesFeature ? String(props.cid || "") : String(props.zid || "");
-            state.featureLayersMap.set(key, layer);
+    if (state.map.getSource('zones')) {
+        state.map.getSource('zones').setData(geojsonData);
+    } else {
+        state.map.addSource('zones', {
+            type: 'geojson',
+            data: geojsonData,
+            promoteId: 'feature_id'
+        });
+        
+        state.map.addLayer({
+            id: 'zones-fill',
+            type: 'fill',
+            source: 'zones',
+            paint: {
+                'fill-color': [
+                    'case',
+                    ['boolean', ['feature-state', 'selected'], false], '#30d158',
+                    ['boolean', ['feature-state', 'hover'], false], '#30d158',
+                    '#ffffff'
+                ],
+                'fill-opacity': [
+                    'case',
+                    ['boolean', ['feature-state', 'selected'], false], 0.35,
+                    ['boolean', ['feature-state', 'hover'], false], 0.2,
+                    0.07
+                ]
+            }
+        });
 
-            layer.on({
-                mouseover: (e) => {
-                    const l = e.target;
-                    const isSelected = state.currentId !== CIRCLE_ID && (key === state.currentId || normalizeZoneId(key) === normalizeZoneId(state.currentId));
-                    if (!isSelected) {
-                        l.setStyle(MAP_STYLES.hover);
-                    }
-                    highlightTileItem(key);
-                },
-                mouseout: (e) => {
-                    const l = e.target;
-                    const isSelected = state.currentId !== CIRCLE_ID && (key === state.currentId || normalizeZoneId(key) === normalizeZoneId(state.currentId));
-                    if (!isSelected) {
-                        l.setStyle(getDefaultStyle());
-                    }
+        state.map.addLayer({
+            id: 'zones-outline',
+            type: 'line',
+            source: 'zones',
+            paint: {
+                'line-color': [
+                    'case',
+                    ['boolean', ['feature-state', 'selected'], false], '#00ff66',
+                    ['boolean', ['feature-state', 'hover'], false], '#30d158',
+                    '#ffffff'
+                ],
+                'line-width': [
+                    'case',
+                    ['boolean', ['feature-state', 'selected'], false], 2.2,
+                    ['boolean', ['feature-state', 'hover'], false], 1.8,
+                    1.0
+                ]
+            }
+        });
+        
+        let hoveredStateId = null;
+
+        state.map.on('mousemove', 'zones-fill', (e) => {
+            if (e.features.length > 0) {
+                const newHoveredId = e.features[0].id;
+                if (hoveredStateId !== null && hoveredStateId !== newHoveredId) {
+                    state.map.setFeatureState({ source: 'zones', id: hoveredStateId }, { hover: false });
                     unhighlightTileItem();
-                },
-                click: (e) => {
-                    state.lastZoneClickTime = Date.now();
-                    if (e && e.originalEvent) {
-                        L.DomEvent.stopPropagation(e.originalEvent);
-                    }
-                    if (state.isCirclesFeature) {
-                        if (props.cid === "Eugene") {
-                            switchToFeature("eugene", layer);
-                        } else if (props.cid === "Florence") {
-                            switchToFeature("florence", layer);
-                        }
-                    } else {
-                        selectSubject(key, false);
-                    }
                 }
-            });
-        }
-    }).addTo(state.map);
+                hoveredStateId = newHoveredId;
+                if (hoveredStateId != null && hoveredStateId !== "") {
+                    state.map.setFeatureState({ source: 'zones', id: hoveredStateId }, { hover: true });
+                    highlightTileItem(hoveredStateId);
+                    state.map.getCanvas().style.cursor = 'pointer';
+                }
+            }
+        });
+
+        state.map.on('mouseleave', 'zones-fill', () => {
+            if (hoveredStateId !== null && hoveredStateId !== "") {
+                state.map.setFeatureState({ source: 'zones', id: hoveredStateId }, { hover: false });
+                unhighlightTileItem();
+            }
+            hoveredStateId = null;
+            state.map.getCanvas().style.cursor = '';
+        });
+
+        state.map.on('click', 'zones-fill', (e) => {
+            state.lastZoneClickTime = Date.now();
+            if (e.features.length > 0 && e.features[0].id != null) {
+                const featureId = String(e.features[0].id);
+                const props = e.features[0].properties;
+                
+                if (state.isCirclesFeature) {
+                    if (props.cid === "Eugene") {
+                        switchToFeature("eugene", getBbox([e.features[0]]));
+                    } else if (props.cid === "Florence") {
+                        switchToFeature("florence", getBbox([e.features[0]]));
+                    }
+                } else {
+                    selectSubject(featureId, false);
+                }
+            }
+        });
+    }
 
     if (state.isLocating && state.userLocationMarker) {
         checkUserLocationZone(state.userLocationMarker.getLatLng());
@@ -845,28 +938,254 @@ function checkUserLocationZone(latlng) {
     }
 }
 
-function toggleLocationTracking() {
-    if (!state.map) return;
-    const locateControlEl = document.querySelector(".leaflet-control-locate");
 
-    if (state.isLocating) {
-        state.isLocating = false;
-        state.map.stopLocate();
-        if (state.userLocationMarker) {
-            state.map.removeLayer(state.userLocationMarker);
-            state.userLocationMarker = null;
+class CustomMapStyleControl {
+    onAdd(map) {
+        this.map = map;
+        this.container = document.createElement("div");
+        this.container.className = "maplibregl-ctrl maplibregl-ctrl-group leaflet-control-layers";
+        
+        const button = document.createElement("a");
+        button.className = "leaflet-control-layers-toggle";
+        button.href = "#";
+        button.title = "Map Elements";
+        button.setAttribute("role", "button");
+        button.setAttribute("aria-label", "Map Elements");
+        button.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+        `;
+        this.container.appendChild(button);
+
+        const listContainer = document.createElement("div");
+        listContainer.className = "leaflet-control-layers-list";
+        listContainer.innerHTML = `
+            <div class="leaflet-control-layers-header">
+                <div class="modal-title-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-left: 2px;">
+                    <span class="modal-title" style="font-size: 0.95rem; font-weight: 700; color: #ffffff; text-transform: none; letter-spacing: normal;">Map Elements</span>
+                    <button type="button" class="modal-close-btn" aria-label="Close Map Elements" style="background: transparent; border: none; padding: 4px; cursor: pointer; color: rgba(255, 255, 255, 0.45); display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; border-radius: 50%;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-capsules-wrapper">
+                    <div class="modal-capsules-scroll">
+                        <button type="button" class="modal-capsule modal-capsule--icon is-active" data-tab="basemaps" title="Select Basemaps">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                <polyline points="2 17 12 22 22 17"></polyline>
+                                <polyline points="2 12 12 17 22 12"></polyline>
+                            </svg>
+                        </button>
+                        <button type="button" class="modal-capsule" data-tab="layers">Our Layers</button>
+                    </div>
+                    <button type="button" class="modal-search-toggle-btn" aria-label="Search items">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-search-expanded">
+                    <div class="modal-search-input-container">
+                        <svg class="modal-search-input-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" class="modal-search-input" placeholder="Search items..." autocomplete="off" />
+                    </div>
+                    <button type="button" class="modal-search-close-btn" aria-label="Close search">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="leaflet-control-layers-body"></div>
+        `;
+        this.container.appendChild(listContainer);
+
+        let activeTab = "basemaps";
+        let searchQuery = "";
+
+        const headerEl = listContainer.querySelector(".leaflet-control-layers-header");
+        const bodyEl = listContainer.querySelector(".leaflet-control-layers-body");
+        const searchInput = listContainer.querySelector(".modal-search-input");
+        const searchToggleBtn = listContainer.querySelector(".modal-search-toggle-btn");
+        const searchCloseBtn = listContainer.querySelector(".modal-search-close-btn");
+
+        const renderContent = () => {
+            if (!bodyEl) return;
+            bodyEl.innerHTML = "";
+            const query = searchQuery.toLowerCase().trim();
+
+            const layers = [];
+            if (state.isCirclesFeature || state.currentFeature === "circles") {
+                layers.push({
+                    id: "circles", name: "CCBA CBC Circles", isChild: false, image: "../images/wetlands.jpg", isLogo: false,
+                    action: () => selectSubject(CIRCLE_ID, true)
+                });
+            } else {
+                const isFlorence = state.currentFeature === "florence";
+                layers.push({
+                    id: "circle", name: isFlorence ? "Florence CBC Circle" : "Eugene CBC Circle", isChild: false, 
+                    image: isFlorence ? "../images/florence.png" : "../images/logo-small.png", isLogo: true,
+                    action: () => selectSubject(CIRCLE_ID, true)
+                });
+                if (state.currentId && state.currentId !== CIRCLE_ID) {
+                    const targetZone = state.allFeatures.find(f => {
+                        const zid = f.properties?.zid;
+                        return zid && (String(zid).toLowerCase() === String(state.currentId).toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
+                    });
+                    const zidDisplay = targetZone ? displayZoneId(targetZone.properties.zid) : state.currentId;
+                    layers.push({
+                        id: "selected-zone", name: `Zone ${zidDisplay}`, isChild: true, image: zoneImagePath(state.currentId), isLogo: false,
+                        action: () => selectSubject(state.currentId, true)
+                    });
+                }
+            }
+
+            const maxItems = Math.max(layers.length, 3);
+            const estimatedHeight = 76 + 20 + (maxItems * 68);
+            listContainer.style.setProperty("height", `${estimatedHeight}px`, "important");
+
+            if (activeTab === "layers") {
+                const filtered = layers.filter(l => l.name.toLowerCase().includes(query));
+                if (filtered.length === 0) bodyEl.innerHTML = `<div class="modal-no-results">No layers found</div>`;
+                else filtered.forEach(l => {
+                    const isCircleOverview = !state.currentId || state.currentId === CIRCLE_ID;
+                    const isRowActive = l.id === "selected-zone" || (l.id === "circle" && isCircleOverview) || (l.id === "circles" && state.isCirclesFeature);
+                    
+                    const row = document.createElement("div");
+                    row.className = `tile-zone-item ${l.isChild ? 'is-child' : ''} ${isRowActive ? 'is-active' : ''}`;
+                    row.innerHTML = `
+                        <div class="tile-zone-item__thumb ${l.isLogo ? 'tile-zone-item__thumb--logo' : ''}">
+                            <img src="${l.image}" alt="${l.name}" loading="lazy">
+                        </div>
+                        <div class="tile-zone-item__info">
+                            <div class="tile-zone-item__title">${l.name}</div>
+                        </div>
+                    `;
+                    row.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); l.action(); });
+                    bodyEl.appendChild(row);
+                });
+            } else {
+                const basemaps = [
+                    { id: "dark", name: "Dark Map", thumbnailClass: "dark-map-thumbnail" },
+                    { id: "satellite", name: "Satellite Map", thumbnailClass: "satellite-thumbnail" }
+                ];
+                const filtered = basemaps.filter(b => b.name.toLowerCase().includes(query));
+                if (filtered.length === 0) bodyEl.innerHTML = `<div class="modal-no-results">No basemaps found</div>`;
+                else filtered.forEach(b => {
+                    const isSelected = state.currentBaseLayer === b.id;
+                    const row = document.createElement("div");
+                    row.className = `tile-zone-item ${isSelected ? 'is-active' : ''}`;
+                    row.innerHTML = `
+                        <div class="tile-zone-item__thumb">
+                            <span class="thumbnail ${b.thumbnailClass}"></span>
+                        </div>
+                        <div class="tile-zone-item__info">
+                            <div class="tile-zone-item__title">${b.name}</div>
+                        </div>
+                    `;
+                    row.addEventListener("click", (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        
+                        if (b.id === "dark") {
+                            this.map.setLayoutProperty("base-satellite", "visibility", "none");
+                            this.map.setLayoutProperty("base-dark", "visibility", "visible");
+                            state.currentBaseLayer = "dark";
+                        } else if (b.id === "satellite") {
+                            this.map.setLayoutProperty("base-dark", "visibility", "none");
+                            this.map.setLayoutProperty("base-satellite", "visibility", "visible");
+                            state.currentBaseLayer = "satellite";
+                        }
+                        renderContent();
+                    });
+                    bodyEl.appendChild(row);
+                });
+            }
+        };
+
+        state.refreshLayersModal = renderContent;
+        renderContent();
+
+        button.addEventListener("click", (e) => {
+            e.preventDefault(); e.stopPropagation();
+            this.container.classList.toggle("leaflet-control-layers-expanded");
+            if (this.container.classList.contains("leaflet-control-layers-expanded")) renderContent();
+        });
+
+        const closeBtn = listContainer.querySelector(".modal-close-btn");
+        if (closeBtn) {
+            closeBtn.addEventListener("click", (e) => {
+                e.preventDefault(); e.stopPropagation();
+                this.container.classList.remove("leaflet-control-layers-expanded");
+            });
         }
-        if (state.userLocationAccuracy) {
-            state.map.removeLayer(state.userLocationAccuracy);
-            state.userLocationAccuracy = null;
-        }
-        if (locateControlEl) locateControlEl.classList.remove("is-active");
-        checkUserLocationZone(null);
-    } else {
-        state.isLocating = true;
-        if (locateControlEl) locateControlEl.classList.add("is-active");
-        state.map.locate({ setView: true, maxZoom: 15, watch: true, enableHighAccuracy: true, timeout: 10000 });
+
+        const capsules = listContainer.querySelectorAll(".modal-capsule");
+        capsules.forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault(); e.stopPropagation();
+                const tab = btn.getAttribute("data-tab");
+                if (tab === activeTab) return;
+                activeTab = tab;
+                capsules.forEach(c => c.classList.toggle("is-active", c.getAttribute("data-tab") === tab));
+                renderContent();
+            });
+        });
+
+        searchToggleBtn.addEventListener("click", (e) => {
+            e.preventDefault(); e.stopPropagation();
+            headerEl.classList.add("is-searching");
+            if (searchInput) searchInput.focus();
+        });
+
+        searchCloseBtn.addEventListener("click", (e) => {
+            e.preventDefault(); e.stopPropagation();
+            headerEl.classList.remove("is-searching");
+            if (searchInput) searchInput.value = "";
+            searchQuery = "";
+            renderContent();
+        });
+
+        searchInput.addEventListener("input", () => {
+            searchQuery = searchInput.value;
+            renderContent();
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!this.container.contains(e.target)) {
+                this.container.classList.remove("leaflet-control-layers-expanded");
+                headerEl.classList.remove("is-searching");
+                if (searchInput) searchInput.value = "";
+                searchQuery = "";
+            }
+        });
+
+        this.container.addEventListener('mousedown', e => e.stopPropagation());
+        this.container.addEventListener('touchstart', e => e.stopPropagation());
+        this.container.addEventListener('dblclick', e => e.stopPropagation());
+        this.container.addEventListener('wheel', e => e.stopPropagation());
+
+        return this.container;
     }
+
+    onRemove() {
+        this.container.parentNode.removeChild(this.container);
+        this.map = undefined;
+    }
+}
+
+function toggleLocationTracking() {
+    // MapLibre handles this with GeolocateControl automatically
 }
 
 function initializeMap() {
@@ -874,458 +1193,86 @@ function initializeMap() {
     const mapWrapper = document.getElementById("map-wrapper");
     if (!mapContainer) return;
 
-    state.map = L.map("tile-map", {
-        zoomControl: true,
-        attributionControl: false,
-        doubleClickZoom: false,
-        minZoom: 8
-    }).setView([44.05, -123.11], 11);
-
-    const FullscreenControl = L.Control.extend({
-        options: { position: "topleft" },
-        onAdd: function () {
-            const container = L.DomUtil.create("div", "leaflet-bar leaflet-control leaflet-control-fullscreen");
-            const button = L.DomUtil.create("a", "leaflet-control-fullscreen-btn", container);
-            button.href = "#";
-            button.title = "Toggle Fullscreen";
-            button.setAttribute("role", "button");
-            button.setAttribute("aria-label", "Toggle Fullscreen");
-            button.innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                </svg>
-            `;
-            L.DomEvent.disableClickPropagation(button);
-            L.DomEvent.on(button, "click", function (e) {
-                L.DomEvent.stop(e);
-                toggleFullscreen();
-            });
-            return container;
-        }
-    });
-    state.fullscreenControl = new FullscreenControl().addTo(state.map);
-
-
-    state.map.on("locationfound", (e) => {
-        if (!state.userLocationMarker) {
-            const userIcon = L.divIcon({
-                className: "user-location-marker",
-                html: '<div class="user-location-dot"></div>',
-                iconSize: [20, 20],
-                iconAnchor: [10, 10]
-            });
-            state.userLocationMarker = L.marker(e.latlng, { icon: userIcon }).addTo(state.map);
-            state.userLocationAccuracy = L.circle(e.latlng, {
-                radius: e.accuracy,
-                color: "#30d158",
-                fillColor: "#30d158",
-                fillOpacity: 0.15,
-                weight: 1.5
-            }).addTo(state.map);
-        } else {
-            state.userLocationMarker.setLatLng(e.latlng);
-            state.userLocationAccuracy.setLatLng(e.latlng);
-            state.userLocationAccuracy.setRadius(e.accuracy);
-        }
-        checkUserLocationZone(e.latlng);
-    });
-
-    state.map.on("locationerror", () => {
-        state.isLocating = false;
-        const locateControlEl = document.querySelector(".leaflet-control-locate");
-        if (locateControlEl) locateControlEl.classList.remove("is-active");
-        checkUserLocationZone(null);
-        showToast("Unable to access device location");
-    });
-
-    const darkTileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        subdomains: "abcd",
+    state.map = new maplibregl.Map({
+        container: 'tile-map',
+        style: {
+            version: 8,
+            sources: {
+                "dark-tiles": {
+                    type: "raster",
+                    tiles: ["https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"],
+                    tileSize: 256,
+                    attribution: "&copy; <a href='https://carto.com/'>CARTO</a>"
+                },
+                "satellite-tiles": {
+                    type: "raster",
+                    tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+                    tileSize: 256,
+                    attribution: "Tiles &copy; Esri"
+                }
+            },
+            layers: [
+                {
+                    id: "base-dark",
+                    type: "raster",
+                    source: "dark-tiles",
+                    minzoom: 0,
+                    maxzoom: 22,
+                    layout: { visibility: "visible" }
+                },
+                {
+                    id: "base-satellite",
+                    type: "raster",
+                    source: "satellite-tiles",
+                    minzoom: 0,
+                    maxzoom: 22,
+                    layout: { visibility: "none" }
+                }
+            ]
+        },
+        center: [-123.11, 44.05],
+        zoom: 11,
         minZoom: 8,
-        maxZoom: 19,
-        detectRetina: true,
-        className: "carto-dark-tile"
+        attributionControl: false
     });
 
-    const esriSatLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-        attribution: "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
-        minZoom: 8,
-        maxZoom: 19,
-        detectRetina: true,
-        className: "esri-sat-tile"
+    state.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-left');
+    state.map.addControl(new maplibregl.FullscreenControl(), 'bottom-left');
+    
+    const geolocate = new maplibregl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true
+    });
+    state.map.addControl(geolocate, 'bottom-left');
+    
+    geolocate.on('geolocate', (e) => {
+        checkUserLocationZone({ lng: e.coords.longitude, lat: e.coords.latitude });
     });
 
-    darkTileLayer.addTo(state.map);
+    state.layersControl = new CustomMapStyleControl();
+    state.map.addControl(state.layersControl, 'bottom-left');
 
-    const baseMaps = {
-        "Dark Map": darkTileLayer,
-        "Satellite Map": esriSatLayer
-    };
-
-    state.baseMapsList = [
-        { name: "Dark Map", layer: darkTileLayer },
-        { name: "Satellite Map", layer: esriSatLayer }
-    ];
-
-    // Custom Map Style Control (Custom Reimplementation)
-    const MapStyleControl = L.Control.extend({
-        options: { position: "topleft" },
-        onAdd: function () {
-            const container = L.DomUtil.create("div", "leaflet-bar leaflet-control leaflet-control-layers");
-            
-            const button = L.DomUtil.create("a", "leaflet-control-layers-toggle", container);
-            button.href = "#";
-            button.title = "Map Elements";
-            button.setAttribute("role", "button");
-            button.setAttribute("aria-label", "Map Elements");
-            button.innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                    <polyline points="2 17 12 22 22 17"></polyline>
-                    <polyline points="2 12 12 17 22 12"></polyline>
-                </svg>
-            `;
-
-            // Create the popup list container
-            const listContainer = L.DomUtil.create("div", "leaflet-control-layers-list", container);
-            
-            listContainer.innerHTML = `
-                <div class="leaflet-control-layers-header">
-                    <div class="modal-title-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-left: 2px;">
-                        <span class="modal-title" style="font-size: 0.95rem; font-weight: 700; color: #ffffff; text-transform: none; letter-spacing: normal;">Map Elements</span>
-                        <button type="button" class="modal-close-btn" aria-label="Close Map Elements" style="background: transparent; border: none; padding: 4px; cursor: pointer; color: rgba(255, 255, 255, 0.45); display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; border-radius: 50%;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="modal-capsules-wrapper">
-                        <div class="modal-capsules-scroll">
-                            <button type="button" class="modal-capsule modal-capsule--icon is-active" data-tab="basemaps" title="Select Basemaps">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                                    <polyline points="2 17 12 22 22 17"></polyline>
-                                    <polyline points="2 12 12 17 22 12"></polyline>
-                                </svg>
-                            </button>
-                            <button type="button" class="modal-capsule" data-tab="layers">Our Layers</button>
-                        </div>
-                        <button type="button" class="modal-search-toggle-btn" aria-label="Search items">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="modal-search-expanded">
-                        <div class="modal-search-input-container">
-                            <svg class="modal-search-input-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                            <input type="text" class="modal-search-input" placeholder="Search items..." autocomplete="off" />
-                        </div>
-                        <button type="button" class="modal-search-close-btn" aria-label="Close search">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="leaflet-control-layers-body"></div>
-            `;
-
-            L.DomEvent.disableClickPropagation(button);
-            L.DomEvent.disableClickPropagation(listContainer);
-            L.DomEvent.disableScrollPropagation(listContainer);
-
-            // Tab and Search State
-            let activeTab = "basemaps";
-            let searchQuery = "";
-
-            const headerEl = listContainer.querySelector(".leaflet-control-layers-header");
-            const bodyEl = listContainer.querySelector(".leaflet-control-layers-body");
-            const searchInput = listContainer.querySelector(".modal-search-input");
-            const searchToggleBtn = listContainer.querySelector(".modal-search-toggle-btn");
-            const searchCloseBtn = listContainer.querySelector(".modal-search-close-btn");
-
-            const renderContent = () => {
-                if (!bodyEl) return;
-                bodyEl.innerHTML = "";
-                const query = searchQuery.toLowerCase().trim();
-
-                // 1. Pre-calculate "Our Layers" list for height estimation
-                const layers = [];
-                if (state.isCirclesFeature || state.currentFeature === "circles") {
-                    layers.push({
-                        id: "circles",
-                        name: "CCBA CBC Circles",
-                        isChild: false,
-                        image: "../images/wetlands.jpg",
-                        isLogo: false,
-                        action: () => selectSubject(CIRCLE_ID, true)
-                    });
-                } else {
-                    const isFlorence = state.currentFeature === "florence";
-                    const circleName = isFlorence ? "Florence CBC Circle" : "Eugene CBC Circle";
-                    const circleImg = isFlorence ? "../images/florence.png" : "../images/logo-small.png";
-                    layers.push({
-                        id: "circle",
-                        name: circleName,
-                        isChild: false,
-                        image: circleImg,
-                        isLogo: true,
-                        action: () => selectSubject(CIRCLE_ID, true)
-                    });
-
-                    if (state.currentId && state.currentId !== CIRCLE_ID) {
-                        const targetZone = state.allFeatures.find(f => {
-                            const zid = f.properties?.zid;
-                            return zid && (String(zid).toLowerCase() === String(state.currentId).toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
-                        });
-                        const zidDisplay = targetZone ? displayZoneId(targetZone.properties.zid) : state.currentId;
-                        const zoneImg = zoneImagePath(state.currentId);
-                        layers.push({
-                            id: "selected-zone",
-                            name: `Zone ${zidDisplay}`,
-                            isChild: true,
-                            image: zoneImg,
-                            isLogo: false,
-                            action: () => selectSubject(state.currentId, true)
-                        });
-                    }
-                }
-
-                // 2. Pre-calculate "Basemaps" item count
-                const basemapsCount = 3;
-
-                // 3. Estmate height based on the tallest tab (max potential items)
-                const maxItems = Math.max(layers.length, basemapsCount);
-                // Header (76px) + Body margins (20px) + items (68px each)
-                const estimatedHeight = 76 + 20 + (maxItems * 68);
-                listContainer.style.setProperty("height", `${estimatedHeight}px`, "important");
-
-                if (activeTab === "layers") {
-                    const filtered = layers.filter(l => l.name.toLowerCase().includes(query));
-                    if (filtered.length === 0) {
-                        bodyEl.innerHTML = `<div class="modal-no-results">No layers found</div>`;
-                    } else {
-                        filtered.forEach(l => {
-                            const isCircleOverview = !state.currentId || state.currentId === CIRCLE_ID;
-                            const isRowActive = l.id === "selected-zone" || (l.id === "circle" && isCircleOverview) || (l.id === "circles" && state.isCirclesFeature);
-                            
-                            const row = L.DomUtil.create("div", `tile-zone-item ${l.isChild ? 'is-child' : ''} ${isRowActive ? 'is-active' : ''}`, bodyEl);
-                            row.innerHTML = `
-                                <div class="tile-zone-item__thumb ${l.isLogo ? 'tile-zone-item__thumb--logo' : ''}">
-                                    <img src="${l.image}" alt="${l.name}" loading="lazy">
-                                </div>
-                                <div class="tile-zone-item__info">
-                                    <div class="tile-zone-item__title">${l.name}</div>
-                                </div>
-                            `;
-
-                            const img = row.querySelector("img");
-                            if (img) {
-                                img.addEventListener("error", () => {
-                                    img.src = FALLBACK_IMAGE;
-                                });
-                            }
-
-                            L.DomEvent.on(row, "click", (e) => {
-                                L.DomEvent.stop(e);
-                                l.action();
-                            });
-                        });
-                    }
-                } else {
-                    // Populate "Basemaps"
-                    const basemaps = [
-                        { id: "dark", name: "Dark Map", thumbnailClass: "dark-map-thumbnail" },
-                        { id: "satellite", name: "Satellite Map", thumbnailClass: "satellite-thumbnail" }
-                    ];
-
-                    const filtered = basemaps.filter(b => b.name.toLowerCase().includes(query));
-                    if (filtered.length === 0) {
-                        bodyEl.innerHTML = `<div class="modal-no-results">No basemaps found</div>`;
-                    } else {
-                        filtered.forEach(b => {
-                            const isSelected = state.currentBaseLayer === b.id;
-                            const row = L.DomUtil.create("div", `tile-zone-item ${isSelected ? 'is-active' : ''}`, bodyEl);
-                            row.innerHTML = `
-                                <div class="tile-zone-item__thumb">
-                                    <span class="thumbnail ${b.thumbnailClass}"></span>
-                                </div>
-                                <div class="tile-zone-item__info">
-                                    <div class="tile-zone-item__title">${b.name}</div>
-                                </div>
-                            `;
-                            L.DomEvent.on(row, "click", (e) => {
-                                L.DomEvent.stop(e);
-                                
-                                if (b.id === "dark") {
-                                    state.map.removeLayer(esriSatLayer);
-                                    if (!state.map.hasLayer(darkTileLayer)) {
-                                        darkTileLayer.addTo(state.map);
-                                    }
-                                    state.currentBaseLayer = "dark";
-                                } else if (b.id === "satellite") {
-                                    state.map.removeLayer(darkTileLayer);
-                                    if (!state.map.hasLayer(esriSatLayer)) {
-                                        esriSatLayer.addTo(state.map);
-                                    }
-                                    state.currentBaseLayer = "satellite";
-                                }
-
-                                document.body.classList.remove("is-light-map-active");
-
-                                updateAllFeatureStyles();
-                                renderContent();
-                            });
-                        });
-                    }
-                }
-            };
-
-            // Register global callback for updates
-            state.refreshLayersModal = () => {
-                renderContent();
-            };
-
-            // Initial render
-            renderContent();
-
-            // Toggle logic on button click
-            L.DomEvent.on(button, "click", (e) => {
-                L.DomEvent.stop(e);
-                const isExpanded = container.classList.contains("leaflet-control-layers-expanded");
-                if (isExpanded) {
-                    container.classList.remove("leaflet-control-layers-expanded");
-                } else {
-                    container.classList.add("leaflet-control-layers-expanded");
-                    renderContent();
-                }
-            });
-
-            // Close button click handler
-            const closeBtn = listContainer.querySelector(".modal-close-btn");
-            if (closeBtn) {
-                L.DomEvent.on(closeBtn, "click", (e) => {
-                    L.DomEvent.stop(e);
-                    container.classList.remove("leaflet-control-layers-expanded");
-                });
-            }
-
-            // Tabs click handlers
-            const capsules = listContainer.querySelectorAll(".modal-capsule");
-            capsules.forEach(btn => {
-                L.DomEvent.on(btn, "click", (e) => {
-                    L.DomEvent.stop(e);
-                    const tab = btn.getAttribute("data-tab");
-                    if (tab === activeTab) return;
-
-                    activeTab = tab;
-                    capsules.forEach(c => {
-                        if (c.getAttribute("data-tab") === tab) {
-                            c.classList.add("is-active");
-                        } else {
-                            c.classList.remove("is-active");
-                        }
-                    });
-
-                    renderContent();
-                });
-            });
-
-            // Search Toggle logic
-            L.DomEvent.on(searchToggleBtn, "click", (e) => {
-                L.DomEvent.stop(e);
-                headerEl.classList.add("is-searching");
-                if (searchInput) {
-                    searchInput.focus();
-                }
-            });
-
-            L.DomEvent.on(searchCloseBtn, "click", (e) => {
-                L.DomEvent.stop(e);
-                headerEl.classList.remove("is-searching");
-                if (searchInput) {
-                    searchInput.value = "";
-                }
-                searchQuery = "";
-                renderContent();
-            });
-
-            L.DomEvent.on(searchInput, "input", () => {
-                searchQuery = searchInput.value;
-                renderContent();
-            });
-
-            // Click outside map style control to collapse it
-            document.addEventListener("click", (e) => {
-                if (!container.contains(e.target)) {
-                    container.classList.remove("leaflet-control-layers-expanded");
-                    // Reset search state on close
-                    headerEl.classList.remove("is-searching");
-                    if (searchInput) {
-                        searchInput.value = "";
-                    }
-                    searchQuery = "";
-                }
-            });
-
-            return container;
-        }
-    });
-
-    state.layersControl = new MapStyleControl().addTo(state.map);
-
-
-    const LocateControl = L.Control.extend({
-        options: { position: "topleft" },
-        onAdd: function () {
-            const container = L.DomUtil.create("div", "leaflet-bar leaflet-control leaflet-control-locate");
-            const button = L.DomUtil.create("a", "leaflet-control-locate-btn", container);
-            button.href = "#";
-            button.title = "Show My Location";
-            button.setAttribute("role", "button");
-            button.setAttribute("aria-label", "Show My Location");
-            button.innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="8"></circle>
-                    <line x1="12" y1="2" x2="12" y2="4"></line>
-                    <line x1="12" y1="20" x2="12" y2="22"></line>
-                    <line x1="2" y1="12" x2="4" y2="12"></line>
-                    <line x1="20" y1="12" x2="22" y2="12"></line>
-                    <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
-                </svg>
-            `;
-            L.DomEvent.disableClickPropagation(button);
-            L.DomEvent.on(button, "click", function (e) {
-                L.DomEvent.stop(e);
-                toggleLocationTracking();
-            });
-            return container;
-        }
-    });
-    state.locateControl = new LocateControl().addTo(state.map);
-
-    updateControlPositions();
-
-    state.map.on("click", () => {
+    state.map.on('click', (e) => {
         if (Date.now() - state.lastZoneClickTime < 250) {
             return;
         }
-        if (!state.isCirclesFeature && state.currentId === CIRCLE_ID) {
-            switchToCirclesFeature();
-        } else {
-            selectSubject(CIRCLE_ID);
+        const features = state.map.queryRenderedFeatures(e.point, { layers: ['zones-fill'] });
+        if (features.length === 0) {
+            if (!state.isCirclesFeature && state.currentId === CIRCLE_ID) {
+                switchToCirclesFeature();
+            } else {
+                selectSubject(CIRCLE_ID);
+            }
         }
     });
 
-    rebuildGeoJsonLayer();
+    state.map.on('load', () => {
+        rebuildGeoJsonLayer();
+    });
+
     setupMapEffectsAndFullscreen(mapWrapper);
 }
+
 
 function setupActionButtons() {
     const downloadModal = document.getElementById("downloads-modal");
