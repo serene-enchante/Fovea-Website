@@ -285,9 +285,27 @@ function updateHeader(subjectTitle) {
  */
 function getFitPadding(extra = 0) {
     const mobile = window.innerWidth <= 768;
-    return mobile
-        ? { top: 80 + extra, bottom: 90 + extra, left: 36 + extra, right: 36 + extra }
-        : { top: 60 + extra, bottom: 70 + extra, left: 60 + extra, right: 60 + extra };
+    if (mobile) {
+        // The floating toolbar is at top: 20px, height: 36px, so its bottom edge is at Y = 56px.
+        // We center the fitted feature in the remaining space from Y = 56px to the bottom of the map.
+        // We use a base margin of 50px + extra for visual breathing room and to clear bottom controls.
+        const baseMargin = 50 + extra;
+        return {
+            top: 56 + baseMargin,
+            bottom: baseMargin,
+            left: 40 + extra,
+            right: 40 + extra
+        };
+    } else {
+        // On desktop, the toolbar is inside the sidebar and doesn't overlap the map area.
+        const margin = 60 + extra;
+        return {
+            top: margin,
+            bottom: margin,
+            left: margin,
+            right: margin
+        };
+    }
 }
 
 function switchToFeature(featureName, circleLayer) {
