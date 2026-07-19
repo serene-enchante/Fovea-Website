@@ -1576,13 +1576,13 @@ body.page-maps-tile {
     }
 
     .maps-tile-map-container {
-        border-radius: 16px !important;
+        border-radius: 24px !important;
     }
 
     /* Mobile actions capsule floating at top-center of map area */
     .maps-tile-header__actions {
         position: absolute !important;
-        top: 20px !important;
+        top: 10px !important;
         bottom: auto !important;
         left: 50% !important;
         transform: translateX(-50%) !important;
