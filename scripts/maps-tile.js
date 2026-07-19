@@ -507,6 +507,8 @@ function renderSidebarList() {
                     switchToFeature("eugene", bbox);
                 } else if (cid === "Florence") {
                     switchToFeature("florence", bbox);
+                } else if (cid === "Oakridge" || cid === "Cottage Grove") {
+                    showToast("There is no data for this count circle");
                 }
             });
             listContainer.appendChild(item);
@@ -864,6 +866,7 @@ function rebuildGeoJsonLayer() {
                     'case',
                     ['boolean', ['feature-state', 'selected'], false], 0.35,
                     ['boolean', ['feature-state', 'hover'], false], 0.2,
+                    ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], 0.02,
                     0.07
                 ]
             }
@@ -878,6 +881,7 @@ function rebuildGeoJsonLayer() {
                     'case',
                     ['boolean', ['feature-state', 'selected'], false], '#00ff66',
                     ['boolean', ['feature-state', 'hover'], false], '#30d158',
+                    ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], 'rgba(255, 255, 255, 0.25)',
                     '#ffffff'
                 ],
                 'line-width': [
@@ -927,6 +931,8 @@ function rebuildGeoJsonLayer() {
                         switchToFeature("eugene", getBbox([e.features[0]]));
                     } else if (props.cid === "Florence") {
                         switchToFeature("florence", getBbox([e.features[0]]));
+                    } else if (props.cid === "Oakridge" || props.cid === "Cottage Grove") {
+                        showToast("There is no data for this count circle");
                     }
                 } else {
                     selectSubject(featureId, true);
