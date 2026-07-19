@@ -1052,7 +1052,8 @@ function initializeMap() {
                         "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
                         "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
                     ],
-                    tileSize: 256,
+                    tileSize: 128,
+                    roundZoom: true,
                     attribution: "&copy; <a href='https://carto.com/'>CARTO</a>"
                 },
                 "satellite-tiles": {
@@ -1060,7 +1061,8 @@ function initializeMap() {
                     tiles: [
                         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                     ],
-                    tileSize: 256,
+                    tileSize: 128,
+                    roundZoom: true,
                     attribution: "Tiles &copy; Esri &mdash; Source: Esri"
                 }
             },
