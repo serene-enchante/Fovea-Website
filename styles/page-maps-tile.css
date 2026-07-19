@@ -698,44 +698,66 @@ body.page-maps-tile {
     overflow: hidden; /* Clips the map as the back bar expands */
 }
 
-/* Desktop back-to-home bar sitting in the gap above the map frame */
-#desktop-back-bar {
+/* Desktop nav tabs container sitting in the gap above the map frame */
+.desktop-nav-tabs {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    width: 100%;
+    margin-bottom: 0.45rem;
+    flex-shrink: 0;
+    transition: height 0.5s cubic-bezier(0.25, 1, 0.5, 1), margin-bottom 0.5s cubic-bezier(0.25, 1, 0.5, 1), gap 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: height, margin-bottom, gap;
+}
+
+.desktop-nav-tab {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    flex: 1;
     height: 1.25rem;          /* matches the old margin-top gap */
-    margin-bottom: 0.45rem;
     background: #0f0f0f;
-    border-radius: 0 0 0 24px; /* bottom-left rounded, matching map frame top-left */
     text-decoration: none;
     color: var(--color-text-muted, rgba(255,255,255,0.45));
     cursor: pointer;
-    transition: color 0.18s ease, background 0.18s ease, height 0.5s cubic-bezier(0.25, 1, 0.5, 1), margin-bottom 0.5s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-    will-change: height, margin-bottom, border-radius;
+    transition: color 0.18s ease, background 0.18s ease, height 0.5s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: height, border-radius;
 }
 
-#desktop-back-bar svg,
-#desktop-back-bar .desktop-back-bar__home-icon {
-    width: 16px;
-    height: 16px;
+#desktop-nav-tab-tools {
+    border-radius: 0 0 0 24px; /* bottom-left rounded (outer: 24px), bottom-right straight */
+}
+
+#desktop-nav-tab-home {
+    border-radius: 0;          /* middle: both straight */
+}
+
+#desktop-nav-tab-settings {
+    border-radius: 0;          /* right: both straight */
+}
+
+.desktop-nav-tab__icon {
     display: block;
-    transition: opacity 0.3s ease;
-}
-
-#desktop-back-bar .desktop-back-bar__home-icon {
-    width: 11px;
-    height: 11px;
     filter: invert(1) brightness(0.45);  /* match the muted text colour */
-    margin-right: 6px;
     transition: opacity 0.3s ease, filter 0.18s ease;
 }
 
-#desktop-back-bar:hover .desktop-back-bar__home-icon {
+.desktop-nav-tab__icon--home {
+    width: 11px;
+    height: 11px;
+}
+
+.desktop-nav-tab__icon--tools,
+.desktop-nav-tab__icon--settings {
+    width: 14px;
+    height: 14px;
+}
+
+.desktop-nav-tab:hover .desktop-nav-tab__icon {
     filter: invert(1) brightness(0.85);
 }
 
-#desktop-back-bar:hover {
+.desktop-nav-tab:hover {
     color: rgba(255, 255, 255, 0.85);
     background: #1c1c1c;
 }
@@ -760,13 +782,16 @@ body.page-maps-tile {
 }
 
 /* Transition states when back bar is clicked */
-body.is-transitioning #desktop-back-bar {
+body.is-transitioning .desktop-nav-tabs {
     height: 100% !important;
     margin-bottom: 0 !important;
 }
 
-body.is-transitioning #desktop-back-bar svg,
-body.is-transitioning #desktop-back-bar .desktop-back-bar__home-icon {
+body.is-transitioning .desktop-nav-tab {
+    height: 100% !important;
+}
+
+body.is-transitioning .desktop-nav-tab__icon {
     opacity: 0 !important;
 }
 
@@ -1613,8 +1638,8 @@ body.is-transitioning #desktop-back-bar .desktop-back-bar__home-icon {
         width: 100% !important;
     }
 
-    /* Hide the desktop-only back bar on mobile */
-    #desktop-back-bar {
+    /* Hide the desktop-only top bars on mobile */
+    .desktop-nav-tabs {
         display: none !important;
     }
 
@@ -2793,87 +2818,4 @@ body.is-help-mode-active .mobile-help-exit-btn {
 .is-light-map-active .tile-zone-item__thumb--logo img {
     background-color: transparent !important;
     filter: invert(1) !important;
-}
-
-/* ─── Mobile Bottom Navigation Bar ──────────────────────────────────────── */
-
-/* Hidden on desktop – only shows on mobile */
-.mobile-bottom-nav {
-    display: none;
-}
-
-@media (max-width: 768px) {
-    /* Push content above the fixed bottom nav */
-    .maps-tile-main {
-        padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
-    }
-
-    .mobile-bottom-nav {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-around;
-        /* Fixed to viewport bottom – works even with body position:fixed */
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        background: #000000;
-        height: calc(28px + env(safe-area-inset-bottom, 0px));
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-        /* sit on top of map controls but under modals */
-        z-index: 1500;
-    }
-
-    /* Gradient bleed extending above the nav bar into the map */
-    .mobile-bottom-nav::before {
-        content: "";
-        position: absolute;
-        bottom: 100%;
-        left: 0;
-        right: 0;
-        height: 40px;
-        background: linear-gradient(to bottom, transparent, #000000);
-        pointer-events: none;
-    }
-
-    .mobile-bottom-nav__item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 3px;
-        flex: 1;
-        height: 100%;
-        background: none;
-        border: none;
-        cursor: pointer;
-        text-decoration: none;
-        color: rgba(255, 255, 255, 0.45);
-        padding: 7px 0 2px 0;
-        -webkit-tap-highlight-color: transparent;
-        transition: color 0.15s ease;
-    }
-
-    .mobile-bottom-nav__item:active {
-        color: rgba(255, 255, 255, 0.85);
-    }
-
-    .mobile-bottom-nav__icon {
-        width: 18px;
-        height: 18px;
-        display: block;
-        /* brightness(0) normalises any coloured SVG to black before invert+dim */
-        filter: brightness(0) invert(1) brightness(0.45);
-        transition: filter 0.15s ease;
-    }
-
-    .mobile-bottom-nav__item:active .mobile-bottom-nav__icon {
-        filter: brightness(0) invert(1) brightness(0.85);
-    }
-
-    .mobile-bottom-nav__label {
-        display: none;
-    }
 }

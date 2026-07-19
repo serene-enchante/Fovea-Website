@@ -2722,7 +2722,9 @@ function setupHelpModeSystem() {
     });
 
     const helpDictionary = [
-        { selector: "#desktop-back-bar", title: "Home Tab", desc: "Click this bar to navigate back to the Fovea homepage." },
+        { selector: "#desktop-nav-tab-home", title: "Home Tab", desc: "Click this bar to navigate back to the Fovea homepage." },
+        { selector: "#desktop-nav-tab-tools", title: "Tools Tab", desc: "Access various tools to assist with bird data collection, processing, and spatial analysis." },
+        { selector: "#desktop-nav-tab-settings", title: "Settings Tab", desc: "Configure options, visual display preferences, and map style layers." },
         { selector: "#header-logo-container, .logo--header", title: "Organization Logo", desc: "Click the organization logo to navigate to the home directory of the organization which the currently selected feature belongs to." },
         { selector: "#header-title", title: "Selection Title", desc: "Displays the name of the currently selected feature." },
         { selector: "#btn-copy-link", title: "Copy Link", desc: "Generates and copies a direct URL share link for the current view.", shortcut: "Shift + C" },
@@ -2995,7 +2997,7 @@ document.addEventListener("DOMContentLoaded", init);
 
 // Desktop back bar: page transition animation sequence before navigating home
 (function () {
-    const bar = document.getElementById("desktop-back-bar");
+    const bar = document.getElementById("desktop-nav-tab-home");
     const overlay = document.getElementById("page-transition-overlay");
     if (!bar || !overlay) return;
 
@@ -3019,3 +3021,5 @@ document.addEventListener("DOMContentLoaded", init);
         overlay.classList.remove("is-active");
     });
 })();
+
+
