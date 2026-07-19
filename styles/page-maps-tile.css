@@ -99,7 +99,6 @@ body.page-maps-tile {
     max-height: calc(1.2em * 2);
 }
 
-/* Header Action Icon Buttons pill container */
 .maps-tile-header__actions {
     display: inline-flex;
     align-items: center;
@@ -111,8 +110,10 @@ body.page-maps-tile {
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
     border-radius: 20px;
     padding: 4px;
     gap: 4px;
@@ -1668,7 +1669,6 @@ body.is-transitioning #desktop-back-bar svg {
         border-radius: 24px !important;
     }
 
-    /* Mobile actions capsule floating at top-center of map area */
     .maps-tile-header__actions {
         position: absolute !important;
         top: 10px !important;
@@ -1686,11 +1686,11 @@ body.is-transitioning #desktop-back-bar svg {
         align-items: center !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
-        background: rgba(255, 255, 255, 0.08) !important;
+        background: rgba(15, 15, 15, 0.7) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
         border-radius: 20px !important;
-        backdrop-filter: blur(16px) !important;
-        -webkit-backdrop-filter: blur(16px) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
         box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
     }
 
@@ -1714,11 +1714,11 @@ body.is-transitioning #desktop-back-bar svg {
     flex-direction: column !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
-    background: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(15, 15, 15, 0.7) !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: 20px !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
     transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
