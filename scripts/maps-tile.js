@@ -1085,7 +1085,6 @@ function initializeMap() {
         },
         center: [-123.11, 44.05],
         zoom: 11,
-        minZoom: 8,
         attributionControl: false
     });
 
