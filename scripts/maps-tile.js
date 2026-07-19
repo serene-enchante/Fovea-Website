@@ -2508,3 +2508,23 @@ function setupSidebarScrollListener() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// Desktop back bar: black curtain pull-down transition before navigating home
+(function () {
+    const bar = document.getElementById("desktop-back-bar");
+    const overlay = document.getElementById("page-transition-overlay");
+    if (!bar || !overlay) return;
+
+    bar.addEventListener("click", function (e) {
+        e.preventDefault();
+        const dest = bar.getAttribute("href") || "../";
+
+        // Trigger the curtain
+        overlay.classList.add("is-active");
+
+        // Navigate after animation completes (matches 0.22s CSS transition)
+        setTimeout(function () {
+            window.location.href = dest;
+        }, 220);
+    });
+})();

@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="../styles/header.css">
     <link rel="stylesheet" href="../styles/cards.css">
     <link rel="stylesheet" href="../styles/maps-components.css">
-    <link rel="stylesheet" href="../styles/page-maps-tile.css?v=30">
+    <link rel="stylesheet" href="../styles/page-maps-tile.css?v=43">
 
     <!-- MapLibre & Fonts -->
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
@@ -288,6 +288,13 @@
 
             <!-- Right 3/4 of width: Leaflet window area with margins on all sides -->
             <div class="maps-tile-map-area">
+                <!-- Desktop only: grey top bar with back-to-home arrow -->
+                <a id="desktop-back-bar" href="../" aria-label="Back to home page" title="Back to home">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </a>
                 <section id="map-wrapper" class="maps-tile-map-container" aria-label="Interactive map view">
                     <div id="tile-map">
                         <div class="map-fade-overlay"></div>
@@ -315,6 +322,9 @@
         </div>
     </div>
 
+    <!-- Page transition overlay: black curtain that pulls down from top on nav -->
+    <div id="page-transition-overlay"></div>
+
     <!-- Interactive Help Mode Tooltip & Overlay Highlight -->
     <div id="help-mode-tooltip" class="help-mode-tooltip" aria-hidden="true"></div>
     <div id="help-mode-highlight" class="help-mode-highlight" aria-hidden="true"></div>
@@ -329,7 +339,7 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-    <script src="../scripts/maps-tile.js?v=26"></script>
+    <script src="../scripts/maps-tile.js?v=28"></script>
 </body>
 
 </html>

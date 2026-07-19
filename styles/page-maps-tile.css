@@ -26,12 +26,13 @@ body.page-maps-tile {
     z-index: 2000;
     padding: calc(0.55rem + env(safe-area-inset-top, 0px)) 1.25rem 0.55rem 1.25rem !important;
     text-align: left;
-    background: #000000;
+    background: #0a0a0a;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: none;
     flex-shrink: 0;
 }
+
 
 .page-maps-tile .logo--header {
     height: 52px;
@@ -686,13 +687,59 @@ body.page-maps-tile {
 .maps-tile-map-area {
     flex: 1;
     height: auto; /* Let flexbox stretch handle height with margins */
-    margin-top: 1.25rem;
+    margin-top: 0; /* Bar now fills the gap itself */
     padding: 0;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     min-height: 0;
     position: relative;
+}
+
+/* Desktop back-to-home bar sitting in the gap above the map frame */
+#desktop-back-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    height: 1.25rem;          /* matches the old margin-top gap */
+    margin-bottom: 0.45rem;
+    background: #0f0f0f;
+    border-radius: 0 0 0 24px; /* bottom-left rounded, matching map frame top-left */
+    text-decoration: none;
+    color: var(--color-text-muted, rgba(255,255,255,0.45));
+    cursor: pointer;
+    transition: color 0.18s ease, background 0.18s ease;
+}
+
+#desktop-back-bar svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+#desktop-back-bar:hover {
+    color: var(--color-text, rgba(255,255,255,0.85));
+    background: #2e2e2e;
+}
+
+/* Page transition overlay: black curtain that pulls down from the top */
+#page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 99999;
+    transform: translateY(-100%);
+    transition: transform 0.22s cubic-bezier(0.55, 0, 1, 0.45);
+    pointer-events: none;
+    will-change: transform;
+}
+
+#page-transition-overlay.is-active {
+    transform: translateY(0);
+    pointer-events: all;
 }
 
 /* Leaflet Window Container extending to edges */
@@ -1523,6 +1570,11 @@ body.page-maps-tile {
         padding: 0 !important;
         margin: 0 !important; /* Reset desktop margins on mobile */
         transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    /* Hide the desktop-only back bar on mobile */
+    #desktop-back-bar {
+        display: none !important;
     }
 
     .maps-tile-map-container .map-ctrl-panel {
