@@ -2838,45 +2838,77 @@ body.is-help-mode-active .mobile-help-exit-btn {
     .mobile-nav-tabs {
         display: flex;
         flex-direction: column;
+        justify-content: flex-end;
+        padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); /* floating safe-area height raised to clear browser toolbar */
         gap: 2px;
         position: absolute;
         right: 0;
-        bottom: calc(72px + env(safe-area-inset-bottom, 0px)); /* floating safe-area height raised to clear browser toolbar */
+        top: 0; /* run the fill full height from the top */
+        bottom: 0; /* run the fill full height to the bottom */
         z-index: 990;
-        width: 32px;
-        box-shadow: -2px 4px 12px rgba(0, 0, 0, 0.45);
+        width: 40px; /* slightly wider for spacing breathing room */
         box-sizing: border-box;
-        background: #000000; /* black fill under the 2px gaps */
-        border-radius: 24px 0 0 24px; /* match outer corners of top and bottom tabs - straight right side */
-        overflow: hidden; /* clip child tabs to match the rounded bounds */
+        background: #000000; /* solid black fill top-to-bottom */
+        border-radius: 0; /* completely straight vertical strip */
+        pointer-events: none; /* pass-through touches on the empty areas */
         
         /* Establish initial state for transitions to prevent snapping */
         transform: translateX(0);
-        opacity: 1;
-        will-change: transform, opacity;
+        will-change: transform;
         
-        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); /* snappy entry when showing */
     }
 
     .mobile-nav-tabs.is-hidden {
-        transform: translateX(42px); /* slide off-screen right */
-        opacity: 0;
-        pointer-events: none;
+        transform: translateX(40px); /* slide off-screen right by exactly its width */
+        /* Gentler ease-in-out start for exit animation so it doesn't poof/snap away */
+        transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mobile-nav-toggle {
+        position: absolute;
+        left: -28px; /* sticks out on the left edge of the vertical bar */
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px)); /* floats exactly where tabs end */
+        width: 28px;
+        height: 36px;
+        background: #000000;
+        border: none;
+        outline: none;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.6);
+        border-radius: 8px 0 0 8px; /* rounded tab corner */
+        cursor: pointer;
+        pointer-events: auto; /* active tap trigger */
+        box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.45);
+    }
+
+    .mobile-nav-toggle__icon {
+        display: block;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        transform: rotate(180deg); /* point right when expanded */
+    }
+
+    .mobile-nav-tabs.is-hidden .mobile-nav-toggle__icon {
+        transform: rotate(0deg); /* point left when collapsed */
     }
 
     .mobile-nav-tab {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
+        width: 40px;
         height: 48px; /* static height so it does not stretch when list is resized */
-        background: #0f0f0f;
+        background: transparent !important; /* remove the grey frame */
         text-decoration: none;
         color: var(--color-text-muted, rgba(255,255,255,0.45));
         cursor: pointer;
-        transition: color 0.18s ease, background 0.18s ease;
+        transition: color 0.18s ease;
         box-sizing: border-box;
-        border-radius: 0; /* straight borders; clipped by parent overflow:hidden */
+        border-radius: 0;
+        pointer-events: auto; /* enable tap interaction on the tab buttons */
     }
 
     #mobile-nav-tab-tools {
@@ -2898,18 +2930,18 @@ body.is-help-mode-active .mobile-help-exit-btn {
      }
 
     .mobile-nav-tab__icon--home {
-        width: 11px;
-        height: 11px;
+        width: 13px;
+        height: 13px;
     }
 
     .mobile-nav-tab__icon--tools,
     .mobile-nav-tab__icon--settings {
-        width: 14px;
-        height: 14px;
+        width: 17px;
+        height: 17px;
     }
 
     .mobile-nav-tab:active {
-        background: #1c1c1c;
+        background: transparent !important;
         color: #ffffff;
     }
 

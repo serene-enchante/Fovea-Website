@@ -2971,6 +2971,8 @@ async function init() {
         setupMobileResizeBar();
         setupHelpModeSystem();
         setupSidebarScrollListener();
+        setupMobileNavToggle();
+        setupMobileNavSwipeListener();
 
         selectSubject(initialId, true);
     } catch (err) {
@@ -2994,15 +2996,6 @@ function setupSidebarScrollListener() {
                 header.classList.add("is-scrolled");
             } else {
                 header.classList.remove("is-scrolled");
-            }
-            
-            // Show tabs only when at the top of the list
-            if (mobileTabs) {
-                if (scrollTop <= 5) {
-                    mobileTabs.classList.remove("is-hidden");
-                } else {
-                    mobileTabs.classList.add("is-hidden");
-                }
             }
         });
     }
@@ -3041,5 +3034,55 @@ document.addEventListener("DOMContentLoaded", init);
         overlay.classList.remove("is-active");
     });
 })();
+
+
+function setupMobileNavToggle() {
+    const toggleBtn = document.getElementById("mobile-nav-toggle");
+    const mobileTabs = document.querySelector(".mobile-nav-tabs");
+    if (toggleBtn && mobileTabs) {
+        toggleBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            mobileTabs.classList.toggle("is-hidden");
+        });
+    }
+}
+
+function setupMobileNavSwipeListener() {
+    const listContainer = document.getElementById("sidebar-zone-list");
+    const mobileTabs = document.querySelector(".mobile-nav-tabs");
+    if (!listContainer || !mobileTabs) return;
+
+    let startX = 0;
+    let startY = 0;
+    let isSwipeCandidate = false;
+
+    listContainer.addEventListener("touchstart", (e) => {
+        if (window.innerWidth > 768) return;
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        isSwipeCandidate = true;
+    }, { passive: true });
+
+    listContainer.addEventListener("touchmove", (e) => {
+        if (!isSwipeCandidate || window.innerWidth > 768) return;
+        
+        const touch = e.touches[0];
+        const diffX = touch.clientX - startX;
+        const diffY = touch.clientY - startY;
+
+        // Verify primary horizontal swipe
+        if (Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+            if (diffX < -30) { // Swiped left -> reveal drawer
+                isSwipeCandidate = false;
+                mobileTabs.classList.remove("is-hidden");
+            } else if (diffX > 30) { // Swiped right -> hide drawer
+                isSwipeCandidate = false;
+                mobileTabs.classList.add("is-hidden");
+            }
+        }
+    }, { passive: true });
+}
 
 

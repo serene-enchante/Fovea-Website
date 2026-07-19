@@ -296,7 +296,7 @@
                     </div>
 
                     <!-- Mobile-only vertical navigation tabs stacked on the right edge -->
-                    <div class="mobile-nav-tabs">
+                    <div class="mobile-nav-tabs is-hidden">
                         <a id="mobile-nav-tab-tools" class="mobile-nav-tab" href="#tools" aria-label="Tools" title="Tools">
                             <img src="../svg/hammer-tool-svgrepo-com.svg" class="mobile-nav-tab__icon mobile-nav-tab__icon--tools" alt="" aria-hidden="true" />
                         </a>
@@ -306,6 +306,13 @@
                         <a id="mobile-nav-tab-settings" class="mobile-nav-tab" href="#settings" aria-label="Settings" title="Settings">
                             <img src="../svg/settings-svgrepo-com.svg" class="mobile-nav-tab__icon mobile-nav-tab__icon--settings" alt="" aria-hidden="true" />
                         </a>
+
+                        <!-- Drawer toggle button sticking out on the left edge -->
+                        <button id="mobile-nav-toggle" class="mobile-nav-toggle" aria-label="Toggle navigation tabs">
+                            <svg class="mobile-nav-toggle__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </aside>
@@ -370,7 +377,7 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-    <script src="../scripts/maps-tile.js?v=93"></script>
+    <script src="../scripts/maps-tile.js?v=102"></script>
 </body>
 
 </html>
