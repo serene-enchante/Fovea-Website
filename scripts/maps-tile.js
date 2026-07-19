@@ -213,23 +213,22 @@ function updateControlPositions() {
 
     if (isMobile) {
         // Zoom → top-right panel
-        if (topRight && zoomCtrl && zoomCtrl.parentElement !== topRight) {
-            topRight.appendChild(zoomCtrl);
-        }
-        // Locate, map styles, fullscreen → bottom-right row (left-to-right order)
+        if (topRight && zoomCtrl) topRight.appendChild(zoomCtrl);
+        // Mobile bottom-right row, left-to-right: map styles → location → fullscreen
         if (topLeft) {
-            if (locateCtrl && locateCtrl.parentElement !== topLeft) topLeft.appendChild(locateCtrl);
-            if (layersCtrl && layersCtrl.parentElement !== topLeft) topLeft.appendChild(layersCtrl);
-            if (fsCtrl && fsCtrl.parentElement !== topLeft) topLeft.appendChild(fsCtrl);
+            if (layersCtrl) topLeft.appendChild(layersCtrl);
+            if (locateCtrl) topLeft.appendChild(locateCtrl);
+            if (fsCtrl) topLeft.appendChild(fsCtrl);
         }
     } else {
-        // All → bottom-left, stacked vertically. With flex-direction:column-reverse,
-        // first appended = visually bottom. So append zoom first = zoom at bottom.
+        // All → bottom-left, stacked vertically. flex-direction:column-reverse means
+        // first appended = visually at bottom. Order from bottom to top:
+        // zoom (bottom) → fullscreen → locate → map styles (top)
         if (topLeft) {
-            if (zoomCtrl && zoomCtrl.parentElement !== topLeft) topLeft.appendChild(zoomCtrl);
-            if (locateCtrl && locateCtrl.parentElement !== topLeft) topLeft.appendChild(locateCtrl);
-            if (fsCtrl && fsCtrl.parentElement !== topLeft) topLeft.appendChild(fsCtrl);
-            if (layersCtrl && layersCtrl.parentElement !== topLeft) topLeft.appendChild(layersCtrl);
+            if (zoomCtrl) topLeft.appendChild(zoomCtrl);
+            if (fsCtrl) topLeft.appendChild(fsCtrl);
+            if (locateCtrl) topLeft.appendChild(locateCtrl);
+            if (layersCtrl) topLeft.appendChild(layersCtrl);
         }
     }
 }
