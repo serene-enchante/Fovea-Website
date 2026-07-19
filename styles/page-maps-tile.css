@@ -663,7 +663,8 @@ body.page-maps-tile {
 /* Right 3/4 Width Map Area with Margins on All Sides */
 .maps-tile-map-area {
     flex: 1;
-    height: 100%;
+    height: auto; /* Let flexbox stretch handle height with margins */
+    margin-top: 1.25rem;
     padding: 0;
     box-sizing: border-box;
     display: flex;
@@ -679,7 +680,7 @@ body.page-maps-tile {
     width: 100%;
     position: relative;
     background: #090b0a;
-    border-radius: 0 !important;
+    border-radius: 24px 0 0 0 !important;
     overflow: hidden !important;
     box-shadow: none;
     border: none;
@@ -1498,6 +1499,7 @@ body.page-maps-tile {
         order: 1 !important;
         height: calc(50% - 9px) !important;
         padding: 0 !important;
+        margin: 0 !important; /* Reset desktop margins on mobile */
         transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
 
