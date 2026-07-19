@@ -679,7 +679,7 @@ body.page-maps-tile {
     width: 100%;
     position: relative;
     background: #090b0a;
-    border-radius: 16px !important;
+    border-radius: 0 !important;
     overflow: hidden !important;
     box-shadow: none;
     border: none;
@@ -1573,6 +1573,10 @@ body.page-maps-tile {
     .page-maps-tile .logo--header {
         height: 44px !important;
         width: auto !important;
+    }
+
+    .maps-tile-map-container {
+        border-radius: 16px !important;
     }
 
     /* Mobile actions capsule floating at top-center of map area */
