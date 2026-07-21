@@ -1605,6 +1605,11 @@ function initializeMap() {
         attributionControl: false
     });
 
+    // Disable rotation on mobile (touch devices) – preserve pinch-to-zoom only
+    if (/Mobi|Android|iPhone|iPad|iPod|Touch/i.test(navigator.userAgent) || window.innerWidth <= 768) {
+        state.map.touchZoomRotate.disableRotation();
+    }
+
     state.baseMapsList = [
         { id: "dark", name: "Dark Map", layerId: "base-dark" },
         { id: "satellite", name: "Satellite Map", layerId: "base-satellite" },
@@ -3233,6 +3238,11 @@ function setupMobileResizeBar() {
 
     window.addEventListener("mouseup", stopDrag);
     window.addEventListener("touchend", stopDrag);
+
+    // On mobile, default to large-map view instead of 50/50 split
+    if (window.innerWidth <= 768) {
+        setMobileSnapState("map-full", false);
+    }
 }
 
 function setupHelpModeSystem() {
