@@ -60,6 +60,151 @@ function getBbox(features) {
     return [[minLng, minLat], [maxLng, maxLat]];
 }
 
+function findPointInsidePolygon(geom) {
+    if (!geom) return null;
+    
+    function getSegDistSq(px, py, a, b) {
+        let x = a[0];
+        let y = a[1];
+        let dx = b[0] - x;
+        let dy = b[1] - y;
+        if (dx !== 0 || dy !== 0) {
+            const t = ((px - x) * dx + (py - y) * dy) / (dx * dx + dy * dy);
+            if (t > 1) {
+                x = b[0];
+                y = b[1];
+            } else if (t > 0) {
+                x += dx * t;
+                y += dy * t;
+            }
+        }
+        dx = px - x;
+        dy = py - y;
+        return dx * dx + dy * dy;
+    }
+
+    function isPointInRing(pt, ring) {
+        const x = pt[0], y = pt[1];
+        let inside = false;
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+            const xi = ring[i][0], yi = ring[i][1];
+            const xj = ring[j][0], yj = ring[j][1];
+            const intersect = ((yi > y) !== (yj > y))
+                && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+        return inside;
+    }
+
+    function isPointInPoly(pt, polyCoords) {
+        if (!polyCoords || polyCoords.length === 0) return false;
+        if (!isPointInRing(pt, polyCoords[0])) return false;
+        for (let i = 1; i < polyCoords.length; i++) {
+            if (isPointInRing(pt, polyCoords[i])) return false;
+        }
+        return true;
+    }
+
+    function pointToPolygonDist(pt, polyCoords) {
+        let minDistSq = Infinity;
+        for (let i = 0; i < polyCoords.length; i++) {
+            const ring = polyCoords[i];
+            for (let j = 0, k = ring.length - 1; j < ring.length; k = j++) {
+                const distSq = getSegDistSq(pt[0], pt[1], ring[k], ring[j]);
+                if (distSq < minDistSq) minDistSq = distSq;
+            }
+        }
+        const dist = Math.sqrt(minDistSq);
+        return isPointInPoly(pt, polyCoords) ? dist : -dist;
+    }
+
+    let polygons = [];
+    if (geom.type === "Polygon") {
+        polygons.push(geom.coordinates);
+    } else if (geom.type === "MultiPolygon") {
+        polygons = geom.coordinates;
+    } else if (geom.type === "Point") {
+        return geom.coordinates;
+    } else {
+        return null;
+    }
+
+    if (polygons.length === 0) return null;
+
+    let bestPoly = polygons[0];
+    let maxLen = 0;
+    polygons.forEach(p => {
+        if (p[0] && p[0].length > maxLen) {
+            maxLen = p[0].length;
+            bestPoly = p;
+        }
+    });
+
+    const outerRing = bestPoly[0];
+    if (!outerRing || outerRing.length < 3) return null;
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    outerRing.forEach(p => {
+        if (p[0] < minX) minX = p[0];
+        if (p[1] < minY) minY = p[1];
+        if (p[0] > maxX) maxX = p[0];
+        if (p[1] > maxY) maxY = p[1];
+    });
+
+    const width = maxX - minX;
+    const height = maxY - minY;
+    const cellSize = Math.min(width, height);
+    if (cellSize === 0) return outerRing[0];
+
+    let bestCell = [minX + width / 2, minY + height / 2, 0, pointToPolygonDist([minX + width / 2, minY + height / 2], bestPoly)];
+    
+    if (bestCell[3] < 0) {
+        outerRing.forEach(p => {
+            const d = pointToPolygonDist(p, bestPoly);
+            if (d > bestCell[3]) {
+                bestCell = [p[0], p[1], 0, d];
+            }
+        });
+    }
+
+    function searchGrid(x0, y0, x1, y1, depth) {
+        if (depth > 4) return;
+        const dx = (x1 - x0) / 8;
+        const dy = (y1 - y0) / 8;
+        let localBest = null;
+        let maxDist = -Infinity;
+        
+        for (let i = 0; i <= 8; i++) {
+            for (let j = 0; j <= 8; j++) {
+                const px = x0 + i * dx;
+                const py = y0 + j * dy;
+                const dist = pointToPolygonDist([px, py], bestPoly);
+                if (dist > maxDist) {
+                    maxDist = dist;
+                    localBest = [px, py];
+                }
+            }
+        }
+        
+        if (localBest && maxDist > bestCell[3]) {
+            bestCell = [localBest[0], localBest[1], 0, maxDist];
+        }
+        
+        if (localBest) {
+            const newMinX = Math.max(x0, localBest[0] - dx);
+            const newMinY = Math.max(y0, localBest[1] - dy);
+            const newMaxX = Math.min(x1, localBest[0] + dx);
+            const newMaxY = Math.min(y1, localBest[1] + dy);
+            searchGrid(newMinX, newMinY, newMaxX, newMaxY, depth + 1);
+        }
+    }
+
+    searchGrid(minX, minY, maxX, maxY, 0);
+
+    return [bestCell[0], bestCell[1]];
+}
+
+
 function getDefaultStyle() {
     return MAP_STYLES.default;
 }
@@ -861,6 +1006,7 @@ function setupMapEffectsAndFullscreen(mapWrapper) {
             setTimeout(() => state.map.invalidateSize(), 200);
             setTimeout(() => state.map.invalidateSize(), 400);
         }
+        updateLabelZoomVisibility();
     };
 
     document.addEventListener("fullscreenchange", () => {
@@ -951,6 +1097,54 @@ function unhighlightTileItem() {
     });
 }
 
+function updateLabelZoomVisibility() {
+    if (!state.map || !state.map.getLayer('zones-labels')) return;
+    
+    const isMobile = window.innerWidth <= 768;
+    const circleCutoff = isMobile ? 5.5 : 7.5;
+    const zoneCutoff = isMobile ? 8.0 : 10.0;
+    
+    const textSizeExpression = [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        circleCutoff, 0,
+        8, [
+            'case',
+            ['has', 'zid'], 0,
+            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.010]], 0,
+            13
+        ],
+        zoneCutoff, [
+            'case',
+            ['has', 'zid'], 0,
+            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0024]], 0,
+            ['case', ['has', 'cid'], 13, 11]
+        ],
+        11, [
+            'case',
+            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0012]], 0,
+            ['case', ['has', 'cid'], 13, 11]
+        ],
+        12, [
+            'case',
+            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0006]], 0,
+            ['case', ['has', 'cid'], 13, 11]
+        ],
+        14, [
+            'case',
+            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.00015]], 0,
+            ['case', ['has', 'cid'], 13, 11]
+        ]
+    ];
+    
+    try {
+        state.map.setLayoutProperty('zones-labels', 'text-size', textSizeExpression);
+    } catch (err) {
+        console.error("Error setting dynamic text-size layout property:", err);
+    }
+}
+
 function rebuildGeoJsonLayer() {
     if (!state.map) return;
     
@@ -997,15 +1191,27 @@ function rebuildGeoJsonLayer() {
     Object.keys(grouped).forEach(newId => {
         const feat = grouped[newId];
         const bbox = getBbox([feat]);
-        const centerLng = (bbox[0][0] + bbox[1][0]) / 2;
-        const centerLat = (bbox[0][1] + bbox[1][1]) / 2;
+        const insidePt = findPointInsidePolygon(feat.geometry);
+        let centerLng, centerLat;
+        if (insidePt) {
+            centerLng = insidePt[0];
+            centerLat = insidePt[1];
+        } else {
+            centerLng = (bbox[0][0] + bbox[1][0]) / 2;
+            centerLat = (bbox[0][1] + bbox[1][1]) / 2;
+        }
+
+        const degWidth = bbox[1][0] - bbox[0][0];
+        const textVal = state.isCirclesFeature ? String(feat.properties.cid || "") : String(feat.properties.zid || "");
 
         labelFeatures.push({
             type: "Feature",
             id: newId,
             properties: {
                 ...feat.properties,
-                feature_id: newId
+                feature_id: newId,
+                deg_width: degWidth,
+                text_len: textVal.length
             },
             geometry: {
                 type: "Point",
@@ -1024,6 +1230,7 @@ function rebuildGeoJsonLayer() {
         if (state.map.getSource('zones-labels-src')) {
             state.map.getSource('zones-labels-src').setData(labelGeojsonData);
         }
+        updateLabelZoomVisibility();
     } else {
         state.map.addSource('zones', {
             type: 'geojson',
@@ -1088,9 +1295,37 @@ function rebuildGeoJsonLayer() {
                     'text-field': ['coalesce', ['get', 'cid'], ['get', 'zid'], ''],
                     'text-font': ['Noto Sans Regular'],
                     'text-size': [
-                        'case',
-                        ['has', 'cid'], 13,
-                        11
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        7.5, 0,
+                        8, [
+                            'case',
+                            ['has', 'zid'], 0,
+                            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.010]], 0,
+                            13
+                        ],
+                        10, [
+                            'case',
+                            ['has', 'zid'], 0,
+                            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0024]], 0,
+                            ['case', ['has', 'cid'], 13, 11]
+                        ],
+                        11, [
+                            'case',
+                            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0012]], 0,
+                            ['case', ['has', 'cid'], 13, 11]
+                        ],
+                        12, [
+                            'case',
+                            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0006]], 0,
+                            ['case', ['has', 'cid'], 13, 11]
+                        ],
+                        14, [
+                            'case',
+                            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.00015]], 0,
+                            ['case', ['has', 'cid'], 13, 11]
+                        ]
                     ],
                     'text-justify': 'center',
                     'text-anchor': 'center',
@@ -1103,6 +1338,7 @@ function rebuildGeoJsonLayer() {
                     'text-halo-width': 1.8
                 }
             });
+            updateLabelZoomVisibility();
         } catch (err) {
             console.error("Error adding zones-labels symbol layer:", err);
         }
