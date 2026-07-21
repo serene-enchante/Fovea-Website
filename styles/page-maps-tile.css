@@ -2170,16 +2170,16 @@ body.has-active-modal .maps-tile-header__actions {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 4px;
-    padding: 0.1rem 0.4rem;
+    background: rgba(48, 209, 88, 0.16) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 0.15rem 0.5rem;
     font-size: 0.7rem;
     font-family: inherit;
     font-weight: 700;
-    color: #30d158;
+    color: #30d158 !important;
     margin-left: 0.4rem;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    box-shadow: none !important;
 }
 
 .help-toggle-subtitle {
@@ -2294,30 +2294,32 @@ body.has-active-modal .maps-tile-header__actions {
 
 .help-mode-tooltip__shortcut {
     margin-top: 0.35rem;
-    padding: 0.3rem 0.6rem;
-    background: rgba(255, 255, 255, 0.06) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: none !important;
+    border-radius: 10px !important;
     font-size: 0.74rem;
-    color: #ffffff;
+    color: rgba(255, 255, 255, 0.65) !important;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
     align-self: flex-start;
+    box-shadow: none !important;
 }
 
 .help-mode-tooltip__shortcut svg {
-    color: #888888 !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    stroke: rgba(255, 255, 255, 0.6) !important;
     flex-shrink: 0;
 }
 
 .help-mode-tooltip__shortcut-label {
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(255, 255, 255, 0.65) !important;
     font-weight: 500;
 }
 
 .help-mode-tooltip__shortcut-val {
-    color: #aaaaaa !important;
+    color: #30d158 !important;
     font-weight: 700;
 }
 
