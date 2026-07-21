@@ -466,7 +466,7 @@ function switchToCirclesFeature() {
     selectSubject(CIRCLE_ID, true);
 }
 
-function selectSubject(id, triggerMapZoom = true) {
+function selectSubject(id, triggerMapZoom = true, animate = true) {
     window.scrollTo(0, 0);
     if (state.isHelpModeActive && window.innerWidth <= 768) return;
     state.currentId = id;
@@ -478,7 +478,7 @@ function selectSubject(id, triggerMapZoom = true) {
         renderSidebarList();
         updateUrl(id);
         if (triggerMapZoom && state.map) {
-            state.map.fitBounds(getBbox(state.allFeatures), { padding: getFitPadding() });
+            state.map.fitBounds(getBbox(state.allFeatures), { padding: getFitPadding(), animate: animate });
         }
         updateAllFeatureStyles();
         return;
@@ -517,9 +517,9 @@ function selectSubject(id, triggerMapZoom = true) {
 
     if (triggerMapZoom && state.map) {
         if (isCircle || !targetFeature) {
-            state.map.fitBounds(getBbox(state.allFeatures), { padding: getFitPadding() });
+            state.map.fitBounds(getBbox(state.allFeatures), { padding: getFitPadding(), animate: animate });
         } else {
-            state.map.fitBounds(getBbox([targetFeature]), { padding: getFitPadding(20), maxZoom: 14 });
+            state.map.fitBounds(getBbox([targetFeature]), { padding: getFitPadding(20), maxZoom: 14, animate: animate });
         }
     }
 
@@ -3342,6 +3342,24 @@ function setupHelpModeSystem() {
 }
 
 async function init() {
+    const triggerEntrance = () => {
+        document.body.classList.remove("is-transitioning");
+        const overlay = document.getElementById("page-transition-overlay");
+        if (overlay) overlay.classList.remove("is-active");
+
+        // Wait 500ms for nav tabs to finish sliding up (map frame reaches full height),
+        // then fade out the map placeholder.
+        setTimeout(() => {
+            const placeholder = document.getElementById("map-loading-placeholder");
+            if (placeholder) {
+                placeholder.classList.add("is-faded");
+                setTimeout(() => {
+                    placeholder.style.display = "none";
+                }, 500);
+            }
+        }, 500);
+    };
+
     try {
         const [circlesRes, eugeneRes, florenceRes] = await Promise.all([
             fetch(CIRCLES_GEOJSON_PATH),
@@ -3383,10 +3401,21 @@ async function init() {
         setupMobileNavToggle();
         setupMobileNavSwipeListener();
 
-        selectSubject(initialId, true);
+        selectSubject(initialId, true, false);
+
+        if (state.map) {
+            state.map.once("load", () => {
+                setTimeout(triggerEntrance, 150);
+            });
+            // Safety timeout fallback
+            setTimeout(triggerEntrance, 1000);
+        } else {
+            triggerEntrance();
+        }
     } catch (err) {
         console.error("Error initializing maps tile page:", err);
         updateHeader("Error loading map data");
+        triggerEntrance();
     }
 }
 
@@ -3439,8 +3468,10 @@ document.addEventListener("DOMContentLoaded", init);
 
     // Reset page states if user navigates back using browser Back button (bfcache reset)
     window.addEventListener("pageshow", function (event) {
-        document.body.classList.remove("is-transitioning");
-        overlay.classList.remove("is-active");
+        if (event.persisted) {
+            document.body.classList.remove("is-transitioning");
+            overlay.classList.remove("is-active");
+        }
     });
 })();
 

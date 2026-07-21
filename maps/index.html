@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="../styles/header.css">
     <link rel="stylesheet" href="../styles/cards.css">
     <link rel="stylesheet" href="../styles/maps-components.css">
-    <link rel="stylesheet" href="../styles/page-maps-tile.css?v=80">
+    <link rel="stylesheet" href="../styles/page-maps-tile.css?v=84">
 
     <!-- MapLibre & Fonts -->
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
@@ -20,7 +20,7 @@
     <link rel="icon" type="image/png" href="../images/logo-fav.png">
 </head>
 
-<body class="page-maps-tile">
+<body class="page-maps-tile is-transitioning">
     <!-- Main Tile View Interface -->
     <main class="maps-tile-main">
         <!-- Content Row (Specification section 2) -->
@@ -412,6 +412,7 @@
                     <div id="tile-map">
                         <div class="map-fade-overlay"></div>
                     </div>
+                    <div id="map-loading-placeholder"></div>
                 </section>
             </div>
         </div>
@@ -436,7 +437,7 @@
     </div>
 
     <!-- Page transition overlay: black curtain that pulls down from top on nav -->
-    <div id="page-transition-overlay"></div>
+    <div id="page-transition-overlay" class="is-active"></div>
 
     <!-- Interactive Help Mode Tooltip & Overlay Highlight -->
     <div id="help-mode-tooltip" class="help-mode-tooltip" aria-hidden="true"></div>
@@ -464,7 +465,7 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-    <script src="../scripts/maps-tile.js?v=143"></script>
+    <script src="../scripts/maps-tile.js?v=147"></script>
 </body>
 
 </html>

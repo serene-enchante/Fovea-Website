@@ -704,6 +704,7 @@ body.page-maps-tile {
     flex-direction: row;
     gap: 2px;
     width: 100%;
+    height: 1.25rem;
     margin-bottom: 0.45rem;
     flex-shrink: 0;
     transition: height 0.5s cubic-bezier(0.25, 1, 0.5, 1), margin-bottom 0.5s cubic-bezier(0.25, 1, 0.5, 1), gap 0.5s cubic-bezier(0.25, 1, 0.5, 1);
@@ -760,6 +761,30 @@ body.page-maps-tile {
 .desktop-nav-tab:hover {
     color: rgba(255, 255, 255, 0.85);
     background: #1c1c1c;
+}
+
+/* Map loading placeholder covering map with slightly brighter grey than view tabs (#0f0f0f) */
+#map-loading-placeholder {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #121212;
+    z-index: 9999;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    will-change: opacity;
+    opacity: 1;
+}
+
+#map-loading-placeholder.is-faded {
+    opacity: 0;
+}
+
+@media (max-width: 768px) {
+    #map-loading-placeholder {
+        display: none !important;
+    }
 }
 
 /* Page transition overlay: black curtain that fades in */
