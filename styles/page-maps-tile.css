@@ -2113,8 +2113,8 @@ body.has-active-modal .maps-tile-header__actions {
     gap: 0.5rem;
     background: rgba(255, 255, 255, 0.05);
     border: none;
-    border-radius: 8px;
-    padding: 0.35rem 0.35rem 0.35rem 0.75rem;
+    border-radius: 9999px;
+    padding: 0.35rem 0.35rem 0.35rem 1.1rem;
 }
 
 .maps-tile-copy-input {
@@ -2133,21 +2133,23 @@ body.has-active-modal .maps-tile-header__actions {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.55rem 0.9rem;
-    background: rgba(48, 209, 88, 0.16) !important;
+    padding: 0.55rem 1.1rem;
+    background: #30d158 !important;
     border: none !important;
-    border-radius: 6px !important;
-    color: #30d158 !important;
+    border-radius: 9999px !important;
+    color: #000000 !important;
     font-size: 0.85rem !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     cursor: pointer;
     transition: all var(--transition-fast);
+    box-shadow: 0 4px 12px rgba(48, 209, 88, 0.25) !important;
     flex-shrink: 0;
 }
 
 .maps-tile-copy-btn:hover {
-    background: rgba(48, 209, 88, 0.28) !important;
+    background: #34e05e !important;
     transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(48, 209, 88, 0.35) !important;
 }
 
 /* Suggest Modal & Form Styles */
@@ -2321,8 +2323,8 @@ body.has-active-modal .maps-tile-header__actions {
     justify-content: space-between;
     gap: 0.85rem;
     background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    border: none;
+    border-radius: 12px;
     padding: 0.85rem 1rem;
 }
 
@@ -2412,8 +2414,8 @@ body.has-active-modal .maps-tile-header__actions {
     justify-content: space-between;
     padding: 0.8rem 1rem;
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 8px;
+    border: none;
+    border-radius: 12px;
     color: #ffffff;
     text-decoration: none;
     font-size: 0.88rem;
@@ -2423,7 +2425,6 @@ body.has-active-modal .maps-tile-header__actions {
 
 .help-doc-link:hover {
     background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.25);
     color: #30d158;
 }
 

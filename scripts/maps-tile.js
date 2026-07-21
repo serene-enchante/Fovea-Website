@@ -3272,6 +3272,14 @@ function setupHelpModeSystem() {
         });
     }
 
+    const docLink = document.querySelector(".help-doc-link");
+    if (docLink) {
+        docLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            showToast("Documentation not available (coming soon)");
+        });
+    }
+
     document.addEventListener("mousedown", () => {
         state.lastNavSource = "click";
     }, true);
@@ -3325,8 +3333,8 @@ function setupHelpModeSystem() {
             return;
         }
 
-        // Suggest Edit (Shift + S)
-        if (e.shiftKey && (e.key === "s" || e.key === "S")) {
+        // Suggest Edit (Shift + Z)
+        if (e.shiftKey && (e.key === "z" || e.key === "Z")) {
             e.preventDefault();
             const suggestBtn = document.getElementById("btn-suggest");
             if (suggestBtn) suggestBtn.click();
@@ -3472,10 +3480,10 @@ function setupHelpModeSystem() {
         { selector: "#desktop-nav-tab-settings, #mobile-nav-tab-settings", title: "Settings Tab", desc: "Configure options, visual display preferences, and map style layers." },
         { selector: "#header-logo-container, .logo--header", title: "Organization Logo", desc: "Click the organization logo to navigate to the home directory of the organization which the currently selected feature belongs to." },
         { selector: "#header-title", title: "Selection Title", desc: "Displays the name of the currently selected feature." },
-        { selector: "#btn-copy-link", title: "Copy Link", desc: "Generates and copies a direct URL share link for the current view.", shortcut: "Shift + C" },
+        { selector: "#btn-copy-link", title: "Share", desc: "Generates and copies a direct URL share link for the current view.", shortcut: "Shift + C" },
         { selector: "#btn-download-files", title: "Download Files", desc: "Access spatial GIS, PDF maps, and survey dataset files for this selection.", shortcut: "Shift + G" },
         { selector: "#btn-edit-item", title: "Edit Item", desc: "Opens the spatial data editor interface for updating boundaries.", shortcut: "Shift + X" },
-        { selector: "#btn-suggest", title: "Suggest Edit", desc: "Submit suggestions, feedback, or pin map annotations.", shortcut: "Shift + S" },
+        { selector: "#btn-suggest", title: "Suggest Edit", desc: "Submit suggestions, feedback, or pin map annotations.", shortcut: "Shift + Z" },
         { selector: "#btn-help", title: "Help & Guide", desc: "Opens user documentation and toggles Interactive Tooltip Mode.", shortcut: "Shift + H" },
         { selector: "#btn-capsule-back", title: "Back Navigation", desc: "Return to the previous higher-level overview (circle or list).", shortcut: "Esc or A / Left Arrow" },
         { selector: '[data-tab="about"]', title: "About Tab", desc: "View detailed descriptions, spatial summaries, and photographs.", shortcut: "` (Backtick)" },

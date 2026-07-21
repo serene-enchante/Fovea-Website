@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="../styles/header.css">
     <link rel="stylesheet" href="../styles/cards.css">
     <link rel="stylesheet" href="../styles/maps-components.css">
-    <link rel="stylesheet" href="../styles/page-maps-tile.css?v=85">
+    <link rel="stylesheet" href="../styles/page-maps-tile.css?v=89">
 
     <!-- MapLibre & Fonts -->
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
@@ -48,14 +48,17 @@
                     <!-- Action Icon Buttons -->
                     <div class="maps-tile-header__actions">
                         <div class="action-buttons-list">
-                            <!-- Copy Link -->
-                            <button type="button" id="btn-copy-link" class="action-icon-btn" aria-label="Copy link to current item"
-                                title="Copy link">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                            <!-- Share -->
+                            <button type="button" id="btn-copy-link" class="action-icon-btn" aria-label="Share current view"
+                                title="Share">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="18" cy="5" r="3"></circle>
+                                    <circle cx="6" cy="12" r="3"></circle>
+                                    <circle cx="18" cy="19" r="3"></circle>
+                                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                                 </svg>
-                                <span>Copy Link</span>
+                                <span>Share</span>
                             </button>
 
                             <!-- Download Files -->
@@ -169,9 +172,9 @@
                     <div class="modal__backdrop" data-modal-close="copy-link-modal"></div>
                     <div class="modal__panel maps-tile-modal__panel">
                         <div class="maps-tile-modal__header">
-                            <h2 id="copy-link-title" class="maps-tile-modal__title">Share Direct Link</h2>
+                            <h2 id="copy-link-title" class="maps-tile-modal__title">Share</h2>
                             <button type="button" class="modal__close maps-tile-modal__close"
-                                aria-label="Close copy link modal" data-modal-close="copy-link-modal">
+                                aria-label="Close share modal" data-modal-close="copy-link-modal">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -296,7 +299,7 @@
                                 </label>
                             </div>
 
-                            <a href="../help/" class="help-doc-link" target="_blank" rel="noopener">
+                            <a href="#" class="help-doc-link">
                                 <span>Documentation & User Guide</span>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -466,7 +469,7 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-    <script src="../scripts/maps-tile.js?v=164"></script>
+    <script src="../scripts/maps-tile.js?v=167"></script>
 </body>
 
 </html>
