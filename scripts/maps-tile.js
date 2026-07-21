@@ -954,24 +954,86 @@ function unhighlightTileItem() {
 function rebuildGeoJsonLayer() {
     if (!state.map) return;
     
+    const grouped = {};
     state.allFeatures.forEach(f => {
         const props = f.properties || {};
         const newId = state.isCirclesFeature ? String(props.cid || "") : String(props.zid || "");
-        props.feature_id = newId;
-        f.id = newId;
+        if (!newId) return;
+
+        if (!grouped[newId]) {
+            grouped[newId] = {
+                type: "Feature",
+                id: newId,
+                properties: {
+                    ...props,
+                    feature_id: newId
+                },
+                geometry: {
+                    type: "MultiPolygon",
+                    coordinates: []
+                }
+            };
+        }
+
+        const geom = f.geometry;
+        if (geom) {
+            if (geom.type === "Polygon") {
+                grouped[newId].geometry.coordinates.push(geom.coordinates);
+            } else if (geom.type === "MultiPolygon") {
+                grouped[newId].geometry.coordinates.push(...geom.coordinates);
+            } else {
+                grouped[newId].geometry = geom;
+            }
+        }
     });
-    
+
     const geojsonData = {
         type: "FeatureCollection",
-        features: state.allFeatures
+        features: Object.values(grouped)
+    };
+
+    // Build a separate geojson collection with exactly one Point per unique ID
+    const labelFeatures = [];
+    Object.keys(grouped).forEach(newId => {
+        const feat = grouped[newId];
+        const bbox = getBbox([feat]);
+        const centerLng = (bbox[0][0] + bbox[1][0]) / 2;
+        const centerLat = (bbox[0][1] + bbox[1][1]) / 2;
+
+        labelFeatures.push({
+            type: "Feature",
+            id: newId,
+            properties: {
+                ...feat.properties,
+                feature_id: newId
+            },
+            geometry: {
+                type: "Point",
+                coordinates: [centerLng, centerLat]
+            }
+        });
+    });
+
+    const labelGeojsonData = {
+        type: "FeatureCollection",
+        features: labelFeatures
     };
 
     if (state.map.getSource('zones')) {
         state.map.getSource('zones').setData(geojsonData);
+        if (state.map.getSource('zones-labels-src')) {
+            state.map.getSource('zones-labels-src').setData(labelGeojsonData);
+        }
     } else {
         state.map.addSource('zones', {
             type: 'geojson',
             data: geojsonData,
+            promoteId: 'feature_id'
+        });
+
+        state.map.addSource('zones-labels-src', {
+            type: 'geojson',
+            data: labelGeojsonData,
             promoteId: 'feature_id'
         });
         
@@ -1016,6 +1078,34 @@ function rebuildGeoJsonLayer() {
                 ]
             }
         });
+
+        try {
+            state.map.addLayer({
+                id: 'zones-labels',
+                type: 'symbol',
+                source: 'zones-labels-src',
+                layout: {
+                    'text-field': ['coalesce', ['get', 'cid'], ['get', 'zid'], ''],
+                    'text-font': ['Noto Sans Regular'],
+                    'text-size': [
+                        'case',
+                        ['has', 'cid'], 13,
+                        11
+                    ],
+                    'text-justify': 'center',
+                    'text-anchor': 'center',
+                    'text-allow-overlap': true,
+                    'text-letter-spacing': 0.05
+                },
+                paint: {
+                    'text-color': '#ffffff',
+                    'text-halo-color': 'rgba(15, 15, 15, 0.95)',
+                    'text-halo-width': 1.8
+                }
+            });
+        } catch (err) {
+            console.error("Error adding zones-labels symbol layer:", err);
+        }
         
         let hoveredStateId = null;
 
@@ -1195,6 +1285,7 @@ function initializeMap() {
         maxZoom: 20,
         style: {
             version: 8,
+            glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
             sources: {
                 "dark-tiles": {
                     type: "raster",
@@ -3356,6 +3447,13 @@ async function init() {
                 setTimeout(() => {
                     placeholder.style.display = "none";
                 }, 500);
+            }
+
+            // Once the map container reaches full height, resize the map and refit bounds
+            // without any animation so the zoom level matches exactly.
+            if (state.map) {
+                state.map.resize();
+                selectSubject(state.currentId, true, false);
             }
         }, 500);
     };
