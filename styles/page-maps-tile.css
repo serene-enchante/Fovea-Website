@@ -2054,11 +2054,14 @@ body.has-active-modal .maps-tile-header__actions {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
+    width: 100% !important;
     padding: 0.65rem 0.85rem !important;
     border-radius: 6px !important;
     border: none !important;
     font-size: 0.85rem !important;
     font-weight: 600 !important;
+    font-family: inherit !important;
+    cursor: pointer !important;
     text-decoration: none !important;
     transition: all var(--transition-fast) !important;
     box-sizing: border-box;

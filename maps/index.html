@@ -127,9 +127,7 @@
                             <section class="download-column maps-tile-download-col" aria-labelledby="vector-title">
                                 <h3 id="vector-title" class="maps-tile-download-col__title">Vector Formats</h3>
                                 <div class="maps-tile-download-list">
-                                    <a href="../geojson/Eugene-01-wgs84.geojson" download="Eugene-01-wgs84.geojson"
-                                        class="download-link maps-tile-download-item is-active"
-                                        id="download-geojson">
+                                    <button type="button" class="download-link maps-tile-download-item is-active" id="download-geojson">
                                         <span>GeoJSON</span>
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -138,29 +136,53 @@
                                             <polyline points="7 10 12 15 17 10"></polyline>
                                             <line x1="12" y1="15" x2="12" y2="3"></line>
                                         </svg>
-                                    </a>
-                                    <div class="download-link maps-tile-download-item is-disabled">
+                                    </button>
+                                    <button type="button" class="download-link maps-tile-download-item is-active" id="download-kmz">
                                         <span>KMZ (GIS)</span>
-                                        <span class="maps-tile-download-tag">Soon</span>
-                                    </div>
-                                    <div class="download-link maps-tile-download-item is-disabled">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="download-link maps-tile-download-item is-active" id="download-gpx">
                                         <span>GPX (GPS)</span>
-                                        <span class="maps-tile-download-tag">Soon</span>
-                                    </div>
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    </button>
                                 </div>
                             </section>
 
                             <section class="download-column maps-tile-download-col" aria-labelledby="raster-title">
                                 <h3 id="raster-title" class="maps-tile-download-col__title">Raster Formats</h3>
                                 <div class="maps-tile-download-list">
-                                    <div class="download-link maps-tile-download-item is-disabled">
-                                        <span>GeoPDF</span>
-                                        <span class="maps-tile-download-tag">Soon</span>
-                                    </div>
-                                    <div class="download-link maps-tile-download-item is-disabled">
-                                        <span>GeoTIFF</span>
-                                        <span class="maps-tile-download-tag">Soon</span>
-                                    </div>
+                                    <button type="button" class="download-link maps-tile-download-item is-active" id="download-geopdf">
+                                        <span>GeoPDF (Layout)</span>
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="download-link maps-tile-download-item is-active" id="download-geotiff">
+                                        <span>GeoTIFF (Raster)</span>
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    </button>
                                 </div>
                             </section>
                         </div>
@@ -467,9 +489,12 @@
 
 
     <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-    <script src="../scripts/maps-tile.js?v=167"></script>
+    <script src="../scripts/maps-tile.js?v=177"></script>
 </body>
 
 </html>

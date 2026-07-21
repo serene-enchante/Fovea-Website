@@ -225,6 +225,7 @@ function updateAllFeatureStyles() {
 
     // Determine geometry styling based on active basemap (thick black outline & transparent deep blue fill for Esri Street/Topo, white for Dark/Satellite)
     const isLightBasemap = state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo";
+    const isSatelliteBasemap = state.currentBaseLayer === "satellite";
     const mapWrapper = document.getElementById("map-wrapper");
     const mapArea = document.querySelector(".maps-tile-map-area");
     [document.body, mapArea, mapWrapper].forEach(el => {
@@ -237,14 +238,23 @@ function updateAllFeatureStyles() {
         }
     });
 
-    const defaultFillColor = isLightBasemap ? '#0d47a1' : '#ffffff';
+    let defaultFillColor = '#ffffff';
+    let defaultFillOpacity = 0.07;
+
+    if (isLightBasemap) {
+        defaultFillColor = '#0d47a1';
+        defaultFillOpacity = 0.22;
+    } else if (isSatelliteBasemap) {
+        defaultFillColor = '#000000';
+        defaultFillOpacity = 0.25;
+    }
+
     const defaultLineColor = isLightBasemap ? '#000000' : '#ffffff';
     const dimLineColor = isLightBasemap ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.25)';
     const defaultLineWidth = isLightBasemap ? 2.8 : 1.0;
-    const defaultFillOpacity = isLightBasemap ? 0.22 : 0.07;
 
     const noDataFillColor = isLightBasemap ? '#8e8e93' : defaultFillColor;
-    const noDataFillOpacity = isLightBasemap ? 0.30 : 0.02;
+    const noDataFillOpacity = isLightBasemap ? 0.30 : (isSatelliteBasemap ? 0.15 : 0.02);
     const noDataLineColor = isLightBasemap ? 'rgba(80, 80, 80, 0.60)' : dimLineColor;
 
     if (state.map.getLayer('zones-fill')) {
@@ -278,6 +288,16 @@ function updateAllFeatureStyles() {
             ['boolean', ['feature-state', 'hover'], false], 2.8,
             defaultLineWidth
         ]);
+    }
+
+    if (state.map.getLayer('zones-labels')) {
+        const textColor = isLightBasemap ? '#000000' : '#ffffff';
+        const haloColor = isLightBasemap ? 'rgba(255, 255, 255, 0.95)' : 'rgba(15, 15, 15, 0.95)';
+        const haloWidth = isLightBasemap ? 2.0 : 1.8;
+
+        state.map.setPaintProperty('zones-labels', 'text-color', textColor);
+        state.map.setPaintProperty('zones-labels', 'text-halo-color', haloColor);
+        state.map.setPaintProperty('zones-labels', 'text-halo-width', haloWidth);
     }
 }
 
@@ -364,6 +384,621 @@ function showToast(message, isError = false) {
     setTimeout(() => {
         toast.classList.remove("is-visible");
     }, 2500);
+}
+
+// --- Client-Side Exporter Helpers (GeoJSON, KMZ, GPX) ---
+function getActiveDownloadFilename(ext) {
+    let base = "map-data";
+    if (state.currentFeature === "circles") {
+        base = "circles-wgs84";
+    } else if (state.currentFeature === "florence") {
+        base = (state.currentId && state.currentId !== CIRCLE_ID) 
+            ? `Florence-Zone-${displayZoneId(state.currentId)}` 
+            : "Florence-00-wgs84";
+    } else {
+        base = (state.currentId && state.currentId !== CIRCLE_ID) 
+            ? `Eugene-Zone-${displayZoneId(state.currentId)}` 
+            : "Eugene-01-wgs84";
+    }
+    return `${base}.${ext}`;
+}
+
+function getSelectedGeoJSONData() {
+    let features = state.allFeatures || [];
+    if (!state.isCirclesFeature && state.currentId && state.currentId !== CIRCLE_ID) {
+        const target = features.find(f => {
+            const zid = f.properties?.zid;
+            return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
+        });
+        if (target) {
+            features = [target];
+        }
+    }
+    return {
+        type: "FeatureCollection",
+        features: JSON.parse(JSON.stringify(features))
+    };
+}
+
+function saveBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 100);
+}
+
+function geojsonToKml(geojson, docName = "Map Data") {
+    function esc(str) {
+        if (str === null || str === undefined) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function coordsToKml(coords) {
+        return coords.map(c => `${c[0]},${c[1]}${c[2] !== undefined ? ',' + c[2] : ''}`).join(' ');
+    }
+
+    function geometryToKml(geom) {
+        if (!geom) return '';
+        switch (geom.type) {
+            case 'Point':
+                return `<Point><coordinates>${geom.coordinates[0]},${geom.coordinates[1]}</coordinates></Point>`;
+            case 'LineString':
+                return `<LineString><coordinates>${coordsToKml(geom.coordinates)}</coordinates></LineString>`;
+            case 'Polygon':
+                return `<Polygon>${geom.coordinates.map((ring, i) => 
+                    i === 0 
+                        ? `<outerBoundaryIs><LinearRing><coordinates>${coordsToKml(ring)}</coordinates></LinearRing></outerBoundaryIs>`
+                        : `<innerBoundaryIs><LinearRing><coordinates>${coordsToKml(ring)}</coordinates></LinearRing></innerBoundaryIs>`
+                ).join('')}</Polygon>`;
+            case 'MultiPolygon':
+                return `<MultiGeometry>${geom.coordinates.map(polyCoords => 
+                    geometryToKml({ type: 'Polygon', coordinates: polyCoords })
+                ).join('')}</MultiGeometry>`;
+            case 'MultiPoint':
+                return `<MultiGeometry>${geom.coordinates.map(ptCoords => 
+                    geometryToKml({ type: 'Point', coordinates: ptCoords })
+                ).join('')}</MultiGeometry>`;
+            case 'MultiLineString':
+                return `<MultiGeometry>${geom.coordinates.map(lineCoords => 
+                    geometryToKml({ type: 'LineString', coordinates: lineCoords })
+                ).join('')}</MultiGeometry>`;
+            case 'GeometryCollection':
+                return `<MultiGeometry>${geom.geometries.map(g => geometryToKml(g)).join('')}</MultiGeometry>`;
+            default:
+                return '';
+        }
+    }
+
+    const features = geojson.type === 'FeatureCollection' ? geojson.features : (geojson.type === 'Feature' ? [geojson] : []);
+    
+    const kmlPlacemarks = features.map(f => {
+        const props = f.properties || {};
+        const title = esc(props.name || props.zid || props.cid || props.title || "Feature");
+        const descData = Object.entries(props)
+            .map(([k, v]) => `<b>${esc(k)}:</b> ${esc(v)}`)
+            .join('<br/>');
+        return `
+    <Placemark>
+      <name>${title}</name>
+      <description><![CDATA[${descData}]]></description>
+      ${geometryToKml(f.geometry)}
+    </Placemark>`;
+    }).join('');
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${esc(docName)}</name>${kmlPlacemarks}
+  </Document>
+</kml>`;
+}
+
+function geojsonToGpx(geojson, docName = "Map Data") {
+    function esc(str) {
+        if (str === null || str === undefined) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    const features = geojson.type === 'FeatureCollection' ? geojson.features : (geojson.type === 'Feature' ? [geojson] : []);
+    let gpxWpts = "";
+    let gpxTrks = "";
+
+    features.forEach(f => {
+        const props = f.properties || {};
+        const title = esc(props.name || props.zid || props.cid || props.title || "Feature");
+        const geom = f.geometry;
+        if (!geom) return;
+
+        function processLine(coords, trkName) {
+            const pts = coords.map(c => `<trkpt lat="${c[1]}" lon="${c[0]}"/>`).join('\n        ');
+            return `
+  <trk>
+    <name>${trkName}</name>
+    <trkseg>
+        ${pts}
+    </trkseg>
+  </trk>`;
+        }
+
+        if (geom.type === 'Point') {
+            gpxWpts += `
+  <wpt lat="${geom.coordinates[1]}" lon="${geom.coordinates[0]}">
+    <name>${title}</name>
+  </wpt>`;
+        } else if (geom.type === 'LineString') {
+            gpxTrks += processLine(geom.coordinates, title);
+        } else if (geom.type === 'MultiLineString') {
+            geom.coordinates.forEach((line, idx) => {
+                gpxTrks += processLine(line, `${title} (${idx + 1})`);
+            });
+        } else if (geom.type === 'Polygon') {
+            geom.coordinates.forEach((ring, idx) => {
+                const ringName = idx === 0 ? title : `${title} (Hole ${idx})`;
+                gpxTrks += processLine(ring, ringName);
+            });
+        } else if (geom.type === 'MultiPolygon') {
+            geom.coordinates.forEach((poly, polyIdx) => {
+                poly.forEach((ring, ringIdx) => {
+                    const ringName = ringIdx === 0 ? `${title} (Part ${polyIdx + 1})` : `${title} (Part ${polyIdx + 1} Hole ${ringIdx})`;
+                    gpxTrks += processLine(ring, ringName);
+                });
+            });
+        }
+    });
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Fovea Web Map" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>${esc(docName)}</name>
+  </metadata>${gpxWpts}${gpxTrks}
+</gpx>`;
+}
+
+function switchBaseMap(baseMapId) {
+    if (!state.map || !state.baseMapsList) return;
+    const targetMap = state.baseMapsList.find(b => b.id === baseMapId);
+    if (!targetMap) return;
+    
+    state.baseMapsList.forEach(bm => {
+        if (state.map.getLayer(bm.layerId)) {
+            state.map.setLayoutProperty(bm.layerId, 'visibility', bm.layerId === targetMap.layerId ? 'visible' : 'none');
+        }
+    });
+    state.currentBaseLayer = baseMapId;
+
+    const mapWrapper = document.getElementById("map-wrapper");
+    if (mapWrapper) {
+        if (baseMapId === "esri-street" || baseMapId === "esri-topo") {
+            mapWrapper.classList.add("is-light-basemap");
+        } else {
+            mapWrapper.classList.remove("is-light-basemap");
+        }
+    }
+
+    if (typeof updateAllFeatureStyles === "function") {
+        updateAllFeatureStyles();
+    }
+}
+
+function getLayoutScaleBar(map, layoutMapWidth) {
+    if (!map) return { miles: 1, pxWidth: 150 };
+    const canvas = map.getCanvas();
+    const cX = canvas.width / 2;
+    const cY = canvas.height / 2;
+    
+    const samplePx = 200;
+    const p1 = map.unproject([cX - (samplePx / 2), cY]);
+    const p2 = map.unproject([cX + (samplePx / 2), cY]);
+    
+    let distMiles = 1;
+    if (typeof turf !== "undefined" && turf.distance) {
+        distMiles = turf.distance([p1.lng, p1.lat], [p2.lng, p2.lat], { units: "miles" });
+    } else {
+        const lat1 = p1.lat * Math.PI / 180;
+        const lat2 = p2.lat * Math.PI / 180;
+        const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+        const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        distMiles = 3958.8 * c;
+    }
+
+    const milesPerLayoutPx = distMiles / (samplePx * (layoutMapWidth / canvas.width));
+    const targetPx = 200;
+    const approxMiles = targetPx * milesPerLayoutPx;
+    
+    const niceIncrements = [0.1, 0.25, 0.5, 1, 2, 3, 5, 10, 15, 20, 25, 50, 100];
+    let chosenMiles = niceIncrements[0];
+    let minDiff = Math.abs(approxMiles - chosenMiles);
+    for (let i = 1; i < niceIncrements.length; i++) {
+        const diff = Math.abs(approxMiles - niceIncrements[i]);
+        if (diff < minDiff) {
+            minDiff = diff;
+            chosenMiles = niceIncrements[i];
+        }
+    }
+
+    const scaleBarPx = Math.max(100, Math.min(450, chosenMiles / milesPerLayoutPx));
+    return { miles: chosenMiles, pxWidth: scaleBarPx };
+}
+
+function loadQrCodeImage(dataUrl) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&format=png&data=${encodeURIComponent(dataUrl)}`;
+        setTimeout(() => resolve(null), 1500);
+    });
+}
+
+async function renderMapLayoutCanvas() {
+    showToast("Rendering Esri Topo Print Layout...");
+    
+    // Remember current active basemap to restore later
+    const previousBaseLayer = state.currentBaseLayer || "dark";
+    
+    // Switch basemap to Esri Topo if not already active
+    if (state.currentBaseLayer !== "esri-topo") {
+        switchBaseMap("esri-topo");
+        
+        // Wait for MapLibre to load and render Esri Topo tiles
+        await new Promise((resolve) => {
+            let checkCount = 0;
+            const checkIdle = () => {
+                checkCount++;
+                if ((state.map && state.map.areTilesLoaded()) || checkCount > 25) {
+                    if (state.map) state.map.off('idle', checkIdle);
+                    resolve();
+                }
+            };
+            if (state.map) {
+                state.map.on('idle', checkIdle);
+                state.map.triggerRepaint();
+            }
+            setTimeout(resolve, 1000); // Failsafe timeout for network tiles
+        });
+    }
+
+    if (state.map) {
+        state.map.triggerRepaint();
+        await new Promise(r => setTimeout(r, 200));
+    }
+
+    const mapCanvas = state.map ? state.map.getCanvas() : null;
+
+    // High resolution layout canvas (2400 x 1800 px - 4:3 ratio, print-optimized quality)
+    const layoutCanvas = document.createElement("canvas");
+    const width = 2400;
+    const height = 1800;
+    layoutCanvas.width = width;
+    layoutCanvas.height = height;
+    const ctx = layoutCanvas.getContext("2d");
+
+    // 1. Pure White outer canvas background (Paper Print-Friendly)
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+
+    // 2. Define inner map frame layout box
+    const mapMargin = 60;
+    const headerHeight = 110;
+    const footerHeight = 70;
+
+    const mapX = mapMargin;
+    const mapY = mapMargin + headerHeight;
+    const mapW = width - (mapMargin * 2);
+    const mapH = height - mapY - footerHeight - mapMargin;
+
+    // Background for map box (clean off-white for topo rendering)
+    ctx.fillStyle = "#f9fafb";
+    ctx.fillRect(mapX, mapY, mapW, mapH);
+
+    // Draw MapLibre WebGL canvas image into map box
+    if (mapCanvas) {
+        try {
+            ctx.drawImage(mapCanvas, mapX, mapY, mapW, mapH);
+        } catch (err) {
+            console.warn("Could not draw map canvas directly:", err);
+        }
+    }
+
+    // Inner map frame border - Crisp minimal dark border
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(mapX, mapY, mapW, mapH);
+
+    // 3. Header Text (No border box around header text!)
+    const hasSpecificZone = state.currentId && state.currentId !== CIRCLE_ID;
+
+    // Header Title Text (Crisp Dark Typography for Paper Printing)
+    ctx.fillStyle = "#111827";
+    ctx.font = "bold 46px system-ui, -apple-system, sans-serif";
+    const headerTitleText = state.isCirclesFeature 
+        ? "COAST TO CASCADES BIRD ALLIANCE" 
+        : (state.currentFeature === "florence" ? "FLORENCE CHRISTMAS BIRD COUNT" : "EUGENE CHRISTMAS BIRD COUNT");
+    ctx.fillText(headerTitleText, mapMargin, mapMargin + 45);
+
+    // Subtitle / Selection Name (ONLY if specific zone, remove "COUNT CIRCLE MAP")
+    if (hasSpecificZone) {
+        ctx.fillStyle = "#059669";
+        ctx.font = "bold 30px system-ui, -apple-system, sans-serif";
+        const subTitleText = `SURVEY ZONE ${displayZoneId(state.currentId)}`;
+        ctx.fillText(subTitleText, mapMargin, mapMargin + 90);
+    }
+
+    // Date & Basemap Metadata (Right-aligned, no box)
+    ctx.fillStyle = "#374151";
+    ctx.font = "26px system-ui, -apple-system, sans-serif";
+    ctx.textAlign = "right";
+    const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    ctx.fillText(dateStr, mapMargin + mapW, mapMargin + 45);
+    ctx.font = "20px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = "#6b7280";
+    ctx.fillText("Base Map: Esri World Topography", mapMargin + mapW, mapMargin + 85);
+    ctx.textAlign = "left";
+
+    // 4. Minimal Cartographic Map Overlays
+    // North Arrow Emblem (Minimalist Print Style)
+    const naX = mapX + mapW - 75;
+    const naY = mapY + 85;
+    ctx.save();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.beginPath();
+    ctx.arc(naX, naY, 40, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // North Pointer Needle
+    ctx.fillStyle = "#111827";
+    ctx.beginPath();
+    ctx.moveTo(naX, naY - 28);
+    ctx.lineTo(naX + 12, naY + 8);
+    ctx.lineTo(naX, naY + 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#9ca3af";
+    ctx.beginPath();
+    ctx.moveTo(naX, naY - 28);
+    ctx.lineTo(naX - 12, naY + 8);
+    ctx.lineTo(naX, naY + 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#111827";
+    ctx.font = "bold 20px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("N", naX, naY - 32);
+    ctx.restore();
+
+    // Actual Calculated Scale Bar in Miles (Bottom Left of Map Area)
+    const scaleInfo = getLayoutScaleBar(state.map, mapW);
+
+    const barX = mapX + 30;
+    const barY = mapY + mapH - 100;
+    const barW = Math.max(260, scaleInfo.pxWidth + 60);
+    const barH = 70;
+
+    // Scale Box
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.fillRect(barX, barY, barW, barH);
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(barX, barY, barW, barH);
+
+    // Scale Bar Line & Ticks
+    const lineStartX = barX + 30;
+    const lineEndX = lineStartX + scaleInfo.pxWidth;
+    const lineY = barY + 45;
+
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(lineStartX, lineY);
+    ctx.lineTo(lineEndX, lineY);
+    ctx.moveTo(lineStartX, lineY - 8);
+    ctx.lineTo(lineStartX, lineY + 8);
+    ctx.moveTo(lineEndX, lineY - 8);
+    ctx.lineTo(lineEndX, lineY + 8);
+    const midX = (lineStartX + lineEndX) / 2;
+    ctx.moveTo(midX, lineY - 5);
+    ctx.lineTo(midX, lineY + 5);
+    ctx.stroke();
+
+    // Scale Bar Numerical Labels
+    ctx.fillStyle = "#111827";
+    ctx.font = "bold 16px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("0", lineStartX, lineY - 12);
+    ctx.fillText(`${scaleInfo.miles} mi`, lineEndX, lineY - 12);
+    ctx.textAlign = "left";
+
+    // QR Code Box Overlay (Bottom Right of Map Area)
+    const qrX = mapX + mapW - 175;
+    const qrY = mapY + mapH - 190;
+    const qrBoxW = 150;
+    const qrBoxH = 165;
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.fillRect(qrX, qrY, qrBoxW, qrBoxH);
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(qrX, qrY, qrBoxW, qrBoxH);
+
+    let qrDrawn = false;
+    if (typeof QRCode !== "undefined") {
+        try {
+            const qrContainer = document.createElement("div");
+            new QRCode(qrContainer, {
+                text: window.location.href,
+                width: 120,
+                height: 120,
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            const qrCanvas = qrContainer.querySelector("canvas");
+            const qrImg = qrContainer.querySelector("img");
+            if (qrCanvas) {
+                ctx.drawImage(qrCanvas, qrX + 15, qrY + 12, 120, 120);
+                qrDrawn = true;
+            } else if (qrImg && qrImg.complete) {
+                ctx.drawImage(qrImg, qrX + 15, qrY + 12, 120, 120);
+                qrDrawn = true;
+            }
+        } catch (e) {
+            console.warn("QRCode generation error:", e);
+        }
+    }
+
+    if (!qrDrawn) {
+        const qrImage = await loadQrCodeImage(window.location.href);
+        if (qrImage) {
+            ctx.drawImage(qrImage, qrX + 15, qrY + 12, 120, 120);
+        }
+    }
+
+    ctx.fillStyle = "#111827";
+    ctx.font = "bold 12px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("SCAN FOR ONLINE MAP", qrX + (qrBoxW / 2), qrY + 152);
+    ctx.textAlign = "left";
+
+    // 5. Clean Footer Text (No border box around footer text!)
+    const footY = height - footerHeight - mapMargin + 18;
+
+    ctx.fillStyle = "#374151";
+    ctx.font = "19px system-ui, sans-serif";
+    const bbox = getBbox(state.allFeatures);
+    const boundsText = `Spatial Extent (WGS84): [${bbox[0][0].toFixed(4)}°W, ${bbox[0][1].toFixed(4)}°N] to [${bbox[1][0].toFixed(4)}°W, ${bbox[1][1].toFixed(4)}°N]`;
+    ctx.fillText(boundsText, mapMargin, footY + 24);
+
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "16px system-ui, sans-serif";
+    ctx.fillText("Printed with Fovea | Esri World Topographic Basemap © Esri, DeLorme, NAVTEQ", mapMargin, footY + 52);
+
+    // Restore previous basemap if changed
+    if (previousBaseLayer !== "esri-topo") {
+        switchBaseMap(previousBaseLayer);
+    }
+
+    return layoutCanvas;
+}
+
+function canvasToTiffBlob(canvas) {
+    const width = canvas.width;
+    const height = canvas.height;
+    const ctx = canvas.getContext("2d");
+    const imgData = ctx.getImageData(0, 0, width, height);
+    const rgba = imgData.data;
+
+    const numPixels = width * height;
+    const rgb = new Uint8Array(numPixels * 3);
+    for (let i = 0, j = 0; i < rgba.length; i += 4, j += 3) {
+        rgb[j] = rgba[i];       // R
+        rgb[j + 1] = rgba[i + 1]; // G
+        rgb[j + 2] = rgba[i + 2]; // B
+    }
+
+    const imageByteCount = rgb.length;
+    const headerSize = 8;
+    const ifdOffset = headerSize + imageByteCount;
+    const numEntries = 12;
+    const ifdSize = 2 + (numEntries * 12) + 4;
+    const valueDataOffset = ifdOffset + ifdSize;
+
+    const totalSize = valueDataOffset + 6;
+    const buffer = new ArrayBuffer(totalSize);
+    const view = new DataView(buffer);
+    const u8 = new Uint8Array(buffer);
+
+    // TIFF Header ("II" Little Endian)
+    u8[0] = 0x49; u8[1] = 0x49;
+    view.setUint16(2, 42, true);
+    view.setUint32(4, ifdOffset, true);
+
+    // Write RGB Pixels
+    u8.set(rgb, headerSize);
+
+    // BitsPerSample values (8, 8, 8)
+    const bitsOffset = valueDataOffset;
+    view.setUint16(bitsOffset, 8, true);
+    view.setUint16(bitsOffset + 2, 8, true);
+    view.setUint16(bitsOffset + 4, 8, true);
+
+    // IFD Tags
+    let p = ifdOffset;
+    view.setUint16(p, numEntries, true); p += 2;
+
+    function writeTag(tag, type, count, value) {
+        view.setUint16(p, tag, true);
+        view.setUint16(p + 2, type, true);
+        view.setUint32(p + 4, count, true);
+        view.setUint32(p + 8, value, true);
+        p += 12;
+    }
+
+    writeTag(256, 4, 1, width);               // ImageWidth
+    writeTag(257, 4, 1, height);              // ImageLength
+    writeTag(258, 3, 3, bitsOffset);          // BitsPerSample
+    writeTag(259, 3, 1, 1);                   // Compression = 1 (Uncompressed)
+    writeTag(262, 3, 1, 2);                   // PhotometricInterpretation = 2 (RGB)
+    writeTag(273, 4, 1, headerSize);          // StripOffsets
+    writeTag(277, 3, 1, 3);                   // SamplesPerPixel = 3
+    writeTag(278, 4, 1, height);              // RowsPerStrip
+    writeTag(279, 4, 1, imageByteCount);      // StripByteCounts
+    writeTag(282, 5, 1, valueDataOffset);     // XResolution
+    writeTag(283, 5, 1, valueDataOffset);     // YResolution
+    writeTag(296, 3, 1, 2);                   // ResolutionUnit = 2 (Inch)
+
+    view.setUint32(p, 0, true);
+
+    return new Blob([buffer], { type: "image/tiff" });
+}
+
+async function downloadGeoPdf() {
+    const canvas = await renderMapLayoutCanvas();
+    const filename = getActiveDownloadFilename("pdf");
+    
+    if (window.jspdf && window.jspdf.jsPDF) {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+            orientation: "landscape",
+            unit: "mm",
+            format: "a4"
+        });
+        
+        const imgData = canvas.toDataURL("image/jpeg", 0.92);
+        pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
+        
+        pdf.setProperties({
+            title: filename.replace(/\.pdf$/, ""),
+            subject: "GeoPDF Map Layout Export - Esri Topo Basemap",
+            keywords: "GeoPDF, GIS, Map, Esri Topo, Fovea",
+            creator: "Fovea Web Map Layout Engine"
+        });
+
+        pdf.save(filename);
+        showToast(`Exported ${filename}`);
+    } else {
+        canvas.toBlob((blob) => {
+            saveBlob(blob, filename.replace(/\.pdf$/, "-layout.png"));
+            showToast(`Exported ${filename.replace(/\.pdf$/, "-layout.png")}`);
+        }, "image/png");
+    }
+}
+
+async function downloadGeoTiff() {
+    const canvas = await renderMapLayoutCanvas();
+    const filename = getActiveDownloadFilename("tif");
+    const tiffBlob = canvasToTiffBlob(canvas);
+    saveBlob(tiffBlob, filename);
+    showToast(`Exported ${filename}`);
 }
 
 function getInitialIdFromUrl() {
@@ -1113,28 +1748,28 @@ function updateLabelZoomVisibility() {
             'case',
             ['has', 'zid'], 0,
             ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.010]], 0,
-            13
+            17
         ],
         zoneCutoff, [
             'case',
             ['has', 'zid'], 0,
             ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0024]], 0,
-            ['case', ['has', 'cid'], 13, 11]
+            ['case', ['has', 'cid'], 17, 14]
         ],
         11, [
             'case',
             ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0012]], 0,
-            ['case', ['has', 'cid'], 13, 11]
+            ['case', ['has', 'cid'], 18, 15]
         ],
         12, [
             'case',
             ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0006]], 0,
-            ['case', ['has', 'cid'], 13, 11]
+            ['case', ['has', 'cid'], 19, 16]
         ],
         14, [
             'case',
             ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.00015]], 0,
-            ['case', ['has', 'cid'], 13, 11]
+            ['case', ['has', 'cid'], 20, 17]
         ]
     ];
     
@@ -1303,28 +1938,28 @@ function rebuildGeoJsonLayer() {
                             'case',
                             ['has', 'zid'], 0,
                             ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.010]], 0,
-                            13
+                            17
                         ],
                         10, [
                             'case',
                             ['has', 'zid'], 0,
                             ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0024]], 0,
-                            ['case', ['has', 'cid'], 13, 11]
+                            ['case', ['has', 'cid'], 17, 14]
                         ],
                         11, [
                             'case',
                             ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0012]], 0,
-                            ['case', ['has', 'cid'], 13, 11]
+                            ['case', ['has', 'cid'], 18, 15]
                         ],
                         12, [
                             'case',
                             ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0006]], 0,
-                            ['case', ['has', 'cid'], 13, 11]
+                            ['case', ['has', 'cid'], 19, 16]
                         ],
                         14, [
                             'case',
                             ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.00015]], 0,
-                            ['case', ['has', 'cid'], 13, 11]
+                            ['case', ['has', 'cid'], 20, 17]
                         ]
                     ],
                     'text-justify': 'center',
@@ -1333,9 +1968,9 @@ function rebuildGeoJsonLayer() {
                     'text-letter-spacing': 0.05
                 },
                 paint: {
-                    'text-color': '#ffffff',
-                    'text-halo-color': 'rgba(15, 15, 15, 0.95)',
-                    'text-halo-width': 1.8
+                    'text-color': (state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo") ? '#000000' : '#ffffff',
+                    'text-halo-color': (state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo") ? 'rgba(255, 255, 255, 0.95)' : 'rgba(15, 15, 15, 0.95)',
+                    'text-halo-width': (state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo") ? 2.0 : 1.8
                 }
             });
             updateLabelZoomVisibility();
@@ -1518,6 +2153,7 @@ function initializeMap() {
 
     state.map = new maplibregl.Map({
         container: 'tile-map',
+        preserveDrawingBuffer: true,
         maxZoom: 20,
         style: {
             version: 8,
@@ -2191,6 +2827,62 @@ function setupActionButtons() {
                 closeAllModals();
             });
         });
+
+        const geojsonBtn = document.getElementById("download-geojson");
+        if (geojsonBtn) {
+            geojsonBtn.addEventListener("click", () => {
+                const geojson = getSelectedGeoJSONData();
+                const filename = getActiveDownloadFilename("geojson");
+                const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
+                saveBlob(blob, filename);
+                showToast(`Downloaded ${filename}`);
+            });
+        }
+
+        const kmzBtn = document.getElementById("download-kmz");
+        if (kmzBtn) {
+            kmzBtn.addEventListener("click", async () => {
+                const geojson = getSelectedGeoJSONData();
+                const filename = getActiveDownloadFilename("kmz");
+                const kmlStr = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
+                if (typeof JSZip !== "undefined") {
+                    const zip = new JSZip();
+                    zip.file("doc.kml", kmlStr);
+                    const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
+                    saveBlob(blob, filename);
+                } else {
+                    const blob = new Blob([kmlStr], { type: "application/vnd.google-earth.kml+xml" });
+                    saveBlob(blob, filename.replace(/\.kmz$/i, ".kml"));
+                }
+                showToast(`Downloaded ${filename}`);
+            });
+        }
+
+        const gpxBtn = document.getElementById("download-gpx");
+        if (gpxBtn) {
+            gpxBtn.addEventListener("click", () => {
+                const geojson = getSelectedGeoJSONData();
+                const filename = getActiveDownloadFilename("gpx");
+                const gpxStr = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
+                const blob = new Blob([gpxStr], { type: "application/gpx+xml" });
+                saveBlob(blob, filename);
+                showToast(`Downloaded ${filename}`);
+            });
+        }
+
+        const geopdfBtn = document.getElementById("download-geopdf");
+        if (geopdfBtn) {
+            geopdfBtn.addEventListener("click", () => {
+                downloadGeoPdf();
+            });
+        }
+
+        const geotiffBtn = document.getElementById("download-geotiff");
+        if (geotiffBtn) {
+            geotiffBtn.addEventListener("click", () => {
+                downloadGeoTiff();
+            });
+        }
     }
 
     if (helpBtn && helpModal) {
