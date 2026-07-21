@@ -1002,7 +1002,6 @@ body.is-transitioning .desktop-nav-tab__icon {
     filter: drop-shadow(0 4px 10px #000000) drop-shadow(0 12px 28px #000000) drop-shadow(0 20px 48px #000000) drop-shadow(0 0 36px #000000) !important;
 }
 
-
 /* Map Style Switcher (Transparent wrapper when collapsed, expanding into panel) */
 .maps-tile-map-container .map-ctrl-styles {
     background: transparent !important;
@@ -1060,6 +1059,45 @@ body.is-transitioning .desktop-nav-tab__icon {
     cursor: pointer !important;
     box-sizing: border-box !important;
     overflow: visible !important;
+}
+
+/* White drop shadows for map control buttons when light basemap (Esri Street / Topo) is active */
+.is-light-basemap .map-ctrl-zoom,
+.is-light-basemap .map-ctrl-locate,
+.is-light-basemap .map-ctrl-fullscreen,
+.is-light-basemap .map-ctrl-styles:not(.map-ctrl-styles--expanded) .map-ctrl-styles__toggle,
+.maps-tile-map-container.is-light-basemap .map-ctrl-zoom,
+.maps-tile-map-container.is-light-basemap .map-ctrl-locate,
+.maps-tile-map-container.is-light-basemap .map-ctrl-fullscreen,
+.maps-tile-map-container.is-light-basemap .map-ctrl-styles:not(.map-ctrl-styles--expanded) .map-ctrl-styles__toggle {
+    filter: drop-shadow(0 4px 10px #ffffff) drop-shadow(0 12px 28px #ffffff) drop-shadow(0 20px 48px #ffffff) drop-shadow(0 0 36px #ffffff) !important;
+}
+
+/* Black icon text & stroke for map control buttons when light basemap (Esri Street / Topo) is active */
+.is-light-basemap .map-ctrl-zoom a,
+.is-light-basemap .map-ctrl-zoom-in,
+.is-light-basemap .map-ctrl-zoom-out,
+.is-light-basemap .map-ctrl-locate a,
+.is-light-basemap .map-ctrl-fullscreen a,
+.is-light-basemap .map-ctrl-styles__toggle,
+.is-light-basemap .map-ctrl-styles__toggle button,
+.is-light-basemap .map-ctrl-locate-btn,
+.maps-tile-map-container.is-light-basemap .map-ctrl-zoom a,
+.maps-tile-map-container.is-light-basemap .map-ctrl-zoom-in,
+.maps-tile-map-container.is-light-basemap .map-ctrl-zoom-out,
+.maps-tile-map-container.is-light-basemap .map-ctrl-locate a,
+.maps-tile-map-container.is-light-basemap .map-ctrl-fullscreen a,
+.maps-tile-map-container.is-light-basemap .map-ctrl-styles__toggle {
+    color: #000000 !important;
+}
+
+.is-light-basemap .map-ctrl-styles__toggle svg,
+.is-light-basemap .map-ctrl-locate-btn svg,
+.is-light-basemap .map-ctrl-fullscreen a svg,
+.maps-tile-map-container.is-light-basemap .map-ctrl-styles__toggle svg,
+.maps-tile-map-container.is-light-basemap .map-ctrl-locate-btn svg,
+.maps-tile-map-container.is-light-basemap .map-ctrl-fullscreen a svg {
+    stroke: #000000 !important;
 }
 
 .maps-tile-map-container .map-ctrl-styles__toggle {
@@ -1412,15 +1450,23 @@ body.is-transitioning .desktop-nav-tab__icon {
     background-image: url("../images/dark_map-02.png") !important;
 }
 
-/* Light Map Preview thumbnail (Inverse coloration of Dark Map) */
-.maps-tile-map-container .map-ctrl-styles__list .light-map-thumbnail {
-    background-image: url("../images/dark_map-02.png") !important;
-    filter: invert(1) !important;
-}
 
 /* Satellite Preview thumbnail */
-.maps-tile-map-container .map-ctrl-styles__list .satellite-thumbnail {
+.maps-tile-map-container .map-ctrl-styles__list .satellite-thumbnail,
+.maps-tile-map-container .satellite-thumbnail {
     background-image: url("../images/Google_satellite-02.png") !important;
+}
+
+/* Esri Street Preview thumbnail */
+.maps-tile-map-container .map-ctrl-styles__list .esri-street-thumbnail,
+.maps-tile-map-container .esri-street-thumbnail {
+    background-image: url("../images/street2.jpg") !important;
+}
+
+/* Esri Topo Preview thumbnail */
+.maps-tile-map-container .map-ctrl-styles__list .esri-topo-thumbnail,
+.maps-tile-map-container .esri-topo-thumbnail {
+    background-image: url("../images/topo.jpg") !important;
 }
 
 .maps-tile-map-container .modal-no-results {
@@ -2546,279 +2592,6 @@ body.is-help-mode-active .mobile-help-exit-btn {
 }
 
 
-
-.is-light-map-active .action-icon-btn {
-    color: #000000 !important;
-}
-
-.is-light-map-active .action-icon-btn span {
-    color: #000000 !important;
-}
-
-.is-light-map-active .action-icon-btn svg {
-    stroke: #000000 !important;
-}
-
-.is-light-map-active .action-icon-btn:hover {
-    background: rgba(48, 209, 88, 0.22) !important;
-    color: #248a3d !important;
-}
-
-.is-light-map-active .action-icon-btn:hover span {
-    color: #248a3d !important;
-}
-
-.is-light-map-active .action-icon-btn:hover svg {
-    stroke: #248a3d !important;
-}
-
-.is-light-map-active .action-icon-btn.is-active {
-    background: rgba(48, 209, 88, 0.22) !important;
-    color: #248a3d !important;
-}
-
-.is-light-map-active .action-icon-btn.is-active span {
-    color: #248a3d !important;
-}
-
-.is-light-map-active .action-icon-btn.is-active svg {
-    stroke: #248a3d !important;
-}
-
-/* Modal Content Colors & Darkened Fills inside Toolbar Modal */
-.is-light-map-active .maps-tile-download-col {
-    background: rgba(0, 0, 0, 0.05) !important;
-}
-
-.is-light-map-active .maps-tile-download-col__title {
-    color: rgba(0, 0, 0, 0.6) !important;
-}
-
-.is-light-map-active .maps-tile-download-item.is-disabled {
-    background: rgba(0, 0, 0, 0.03) !important;
-    color: rgba(0, 0, 0, 0.35) !important;
-}
-
-.is-light-map-active .maps-tile-download-tag {
-    background: rgba(0, 0, 0, 0.06) !important;
-    color: rgba(0, 0, 0, 0.45) !important;
-}
-
-.is-light-map-active .maps-tile-copy-desc {
-    color: #000000 !important;
-}
-
-.is-light-map-active .maps-tile-copy-input-row {
-    background: rgba(0, 0, 0, 0.05) !important;
-    border: 1px solid rgba(0, 0, 0, 0.12) !important;
-}
-
-.is-light-map-active .maps-tile-copy-input {
-    color: #000000 !important;
-}
-
-.is-light-map-active .maps-tile-help-desc {
-    color: #000000 !important;
-}
-
-.is-light-map-active .help-toggle-card {
-    background: rgba(0, 0, 0, 0.04) !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-}
-
-.is-light-map-active .help-toggle-title {
-    color: #000000 !important;
-}
-
-.is-light-map-active .help-toggle-subtitle {
-    color: rgba(0, 0, 0, 0.55) !important;
-}
-
-.is-light-map-active .help-shortcut-badge {
-    background: transparent !important;
-    border: 1px solid rgba(0, 0, 0, 0.35) !important;
-    color: #333333 !important;
-}
-
-.is-light-map-active .help-slider {
-    background-color: rgba(0, 0, 0, 0.16) !important;
-}
-
-.is-light-map-active .help-switch input:checked + .help-slider {
-    background-color: #30d158 !important;
-}
-
-.is-light-map-active .help-doc-link {
-    background: rgba(0, 0, 0, 0.05) !important;
-    border: 1px solid rgba(0, 0, 0, 0.1) !important;
-    color: #000000 !important;
-}
-
-.is-light-map-active .help-doc-link:hover {
-    background: rgba(48, 209, 88, 0.16) !important;
-    color: #248a3d !important;
-}
-
-/* Darkened Green styling overrides for internal modal elements in Light Map */
-.is-light-map-active .maps-tile-download-item.is-active {
-    background: rgba(48, 209, 88, 0.22) !important;
-    color: #248a3d !important;
-}
-
-.is-light-map-active .maps-tile-download-item.is-active:hover {
-    background: rgba(48, 209, 88, 0.32) !important;
-    color: #1e6f30 !important;
-}
-
-.is-light-map-active .maps-tile-copy-btn {
-    background: rgba(48, 209, 88, 0.22) !important;
-    color: #248a3d !important;
-}
-
-.is-light-map-active .maps-tile-copy-btn:hover {
-    background: rgba(48, 209, 88, 0.32) !important;
-    color: #1e6f30 !important;
-}
-
-/* Light Map overrides for Map Control buttons (Zoom, Locate, Fullscreen, Layers switcher toggle) */
-.is-light-map-active .maps-tile-map-container .map-ctrl-zoom a,
-.is-light-map-active .maps-tile-map-container .map-ctrl-locate a,
-.is-light-map-active .maps-tile-map-container .map-ctrl-fullscreen a,
-.is-light-map-active .maps-tile-map-container .map-ctrl-styles__toggle {
-    color: #000000 !important;
-}
-
-.is-light-map-active .maps-tile-map-container .map-ctrl-zoom a:hover,
-.is-light-map-active .maps-tile-map-container .map-ctrl-locate a:hover,
-.is-light-map-active .maps-tile-map-container .map-ctrl-fullscreen a:hover,
-.is-light-map-active .maps-tile-map-container .map-ctrl-styles__toggle:hover {
-    color: #30d158 !important;
-}
-
-.is-light-map-active .maps-tile-map-container .map-ctrl-locate.is-active a,
-.is-light-map-active .maps-tile-map-container .map-ctrl-styles--expanded .map-ctrl-styles__toggle {
-    color: #30d158 !important;
-}
-
-/* Light Map overrides for the Left Sidebar Column */
-.is-light-map-active .logo--header {
-    filter: invert(1) !important;
-}
-
-.is-light-map-active .maps-tile-header__title {
-    color: #000000 !important;
-}
-
-.is-light-map-active .maps-tile-sidebar,
-.is-light-map-active .sidebar-about-panel,
-.is-light-map-active .sidebar-about-wrapper,
-.is-light-map-active .sidebar-about-text,
-.is-light-map-active .tile-zone-item__title,
-.is-light-map-active .tile-zone-item__meta,
-.is-light-map-active .sidebar-empty-state,
-.is-light-map-active .sidebar-empty-state__text {
-    color: #000000 !important;
-}
-
-.is-light-map-active .tile-zone-item__meta-prefix {
-    color: #248a3d !important;
-}
-
-.is-light-map-active .tile-zone-item.is-active .tile-zone-item__title {
-    color: var(--color-focus) !important;
-}
-
-.is-light-map-active .sidebar-capsule {
-    background: rgba(0, 0, 0, 0.08) !important;
-    color: rgba(0, 0, 0, 0.65) !important;
-}
-
-.is-light-map-active .sidebar-capsule:hover {
-    background: rgba(0, 0, 0, 0.14) !important;
-    color: rgba(0, 0, 0, 0.85) !important;
-}
-
-.is-light-map-active .sidebar-capsule.is-active,
-.is-light-map-active .sidebar-capsule.is-active:hover {
-    background: rgba(48, 209, 88, 0.22) !important;
-    color: #248a3d !important;
-    font-weight: 700;
-}
-
-.is-light-map-active .sidebar-back-btn {
-    color: rgba(0, 0, 0, 0.7) !important;
-}
-
-.is-light-map-active .sidebar-back-btn:hover {
-    color: #000000 !important;
-}
-
-.is-light-map-active .sidebar-search-toggle-btn {
-    background: rgba(0, 0, 0, 0.08) !important;
-    color: rgba(0, 0, 0, 0.6) !important;
-}
-
-.is-light-map-active .sidebar-search-toggle-btn:hover {
-    background: rgba(0, 0, 0, 0.14) !important;
-    color: #000000 !important;
-}
-
-/* Light Map background overrides for the Left Sidebar Column */
-.is-light-map-active .maps-tile-sidebar,
-.is-light-map-active .maps-tile-header,
-.is-light-map-active .maps-tile-sidebar__header {
-    background: #e0e0e0 !important;
-}
-
-.is-light-map-active .maps-tile-sidebar::after {
-    background: linear-gradient(to top, #e0e0e0 0%, rgba(224, 224, 224, 0) 100%) !important;
-}
-
-.is-light-map-active .maps-tile-sidebar__header::after {
-    background: linear-gradient(to bottom, #e0e0e0 0%, rgba(224, 224, 224, 0) 100%) !important;
-}
-
-.is-light-map-active .tile-zone-item {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
-}
-
-.is-light-map-active .tile-zone-item:hover,
-.is-light-map-active .tile-zone-item.is-hovered {
-    background: rgba(0, 0, 0, 0.04) !important;
-}
-
-.is-light-map-active .tile-zone-item.is-active {
-    background: rgba(48, 209, 88, 0.09) !important;
-}
-
-.is-light-map-active .maps-tile-sidebar__scroll {
-    scrollbar-color: rgba(0, 0, 0, 0.15) transparent !important;
-}
-
-/* Light Map overrides for Map control button drop shadows & Map frame edge overlays */
-.is-light-map-active .maps-tile-map-container .map-ctrl-zoom,
-.is-light-map-active .maps-tile-map-container .map-ctrl-locate,
-.is-light-map-active .maps-tile-map-container .map-ctrl-fullscreen {
-    filter: drop-shadow(0 4px 10px #ffffff) drop-shadow(0 12px 28px #ffffff) drop-shadow(0 20px 48px #ffffff) drop-shadow(0 0 36px #ffffff) !important;
-}
-
-.is-light-map-active .maps-tile-map-container .map-ctrl-styles:not(.map-ctrl-styles--expanded) .map-ctrl-styles__toggle {
-    filter: drop-shadow(0 4px 10px #ffffff) drop-shadow(0 12px 28px #ffffff) drop-shadow(0 20px 48px #ffffff) drop-shadow(0 0 36px #ffffff) !important;
-}
-
-.is-light-map-active .map-fade-overlay {
-    display: none !important;
-}
-
-/* Light Map overrides for Eugene & Florence circle thumbnails */
-.is-light-map-active .tile-zone-item__thumb--logo {
-    background: transparent !important;
-}
-
-.is-light-map-active .tile-zone-item__thumb--logo img {
-    background-color: transparent !important;
-    filter: invert(1) !important;
-}
 
 .sidebar-list-container {
     position: relative;

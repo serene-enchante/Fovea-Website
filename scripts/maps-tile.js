@@ -77,6 +77,63 @@ function updateAllFeatureStyles() {
             { selected: isSelected }
         );
     });
+
+    // Determine geometry styling based on active basemap (thick black outline & transparent deep blue fill for Esri Street/Topo, white for Dark/Satellite)
+    const isLightBasemap = state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo";
+    const mapWrapper = document.getElementById("map-wrapper");
+    const mapArea = document.querySelector(".maps-tile-map-area");
+    [document.body, mapArea, mapWrapper].forEach(el => {
+        if (el) {
+            if (isLightBasemap) {
+                el.classList.add("is-light-basemap");
+            } else {
+                el.classList.remove("is-light-basemap");
+            }
+        }
+    });
+
+    const defaultFillColor = isLightBasemap ? '#0d47a1' : '#ffffff';
+    const defaultLineColor = isLightBasemap ? '#000000' : '#ffffff';
+    const dimLineColor = isLightBasemap ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.25)';
+    const defaultLineWidth = isLightBasemap ? 2.8 : 1.0;
+    const defaultFillOpacity = isLightBasemap ? 0.22 : 0.07;
+
+    const noDataFillColor = isLightBasemap ? '#8e8e93' : defaultFillColor;
+    const noDataFillOpacity = isLightBasemap ? 0.30 : 0.02;
+    const noDataLineColor = isLightBasemap ? 'rgba(80, 80, 80, 0.60)' : dimLineColor;
+
+    if (state.map.getLayer('zones-fill')) {
+        state.map.setPaintProperty('zones-fill', 'fill-color', [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false], '#30d158',
+            ['boolean', ['feature-state', 'hover'], false], '#30d158',
+            ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataFillColor,
+            defaultFillColor
+        ]);
+        state.map.setPaintProperty('zones-fill', 'fill-opacity', [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false], 0.35,
+            ['boolean', ['feature-state', 'hover'], false], 0.2,
+            ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataFillOpacity,
+            defaultFillOpacity
+        ]);
+    }
+
+    if (state.map.getLayer('zones-outline')) {
+        state.map.setPaintProperty('zones-outline', 'line-color', [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false], '#00ff66',
+            ['boolean', ['feature-state', 'hover'], false], '#30d158',
+            ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataLineColor,
+            defaultLineColor
+        ]);
+        state.map.setPaintProperty('zones-outline', 'line-width', [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false], 3.2,
+            ['boolean', ['feature-state', 'hover'], false], 2.8,
+            defaultLineWidth
+        ]);
+    }
 }
 
 const state = {
@@ -1135,6 +1192,7 @@ function initializeMap() {
 
     state.map = new maplibregl.Map({
         container: 'tile-map',
+        maxZoom: 20,
         style: {
             version: 8,
             sources: {
@@ -1147,6 +1205,7 @@ function initializeMap() {
                         "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
                     ],
                     tileSize: 128,
+                    maxzoom: 19,
                     roundZoom: true,
                     attribution: "&copy; <a href='https://carto.com/'>CARTO</a>"
                 },
@@ -1156,8 +1215,27 @@ function initializeMap() {
                         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                     ],
                     tileSize: 128,
+                    maxzoom: 18,
                     roundZoom: true,
                     attribution: "Tiles &copy; Esri &mdash; Source: Esri"
+                },
+                "esri-street-tiles": {
+                    type: "raster",
+                    tiles: [
+                        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+                    ],
+                    tileSize: 256,
+                    maxzoom: 18,
+                    attribution: "Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ"
+                },
+                "esri-topo-tiles": {
+                    type: "raster",
+                    tiles: [
+                        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+                    ],
+                    tileSize: 256,
+                    maxzoom: 18,
+                    attribution: "Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, TomTom"
                 }
             },
             layers: [
@@ -1176,6 +1254,22 @@ function initializeMap() {
                     minzoom: 0,
                     maxzoom: 22,
                     layout: { visibility: "none" }
+                },
+                {
+                    id: "base-esri-street",
+                    type: "raster",
+                    source: "esri-street-tiles",
+                    minzoom: 0,
+                    maxzoom: 22,
+                    layout: { visibility: "none" }
+                },
+                {
+                    id: "base-esri-topo",
+                    type: "raster",
+                    source: "esri-topo-tiles",
+                    minzoom: 0,
+                    maxzoom: 22,
+                    layout: { visibility: "none" }
                 }
             ]
         },
@@ -1186,7 +1280,9 @@ function initializeMap() {
 
     state.baseMapsList = [
         { id: "dark", name: "Dark Map", layerId: "base-dark" },
-        { id: "satellite", name: "Satellite Map", layerId: "base-satellite" }
+        { id: "satellite", name: "Satellite Map", layerId: "base-satellite" },
+        { id: "esri-street", name: "Street Map", layerId: "base-esri-street" },
+        { id: "esri-topo", name: "Topo Map", layerId: "base-esri-topo" }
     ];
 
     // Create custom controls container
@@ -1450,8 +1546,10 @@ function initializeMap() {
             }
         } else {
             const basemaps = [
-                { id: "dark", name: "Dark Map", thumbnailClass: "dark-map-thumbnail" },
-                { id: "satellite", name: "Satellite Map", thumbnailClass: "satellite-thumbnail" }
+                { id: "dark", name: "Dark Map", thumbnailClass: "dark-map-thumbnail", layerId: "base-dark" },
+                { id: "satellite", name: "Satellite Map", thumbnailClass: "satellite-thumbnail", layerId: "base-satellite" },
+                { id: "esri-street", name: "Street Map", thumbnailClass: "esri-street-thumbnail", layerId: "base-esri-street" },
+                { id: "esri-topo", name: "Topo Map", thumbnailClass: "esri-topo-thumbnail", layerId: "base-esri-topo" }
             ];
 
             const filtered = basemaps.filter(b => b.name.toLowerCase().includes(query));
@@ -1474,17 +1572,23 @@ function initializeMap() {
                         e.stopPropagation();
                         e.preventDefault();
                         
-                        if (b.id === "dark") {
-                            state.map.setLayoutProperty('base-satellite', 'visibility', 'none');
-                            state.map.setLayoutProperty('base-dark', 'visibility', 'visible');
-                            state.currentBaseLayer = "dark";
-                        } else if (b.id === "satellite") {
-                            state.map.setLayoutProperty('base-dark', 'visibility', 'none');
-                            state.map.setLayoutProperty('base-satellite', 'visibility', 'visible');
-                            state.currentBaseLayer = "satellite";
+                        if (state.map && state.baseMapsList) {
+                            state.baseMapsList.forEach(bm => {
+                                if (state.map.getLayer(bm.layerId)) {
+                                    state.map.setLayoutProperty(bm.layerId, 'visibility', bm.layerId === b.layerId ? 'visible' : 'none');
+                                }
+                            });
                         }
+                        state.currentBaseLayer = b.id;
 
-                        document.body.classList.remove("is-light-map-active");
+                        const mapWrapper = document.getElementById("map-wrapper");
+                        if (mapWrapper) {
+                            if (b.id === "esri-street" || b.id === "esri-topo") {
+                                mapWrapper.classList.add("is-light-basemap");
+                            } else {
+                                mapWrapper.classList.remove("is-light-basemap");
+                            }
+                        }
 
                         updateAllFeatureStyles();
                         renderContent();
