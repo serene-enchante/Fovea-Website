@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="../styles/header.css">
     <link rel="stylesheet" href="../styles/cards.css">
     <link rel="stylesheet" href="../styles/maps-components.css">
-    <link rel="stylesheet" href="../styles/page-maps-tile.css?v=89">
+    <link rel="stylesheet" href="../styles/page-maps-tile.css?v=98">
 
     <!-- MapLibre & Fonts -->
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
@@ -123,13 +123,30 @@
                             </button>
                         </div>
 
+                        <div class="maps-tile-download-search-wrapper">
+                            <div class="maps-tile-download-search-box">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input type="text" id="download-app-search" class="maps-tile-download-search-input" placeholder="Search app (e.g. Avenza)..." autocomplete="off" />
+                                <button type="button" id="download-app-search-clear" class="maps-tile-download-search-clear" aria-label="Clear search" style="display: none;">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="download-app-autocomplete" class="maps-tile-download-autocomplete" style="display: none;"></div>
+                        </div>
+
                         <div class="download-grid maps-tile-download-grid">
                             <section class="download-column maps-tile-download-col" aria-labelledby="vector-title">
                                 <h3 id="vector-title" class="maps-tile-download-col__title">Vector Formats</h3>
                                 <div class="maps-tile-download-list">
                                     <button type="button" class="download-link maps-tile-download-item is-active" id="download-geojson">
                                         <span>GeoJSON</span>
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                             stroke-linejoin="round">
                                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -138,8 +155,8 @@
                                         </svg>
                                     </button>
                                     <button type="button" class="download-link maps-tile-download-item is-active" id="download-kmz">
-                                        <span>KMZ (GIS)</span>
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                        <span>KMZ</span>
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                             stroke-linejoin="round">
                                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -148,8 +165,8 @@
                                         </svg>
                                     </button>
                                     <button type="button" class="download-link maps-tile-download-item is-active" id="download-gpx">
-                                        <span>GPX (GPS)</span>
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                        <span>GPX</span>
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                             stroke-linejoin="round">
                                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -164,8 +181,8 @@
                                 <h3 id="raster-title" class="maps-tile-download-col__title">Raster Formats</h3>
                                 <div class="maps-tile-download-list">
                                     <button type="button" class="download-link maps-tile-download-item is-active" id="download-geopdf">
-                                        <span>GeoPDF (Layout)</span>
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                        <span>GeoPDF</span>
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                             stroke-linejoin="round">
                                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -174,8 +191,8 @@
                                         </svg>
                                     </button>
                                     <button type="button" class="download-link maps-tile-download-item is-active" id="download-geotiff">
-                                        <span>GeoTIFF (Raster)</span>
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                        <span>GeoTIFF</span>
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                             stroke-linejoin="round">
                                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -494,7 +511,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-    <script src="../scripts/maps-tile.js?v=177"></script>
+    <script src="../scripts/maps-tile.js?v=178"></script>
 </body>
 
 </html>

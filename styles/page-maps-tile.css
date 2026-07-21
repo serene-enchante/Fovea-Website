@@ -1966,7 +1966,7 @@ body.has-active-modal .maps-tile-header__actions {
     flex-direction: column !important;
     gap: 1.25rem !important;
     position: relative;
-    overflow: hidden;
+    overflow: visible !important;
 }
 
 /* Disabled internal gradient overlay to eliminate rough edges */
@@ -2046,36 +2046,35 @@ body.has-active-modal .maps-tile-header__actions {
 
 .maps-tile-download-list {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
 }
 
 .maps-tile-download-item {
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    padding: 0.65rem 0.85rem !important;
-    border-radius: 6px !important;
+    gap: 0.4rem !important;
+    padding: 0.4rem 0.75rem !important;
+    background: rgba(255, 255, 255, 0.10) !important;
     border: none !important;
-    font-size: 0.85rem !important;
+    border-radius: 20px !important;
+    color: #ffffff !important;
+    font-size: 0.76rem !important;
     font-weight: 600 !important;
-    font-family: inherit !important;
     cursor: pointer !important;
     text-decoration: none !important;
-    transition: all var(--transition-fast) !important;
+    transition: all 0.2s ease !important;
+    box-shadow: none !important;
     box-sizing: border-box;
 }
 
-.maps-tile-download-item.is-active {
-    background: rgba(48, 209, 88, 0.16) !important;
-    border: none !important;
-    color: #30d158 !important;
-}
-
+.maps-tile-download-item:hover,
 .maps-tile-download-item.is-active:hover {
-    background: rgba(48, 209, 88, 0.28) !important;
+    background: rgba(48, 209, 88, 0.22) !important;
+    color: #30d158 !important;
     transform: translateY(-1px);
+    box-shadow: none !important;
 }
 
 .maps-tile-download-item.is-disabled {
@@ -2092,6 +2091,137 @@ body.has-active-modal .maps-tile-header__actions {
     border-radius: 4px;
     background: rgba(255, 255, 255, 0.06);
     color: rgba(255, 255, 255, 0.35);
+}
+
+/* App Compatibility Search & Autocomplete Styles */
+.maps-tile-download-search-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 280px;
+    margin-top: 0.75rem;
+    margin-bottom: 1rem;
+    margin-left: auto;
+    margin-right: auto;
+    z-index: 30;
+    box-sizing: border-box;
+}
+
+.maps-tile-download-search-box {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    padding: 0.6rem 0.85rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+.maps-tile-download-search-box:focus-within {
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.22);
+}
+
+.maps-tile-download-search-box .search-icon {
+    color: rgba(255, 255, 255, 0.4);
+    flex-shrink: 0;
+}
+
+.maps-tile-download-search-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-family: inherit;
+    width: 100%;
+    min-width: 0;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+
+.maps-tile-download-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.maps-tile-download-search-clear {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.maps-tile-download-search-clear:hover {
+    color: #ffffff;
+}
+
+.maps-tile-download-autocomplete {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: rgba(35, 39, 47, 0.98);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    max-height: 220px;
+    overflow-y: auto;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+    z-index: 50;
+    padding: 0.4rem;
+}
+
+.download-autocomplete-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.download-autocomplete-item:hover {
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.download-autocomplete-item__name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.download-autocomplete-item__formats {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.download-format-pill {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.maps-tile-download-item.is-dimmed {
+    opacity: 0.25 !important;
+    pointer-events: none !important;
+    filter: grayscale(0.8) !important;
+}
+
+.maps-tile-download-item.is-filtered-match {
+    background: rgba(255, 255, 255, 0.20) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35) !important;
 }
 
 /* Copy Link Modal Body Styles */

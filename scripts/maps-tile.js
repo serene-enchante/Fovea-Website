@@ -2675,6 +2675,182 @@ function initializeMap() {
     setupMapEffectsAndFullscreen(mapWrapper);
 }
 
+const MAP_VIEWER_APPS = [
+    {
+        name: "Avenza Maps",
+        aliases: ["avenza", "avenzamaps"],
+        formats: ["geopdf", "geotiff", "kmz", "gpx"]
+    },
+    {
+        name: "OsmAnd Maps",
+        aliases: ["osmand", "osmandmaps", "osmand+"],
+        formats: ["gpx", "geojson", "kmz"]
+    },
+    {
+        name: "Gaia GPS",
+        aliases: ["gaia", "gaiagps"],
+        formats: ["gpx", "kmz", "geojson"]
+    },
+    {
+        name: "AllTrails",
+        aliases: ["alltrails", "all trails"],
+        formats: ["gpx", "kmz"]
+    },
+    {
+        name: "CalTopo",
+        aliases: ["caltopo", "sarsoft"],
+        formats: ["gpx", "kmz", "geopdf", "geojson"]
+    },
+    {
+        name: "onX Maps",
+        aliases: ["onx", "onxhunt", "onxoffroad", "onxmaps"],
+        formats: ["gpx", "kmz"]
+    },
+    {
+        name: "Google Earth",
+        aliases: ["google earth", "googleearth", "earth"],
+        formats: ["kmz", "geojson"]
+    },
+    {
+        name: "QGIS",
+        aliases: ["qgis", "quantum gis"],
+        formats: ["geojson", "kmz", "gpx", "geopdf", "geotiff"]
+    },
+    {
+        name: "ArcGIS / Field Maps",
+        aliases: ["arcgis", "esri", "field maps"],
+        formats: ["geojson", "geopdf", "geotiff", "kmz", "gpx"]
+    },
+    {
+        name: "Garmin Explore / BaseCamp",
+        aliases: ["garmin", "basecamp", "garmin explore"],
+        formats: ["gpx", "kmz"]
+    },
+    {
+        name: "Locus Map",
+        aliases: ["locus", "locusmap"],
+        formats: ["gpx", "kmz", "geotiff"]
+    },
+    {
+        name: "Organic Maps / Maps.me",
+        aliases: ["organic maps", "mapsme", "maps.me"],
+        formats: ["kmz", "gpx"]
+    }
+];
+
+function setupDownloadAppSearch() {
+    const searchInput = document.getElementById("download-app-search");
+    const clearBtn = document.getElementById("download-app-search-clear");
+    const autocompleteBox = document.getElementById("download-app-autocomplete");
+    if (!searchInput || !autocompleteBox) return;
+
+    const allDownloadButtons = {
+        "geojson": document.getElementById("download-geojson"),
+        "kmz": document.getElementById("download-kmz"),
+        "gpx": document.getElementById("download-gpx"),
+        "geopdf": document.getElementById("download-geopdf"),
+        "geotiff": document.getElementById("download-geotiff")
+    };
+
+    const filterFormatsByApp = (appFormats) => {
+        if (!appFormats) {
+            Object.values(allDownloadButtons).forEach(btn => {
+                if (btn) {
+                    btn.classList.remove("is-dimmed", "is-filtered-match");
+                }
+            });
+            return;
+        }
+
+        Object.entries(allDownloadButtons).forEach(([formatKey, btn]) => {
+            if (btn) {
+                if (appFormats.includes(formatKey)) {
+                    btn.classList.remove("is-dimmed");
+                    btn.classList.add("is-filtered-match");
+                } else {
+                    btn.classList.add("is-dimmed");
+                    btn.classList.remove("is-filtered-match");
+                }
+            }
+        });
+    };
+
+    const updateAutocomplete = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        if (clearBtn) {
+            clearBtn.style.display = query ? "flex" : "none";
+        }
+
+        if (!query) {
+            autocompleteBox.style.display = "none";
+            autocompleteBox.innerHTML = "";
+            filterFormatsByApp(null);
+            return;
+        }
+
+        const matches = MAP_VIEWER_APPS.filter(app => 
+            app.name.toLowerCase().includes(query) || 
+            app.aliases.some(a => a.includes(query))
+        );
+
+        if (matches.length === 0) {
+            autocompleteBox.style.display = "block";
+            autocompleteBox.innerHTML = `<div style="padding:0.6rem; font-size:0.8rem; color:rgba(255,255,255,0.4); text-align:center;">No matching viewer app found</div>`;
+            filterFormatsByApp(null);
+            return;
+        }
+
+        autocompleteBox.style.display = "block";
+        autocompleteBox.innerHTML = matches.map(app => `
+            <div class="download-autocomplete-item" data-app-name="${app.name}">
+                <span class="download-autocomplete-item__name">${app.name}</span>
+                <div class="download-autocomplete-item__formats">
+                    ${app.formats.map(f => `<span class="download-format-pill">${f.toUpperCase()}</span>`).join("")}
+                </div>
+            </div>
+        `).join("");
+
+        autocompleteBox.querySelectorAll(".download-autocomplete-item").forEach(item => {
+            item.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const selectedName = item.getAttribute("data-app-name");
+                const selectedApp = MAP_VIEWER_APPS.find(a => a.name === selectedName);
+                if (selectedApp) {
+                    searchInput.value = selectedApp.name;
+                    autocompleteBox.style.display = "none";
+                    if (clearBtn) clearBtn.style.display = "flex";
+                    filterFormatsByApp(selectedApp.formats);
+                    if (typeof showToast === "function") {
+                        showToast(`Filtered formats for ${selectedApp.name}`);
+                    }
+                }
+            });
+        });
+
+        if (matches.length > 0) {
+            filterFormatsByApp(matches[0].formats);
+        }
+    };
+
+    searchInput.addEventListener("input", updateAutocomplete);
+    searchInput.addEventListener("focus", updateAutocomplete);
+
+    if (clearBtn) {
+        clearBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            searchInput.value = "";
+            updateAutocomplete();
+            searchInput.focus();
+        });
+    }
+
+    document.addEventListener("click", (e) => {
+        if (!e.target.closest(".maps-tile-download-search-wrapper")) {
+            autocompleteBox.style.display = "none";
+        }
+    });
+}
+
 function setupActionButtons() {
     const downloadModal = document.getElementById("downloads-modal");
     const copyModal = document.getElementById("copy-link-modal");
@@ -2809,6 +2985,7 @@ function setupActionButtons() {
     }
 
     if (downloadBtn && downloadModal) {
+        setupDownloadAppSearch();
         downloadBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             if (e.currentTarget) e.currentTarget.blur();
