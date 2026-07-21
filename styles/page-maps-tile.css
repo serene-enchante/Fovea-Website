@@ -2987,4 +2987,10 @@ body.is-annotation-mode .annotation-exit-btn {
     .mobile-nav-tab:active .mobile-nav-tab__icon {
         filter: invert(1) brightness(0.85) grayscale(100%);
     }
+
+    /* Hide zoom controls on mobile */
+    .maps-tile-map-container .map-ctrl-zoom,
+    .map-ctrl-zoom {
+        display: none !important;
+    }
 }
