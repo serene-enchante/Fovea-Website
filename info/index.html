@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>About fovea</title>
+    <meta name="description" content="About Fovea - A centralized and concise environment to view and iterate citizen science spatial data.">
+
+    <link rel="icon" type="image/png" href="../images/logo-fav.png">
+
+    <style>
+        @font-face {
+            font-family: 'Aliceregular';
+            src: url('../fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff2') format('woff2'),
+                 url('../fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --body-text-color: rgba(255, 255, 255, 0.72);
+            --subtext-color: rgba(255, 255, 255, 0.45);
+            --border-color: rgba(255, 255, 255, 0.12);
+            --font-serif: 'Aliceregular', 'Alice', Georgia, serif;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .info-page-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 4rem 1.75rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Ambient Glow Background */
+        .ambient-glow {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: clamp(320px, 60vw, 700px);
+            height: clamp(320px, 60vw, 700px);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.035) 0%, rgba(0, 0, 0, 0) 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .info-card {
+            max-width: 680px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+            opacity: 0;
+            transform: translateY(12px);
+            animation: fadeInContent 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.1s;
+        }
+
+        @keyframes fadeInContent {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-nav {
+            margin-bottom: 0.5rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.86rem;
+            color: var(--subtext-color);
+            text-decoration: none;
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+
+        .back-link:hover {
+            color: #ffffff;
+            transform: translateX(-3px);
+        }
+
+        .info-header {
+            font-family: var(--font-serif);
+            font-size: clamp(2.75rem, 6vw, 4.25rem);
+            font-weight: 400;
+            color: var(--text-color);
+            letter-spacing: -0.025em;
+            line-height: 1.1;
+        }
+
+        /* Upper-Right Background Eye Element */
+        .bg-eye-wrapper {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: clamp(340px, 48vw, 700px);
+            height: clamp(340px, 48vw, 700px);
+            pointer-events: none;
+            z-index: 2;
+            overflow: hidden;
+            opacity: 0.65;
+            -webkit-mask-image: radial-gradient(circle at 85% 15%, black 60%, transparent 98%);
+            mask-image: radial-gradient(circle at 85% 15%, black 60%, transparent 98%);
+        }
+
+        .bg-eye-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: contrast(1.05) brightness(0.95);
+        }
+
+        .info-body-text {
+            font-size: clamp(1.05rem, 1.8vw, 1.22rem);
+            line-height: 1.75;
+            color: var(--body-text-color);
+            font-weight: 300;
+            letter-spacing: 0.01em;
+        }
+
+        .info-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            margin-top: 1rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .action-pill-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 9999px;
+            color: #ffffff;
+            font-size: 0.86rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .action-pill-btn:hover {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .action-pill-btn--primary {
+            background: #30d158;
+            color: #000000;
+            border: none;
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(48, 209, 88, 0.25);
+        }
+
+        .action-pill-btn--primary:hover {
+            background: #34e05e;
+            color: #000000;
+            box-shadow: 0 6px 18px rgba(48, 209, 88, 0.35);
+        }
+
+        /* Mobile specific black gradient backdrop for text readability */
+        @media (max-width: 768px) {
+            .bg-eye-wrapper {
+                opacity: 0.45;
+                width: 90vw;
+                height: 90vw;
+                -webkit-mask-image: radial-gradient(circle at 85% 15%, black 45%, transparent 92%);
+                mask-image: radial-gradient(circle at 85% 15%, black 45%, transparent 92%);
+            }
+
+            .info-page-container {
+                padding: 3rem 1.25rem;
+            }
+
+            .info-card {
+                position: relative;
+                z-index: 10;
+                background: radial-gradient(circle at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.3) 60%, rgba(0, 0, 0, 0) 100%);
+                padding: 1.5rem 1.25rem;
+                border-radius: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ambient-glow"></div>
+    <div class="bg-eye-wrapper">
+        <img src="../images/eye.jpg" alt="" class="bg-eye-img" />
+    </div>
+
+    <main class="info-page-container">
+        <article class="info-card">
+            <nav class="info-nav">
+                <a href="../" class="back-link">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Home</span>
+                </a>
+            </nav>
+
+            <h1 class="info-header">About fovea</h1>
+
+            <p class="info-body-text">
+                The fovea centralis is the part of birds' eyes which allows them to see distant objects with acute detail. Likewise, this project provides a centralized and concise environment to view and iterate broad, decentralized citizen science data. The web interface abstracts professional data schemas and organization practices so that contributors can maintain autonomy over their data input while still enforcing scientific data validity.
+            </p>
+
+            <div class="info-actions">
+                <a href="../maps/?feature=circles" class="action-pill-btn action-pill-btn--primary">
+                    <span>Explore Maps</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+            </div>
+        </article>
+    </main>
+</body>
+
+</html>

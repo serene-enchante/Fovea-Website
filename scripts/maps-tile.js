@@ -1003,6 +1003,13 @@ async function downloadGeoTiff() {
 
 function getInitialIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
+    const circleParam = params.get("circle") || params.get("cid");
+    if (circleParam) {
+        state.currentFeature = "circles";
+        state.isCirclesFeature = true;
+        return circleParam.trim();
+    }
+
     const feature = (params.get("feature") || "").toLowerCase();
     if (feature === "circles") {
         state.currentFeature = "circles";
