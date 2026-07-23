@@ -4178,9 +4178,9 @@ function setupMobileResizeBar() {
     window.addEventListener("mouseup", stopDrag);
     window.addEventListener("touchend", stopDrag);
 
-    // On mobile, default to large-map view instead of 50/50 split
+    // On mobile, default to 50/50 split view instead of large-map view
     if (window.innerWidth <= 768) {
-        setMobileSnapState("map-full", false);
+        setMobileSnapState("default", false);
     }
 }
 
