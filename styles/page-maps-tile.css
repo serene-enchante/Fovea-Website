@@ -77,6 +77,33 @@ body.page-maps-tile {
     min-width: 0;
 }
 
+.header-view-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.header-view-tab {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 9999px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.22rem 0.65rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    line-height: 1.2;
+}
+
+.header-view-tab:hover {
+    background: rgba(48, 209, 88, 0.18);
+    border-color: rgba(48, 209, 88, 0.4);
+    color: #30d158;
+}
+
 .maps-tile-header__center {
     display: flex;
     align-items: center;
@@ -1569,36 +1596,65 @@ body.is-transitioning .desktop-nav-tab__icon {
     flex-shrink: 0;
 }
 
-/* Toast Notification for Copy Link, Location, Help Mode */
-.toast-notification {
+/* Toast Notification for Copy Link, Location, Help Mode, Tools/Settings (styled to match top toolbar, centered at bottom of map frame with float animation) */
+.toast-notification,
+.maps-tile-map-area .toast-notification {
     position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(10px);
-    background: transparent;
-    color: #ffffff !important;
-    border: none;
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
-    font-size: 0.95rem;
-    font-weight: 600;
-    text-shadow: 0 2px 4px #000000, 0 4px 12px #000000, 0 0 16px #000000, 0 0 24px #000000 !important;
-    z-index: 10000;
+    bottom: 24px !important;
+    top: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) translateY(20px) scale(0.95);
+    background: rgba(0, 0, 0, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    color: #d1d1d6 !important;
+    padding: 10px 22px !important;
+    border-radius: 24px !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    text-shadow: none !important;
+    z-index: 99999;
     opacity: 0;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
     white-space: nowrap;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.6rem !important;
 }
 
-.toast-notification.is-visible {
+.toast-notification span,
+.maps-tile-map-area .toast-notification span {
+    color: #d1d1d6 !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+}
+
+.toast-notification.is-visible,
+.maps-tile-map-area .toast-notification.is-visible {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0) scale(1);
 }
 
-.toast-notification.toast-notification--disabled {
+.toast-notification.toast-notification--disabled,
+.maps-tile-map-area .toast-notification.toast-notification--disabled {
     color: #ff453a !important;
-    text-shadow: 0 2px 4px #000000, 0 4px 12px #000000, 0 0 16px #000000, 0 0 24px #000000 !important;
+    border-color: rgba(255, 69, 58, 0.25) !important;
+    background: rgba(20, 0, 0, 0.85) !important;
+}
+
+.toast-notification.toast-notification--disabled span,
+.maps-tile-map-area .toast-notification.toast-notification--disabled span {
+    color: #ff453a !important;
+}
+
+.toast-notification__icon {
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0;
 }
 
 /* Responsive adjustments for mobile/tablet */

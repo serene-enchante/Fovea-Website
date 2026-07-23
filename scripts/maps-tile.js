@@ -1,4 +1,4 @@
-const EUGENE_GEOJSON_PATH = "../geojson/Eugene-01-wgs84.geojson";
+const EUGENE_GEOJSON_PATH = "../geojson/Eugene-02-wgs84.geojson";
 const FLORENCE_GEOJSON_PATH = "../geojson/Florence-00-wgs84.geojson";
 const CIRCLES_GEOJSON_PATH = "../geojson/circles-wgs84.geojson";
 const CIRCLE_ID = "ecbc-circle";
@@ -367,23 +367,28 @@ function formatArea(value) {
 
 function showToast(message, isError = false) {
     let toast = document.getElementById("toast-notification");
+    const container = document.querySelector(".maps-tile-map-area") || document.body;
     if (!toast) {
         toast = document.createElement("div");
         toast.id = "toast-notification";
         toast.className = "toast-notification";
-        const mapWrapper = document.getElementById("map-wrapper");
-        (mapWrapper || document.body).appendChild(toast);
+        container.appendChild(toast);
+    } else if (toast.parentElement !== container) {
+        container.appendChild(toast);
     }
-    toast.textContent = message;
+
+    toast.innerHTML = `<span>${message}</span>`;
+
     if (isError) {
         toast.classList.add("toast-notification--disabled");
     } else {
         toast.classList.remove("toast-notification--disabled");
     }
     toast.classList.add("is-visible");
-    setTimeout(() => {
+    if (window._toastTimer) clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => {
         toast.classList.remove("is-visible");
-    }, 2500);
+    }, 2800);
 }
 
 // --- Client-Side Exporter Helpers (GeoJSON, KMZ, GPX) ---
@@ -2406,6 +2411,7 @@ function initializeMap() {
                         </svg>
                     </button>
                     <button type="button" class="modal-capsule" data-tab="layers">Our Layers</button>
+
                 </div>
                 <button type="button" class="modal-search-toggle-btn" aria-label="Search items">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2607,6 +2613,14 @@ function initializeMap() {
             e.stopPropagation();
             e.preventDefault();
             const tab = btn.getAttribute("data-tab");
+            if (tab === "tools") {
+                showToast("Tools view is not available (coming soon)");
+                return;
+            }
+            if (tab === "settings") {
+                showToast("Settings view is not available (coming soon)");
+                return;
+            }
             if (tab === activeTab) return;
 
             activeTab = tab;
@@ -2935,6 +2949,30 @@ function setupActionButtons() {
         }
         window.updateActionButtonsState();
     };
+
+    const handleToolsClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.currentTarget) e.currentTarget.blur();
+        showToast("Tools view is not available (coming soon)");
+    };
+
+    const handleSettingsClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.currentTarget) e.currentTarget.blur();
+        showToast("Settings view is not available (coming soon)");
+    };
+
+    ["desktop-nav-tab-tools", "mobile-nav-tab-tools"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("click", handleToolsClick);
+    });
+
+    ["desktop-nav-tab-settings", "mobile-nav-tab-settings"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("click", handleSettingsClick);
+    });
 
     const modalBackBtn = document.getElementById("btn-modal-back");
     if (modalBackBtn) {
@@ -3564,10 +3602,23 @@ function setupSearch() {
 function setupCapsules() {
     const capsules = document.querySelectorAll(".sidebar-capsule");
     capsules.forEach(cap => {
-        cap.addEventListener("click", () => {
+        cap.addEventListener("click", (e) => {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            const tab = cap.getAttribute("data-tab");
+            if (tab === "tools") {
+                showToast("Tools view is not available (coming soon)");
+                return;
+            }
+            if (tab === "settings") {
+                showToast("Settings view is not available (coming soon)");
+                return;
+            }
             capsules.forEach(c => c.classList.remove("is-active"));
             cap.classList.add("is-active");
-            state.activeTab = cap.getAttribute("data-tab") || "items";
+            state.activeTab = tab || "items";
             renderSidebarList();
         });
     });
