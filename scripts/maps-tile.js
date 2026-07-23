@@ -1010,9 +1010,21 @@ function getInitialIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
     const circleParam = params.get("circle") || params.get("cid");
     if (circleParam) {
-        state.currentFeature = "circles";
-        state.isCirclesFeature = true;
-        return circleParam.trim();
+        const cName = circleParam.trim();
+        const lowerName = cName.toLowerCase();
+        if (lowerName === "eugene") {
+            state.currentFeature = "eugene";
+            state.isCirclesFeature = false;
+            return CIRCLE_ID;
+        } else if (lowerName === "florence") {
+            state.currentFeature = "florence";
+            state.isCirclesFeature = false;
+            return CIRCLE_ID;
+        } else {
+            state.currentFeature = "circles";
+            state.isCirclesFeature = true;
+            return cName;
+        }
     }
 
     const feature = (params.get("feature") || "").toLowerCase();
@@ -4681,6 +4693,12 @@ async function init() {
         setupMobileNavSwipeListener();
 
         selectSubject(initialId, true, false);
+
+        if (initialId === "Oakridge" || initialId === "Cottage Grove") {
+            setTimeout(() => {
+                showToast("There is no data for this count circle");
+            }, 800);
+        }
 
         if (state.map) {
             state.map.once("load", () => {

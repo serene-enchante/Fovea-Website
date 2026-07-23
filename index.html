@@ -179,7 +179,7 @@
             top: calc(100% + 8px);
             left: 0;
             right: 0;
-            background: rgba(24, 26, 31, 0.96);
+            background: #000000;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.14);
@@ -215,14 +215,12 @@
             justify-content: center;
             width: 32px;
             height: 32px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.07);
             color: rgba(255, 255, 255, 0.7);
             flex-shrink: 0;
+            transition: color 0.2s ease;
         }
 
         .autocomplete-item:hover .autocomplete-item__icon {
-            background: rgba(48, 209, 88, 0.18);
             color: var(--accent-green);
         }
 
@@ -348,26 +346,32 @@
             {
                 name: "Eugene",
                 title: "Eugene Count Circle",
-                subtitle: "Lane County, OR • CBC Circle 00/01",
-                url: "maps/?circle=Eugene"
+                subtitle: "Lane County, OR, USA",
+                url: "maps/?circle=Eugene",
+                logo: "images/logo-small.png",
+                hasData: true
             },
             {
                 name: "Florence",
                 title: "Florence Count Circle",
-                subtitle: "Coastal Lane County, OR • CBC Circle 00",
-                url: "maps/?circle=Florence"
+                subtitle: "Lane County, OR, USA",
+                url: "maps/?circle=Florence",
+                logo: "images/florence.png",
+                hasData: true
             },
             {
                 name: "Cottage Grove",
                 title: "Cottage Grove Count Circle",
-                subtitle: "Southern Lane County, OR",
-                url: "maps/?circle=Cottage%20Grove"
+                subtitle: "Lane County, OR, USA",
+                url: "maps/?circle=Cottage%20Grove",
+                hasData: false
             },
             {
                 name: "Oakridge",
                 title: "Oakridge Count Circle",
-                subtitle: "Cascade Foothills, OR",
-                url: "maps/?circle=Oakridge"
+                subtitle: "Lane County, OR, USA",
+                url: "maps/?circle=Oakridge",
+                hasData: false
             }
         ];
 
@@ -403,20 +407,30 @@
                 }
 
                 dropdown.style.display = "block";
-                dropdown.innerHTML = matches.map((circle, index) => `
-                    <a href="${circle.url}" class="autocomplete-item" data-index="${index}">
-                        <div class="autocomplete-item__icon">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="9"></circle>
-                                <circle cx="12" cy="12" r="3"></circle>
+                dropdown.innerHTML = matches.map((circle, index) => {
+                    let iconHtml = "";
+                    if (circle.hasData) {
+                        iconHtml = `<img src="${circle.logo}" alt="${circle.name}" style="width: 100%; height: 100%; object-fit: contain;" />`;
+                    } else {
+                        iconHtml = `
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; opacity: 0.5;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
                             </svg>
-                        </div>
-                        <div class="autocomplete-item__info">
-                            <div class="autocomplete-item__title">${circle.title}</div>
-                            <div class="autocomplete-item__subtitle">${circle.subtitle}</div>
-                        </div>
-                    </a>
-                `).join("");
+                        `;
+                    }
+                    return `
+                        <a href="${circle.url}" class="autocomplete-item" data-index="${index}">
+                            <div class="autocomplete-item__icon">
+                                ${iconHtml}
+                            </div>
+                            <div class="autocomplete-item__info">
+                                <div class="autocomplete-item__title">${circle.title}</div>
+                                <div class="autocomplete-item__subtitle">${circle.subtitle}</div>
+                            </div>
+                        </a>
+                    `;
+                }).join("");
 
                 selectedIndex = -1;
             };
