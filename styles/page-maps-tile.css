@@ -1,3 +1,33 @@
+@font-face {
+    font-family: 'Aliceregular';
+    src: url('../fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff2') format('woff2'),
+         url('../fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* HTML label overlay container */
+#map-label-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 5;
+}
+
+.map-zone-label {
+    position: absolute;
+    font-family: 'Aliceregular', 'Alice', Georgia, serif;
+    font-weight: normal;
+    line-height: 1;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.2s ease, font-size 0.2s ease;
+    letter-spacing: 0.04em;
+    user-select: none;
+    pointer-events: none;
+}
+
 /* PAGE: MAPS TILE OVERRIDES AND LAYOUT */
 html.page-maps-tile-html {
     height: 100% !important;

@@ -317,15 +317,8 @@ function updateAllFeatureStyles() {
         state.map.setPaintProperty('zones-outline-highlight', 'line-width-transition', { duration: 250 });
     }
 
-    if (state.map.getLayer('zones-labels')) {
-        const textColor = isLightBasemap ? '#000000' : '#ffffff';
-        const haloColor = isLightBasemap ? 'rgba(255, 255, 255, 0.95)' : 'rgba(15, 15, 15, 0.95)';
-        const haloWidth = isLightBasemap ? 2.0 : 1.8;
-
-        state.map.setPaintProperty('zones-labels', 'text-color', textColor);
-        state.map.setPaintProperty('zones-labels', 'text-halo-color', haloColor);
-        state.map.setPaintProperty('zones-labels', 'text-halo-width', haloWidth);
-    }
+    // Refresh HTML label colors for basemap change
+    rebuildHtmlLabels();
 }
 
 const state = {
@@ -1872,52 +1865,86 @@ function unhighlightTileItem() {
     });
 }
 
+// HTML label overlay — repositions Alice-font div labels on every map render
 function updateLabelZoomVisibility() {
-    if (!state.map || !state.map.getLayer('zones-labels')) return;
-    
+    rebuildHtmlLabels();
+}
+
+function rebuildHtmlLabels() {
+    if (!state.map || !state.labelData) return;
+
+    const overlay = document.getElementById('map-label-overlay');
+    if (!overlay) return;
+
+    const zoom = state.map.getZoom();
     const isMobile = window.innerWidth <= 768;
     const circleCutoff = isMobile ? 5.5 : 7.5;
     const zoneCutoff = isMobile ? 8.0 : 10.0;
-    
-    const textSizeExpression = [
-        'interpolate',
-        ['linear'],
-        ['zoom'],
-        circleCutoff, 0,
-        8, [
-            'case',
-            ['has', 'zid'], 0,
-            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.010]], 0,
-            17
-        ],
-        zoneCutoff, [
-            'case',
-            ['has', 'zid'], 0,
-            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0024]], 0,
-            ['case', ['has', 'cid'], 17, 14]
-        ],
-        11, [
-            'case',
-            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0012]], 0,
-            ['case', ['has', 'cid'], 18, 15]
-        ],
-        12, [
-            'case',
-            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0006]], 0,
-            ['case', ['has', 'cid'], 19, 16]
-        ],
-        14, [
-            'case',
-            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.00015]], 0,
-            ['case', ['has', 'cid'], 20, 17]
-        ]
-    ];
-    
-    try {
-        state.map.setLayoutProperty('zones-labels', 'text-size', textSizeExpression);
-    } catch (err) {
-        console.error("Error setting dynamic text-size layout property:", err);
-    }
+    const isLightBasemap = state.currentBaseLayer === 'esri-street' || state.currentBaseLayer === 'esri-topo';
+
+    // Remove labels that no longer match current feature set
+    const currentIds = new Set(state.labelData.map(d => d.id));
+    const existing = overlay.querySelectorAll('.map-zone-label');
+    existing.forEach(el => {
+        if (!currentIds.has(el.dataset.labelId)) el.remove();
+    });
+
+    state.labelData.forEach(d => {
+        const { id, lng, lat, text, degWidth, textLen, isCircle } = d;
+
+        // Determine visibility based on zoom + size thresholds (mirrors old MapLibre expression)
+        let visible = false;
+        if (zoom < circleCutoff) {
+            visible = false;
+        } else if (isCircle) {
+            if (zoom >= circleCutoff) {
+                const thresholds = [
+                    [8, 0.010], [zoneCutoff, 0.0024], [11, 0.0012], [12, 0.0006], [14, 0.00015]
+                ];
+                const fits = thresholds.some(([z, factor]) => zoom >= z && degWidth >= textLen * factor);
+                visible = fits || zoom >= 14;
+            }
+        } else {
+            // zid features only show at higher zooms
+            const thresholds = [
+                [11, 0.0012], [12, 0.0006], [14, 0.00015]
+            ];
+            visible = thresholds.some(([z, factor]) => zoom >= z && degWidth >= textLen * factor) || zoom >= 14;
+        }
+
+        // Project geo coords to screen pixel coords
+        const pt = state.map.project([lng, lat]);
+        const canvas = state.map.getCanvas();
+
+        let el = overlay.querySelector(`.map-zone-label[data-label-id="${id}"]`);
+        if (!el) {
+            el = document.createElement('div');
+            el.className = 'map-zone-label';
+            el.dataset.labelId = id;
+            el.textContent = text;
+            overlay.appendChild(el);
+        }
+
+        // Font size: interpolate with zoom
+        let fontSize = 0;
+        if (visible) {
+            if (zoom <= 8) fontSize = isCircle ? 13 : 11;
+            else if (zoom <= 10) fontSize = isCircle ? 14 : 12;
+            else if (zoom <= 11) fontSize = isCircle ? 15 : 13;
+            else if (zoom <= 12) fontSize = isCircle ? 16 : 14;
+            else fontSize = isCircle ? 17 : 15;
+        }
+
+        el.style.left = `${pt.x}px`;
+        el.style.top = `${pt.y}px`;
+        el.style.fontSize = `${fontSize}px`;
+        el.style.opacity = fontSize > 0 ? '1' : '0';
+        el.style.pointerEvents = 'none';
+        el.style.color = isLightBasemap ? '#111' : '#fff';
+        el.style.textShadow = isLightBasemap
+            ? '0 0 4px rgba(255,255,255,0.95), 0 0 6px rgba(255,255,255,0.9)'
+            : '0 0 4px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)';
+    });
 }
 
 function rebuildGeoJsonLayer() {
@@ -1995,16 +2022,19 @@ function rebuildGeoJsonLayer() {
         });
     });
 
-    const labelGeojsonData = {
-        type: "FeatureCollection",
-        features: labelFeatures
-    };
+    // Store label data on state for HTML overlay rendering
+    state.labelData = labelFeatures.map(f => ({
+        id: f.id,
+        lng: f.geometry.coordinates[0],
+        lat: f.geometry.coordinates[1],
+        text: state.isCirclesFeature ? String(f.properties.cid || '') : String(f.properties.zid || ''),
+        degWidth: f.properties.deg_width,
+        textLen: f.properties.text_len,
+        isCircle: !!f.properties.cid && !f.properties.zid
+    }));
 
     if (state.map.getSource('zones')) {
         state.map.getSource('zones').setData(geojsonData);
-        if (state.map.getSource('zones-labels-src')) {
-            state.map.getSource('zones-labels-src').setData(labelGeojsonData);
-        }
         updateLabelZoomVisibility();
     } else {
         state.map.addSource('zones', {
@@ -2013,12 +2043,6 @@ function rebuildGeoJsonLayer() {
             promoteId: 'feature_id'
         });
 
-        state.map.addSource('zones-labels-src', {
-            type: 'geojson',
-            data: labelGeojsonData,
-            promoteId: 'feature_id'
-        });
-        
         state.map.addLayer({
             id: 'zones-fill',
             type: 'fill',
@@ -2094,62 +2118,14 @@ function rebuildGeoJsonLayer() {
             }
         });
 
-        try {
-            state.map.addLayer({
-                id: 'zones-labels',
-                type: 'symbol',
-                source: 'zones-labels-src',
-                layout: {
-                    'text-field': ['coalesce', ['get', 'cid'], ['get', 'zid'], ''],
-                    'text-font': ['Noto Sans Regular'],
-                    'text-size': [
-                        'interpolate',
-                        ['linear'],
-                        ['zoom'],
-                        7.5, 0,
-                        8, [
-                            'case',
-                            ['has', 'zid'], 0,
-                            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.010]], 0,
-                            17
-                        ],
-                        10, [
-                            'case',
-                            ['has', 'zid'], 0,
-                            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0024]], 0,
-                            ['case', ['has', 'cid'], 17, 14]
-                        ],
-                        11, [
-                            'case',
-                            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0012]], 0,
-                            ['case', ['has', 'cid'], 18, 15]
-                        ],
-                        12, [
-                            'case',
-                            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.0006]], 0,
-                            ['case', ['has', 'cid'], 19, 16]
-                        ],
-                        14, [
-                            'case',
-                            ['<', ['coalesce', ['get', 'deg_width'], 0], ['*', ['coalesce', ['get', 'text_len'], 1], 0.00015]], 0,
-                            ['case', ['has', 'cid'], 20, 17]
-                        ]
-                    ],
-                    'text-justify': 'center',
-                    'text-anchor': 'center',
-                    'text-allow-overlap': true,
-                    'text-letter-spacing': 0.05
-                },
-                paint: {
-                    'text-color': (state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo") ? '#000000' : '#ffffff',
-                    'text-halo-color': (state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo") ? 'rgba(255, 255, 255, 0.95)' : 'rgba(15, 15, 15, 0.95)',
-                    'text-halo-width': (state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo") ? 2.0 : 1.8
-                }
-            });
-            updateLabelZoomVisibility();
-        } catch (err) {
-            console.error("Error adding zones-labels symbol layer:", err);
+        // Register map move/zoom listeners for HTML label repositioning (once)
+        if (!state._labelListenersAttached) {
+            state._labelListenersAttached = true;
+            state.map.on('move', rebuildHtmlLabels);
+            state.map.on('zoom', rebuildHtmlLabels);
+            state.map.on('render', rebuildHtmlLabels);
         }
+        updateLabelZoomVisibility();
         
         let hoveredStateId = null;
 
