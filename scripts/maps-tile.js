@@ -257,18 +257,24 @@ function updateAllFeatureStyles() {
     const noDataFillOpacity = isLightBasemap ? 0.30 : (isSatelliteBasemap ? 0.15 : 0.02);
     const noDataLineColor = isLightBasemap ? 'rgba(80, 80, 80, 0.60)' : dimLineColor;
 
+    const hoverFillOpacity = isLightBasemap ? 0.45 : (isSatelliteBasemap ? 0.45 : 0.22);
+    const noDataHoverFillOpacity = isLightBasemap ? 0.55 : (isSatelliteBasemap ? 0.35 : 0.15);
+
     if (state.map.getLayer('zones-fill')) {
         state.map.setPaintProperty('zones-fill', 'fill-color', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], '#30d158',
-            ['boolean', ['feature-state', 'hover'], false], '#30d158',
             ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataFillColor,
             defaultFillColor
         ]);
         state.map.setPaintProperty('zones-fill', 'fill-opacity', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], 0.0,
-            ['boolean', ['feature-state', 'hover'], false], 0.05,
+            ['boolean', ['feature-state', 'hover'], false], [
+                'case',
+                ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataHoverFillOpacity,
+                hoverFillOpacity
+            ],
             ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataFillOpacity,
             defaultFillOpacity
         ]);
@@ -278,15 +284,30 @@ function updateAllFeatureStyles() {
         state.map.setPaintProperty('zones-outline', 'line-color', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], '#00ff66',
-            ['boolean', ['feature-state', 'hover'], false], '#30d158',
+            ['boolean', ['feature-state', 'hover'], false], defaultLineColor,
             ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataLineColor,
             defaultLineColor
         ]);
         state.map.setPaintProperty('zones-outline', 'line-width', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], 3.2,
-            ['boolean', ['feature-state', 'hover'], false], 2.8,
+            ['boolean', ['feature-state', 'selected'], false], (isLightBasemap ? 4.5 : 3.2),
+            ['boolean', ['feature-state', 'hover'], false], (isLightBasemap ? 3.8 : 2.2),
             defaultLineWidth
+        ]);
+    }
+
+    if (state.map.getLayer('zones-outline-highlight')) {
+        state.map.setPaintProperty('zones-outline-highlight', 'line-color', [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false], '#00ff66',
+            ['boolean', ['feature-state', 'hover'], false], defaultLineColor,
+            'transparent'
+        ]);
+        state.map.setPaintProperty('zones-outline-highlight', 'line-width', [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false], (isLightBasemap ? 4.5 : 3.2),
+            ['boolean', ['feature-state', 'hover'], false], (isLightBasemap ? 3.8 : 2.2),
+            0.0
         ]);
     }
 
@@ -2034,6 +2055,30 @@ function rebuildGeoJsonLayer() {
                     ['boolean', ['feature-state', 'selected'], false], 2.2,
                     ['boolean', ['feature-state', 'hover'], false], 1.8,
                     1.0
+                ]
+            }
+        });
+
+        state.map.addLayer({
+            id: 'zones-outline-highlight',
+            type: 'line',
+            source: 'zones',
+            layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            paint: {
+                'line-color': [
+                    'case',
+                    ['boolean', ['feature-state', 'selected'], false], '#00ff66',
+                    ['boolean', ['feature-state', 'hover'], false], '#30d158',
+                    'transparent'
+                ],
+                'line-width': [
+                    'case',
+                    ['boolean', ['feature-state', 'selected'], false], 3.2,
+                    ['boolean', ['feature-state', 'hover'], false], 2.8,
+                    0.0
                 ]
             }
         });
