@@ -17,13 +17,13 @@
 
 .map-zone-label {
     position: absolute;
-    font-family: 'Aliceregular', 'Alice', Georgia, serif;
-    font-weight: normal;
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    font-weight: 600;
     line-height: 1;
     white-space: nowrap;
     transform: translate(-50%, -50%);
     transition: opacity 0.2s ease, font-size 0.2s ease;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     user-select: none;
     pointer-events: none;
 }

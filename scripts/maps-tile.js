@@ -1892,24 +1892,28 @@ function rebuildHtmlLabels() {
     state.labelData.forEach(d => {
         const { id, lng, lat, text, degWidth, textLen, isCircle } = d;
 
-        // Determine visibility based on zoom + size thresholds (mirrors old MapLibre expression)
+        // Determine visibility based on zoom + size thresholds (mirrors old MapLibre interpolation)
         let visible = false;
-        if (zoom < circleCutoff) {
-            visible = false;
-        } else if (isCircle) {
-            if (zoom >= circleCutoff) {
-                const thresholds = [
-                    [8, 0.010], [zoneCutoff, 0.0024], [11, 0.0012], [12, 0.0006], [14, 0.00015]
-                ];
-                const fits = thresholds.some(([z, factor]) => zoom >= z && degWidth >= textLen * factor);
-                visible = fits || zoom >= 14;
+        if (zoom >= circleCutoff) {
+            if (isCircle) {
+                // Pick the size-fit threshold for the current zoom range
+                let factor;
+                if (zoom >= 14)          { visible = true; }
+                else if (zoom >= 12)     { factor = 0.00015; }
+                else if (zoom >= 11)     { factor = 0.0006; }
+                else if (zoom >= zoneCutoff) { factor = 0.0012; }
+                else if (zoom >= 8)      { factor = 0.0024; }
+                else                     { factor = 0.010; }  // circleCutoff..8
+                if (factor !== undefined) visible = degWidth >= textLen * factor;
+            } else {
+                // zid features only show at higher zooms
+                let factor;
+                if (zoom >= 14)      { visible = true; }
+                else if (zoom >= 12) { factor = 0.00015; }
+                else if (zoom >= 11) { factor = 0.0006; }
+                else if (zoom >= zoneCutoff) { factor = 0.0012; }
+                if (factor !== undefined) visible = degWidth >= textLen * factor;
             }
-        } else {
-            // zid features only show at higher zooms
-            const thresholds = [
-                [11, 0.0012], [12, 0.0006], [14, 0.00015]
-            ];
-            visible = thresholds.some(([z, factor]) => zoom >= z && degWidth >= textLen * factor) || zoom >= 14;
         }
 
         // Project geo coords to screen pixel coords
@@ -1928,11 +1932,11 @@ function rebuildHtmlLabels() {
         // Font size: interpolate with zoom
         let fontSize = 0;
         if (visible) {
-            if (zoom <= 8) fontSize = isCircle ? 13 : 11;
-            else if (zoom <= 10) fontSize = isCircle ? 14 : 12;
-            else if (zoom <= 11) fontSize = isCircle ? 15 : 13;
-            else if (zoom <= 12) fontSize = isCircle ? 16 : 14;
-            else fontSize = isCircle ? 17 : 15;
+            if (zoom <= 8) fontSize = isCircle ? 17 : 15;
+            else if (zoom <= 10) fontSize = isCircle ? 18 : 16;
+            else if (zoom <= 11) fontSize = isCircle ? 19 : 17;
+            else if (zoom <= 12) fontSize = isCircle ? 20 : 18;
+            else fontSize = isCircle ? 22 : 20;
         }
 
         el.style.left = `${pt.x}px`;
@@ -1940,7 +1944,7 @@ function rebuildHtmlLabels() {
         el.style.fontSize = `${fontSize}px`;
         el.style.opacity = fontSize > 0 ? '1' : '0';
         el.style.pointerEvents = 'none';
-        el.style.color = isLightBasemap ? '#111' : '#fff';
+        el.style.color = isLightBasemap ? '#111' : '#c8c8c8';
         el.style.textShadow = isLightBasemap
             ? '0 0 4px rgba(255,255,255,0.95), 0 0 6px rgba(255,255,255,0.9)'
             : '0 0 4px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)';
