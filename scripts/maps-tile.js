@@ -267,6 +267,8 @@ function updateAllFeatureStyles() {
             ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataFillColor,
             defaultFillColor
         ]);
+        const dimFillOpacity = defaultFillOpacity * 0.25;
+        const dimNoDataFillOpacity = noDataFillOpacity * 0.25;
         state.map.setPaintProperty('zones-fill', 'fill-opacity', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], 0.0,
@@ -275,11 +277,14 @@ function updateAllFeatureStyles() {
                 ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataHoverFillOpacity,
                 hoverFillOpacity
             ],
-            ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataFillOpacity,
-            defaultFillOpacity
+            // Default: dim when far from cursor, full opacity when nearby
+            ['interpolate', ['linear'], ['coalesce', ['feature-state', 'proximity'], 0],
+                0, ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false, dimNoDataFillOpacity, dimFillOpacity],
+                1, ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false, noDataFillOpacity, defaultFillOpacity]
+            ]
         ]);
         state.map.setPaintProperty('zones-fill', 'fill-color-transition', { duration: 250 });
-        state.map.setPaintProperty('zones-fill', 'fill-opacity-transition', { duration: 250 });
+        state.map.setPaintProperty('zones-fill', 'fill-opacity-transition', { duration: 80 });
     }
 
     if (state.map.getLayer('zones-outline')) {
@@ -296,8 +301,18 @@ function updateAllFeatureStyles() {
             ['boolean', ['feature-state', 'hover'], false], (isLightBasemap ? 3.8 : 2.2),
             defaultLineWidth
         ]);
+        state.map.setPaintProperty('zones-outline', 'line-opacity', [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false], 1.0,
+            ['boolean', ['feature-state', 'hover'], false], 1.0,
+            ['interpolate', ['linear'], ['coalesce', ['feature-state', 'proximity'], 0],
+                0, 0.18,
+                1, 1.0
+            ]
+        ]);
         state.map.setPaintProperty('zones-outline', 'line-color-transition', { duration: 250 });
         state.map.setPaintProperty('zones-outline', 'line-width-transition', { duration: 250 });
+        state.map.setPaintProperty('zones-outline', 'line-opacity-transition', { duration: 80 });
     }
 
     if (state.map.getLayer('zones-outline-highlight')) {
@@ -1865,7 +1880,53 @@ function unhighlightTileItem() {
     });
 }
 
-// HTML label overlay — repositions Alice-font div labels on every map render
+// Cursor proximity glow: set feature-state 'proximity' (0–1) based on
+// screen-space distance from cursor to each zone center point
+function setupProximityTracking() {
+    if (state._proximityListenerAttached) return;
+    state._proximityListenerAttached = true;
+
+    const RADIUS = 240;   // px — radial gradient falloff distance
+    let rafPending = false;
+    let lastCx = -9999, lastCy = -9999;
+
+    const canvas = state.map.getCanvas();
+
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const cx = e.clientX - rect.left;
+        const cy = e.clientY - rect.top;
+
+        // Skip tiny micro-movements to avoid thrashing feature state
+        if (Math.abs(cx - lastCx) < 3 && Math.abs(cy - lastCy) < 3) return;
+        lastCx = cx; lastCy = cy;
+
+        if (rafPending) return;
+        rafPending = true;
+        requestAnimationFrame(() => {
+            rafPending = false;
+            if (!state.labelData || !state.map) return;
+            state.labelData.forEach(d => {
+                const pt = state.map.project([d.lng, d.lat]);
+                const dist = Math.hypot(cx - pt.x, cy - pt.y);
+                // Smooth quadratic falloff for more natural gradient feel
+                const linear = Math.max(0, 1 - dist / RADIUS);
+                const proximity = linear * linear * (3 - 2 * linear); // smoothstep
+                state.map.setFeatureState({ source: 'zones', id: d.id }, { proximity });
+            });
+        });
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        lastCx = -9999; lastCy = -9999;
+        if (!state.labelData || !state.map) return;
+        state.labelData.forEach(d => {
+            state.map.setFeatureState({ source: 'zones', id: d.id }, { proximity: 0 });
+        });
+    });
+}
+
+// HTML label overlay — repositions div labels on every map render
 function updateLabelZoomVisibility() {
     rebuildHtmlLabels();
 }
@@ -2129,6 +2190,7 @@ function rebuildGeoJsonLayer() {
             state.map.on('zoom', rebuildHtmlLabels);
             state.map.on('render', rebuildHtmlLabels);
         }
+        setupProximityTracking();
         updateLabelZoomVisibility();
         
         let hoveredStateId = null;
