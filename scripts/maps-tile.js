@@ -2133,7 +2133,11 @@ function rebuildGeoJsonLayer() {
                         showToast("There is no data for this count circle");
                     }
                 } else {
-                    selectSubject(featureId, true);
+                    if (state.currentId === featureId) {
+                        selectSubject(CIRCLE_ID);
+                    } else {
+                        selectSubject(featureId, true);
+                    }
                 }
             }
         });
