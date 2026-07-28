@@ -278,6 +278,8 @@ function updateAllFeatureStyles() {
             ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataFillOpacity,
             defaultFillOpacity
         ]);
+        state.map.setPaintProperty('zones-fill', 'fill-color-transition', { duration: 250 });
+        state.map.setPaintProperty('zones-fill', 'fill-opacity-transition', { duration: 250 });
     }
 
     if (state.map.getLayer('zones-outline')) {
@@ -294,6 +296,8 @@ function updateAllFeatureStyles() {
             ['boolean', ['feature-state', 'hover'], false], (isLightBasemap ? 3.8 : 2.2),
             defaultLineWidth
         ]);
+        state.map.setPaintProperty('zones-outline', 'line-color-transition', { duration: 250 });
+        state.map.setPaintProperty('zones-outline', 'line-width-transition', { duration: 250 });
     }
 
     if (state.map.getLayer('zones-outline-highlight')) {
@@ -309,6 +313,8 @@ function updateAllFeatureStyles() {
             ['boolean', ['feature-state', 'hover'], false], (isLightBasemap ? 3.8 : 2.2),
             0.0
         ]);
+        state.map.setPaintProperty('zones-outline-highlight', 'line-color-transition', { duration: 250 });
+        state.map.setPaintProperty('zones-outline-highlight', 'line-width-transition', { duration: 250 });
     }
 
     if (state.map.getLayer('zones-labels')) {
@@ -2021,7 +2027,6 @@ function rebuildGeoJsonLayer() {
                 'fill-color': [
                     'case',
                     ['boolean', ['feature-state', 'selected'], false], '#30d158',
-                    ['boolean', ['feature-state', 'hover'], false], '#30d158',
                     '#ffffff'
                 ],
                 'fill-opacity': [
@@ -2030,7 +2035,9 @@ function rebuildGeoJsonLayer() {
                     ['boolean', ['feature-state', 'hover'], false], 0.05,
                     ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], 0.02,
                     0.07
-                ]
+                ],
+                'fill-color-transition': { duration: 250 },
+                'fill-opacity-transition': { duration: 250 }
             }
         });
 
@@ -2046,7 +2053,7 @@ function rebuildGeoJsonLayer() {
                 'line-color': [
                     'case',
                     ['boolean', ['feature-state', 'selected'], false], '#00ff66',
-                    ['boolean', ['feature-state', 'hover'], false], '#30d158',
+                    ['boolean', ['feature-state', 'hover'], false], '#ffffff',
                     ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], 'rgba(255, 255, 255, 0.25)',
                     '#ffffff'
                 ],
@@ -2055,7 +2062,9 @@ function rebuildGeoJsonLayer() {
                     ['boolean', ['feature-state', 'selected'], false], 2.2,
                     ['boolean', ['feature-state', 'hover'], false], 1.8,
                     1.0
-                ]
+                ],
+                'line-color-transition': { duration: 250 },
+                'line-width-transition': { duration: 250 }
             }
         });
 
@@ -2071,7 +2080,7 @@ function rebuildGeoJsonLayer() {
                 'line-color': [
                     'case',
                     ['boolean', ['feature-state', 'selected'], false], '#00ff66',
-                    ['boolean', ['feature-state', 'hover'], false], '#30d158',
+                    ['boolean', ['feature-state', 'hover'], false], '#ffffff',
                     'transparent'
                 ],
                 'line-width': [
@@ -2079,7 +2088,9 @@ function rebuildGeoJsonLayer() {
                     ['boolean', ['feature-state', 'selected'], false], 3.2,
                     ['boolean', ['feature-state', 'hover'], false], 2.8,
                     0.0
-                ]
+                ],
+                'line-color-transition': { duration: 250 },
+                'line-width-transition': { duration: 250 }
             }
         });
 
