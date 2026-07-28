@@ -298,13 +298,11 @@ function updateAllFeatureStyles() {
         state.map.setPaintProperty('zones-outline', 'line-width', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], (isLightBasemap ? 4.5 : 3.2),
-            ['boolean', ['feature-state', 'hover'], false], (isLightBasemap ? 3.8 : 2.2),
             defaultLineWidth
         ]);
         state.map.setPaintProperty('zones-outline', 'line-opacity', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], 1.0,
-            ['boolean', ['feature-state', 'hover'], false], 1.0,
             ['interpolate', ['linear'], ['coalesce', ['feature-state', 'proximity'], 0],
                 0, 0.18,
                 1, 1.0
@@ -319,13 +317,11 @@ function updateAllFeatureStyles() {
         state.map.setPaintProperty('zones-outline-highlight', 'line-color', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], '#00ff66',
-            ['boolean', ['feature-state', 'hover'], false], defaultLineColor,
             'transparent'
         ]);
         state.map.setPaintProperty('zones-outline-highlight', 'line-width', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], (isLightBasemap ? 4.5 : 3.2),
-            ['boolean', ['feature-state', 'hover'], false], (isLightBasemap ? 3.8 : 2.2),
             0.0
         ]);
         state.map.setPaintProperty('zones-outline-highlight', 'line-color-transition', { duration: 250 });
@@ -2142,14 +2138,12 @@ function rebuildGeoJsonLayer() {
                 'line-color': [
                     'case',
                     ['boolean', ['feature-state', 'selected'], false], '#00ff66',
-                    ['boolean', ['feature-state', 'hover'], false], '#ffffff',
                     ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], 'rgba(255, 255, 255, 0.25)',
                     '#ffffff'
                 ],
                 'line-width': [
                     'case',
                     ['boolean', ['feature-state', 'selected'], false], 2.2,
-                    ['boolean', ['feature-state', 'hover'], false], 1.8,
                     1.0
                 ],
                 'line-color-transition': { duration: 250 },
@@ -2169,13 +2163,11 @@ function rebuildGeoJsonLayer() {
                 'line-color': [
                     'case',
                     ['boolean', ['feature-state', 'selected'], false], '#00ff66',
-                    ['boolean', ['feature-state', 'hover'], false], '#ffffff',
                     'transparent'
                 ],
                 'line-width': [
                     'case',
                     ['boolean', ['feature-state', 'selected'], false], 3.2,
-                    ['boolean', ['feature-state', 'hover'], false], 2.8,
                     0.0
                 ],
                 'line-color-transition': { duration: 250 },
