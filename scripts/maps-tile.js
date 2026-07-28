@@ -1314,7 +1314,8 @@ function switchToFeature(featureName, circleLayer) {
     if (circleLayer) {
         state.map.once("moveend", performSwap);
         state.map.fitBounds(circleLayer, {
-            duration: 900,
+            speed: 0.8,
+            curve: 1.4,
             padding: getFitPadding()
         });
         setTimeout(performSwap, 1000);
@@ -1344,7 +1345,12 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
         renderSidebarList();
         updateUrl(id);
         if (triggerMapZoom && state.map) {
-            state.map.fitBounds(getBbox(state.allFeatures), { padding: getFitPadding(), animate: animate });
+            state.map.fitBounds(getBbox(state.allFeatures), {
+                padding: getFitPadding(),
+                animate: animate,
+                speed: 0.8,
+                curve: 1.4
+            });
         }
         updateAllFeatureStyles();
         return;
@@ -1383,9 +1389,20 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
 
     if (triggerMapZoom && state.map) {
         if (isCircle || !targetFeature) {
-            state.map.fitBounds(getBbox(state.allFeatures), { padding: getFitPadding(), animate: animate });
+            state.map.fitBounds(getBbox(state.allFeatures), {
+                padding: getFitPadding(),
+                animate: animate,
+                speed: 0.8,
+                curve: 1.4
+            });
         } else {
-            state.map.fitBounds(getBbox([targetFeature]), { padding: getFitPadding(20), maxZoom: 14, animate: animate });
+            state.map.fitBounds(getBbox([targetFeature]), {
+                padding: getFitPadding(20),
+                maxZoom: 14,
+                animate: animate,
+                speed: 0.8,
+                curve: 1.4
+            });
         }
     }
 
@@ -2241,8 +2258,14 @@ function initializeMap() {
         container: 'tile-map',
         preserveDrawingBuffer: true,
         maxZoom: 20,
+        projection: { type: 'globe' },
+        dragPan: {
+            linearity: 0.15,
+            deceleration: 1000
+        },
         style: {
             version: 8,
+            projection: { type: 'globe' },
             glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
             sources: {
                 "dark-tiles": {
@@ -2326,6 +2349,22 @@ function initializeMap() {
         zoom: 11,
         attributionControl: false
     });
+
+    // Configure smooth inertial scroll zoom rates for trackpad and mouse wheel (Google Earth style)
+    if (state.map.scrollZoom) {
+        state.map.scrollZoom.setWheelZoomRate(1 / 750);
+        state.map.scrollZoom.setZoomRate(1 / 150);
+    }
+    
+    state.map.on('style.load', () => {
+        state.map.setProjection({ type: 'globe' });
+    });
+
+    try {
+        state.map.setProjection({ type: 'globe' });
+    } catch(e) {
+        console.warn("Immediate setProjection not supported yet:", e);
+    }
 
     // Disable rotation on mobile (touch devices) – preserve pinch-to-zoom only
     if (/Mobi|Android|iPhone|iPad|iPod|Touch/i.test(navigator.userAgent) || window.innerWidth <= 768) {
@@ -2764,6 +2803,11 @@ function initializeMap() {
     });
 
     state.map.on("load", () => {
+        state.map.setProjection({ type: 'globe' });
+        state.map.dragPan.enable({
+            linearity: 0.15,
+            deceleration: 1000
+        });
         rebuildGeoJsonLayer();
     });
 
