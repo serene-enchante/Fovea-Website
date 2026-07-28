@@ -267,8 +267,8 @@ function updateAllFeatureStyles() {
         ]);
         state.map.setPaintProperty('zones-fill', 'fill-opacity', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], 0.35,
-            ['boolean', ['feature-state', 'hover'], false], 0.2,
+            ['boolean', ['feature-state', 'selected'], false], 0.0,
+            ['boolean', ['feature-state', 'hover'], false], 0.05,
             ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataFillOpacity,
             defaultFillOpacity
         ]);
@@ -2005,8 +2005,8 @@ function rebuildGeoJsonLayer() {
                 ],
                 'fill-opacity': [
                     'case',
-                    ['boolean', ['feature-state', 'selected'], false], 0.35,
-                    ['boolean', ['feature-state', 'hover'], false], 0.2,
+                    ['boolean', ['feature-state', 'selected'], false], 0.0,
+                    ['boolean', ['feature-state', 'hover'], false], 0.05,
                     ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], 0.02,
                     0.07
                 ]
@@ -2017,6 +2017,10 @@ function rebuildGeoJsonLayer() {
             id: 'zones-outline',
             type: 'line',
             source: 'zones',
+            layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
             paint: {
                 'line-color': [
                     'case',
