@@ -3453,7 +3453,7 @@ body.is-annotation-mode .annotation-exit-btn {
         box-sizing: border-box;
         border-radius: 25px !important;
         width: calc(100% - 48px) !important;
-        max-width: 320px !important;
+        max-width: 380px !important;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
     }
 
@@ -3462,12 +3462,12 @@ body.is-annotation-mode .annotation-exit-btn {
         align-items: center;
         justify-content: center;
         flex: none !important;
-        width: 38px !important;
+        width: 80px !important;
         height: 38px !important;
         border-radius: 19px !important;
         color: #d1d1d6;
         cursor: pointer;
-        transition: color 0.15s ease, transform 0.1s ease;
+        transition: color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
         text-decoration: none;
     }
 
@@ -3496,6 +3496,7 @@ body.is-annotation-mode .annotation-exit-btn {
 
     .mobile-bottom-nav-item.is-active {
         color: var(--accent-primary) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
     }
 
     /* Clear bottom nav layout */
