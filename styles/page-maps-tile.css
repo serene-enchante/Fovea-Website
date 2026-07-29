@@ -155,7 +155,7 @@ body.page-maps-tile {
     font-size: 1.25rem;
     font-weight: 700;
     letter-spacing: 0.04em;
-    color: var(--color-heading);
+    color: #e4e4e7 !important;
     line-height: 1.2;
     flex: 1;
     min-width: 0;
@@ -612,9 +612,9 @@ body.page-maps-tile {
 .tile-zone-item {
     display: grid;
     grid-template-columns: 80px 1fr;
-    gap: 0.75rem;
+    gap: 1.0rem;
     align-items: center;
-    padding: 0.75rem 0.5rem !important;
+    padding: 0.75rem 0.9rem !important;
     background: transparent !important;
     border: none !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -696,9 +696,10 @@ body.page-maps-tile {
 }
 
 .tile-zone-item__title {
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
     font-size: 0.95rem;
-    font-weight: 700;
-    color: #a1a1aa;
+    font-weight: 400;
+    color: #c4c4c8;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1513,8 +1514,9 @@ body.is-transitioning .desktop-nav-tab__icon {
 }
 
 .maps-tile-map-container .map-ctrl-styles__list .tile-zone-item__title {
-    font-weight: 700 !important;
-    color: #a1a1aa !important;
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif !important;
+    font-weight: 400 !important;
+    color: #c4c4c8 !important;
     transition: color var(--transition-fast);
 }
 
