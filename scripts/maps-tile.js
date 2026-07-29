@@ -3647,6 +3647,34 @@ function setupActionButtons() {
     handleModalReparenting();
     window.addEventListener("resize", handleModalReparenting);
 
+    const toolbar = document.querySelector(".maps-tile-header__actions");
+    if (toolbar) {
+        const threshold = 140; // px — proximity threshold distance
+        window.addEventListener("mousemove", (e) => {
+            const rect = toolbar.getBoundingClientRect();
+            
+            // Calculate relative mouse coordinates inside toolbar coordinate space
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Calculate shortest distance from cursor to toolbar bounding box
+            const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
+            const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            toolbar.style.setProperty("--mouse-x", `${x}px`);
+            toolbar.style.setProperty("--mouse-y", `${y}px`);
+
+            // Compute proximity opacity (1.0 inside toolbar, tapering down to 0.0 at threshold distance)
+            let opacity = 0;
+            if (dist <= threshold) {
+                opacity = Math.pow(1 - dist / threshold, 1.2);
+            }
+
+            toolbar.style.setProperty("--glow-opacity", opacity.toFixed(3));
+        });
+    }
+
     window.updateActionButtonsState = () => {
         const isDownloadOpen = downloadModal && downloadModal.getAttribute("aria-hidden") === "false";
         const isCopyOpen = copyModal && copyModal.getAttribute("aria-hidden") === "false";
