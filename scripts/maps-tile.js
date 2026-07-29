@@ -1882,7 +1882,7 @@ function setupProximityTracking() {
     if (state._proximityListenerAttached) return;
     state._proximityListenerAttached = true;
 
-    const RADIUS = 240;   // px — radial gradient falloff distance
+    const RADIUS = 120;   // px — radial gradient falloff distance
     let rafPending = false;
     let lastCx = -9999, lastCy = -9999;
 
@@ -1938,7 +1938,7 @@ function setupProximityGlowCanvas() {
     container.appendChild(glowCanvas);
 
     const ctx = glowCanvas.getContext('2d');
-    const RADIUS = 200; // CSS px — radial gradient falloff
+    const RADIUS = 100; // CSS px — radial gradient falloff
     let cx = -9999, cy = -9999;
     let rafPending = false;
 
