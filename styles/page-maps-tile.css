@@ -232,6 +232,27 @@ body.page-maps-tile {
     }
 }
 
+.header-view-menu__left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.header-view-menu__icon {
+    width: 13px;
+    height: 13px;
+    stroke: #a1a1aa;
+    stroke-width: 2.2;
+    flex-shrink: 0;
+    transition: stroke var(--transition-fast);
+}
+
+.header-view-menu__item:hover .header-view-menu__icon,
+.header-view-menu__item.is-active .header-view-menu__icon {
+    stroke: var(--accent-primary);
+}
+
 .header-view-menu__item {
     display: flex;
     align-items: center;
@@ -245,6 +266,7 @@ body.page-maps-tile {
     cursor: pointer;
     transition: all var(--transition-fast);
     user-select: none;
+    gap: 1rem;
 }
 
 .header-view-menu__item:hover {
