@@ -175,6 +175,26 @@ body.page-maps-tile {
     margin-left: 0.2rem;
 }
 
+.header-view-toggle__icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #a1a1aa;
+    transition: color var(--transition-fast);
+}
+
+.header-view-toggle:hover .header-view-toggle__icon-wrap {
+    color: #ffffff;
+}
+
+.header-view-toggle__icon-wrap svg {
+    width: 12px;
+    height: 12px;
+    stroke: currentColor;
+    stroke-width: 2.2;
+}
+
 .header-view-toggle:hover {
     background: rgba(255, 255, 255, 0.16);
     color: #ffffff;
