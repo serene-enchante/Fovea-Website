@@ -366,7 +366,7 @@ body.page-maps-tile {
     width: auto !important;
     padding: 0 0.65rem !important;
     background: transparent;
-    border: 1px solid transparent !important;
+    border: none;
     border-radius: 16px !important;
     color: #d1d1d6 !important;
     font-size: 0.78rem !important;
@@ -376,7 +376,6 @@ body.page-maps-tile {
     text-decoration: none;
     position: relative;
     flex-shrink: 0 !important;
-    box-sizing: border-box !important;
 }
 
 .action-icon-btn span {
@@ -387,19 +386,14 @@ body.page-maps-tile {
     transition: color var(--transition-fast);
 }
 
-.action-icon-btn:hover {
-    background: rgba(var(--accent-rgb), 0.14) !important;
-    border-color: rgba(var(--accent-rgb), 0.45) !important;
-    color: var(--accent-primary) !important;
-    box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.25) !important;
-    transform: translateY(-1px);
-}
-
+.action-icon-btn:hover,
 .action-icon-btn.is-active {
-    background: rgba(var(--accent-rgb), 0.22) !important;
-    border-color: rgba(var(--accent-rgb), 0.65) !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
     color: var(--accent-primary) !important;
-    box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.35) !important;
+    transform: none !important;
 }
 
 .action-icon-btn:hover span,
@@ -2136,6 +2130,12 @@ body.is-transitioning .desktop-nav-tab__icon {
     -webkit-backdrop-filter: blur(20px) !important;
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
     transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.maps-tile-header__actions:hover {
+    background: linear-gradient(135deg, rgba(30, 35, 40, 0.85) 0%, rgba(15, 15, 15, 0.85) 100%) !important;
+    border-color: rgba(var(--accent-rgb), 0.5) !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7), 0 0 16px rgba(var(--accent-rgb), 0.25), inset 0 0 12px rgba(var(--accent-rgb), 0.1) !important;
 }
 
 /* Animated expansion when modal is open inside capsule */
