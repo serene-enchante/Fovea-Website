@@ -272,19 +272,16 @@ function updateAllFeatureStyles() {
         state.map.setPaintProperty('zones-fill', 'fill-opacity', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], 0.0,
-            ['boolean', ['feature-state', 'hover'], false], [
-                'case',
-                ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataHoverFillOpacity,
-                hoverFillOpacity
-            ],
-            // Default: dim when far from cursor, full opacity when nearby
-            ['interpolate', ['linear'], ['coalesce', ['feature-state', 'proximity'], 0],
-                0, ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false, dimNoDataFillOpacity, dimFillOpacity],
-                1, ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false, noDataFillOpacity, defaultFillOpacity]
+            ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
+                0, ['interpolate', ['linear'], ['coalesce', ['feature-state', 'proximity'], 0],
+                    0, ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false, dimNoDataFillOpacity, dimFillOpacity],
+                    1, ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false, noDataFillOpacity, defaultFillOpacity]
+                ],
+                1, ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false, noDataHoverFillOpacity, hoverFillOpacity]
             ]
         ]);
         state.map.setPaintProperty('zones-fill', 'fill-color-transition', { duration: 250 });
-        state.map.setPaintProperty('zones-fill', 'fill-opacity-transition', { duration: 80 });
+        state.map.setPaintProperty('zones-fill', 'fill-opacity-transition', { duration: 250 });
     }
 
     if (state.map.getLayer('zones-outline')) {
@@ -303,12 +300,14 @@ function updateAllFeatureStyles() {
         state.map.setPaintProperty('zones-outline', 'line-opacity', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], 1.0,
-            ['boolean', ['feature-state', 'hover'], false], 1.0,
-            0.18  // dim by default; per-segment glow handled by canvas overlay
+            ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
+                0, 0.18,
+                1, 1.0
+            ]
         ]);
         state.map.setPaintProperty('zones-outline', 'line-color-transition', { duration: 250 });
         state.map.setPaintProperty('zones-outline', 'line-width-transition', { duration: 250 });
-        state.map.setPaintProperty('zones-outline', 'line-opacity-transition', { duration: 80 });
+        state.map.setPaintProperty('zones-outline', 'line-opacity-transition', { duration: 250 });
     }
 
     if (state.map.getLayer('zones-outline-highlight')) {
@@ -2252,7 +2251,8 @@ function rebuildGeoJsonLayer() {
                     1.0
                 ],
                 'line-color-transition': { duration: 250 },
-                'line-width-transition': { duration: 250 }
+                'line-width-transition': { duration: 250 },
+                'line-opacity-transition': { duration: 250 }
             }
         });
 
@@ -2292,30 +2292,68 @@ function rebuildGeoJsonLayer() {
         updateLabelZoomVisibility();
         
         let hoveredStateId = null;
+        let activeHoverAlphas = {};
+        let hoverAnimationRaf = null;
+
+        function updateHoverAlphas() {
+            let animNeeded = false;
+            const allIds = new Set(Object.keys(activeHoverAlphas));
+            if (hoveredStateId) allIds.add(hoveredStateId);
+
+            allIds.forEach(id => {
+                const target = (id === hoveredStateId) ? 1.0 : 0.0;
+                const current = activeHoverAlphas[id] || 0.0;
+                const next = current + (target - current) * 0.16;
+
+                if (Math.abs(target - next) < 0.008) {
+                    activeHoverAlphas[id] = target;
+                    if (target === 0) delete activeHoverAlphas[id];
+                } else {
+                    activeHoverAlphas[id] = next;
+                    animNeeded = true;
+                }
+
+                const alphaToSet = activeHoverAlphas[id] || 0.0;
+                state.map.setFeatureState({ source: 'zones', id: id }, { 
+                    hover: alphaToSet > 0.01,
+                    hoverAlpha: alphaToSet
+                });
+            });
+
+            if (animNeeded) {
+                hoverAnimationRaf = requestAnimationFrame(updateHoverAlphas);
+            } else {
+                hoverAnimationRaf = null;
+            }
+        }
+
+        function setHoveredFeatureId(newId) {
+            if (hoveredStateId === newId) return;
+            if (hoveredStateId && hoveredStateId !== newId) {
+                unhighlightTileItem();
+            }
+            hoveredStateId = newId;
+            if (hoveredStateId) {
+                highlightTileItem(hoveredStateId);
+                state.map.getCanvas().style.cursor = 'pointer';
+            } else {
+                state.map.getCanvas().style.cursor = '';
+            }
+
+            if (!hoverAnimationRaf) {
+                hoverAnimationRaf = requestAnimationFrame(updateHoverAlphas);
+            }
+        }
 
         state.map.on('mousemove', 'zones-fill', (e) => {
             if (e.features.length > 0) {
                 const newHoveredId = e.features[0].id;
-                if (hoveredStateId !== null && hoveredStateId !== newHoveredId) {
-                    state.map.setFeatureState({ source: 'zones', id: hoveredStateId }, { hover: false });
-                    unhighlightTileItem();
-                }
-                hoveredStateId = newHoveredId;
-                if (hoveredStateId != null && hoveredStateId !== "") {
-                    state.map.setFeatureState({ source: 'zones', id: hoveredStateId }, { hover: true });
-                    highlightTileItem(hoveredStateId);
-                    state.map.getCanvas().style.cursor = 'pointer';
-                }
+                setHoveredFeatureId(newHoveredId);
             }
         });
 
         state.map.on('mouseleave', 'zones-fill', () => {
-            if (hoveredStateId !== null && hoveredStateId !== "") {
-                state.map.setFeatureState({ source: 'zones', id: hoveredStateId }, { hover: false });
-                unhighlightTileItem();
-            }
-            hoveredStateId = null;
-            state.map.getCanvas().style.cursor = '';
+            setHoveredFeatureId(null);
         });
 
         state.map.on('click', 'zones-fill', (e) => {
