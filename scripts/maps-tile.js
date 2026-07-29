@@ -257,8 +257,8 @@ function updateAllFeatureStyles() {
     const noDataFillOpacity = isLightBasemap ? 0.30 : (isSatelliteBasemap ? 0.15 : 0.02);
     const noDataLineColor = isLightBasemap ? 'rgba(80, 80, 80, 0.60)' : dimLineColor;
 
-    const hoverFillOpacity = isLightBasemap ? 0.45 : (isSatelliteBasemap ? 0.45 : 0.22);
-    const noDataHoverFillOpacity = isLightBasemap ? 0.55 : (isSatelliteBasemap ? 0.35 : 0.15);
+    const hoverFillOpacity = isLightBasemap ? 0.55 : (isSatelliteBasemap ? 0.50 : 0.35);
+    const noDataHoverFillOpacity = isLightBasemap ? 0.60 : (isSatelliteBasemap ? 0.45 : 0.25);
 
     if (state.map.getLayer('zones-fill')) {
         state.map.setPaintProperty('zones-fill', 'fill-color', [
@@ -303,7 +303,8 @@ function updateAllFeatureStyles() {
         state.map.setPaintProperty('zones-outline', 'line-opacity', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], 1.0,
-            0.18  // always dim; per-segment glow handled by canvas overlay
+            ['boolean', ['feature-state', 'hover'], false], 1.0,
+            0.18  // dim by default; per-segment glow handled by canvas overlay
         ]);
         state.map.setPaintProperty('zones-outline', 'line-color-transition', { duration: 250 });
         state.map.setPaintProperty('zones-outline', 'line-width-transition', { duration: 250 });
@@ -1957,22 +1958,15 @@ function setupProximityGlowCanvas() {
 
         const isLight = state.currentBaseLayer === 'esri-street' || state.currentBaseLayer === 'esri-topo';
         const lineColor = isLight ? 'rgba(0,0,0,0.95)' : 'rgba(255,255,255,0.95)';
-        const glowColor = isLight ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)';
+        const lineW = isLight ? 2.8 : 1.0;
 
         ctx.save();
 
-        // --- Pass 1: soft outer glow (thick, low opacity) ---
-        ctx.strokeStyle = glowColor;
-        ctx.lineWidth = 6;
+        // Draw crisp line matching exact regular map line thickness
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = lineW;
         ctx.lineJoin = 'round';
         ctx.lineCap = 'round';
-        ctx.beginPath();
-        _drawAllRings();
-        ctx.stroke();
-
-        // --- Pass 2: crisp bright line (thin, full opacity) ---
-        ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 1.5;
         ctx.beginPath();
         _drawAllRings();
         ctx.stroke();
