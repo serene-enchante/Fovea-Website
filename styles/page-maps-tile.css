@@ -3464,11 +3464,22 @@ body.is-annotation-mode .annotation-exit-btn {
         text-decoration: none;
     }
 
-    .mobile-bottom-nav-item svg {
+    .mobile-bottom-nav-item__icon {
         width: 22px;
         height: 22px;
-        stroke: currentColor;
-        transition: stroke-width 0.15s ease;
+        background-color: currentColor;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-position: center;
+        mask-position: center;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        display: block;
+    }
+
+    #mobile-nav-tab-home .mobile-bottom-nav-item__icon {
+        width: 17px;
+        height: 17px;
     }
 
     .mobile-bottom-nav-item:active {
