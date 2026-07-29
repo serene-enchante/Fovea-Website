@@ -303,10 +303,7 @@ function updateAllFeatureStyles() {
         state.map.setPaintProperty('zones-outline', 'line-opacity', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], 1.0,
-            ['interpolate', ['linear'], ['coalesce', ['feature-state', 'proximity'], 0],
-                0, 0.18,
-                1, 1.0
-            ]
+            0.18  // always dim; per-segment glow handled by canvas overlay
         ]);
         state.map.setPaintProperty('zones-outline', 'line-color-transition', { duration: 250 });
         state.map.setPaintProperty('zones-outline', 'line-width-transition', { duration: 250 });
@@ -1922,6 +1919,120 @@ function setupProximityTracking() {
     });
 }
 
+// Canvas overlay: draws zone outlines bright, masked by radial gradient at cursor.
+// This gives true per-segment glow — only the line pixels within the gradient radius
+// are revealed, rather than MapLibre's per-feature opacity which affects whole zones.
+function setupProximityGlowCanvas() {
+    if (state._glowCanvasAttached) return;
+    state._glowCanvasAttached = true;
+
+    const mapCanvas = state.map.getCanvas();
+    const container = document.getElementById('tile-map');
+
+    const glowCanvas = document.createElement('canvas');
+    glowCanvas.id = 'map-glow-canvas';
+    glowCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:4;';
+    container.appendChild(glowCanvas);
+
+    const ctx = glowCanvas.getContext('2d');
+    const RADIUS = 200; // CSS px — radial gradient falloff
+    let cx = -9999, cy = -9999;
+    let rafPending = false;
+
+    function syncSize() {
+        const rect = mapCanvas.getBoundingClientRect();
+        const w = Math.round(rect.width);
+        const h = Math.round(rect.height);
+        if (glowCanvas.width !== w || glowCanvas.height !== h) {
+            glowCanvas.width = w;
+            glowCanvas.height = h;
+        }
+    }
+
+    function drawGlow() {
+        syncSize();
+        const w = glowCanvas.width, h = glowCanvas.height;
+        ctx.clearRect(0, 0, w, h);
+        if (cx < 0 || !state.allFeatures?.length) return;
+
+        const isLight = state.currentBaseLayer === 'esri-street' || state.currentBaseLayer === 'esri-topo';
+        const lineColor = isLight ? 'rgba(0,0,0,0.95)' : 'rgba(255,255,255,0.95)';
+        const glowColor = isLight ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)';
+
+        ctx.save();
+
+        // --- Pass 1: soft outer glow (thick, low opacity) ---
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 6;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        _drawAllRings();
+        ctx.stroke();
+
+        // --- Pass 2: crisp bright line (thin, full opacity) ---
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        _drawAllRings();
+        ctx.stroke();
+
+        // --- Mask: keep only pixels within cursor radius ---
+        ctx.globalCompositeOperation = 'destination-in';
+        const t = cx, u = cy;
+        const grad = ctx.createRadialGradient(t, u, 0, t, u, RADIUS);
+        // Smoothstep-ish stops for a natural gradient feel
+        grad.addColorStop(0,    'rgba(0,0,0,1)');
+        grad.addColorStop(0.45, 'rgba(0,0,0,0.95)');
+        grad.addColorStop(0.75, 'rgba(0,0,0,0.5)');
+        grad.addColorStop(1,    'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.restore();
+    }
+
+    function _drawAllRings() {
+        state.allFeatures.forEach(feat => {
+            const geom = feat?.geometry;
+            if (!geom) return;
+            const polys = geom.type === 'Polygon'      ? [geom.coordinates]
+                        : geom.type === 'MultiPolygon' ? geom.coordinates
+                        : [];
+            polys.forEach(poly => {
+                poly.forEach(ring => {
+                    ring.forEach((coord, i) => {
+                        const p = state.map.project(coord);
+                        i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+                    });
+                    ctx.closePath();
+                });
+            });
+        });
+    }
+
+    function scheduleRedraw() {
+        if (rafPending) return;
+        rafPending = true;
+        requestAnimationFrame(() => { rafPending = false; drawGlow(); });
+    }
+
+    mapCanvas.addEventListener('mousemove', (e) => {
+        const rect = mapCanvas.getBoundingClientRect();
+        cx = e.clientX - rect.left;
+        cy = e.clientY - rect.top;
+        scheduleRedraw();
+    });
+
+    mapCanvas.addEventListener('mouseleave', () => {
+        cx = -9999; cy = -9999;
+        scheduleRedraw();
+    });
+
+    // Redraw when map pans/zooms so lines stay aligned
+    state.map.on('render', () => { if (cx >= 0) scheduleRedraw(); });
+}
+
 // HTML label overlay — repositions div labels on every map render
 function updateLabelZoomVisibility() {
     rebuildHtmlLabels();
@@ -2183,6 +2294,7 @@ function rebuildGeoJsonLayer() {
             state.map.on('render', rebuildHtmlLabels);
         }
         setupProximityTracking();
+        setupProximityGlowCanvas();
         updateLabelZoomVisibility();
         
         let hoveredStateId = null;
