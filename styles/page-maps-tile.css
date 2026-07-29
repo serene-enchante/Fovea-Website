@@ -1,3 +1,16 @@
+:root {
+    /* Relational Accent Theme System */
+    --accent-h: 166;
+    --accent-s: 100%;
+    --accent-l: 42%;
+    --accent-primary: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+    --accent-light:   hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 8%));
+    --accent-hover:   hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 4%));
+    --accent-dark:    hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 8%));
+    --accent-rgb: 0, 213, 164;
+    --accent-green: var(--accent-primary);
+}
+
 @font-face {
     font-family: 'Aliceregular';
     src: url('../fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff2') format('woff2'),
@@ -129,9 +142,9 @@ body.page-maps-tile {
 }
 
 .header-view-tab:hover {
-    background: rgba(0, 213, 164, 0.18);
-    border-color: rgba(0, 213, 164, 0.4);
-    color: #00d5a4;
+    background: rgba(var(--accent-rgb), 0.18);
+    border-color: rgba(var(--accent-rgb), 0.4);
+    color: var(--accent-primary);
 }
 
 .maps-tile-header__center {
@@ -214,19 +227,19 @@ body.page-maps-tile {
 
 .action-icon-btn:hover,
 .action-icon-btn.is-active {
-    background: rgba(0, 213, 164, 0.2) !important;
-    color: #00d5a4 !important;
+    background: rgba(var(--accent-rgb), 0.2) !important;
+    color: var(--accent-primary) !important;
     transform: translateY(-1px);
 }
 
 .action-icon-btn:hover span,
 .action-icon-btn.is-active span {
-    color: #00d5a4 !important;
+    color: var(--accent-primary) !important;
 }
 
 .action-icon-btn:hover svg,
 .action-icon-btn.is-active svg {
-    stroke: #00d5a4 !important;
+    stroke: var(--accent-primary) !important;
 }
 
 .action-icon-btn:active {
@@ -489,8 +502,8 @@ body.page-maps-tile {
 
 .sidebar-capsule.is-active,
 .sidebar-capsule.is-active:hover {
-    background: rgba(0, 213, 164, 0.16) !important;
-    color: #00d5a4 !important;
+    background: rgba(var(--accent-rgb), 0.16) !important;
+    color: var(--accent-primary) !important;
     font-weight: 700;
 }
 
@@ -587,7 +600,7 @@ body.page-maps-tile {
 }
 
 .sidebar-about-media:hover {
-    border-color: rgba(0, 213, 164, 0.5);
+    border-color: rgba(var(--accent-rgb), 0.5);
     transform: scale(1.015);
 }
 
@@ -625,15 +638,15 @@ body.page-maps-tile {
 }
 
 .tile-zone-item.is-hovered .tile-zone-item__title {
-    color: #00d5a4;
+    color: var(--accent-primary);
 }
 
 .tile-zone-item.is-active {
-    background: rgba(0, 213, 164, 0.08) !important;
+    background: rgba(var(--accent-rgb), 0.08) !important;
 }
 
 .tile-zone-item.is-active .tile-zone-item__title {
-    color: #00d5a4 !important;
+    color: var(--accent-primary) !important;
     font-weight: 700;
 }
 
@@ -1194,7 +1207,7 @@ body.is-transitioning .desktop-nav-tab__icon {
     display: inline-flex !important;
     opacity: 1 !important;
     pointer-events: auto !important;
-    color: #00d5a4 !important;
+    color: var(--accent-primary) !important;
 }
 
 /* Switcher option items list content */
@@ -1230,7 +1243,7 @@ body.is-transitioning .desktop-nav-tab__icon {
 .maps-tile-map-container .map-ctrl-fullscreen a:hover,
 .maps-tile-map-container .map-ctrl-styles__toggle:hover {
     background: transparent !important;
-    color: #00d5a4 !important;
+    color: var(--accent-primary) !important;
     transform: translateY(-1px) !important;
 }
 
@@ -1307,8 +1320,8 @@ body.is-transitioning .desktop-nav-tab__icon {
 }
 
 .maps-tile-map-container .modal-capsule.is-active {
-    background: rgba(0, 213, 164, 0.16) !important;
-    color: #00d5a4 !important;
+    background: rgba(var(--accent-rgb), 0.16) !important;
+    color: var(--accent-primary) !important;
     font-weight: normal !important;
 }
 
@@ -1507,8 +1520,8 @@ body.is-transitioning .desktop-nav-tab__icon {
 
 .maps-tile-map-container .map-ctrl-styles__list .tile-zone-item.is-active .tile-zone-item__title {
     font-weight: 700 !important;
-    color: #00d5a4 !important;
-    text-shadow: 0 0 6px rgba(0, 213, 164, 0.5) !important;
+    color: var(--accent-primary) !important;
+    text-shadow: 0 0 6px rgba(var(--accent-rgb), 0.5) !important;
 }
 
 .maps-tile-map-container .map-ctrl-styles__list .tile-zone-item.is-active {
@@ -1559,7 +1572,7 @@ body.is-transitioning .desktop-nav-tab__icon {
 }
 
 .maps-tile-map-container .map-ctrl-locate.is-active a {
-    color: #00d5a4 !important;
+    color: var(--accent-primary) !important;
     background-color: transparent !important;
 }
 
@@ -1572,24 +1585,24 @@ body.is-transitioning .desktop-nav-tab__icon {
 .user-location-dot {
     width: 14px;
     height: 14px;
-    background-color: #00d5a4;
+    background-color: var(--accent-primary);
     border: 2px solid #ffffff;
     border-radius: 50%;
-    box-shadow: 0 0 10px rgba(0, 213, 164, 0.9), 0 2px 6px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.9), 0 2px 6px rgba(0, 0, 0, 0.5);
     animation: pulse-user-location 2s infinite;
 }
 
 @keyframes pulse-user-location {
     0% {
-        box-shadow: 0 0 0 0 rgba(0, 213, 164, 0.8);
+        box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.8);
     }
 
     70% {
-        box-shadow: 0 0 0 14px rgba(0, 213, 164, 0);
+        box-shadow: 0 0 0 14px rgba(var(--accent-rgb), 0);
     }
 
     100% {
-        box-shadow: 0 0 0 0 rgba(0, 213, 164, 0);
+        box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0);
     }
 }
 
@@ -1620,9 +1633,9 @@ body.is-transitioning .desktop-nav-tab__icon {
 .map-location-badge__dot {
     width: 8px;
     height: 8px;
-    background-color: #00d5a4;
+    background-color: var(--accent-primary);
     border-radius: 50%;
-    box-shadow: 0 0 8px #00d5a4;
+    box-shadow: 0 0 8px var(--accent-primary);
     flex-shrink: 0;
 }
 
@@ -1832,7 +1845,7 @@ body.is-transitioning .desktop-nav-tab__icon {
 
     .mobile-resize-bar:active .mobile-resize-handle,
     .mobile-resize-bar:hover .mobile-resize-handle {
-        background: #00d5a4;
+        background: var(--accent-primary);
     }
 
     .maps-tile-sidebar {
@@ -2157,8 +2170,8 @@ body.has-active-modal .maps-tile-header__actions {
 
 .maps-tile-download-item:hover,
 .maps-tile-download-item.is-active:hover {
-    background: rgba(0, 213, 164, 0.22) !important;
-    color: #00d5a4 !important;
+    background: rgba(var(--accent-rgb), 0.22) !important;
+    color: var(--accent-primary) !important;
     transform: translateY(-1px);
     box-shadow: none !important;
 }
@@ -2353,7 +2366,7 @@ body.has-active-modal .maps-tile-header__actions {
     align-items: center;
     gap: 0.4rem;
     padding: 0.55rem 1.1rem;
-    background: #00d5a4 !important;
+    background: var(--accent-primary) !important;
     border: none !important;
     border-radius: 9999px !important;
     color: #000000 !important;
@@ -2361,14 +2374,14 @@ body.has-active-modal .maps-tile-header__actions {
     font-weight: 700 !important;
     cursor: pointer;
     transition: all var(--transition-fast);
-    box-shadow: 0 4px 12px rgba(0, 213, 164, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.25) !important;
     flex-shrink: 0;
 }
 
 .maps-tile-copy-btn:hover {
     background: #34e05e !important;
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 213, 164, 0.35) !important;
+    box-shadow: 0 6px 16px rgba(var(--accent-rgb), 0.35) !important;
 }
 
 /* Suggest Modal & Form Styles */
@@ -2450,14 +2463,14 @@ body.has-active-modal .maps-tile-header__actions {
 }
 
 .suggest-draw-btn:hover {
-    background: rgba(0, 213, 164, 0.22) !important;
-    color: #00d5a4 !important;
+    background: rgba(var(--accent-rgb), 0.22) !important;
+    color: var(--accent-primary) !important;
     transform: translateY(-1px);
 }
 
 .suggest-draw-btn.is-active {
-    background: rgba(0, 213, 164, 0.28) !important;
-    color: #00d5a4 !important;
+    background: rgba(var(--accent-rgb), 0.28) !important;
+    color: var(--accent-primary) !important;
 }
 
 .suggest-draw-btn--clear {
@@ -2489,9 +2502,9 @@ body.has-active-modal .maps-tile-header__actions {
 }
 
 .suggest-status-badge {
-    color: #00d5a4;
+    color: var(--accent-primary);
     font-weight: 600;
-    background: rgba(0, 213, 164, 0.16);
+    background: rgba(var(--accent-rgb), 0.16);
     padding: 0.2rem 0.6rem;
     border-radius: 20px;
 }
@@ -2502,7 +2515,7 @@ body.has-active-modal .maps-tile-header__actions {
     justify-content: center;
     width: 100%;
     padding: 0.65rem 1rem;
-    background: #00d5a4 !important;
+    background: var(--accent-primary) !important;
     color: #000000 !important;
     border: none !important;
     border-radius: 20px !important;
@@ -2510,14 +2523,14 @@ body.has-active-modal .maps-tile-header__actions {
     font-weight: 700 !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
-    box-shadow: 0 4px 12px rgba(0, 213, 164, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.25) !important;
     margin-top: 0.35rem;
 }
 
 .suggest-submit-btn:hover {
     background: #34e05e !important;
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 213, 164, 0.35) !important;
+    box-shadow: 0 6px 16px rgba(var(--accent-rgb), 0.35) !important;
 }
 
 /* Help Modal & Interactive Guide Styles */
@@ -2565,14 +2578,14 @@ body.has-active-modal .maps-tile-header__actions {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 213, 164, 0.16) !important;
+    background: rgba(var(--accent-rgb), 0.16) !important;
     border: none !important;
     border-radius: 10px !important;
     padding: 0.15rem 0.5rem;
     font-size: 0.7rem;
     font-family: inherit;
     font-weight: 700;
-    color: #00d5a4 !important;
+    color: var(--accent-primary) !important;
     margin-left: 0.4rem;
     box-shadow: none !important;
 }
@@ -2620,7 +2633,7 @@ body.has-active-modal .maps-tile-header__actions {
 }
 
 .help-switch input:checked+.help-slider {
-    background-color: #00d5a4;
+    background-color: var(--accent-primary);
 }
 
 .help-switch input:checked+.help-slider:before {
@@ -2644,7 +2657,7 @@ body.has-active-modal .maps-tile-header__actions {
 
 .help-doc-link:hover {
     background: rgba(255, 255, 255, 0.12);
-    color: #00d5a4;
+    color: var(--accent-primary);
 }
 
 /* Floating Interactive Tooltip Mode */
@@ -2674,7 +2687,7 @@ body.has-active-modal .maps-tile-header__actions {
 
 .help-mode-tooltip__title {
     font-weight: 700;
-    color: #00d5a4;
+    color: var(--accent-primary);
     font-size: 0.82rem;
     display: flex;
     align-items: center;
@@ -2713,7 +2726,7 @@ body.has-active-modal .maps-tile-header__actions {
 }
 
 .help-mode-tooltip__shortcut-val {
-    color: #00d5a4 !important;
+    color: var(--accent-primary) !important;
     font-weight: 700;
 }
 
@@ -2725,11 +2738,11 @@ body.is-help-mode-active [data-help-title]:hover {
     position: fixed;
     pointer-events: none;
     z-index: 99999998 !important;
-    border: 2px dashed #00d5a4 !important;
+    border: 2px dashed var(--accent-primary) !important;
     border-radius: 6px;
     transition: left 0.06s ease-out, top 0.06s ease-out, width 0.06s ease-out, height 0.06s ease-out;
     display: none;
-    box-shadow: 0 0 12px rgba(0, 213, 164, 0.4), inset 0 0 8px rgba(0, 213, 164, 0.15) !important;
+    box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.4), inset 0 0 8px rgba(var(--accent-rgb), 0.15) !important;
 }
 
 .help-mode-highlight[aria-hidden="false"] {

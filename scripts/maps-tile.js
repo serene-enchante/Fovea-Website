@@ -11,6 +11,23 @@ if (typeof maplibregl !== 'undefined' && maplibregl.Map) {
     };
 }
 
+// Central Theme Accent Helpers — Dynamically read relational root CSS variables
+function getThemeAccent() {
+    if (typeof window !== 'undefined' && document.documentElement) {
+        const val = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim();
+        if (val) return val;
+    }
+    return "#00d5a4";
+}
+
+function getThemeAccentLight() {
+    if (typeof window !== 'undefined' && document.documentElement) {
+        const val = getComputedStyle(document.documentElement).getPropertyValue('--accent-light').trim();
+        if (val) return val;
+    }
+    return "#00f0b5";
+}
+
 const MAP_STYLES = {
     default: {
         color: "#ffffff",
@@ -19,15 +36,15 @@ const MAP_STYLES = {
         fillOpacity: 0.07
     },
     hover: {
-        color: "#00d5a4",
+        get color() { return getThemeAccent(); },
         weight: 1.8,
-        fillColor: "#00d5a4",
+        get fillColor() { return getThemeAccent(); },
         fillOpacity: 0.2
     },
     selected: {
-        color: "#00f0b5",
+        get color() { return getThemeAccentLight(); },
         weight: 2.2,
-        fillColor: "#00d5a4",
+        get fillColor() { return getThemeAccent(); },
         fillOpacity: 0.35
     }
 };
@@ -264,7 +281,7 @@ function updateAllFeatureStyles() {
     if (state.map.getLayer('zones-fill')) {
         state.map.setPaintProperty('zones-fill', 'fill-color', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], '#00d5a4',
+            ['boolean', ['feature-state', 'selected'], false], getThemeAccent(),
             ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
                 0, ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false, noDataFillColor, defaultFillColor],
                 1, hoverFillColor
@@ -290,7 +307,7 @@ function updateAllFeatureStyles() {
     if (state.map.getLayer('zones-outline')) {
         state.map.setPaintProperty('zones-outline', 'line-color', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], '#00f0b5',
+            ['boolean', ['feature-state', 'selected'], false], getThemeAccentLight(),
             ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataLineColor,
             defaultLineColor
         ]);
@@ -312,7 +329,7 @@ function updateAllFeatureStyles() {
     if (state.map.getLayer('zones-outline-highlight')) {
         state.map.setPaintProperty('zones-outline-highlight', 'line-color', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], '#00f0b5',
+            ['boolean', ['feature-state', 'selected'], false], getThemeAccentLight(),
             'transparent'
         ]);
         state.map.setPaintProperty('zones-outline-highlight', 'line-width', [
@@ -2306,7 +2323,7 @@ function rebuildGeoJsonLayer() {
             paint: {
                 'fill-color': [
                     'case',
-                    ['boolean', ['feature-state', 'selected'], false], '#00d5a4',
+                    ['boolean', ['feature-state', 'selected'], false], getThemeAccent(),
                     '#ffffff'
                 ],
                 'fill-opacity': [
@@ -2331,7 +2348,7 @@ function rebuildGeoJsonLayer() {
             paint: {
                 'line-color': [
                     'case',
-                    ['boolean', ['feature-state', 'selected'], false], '#00f0b5',
+                    ['boolean', ['feature-state', 'selected'], false], getThemeAccentLight(),
                     ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], 'rgba(255, 255, 255, 0.25)',
                     '#ffffff'
                 ],
@@ -2357,7 +2374,7 @@ function rebuildGeoJsonLayer() {
             paint: {
                 'line-color': [
                     'case',
-                    ['boolean', ['feature-state', 'selected'], false], '#00f0b5',
+                    ['boolean', ['feature-state', 'selected'], false], getThemeAccentLight(),
                     'transparent'
                 ],
                 'line-width': [
@@ -3854,9 +3871,10 @@ function setupSuggestFormAndDrawing(closeAllModals) {
             // Build a green location-pin SVG and register it as a MapLibre image
             const addMarkerLayer = () => {
                 if (!state.map.hasImage("suggest-pin-icon")) {
+                    const primaryColor = getThemeAccent();
                     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">
-                        <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 30 18 30S36 31.5 36 18C36 8.06 27.94 0 18 0z" fill="#00d5a4"/>
-                        <circle cx="18" cy="18" r="7" fill="#00d5a4"/>
+                        <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 30 18 30S36 31.5 36 18C36 8.06 27.94 0 18 0z" fill="${primaryColor}"/>
+                        <circle cx="18" cy="18" r="7" fill="${primaryColor}"/>
                     </svg>`;
                     const blob = new Blob([svg], { type: "image/svg+xml" });
                     const url = URL.createObjectURL(blob);
