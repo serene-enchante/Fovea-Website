@@ -3406,14 +3406,20 @@ body.is-annotation-mode .annotation-exit-btn {
         bottom: 0;
         left: 0;
         right: 0;
-        height: 60px;
+        /* Height of tap area + safe-area for iPhone home indicator */
+        height: calc(60px + env(safe-area-inset-bottom, 0px));
         background: #000000;
         border-top: 1px solid rgba(255, 255, 255, 0.12);
-        z-index: 2000;
+        /* Must be above all modals, tooltips, overlays */
+        z-index: 99999;
         justify-content: space-around;
-        align-items: center;
+        align-items: flex-start;
+        padding-top: 0;
         padding-bottom: env(safe-area-inset-bottom, 0px);
         box-sizing: border-box;
+        /* Safari: isolate stacking context from any ancestor transforms */
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
     }
 
     .mobile-bottom-nav-item {
@@ -3421,7 +3427,7 @@ body.is-annotation-mode .annotation-exit-btn {
         align-items: center;
         justify-content: center;
         flex: 1;
-        height: 100%;
+        height: 60px; /* fixed tap area; nav total height = 60px + safe-area */
         color: rgba(255, 255, 255, 0.55);
         cursor: pointer;
         transition: color 0.15s ease, transform 0.1s ease;
