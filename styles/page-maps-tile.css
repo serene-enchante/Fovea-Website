@@ -144,6 +144,13 @@ body.page-maps-tile {
     color: var(--accent-primary);
 }
 
+.header-view-toggle-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
 /* Header View Toggle Dropdown Button (Rounded edges, not capsule, grey shades, no outline) */
 .header-view-toggle {
     display: inline-flex;
@@ -172,6 +179,10 @@ body.page-maps-tile {
     color: #ffffff;
 }
 
+.header-view-toggle[aria-expanded="true"] .header-view-toggle__chevron {
+    transform: rotate(180deg);
+}
+
 .header-view-toggle__chevron {
     width: 11px;
     height: 11px;
@@ -182,6 +193,72 @@ body.page-maps-tile {
 
 .header-view-toggle:hover .header-view-toggle__chevron {
     stroke: #ffffff;
+}
+
+/* Floating Options Dropdown Popup Menu (Black fill, 333333 outline, rounded edges matching help popup) */
+.header-view-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 10000;
+    min-width: 145px;
+    background: #000000 !important;
+    border: 1px solid #333333 !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.9) !important;
+    border-radius: 12px !important;
+    padding: 0.35rem !important;
+    display: none;
+    flex-direction: column;
+    gap: 0.15rem;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.header-view-menu[aria-hidden="false"] {
+    display: flex !important;
+    animation: menuFadeIn 0.15s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+@keyframes menuFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.header-view-menu__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 0.65rem;
+    border-radius: 8px;
+    color: #a1a1aa;
+    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    user-select: none;
+}
+
+.header-view-menu__item:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+.header-view-menu__item.is-active {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.header-view-menu__check {
+    stroke: var(--accent-primary);
+    stroke-width: 2.5;
+    flex-shrink: 0;
 }
 
 .maps-tile-header__center {
