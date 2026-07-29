@@ -1806,25 +1806,22 @@ function renderSidebarList() {
         item.className = "tile-zone-item";
         item.setAttribute("data-id", String(props.zid));
 
-        const geomSvg = generateZoneGeometrySVG(feature);
-        let thumbHtml = "";
-        if (geomSvg) {
-            thumbHtml = `<div class="tile-zone-item__thumb">${geomSvg}</div>`;
-        } else {
-            const imgPath = zoneImagePath(props.zid);
-            thumbHtml = `
-                <div class="tile-zone-item__thumb">
-                    <img src="${imgPath}" alt="Zone ${zid}" loading="lazy">
-                </div>
-            `;
-        }
-
+        const imgPath = zoneImagePath(props.zid);
         item.innerHTML = `
-            ${thumbHtml}
+            <div class="tile-zone-item__thumb">
+                <img src="${imgPath}" alt="Zone ${zid}" loading="lazy">
+            </div>
             <div class="tile-zone-item__info">
                 <div class="tile-zone-item__title">Zone ${zid}</div>
             </div>
         `;
+
+        const img = item.querySelector("img");
+        if (img) {
+            img.addEventListener("error", () => {
+                img.src = FALLBACK_IMAGE;
+            });
+        }
 
         item.addEventListener("mouseenter", () => {
             const featureId = String(props.zid || "");
@@ -3250,22 +3247,12 @@ function initializeMap() {
                     const isCircleOverview = !state.currentId || state.currentId === CIRCLE_ID;
                     const isRowActive = l.id === "selected-zone" || (l.id === "circle" && isCircleOverview) || (l.id === "circles" && state.isCirclesFeature);
                     
-                    const geomSvg = l.feature ? generateZoneGeometrySVG(l.feature) : "";
-                    let thumbHtml = "";
-                    if (geomSvg) {
-                        thumbHtml = `<div class="tile-zone-item__thumb">${geomSvg}</div>`;
-                    } else {
-                        thumbHtml = `
-                            <div class="tile-zone-item__thumb ${l.isLogo ? 'tile-zone-item__thumb--logo' : ''}">
-                                <img src="${l.image}" alt="${l.name}" loading="lazy">
-                            </div>
-                        `;
-                    }
-
                     const row = document.createElement("div");
                     row.className = `tile-zone-item ${l.isChild ? 'is-child' : ''} ${isRowActive ? 'is-active' : ''}`;
                     row.innerHTML = `
-                        ${thumbHtml}
+                        <div class="tile-zone-item__thumb ${l.isLogo ? 'tile-zone-item__thumb--logo' : ''}">
+                            <img src="${l.image}" alt="${l.name}" loading="lazy">
+                        </div>
                         <div class="tile-zone-item__info">
                             <div class="tile-zone-item__title">${l.name}</div>
                         </div>
