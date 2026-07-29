@@ -3394,124 +3394,59 @@ body.is-annotation-mode .annotation-exit-btn {
 }
 
 /* Hidden on desktop */
-.mobile-nav-tabs {
+.mobile-bottom-nav {
     display: none;
 }
 
 @media (max-width: 768px) {
-    /* Stack vertical nav tabs on the right side of the list column */
-    .mobile-nav-tabs {
+    /* Mobile bottom navigation bar spanning full viewport width */
+    .mobile-bottom-nav {
         display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); /* floating safe-area height raised to clear browser toolbar */
-        gap: 2px;
-        position: absolute;
+        position: fixed;
+        bottom: 0;
+        left: 0;
         right: 0;
-        top: 0; /* run the fill full height from the top */
-        bottom: 0; /* run the fill full height to the bottom */
-        z-index: 990;
-        width: 40px; /* slightly wider for spacing breathing room */
-        box-sizing: border-box;
-        background: #000000; /* solid black fill top-to-bottom */
-        border-radius: 0; /* completely straight vertical strip */
-        pointer-events: none; /* pass-through touches on the empty areas */
-        
-        /* Establish initial state for transitions to prevent snapping */
-        transform: translateX(0);
-        will-change: transform;
-        
-        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); /* snappy entry when showing */
-    }
-
-    .mobile-nav-tabs.is-hidden {
-        transform: translateX(40px); /* slide off-screen right by exactly its width */
-        /* Gentler ease-in-out start for exit animation so it doesn't poof/snap away */
-        transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .mobile-nav-toggle {
-        position: absolute;
-        left: -28px; /* sticks out on the left edge of the vertical bar */
-        bottom: calc(72px + env(safe-area-inset-bottom, 0px)); /* floats exactly where tabs end */
-        width: 28px;
-        height: 36px;
+        height: 60px;
         background: #000000;
-        border: none;
-        outline: none;
-        padding: 0;
-        display: flex;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        z-index: 2000;
+        justify-content: space-around;
         align-items: center;
-        justify-content: center;
-        color: rgba(255, 255, 255, 0.6);
-        border-radius: 8px 0 0 8px; /* rounded tab corner */
-        cursor: pointer;
-        pointer-events: auto; /* active tap trigger */
-        box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.45);
-    }
-
-    .mobile-nav-toggle__icon {
-        display: block;
-        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        transform: rotate(180deg); /* point right when expanded */
-    }
-
-    .mobile-nav-tabs.is-hidden .mobile-nav-toggle__icon {
-        transform: rotate(0deg); /* point left when collapsed */
-    }
-
-    .mobile-nav-tab {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 48px; /* static height so it does not stretch when list is resized */
-        background: transparent !important; /* remove the grey frame */
-        text-decoration: none;
-        color: var(--color-text-muted, rgba(255,255,255,0.45));
-        cursor: pointer;
-        transition: color 0.18s ease;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
         box-sizing: border-box;
-        border-radius: 0;
-        pointer-events: auto; /* enable tap interaction on the tab buttons */
     }
 
-    #mobile-nav-tab-tools {
-        border-radius: 0;
+    .mobile-bottom-nav-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        height: 100%;
+        color: rgba(255, 255, 255, 0.55);
+        cursor: pointer;
+        transition: color 0.15s ease, transform 0.1s ease;
+        text-decoration: none;
     }
 
-    #mobile-nav-tab-home {
-        border-radius: 0;
+    .mobile-bottom-nav-item svg {
+        width: 22px;
+        height: 22px;
+        stroke: currentColor;
+        transition: stroke-width 0.15s ease;
     }
 
-    #mobile-nav-tab-settings {
-        border-radius: 0;
+    .mobile-bottom-nav-item:active {
+        color: var(--accent-primary);
+        transform: scale(0.9);
     }
 
-    .mobile-nav-tab__icon {
-        display: block;
-        filter: invert(1) brightness(0.45) grayscale(100%);
-        transition: opacity 0.3s ease, filter 0.18s ease;
-     }
-
-    .mobile-nav-tab__icon--home {
-        width: 13px;
-        height: 13px;
+    .mobile-bottom-nav-item.is-active {
+        color: var(--accent-primary) !important;
     }
 
-    .mobile-nav-tab__icon--tools,
-    .mobile-nav-tab__icon--settings {
-        width: 17px;
-        height: 17px;
-    }
-
-    .mobile-nav-tab:active {
-        background: transparent !important;
-        color: #ffffff;
-    }
-
-    .mobile-nav-tab:active .mobile-nav-tab__icon {
-        filter: invert(1) brightness(0.85) grayscale(100%);
+    /* Clear bottom nav layout */
+    .maps-tile-sidebar__scroll {
+        padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
     /* Hide zoom controls on mobile */

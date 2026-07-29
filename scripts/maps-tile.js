@@ -5203,6 +5203,7 @@ function setupHelpModeSystem() {
 
     const helpDictionary = [
         { selector: "#desktop-nav-tab-home, #mobile-nav-tab-home", title: "Home Tab", desc: "Click this bar to navigate back to the Fovea homepage." },
+        { selector: "#mobile-nav-tab-explore", title: "Explore Tab", desc: "Switch to map-full view to explore the map on mobile." },
         { selector: "#desktop-nav-tab-tools, #mobile-nav-tab-tools", title: "Tools Tab", desc: "Access various tools to assist with bird data collection, processing, and spatial analysis." },
         { selector: "#desktop-nav-tab-settings, #mobile-nav-tab-settings", title: "Settings Tab", desc: "Configure options, visual display preferences, and map style layers." },
         { selector: "#header-logo-container, .logo--header", title: "Organization Logo", desc: "Click the organization logo to navigate to the home directory of the organization which the currently selected feature belongs to." },
@@ -5477,8 +5478,7 @@ async function init() {
         setupMobileResizeBar();
         setupHelpModeSystem();
         setupSidebarScrollListener();
-        setupMobileNavToggle();
-        setupMobileNavSwipeListener();
+        setupMobileBottomNav();
         setupViewToggleMenu();
 
         selectSubject(initialId, true, false);
@@ -5508,7 +5508,6 @@ async function init() {
 function setupSidebarScrollListener() {
     const scrollBox = document.getElementById("sidebar-zone-list");
     const header = document.getElementById("sidebar-header");
-    const mobileTabs = document.querySelector(".mobile-nav-tabs");
     
     if (scrollBox && header) {
         let lastScrollTop = 0;
@@ -5653,53 +5652,20 @@ document.addEventListener("DOMContentLoaded", init);
 })();
 
 
-function setupMobileNavToggle() {
-    const toggleBtn = document.getElementById("mobile-nav-toggle");
-    const mobileTabs = document.querySelector(".mobile-nav-tabs");
-    if (toggleBtn && mobileTabs) {
-        toggleBtn.addEventListener("click", (e) => {
+function setupMobileBottomNav() {
+    // Wire up the Explore tab: snap to map-full view on mobile
+    const exploreTab = document.getElementById("mobile-nav-tab-explore");
+    if (exploreTab) {
+        exploreTab.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            mobileTabs.classList.toggle("is-hidden");
+            if (window.innerWidth <= 768) {
+                setMobileSnapState("map-full", true);
+            }
         });
     }
+    // Tools/Settings/Home tabs are handled by setupActionButtons and the transition listener above
 }
 
-function setupMobileNavSwipeListener() {
-    const listContainer = document.getElementById("sidebar-zone-list");
-    const mobileTabs = document.querySelector(".mobile-nav-tabs");
-    if (!listContainer || !mobileTabs) return;
-
-    let startX = 0;
-    let startY = 0;
-    let isSwipeCandidate = false;
-
-    listContainer.addEventListener("touchstart", (e) => {
-        if (window.innerWidth > 768) return;
-        const touch = e.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        isSwipeCandidate = true;
-    }, { passive: true });
-
-    listContainer.addEventListener("touchmove", (e) => {
-        if (!isSwipeCandidate || window.innerWidth > 768) return;
-        
-        const touch = e.touches[0];
-        const diffX = touch.clientX - startX;
-        const diffY = touch.clientY - startY;
-
-        // Verify primary horizontal swipe
-        if (Math.abs(diffX) > Math.abs(diffY) * 1.5) {
-            if (diffX < -30) { // Swiped left -> reveal drawer
-                isSwipeCandidate = false;
-                mobileTabs.classList.remove("is-hidden");
-            } else if (diffX > 30) { // Swiped right -> hide drawer
-                isSwipeCandidate = false;
-                mobileTabs.classList.add("is-hidden");
-            }
-        }
-    }, { passive: true });
-}
 
 
