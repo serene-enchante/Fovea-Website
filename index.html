@@ -123,6 +123,7 @@
         }
 
         .search-box {
+            position: relative;
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -132,6 +133,10 @@
             padding: 0.75rem 1.25rem;
             transition: all 0.25s ease;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --mouse-x: 50%;
+            --mouse-y: 50%;
+            --glow-opacity: 0;
+            --spotlight-size: 240px;
         }
 
         .search-box:focus-within {
@@ -140,7 +145,48 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15);
         }
 
+        /* Proximity Glow for Search Box */
+        .search-box::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: var(--glow-opacity, 0);
+            transition: opacity 0.1s linear;
+            z-index: 0;
+            background: radial-gradient(
+                var(--spotlight-size) circle at var(--mouse-x) var(--mouse-y),
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                transparent 75%
+            );
+        }
+
+        .search-box::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 9999px;
+            padding: 1px;
+            background: radial-gradient(
+                var(--spotlight-size) circle at var(--mouse-x) var(--mouse-y),
+                rgba(255, 255, 255, 0.35) 0%,
+                rgba(255, 255, 255, 0.1) 40%,
+                transparent 75%
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: var(--glow-opacity, 0);
+            transition: opacity 0.1s linear;
+            z-index: 1;
+        }
+
         .search-icon {
+            position: relative;
+            z-index: 2;
             color: rgba(255, 255, 255, 0.4);
             flex-shrink: 0;
             transition: color 0.2s ease;
@@ -151,6 +197,8 @@
         }
 
         .search-input {
+            position: relative;
+            z-index: 2;
             width: 100%;
             background: transparent;
             border: none;
@@ -166,6 +214,8 @@
         }
 
         .search-clear {
+            position: relative;
+            z-index: 2;
             background: transparent;
             border: none;
             color: rgba(255, 255, 255, 0.4);
@@ -198,9 +248,54 @@
             z-index: 50;
             padding: 0.4rem;
             display: none;
+            --mouse-x: 50%;
+            --mouse-y: 50%;
+            --glow-opacity: 0;
+            --spotlight-size: 240px;
+        }
+
+        /* Proximity Glow for Autocomplete Dropdown */
+        .autocomplete-dropdown::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: var(--glow-opacity, 0);
+            transition: opacity 0.1s linear;
+            z-index: 0;
+            background: radial-gradient(
+                var(--spotlight-size) circle at var(--mouse-x) var(--mouse-y),
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                transparent 75%
+            );
+        }
+
+        .autocomplete-dropdown::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 17px;
+            padding: 1px;
+            background: radial-gradient(
+                var(--spotlight-size) circle at var(--mouse-x) var(--mouse-y),
+                rgba(255, 255, 255, 0.35) 0%,
+                rgba(255, 255, 255, 0.1) 40%,
+                transparent 75%
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: var(--glow-opacity, 0);
+            transition: opacity 0.1s linear;
+            z-index: 1;
         }
 
         .autocomplete-item {
+            position: relative;
+            z-index: 2;
             display: flex;
             align-items: center;
             gap: 0.85rem;
@@ -388,6 +483,45 @@
             const clearBtn = document.getElementById("home-search-clear");
             const dropdown = document.getElementById("home-autocomplete");
             let selectedIndex = -1;
+
+            // Proximity Glow Effect for Search Box & Autocomplete Dropdown
+            const setupProximityGlow = (element, threshold = 140, spotlightSize = 240) => {
+                if (!element) return;
+                
+                element.style.setProperty("--mouse-x", "50%");
+                element.style.setProperty("--mouse-y", "50%");
+                element.style.setProperty("--glow-opacity", "0");
+                element.style.setProperty("--spotlight-size", `${spotlightSize}px`);
+
+                window.addEventListener("mousemove", (e) => {
+                    if (window.getComputedStyle(element).display === "none") {
+                        element.style.setProperty("--glow-opacity", "0");
+                        return;
+                    }
+
+                    const rect = element.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
+                    const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    element.style.setProperty("--mouse-x", `${x}px`);
+                    element.style.setProperty("--mouse-y", `${y}px`);
+
+                    let opacity = 0;
+                    if (dist <= threshold) {
+                        opacity = Math.pow(1 - dist / threshold, 1.2);
+                    }
+
+                    element.style.setProperty("--glow-opacity", opacity.toFixed(3));
+                });
+            };
+
+            const searchBox = document.querySelector(".search-box");
+            setupProximityGlow(searchBox, 140, 240);
+            setupProximityGlow(dropdown, 140, 240);
 
             const renderDropdown = (query) => {
                 const q = query.trim().toLowerCase();
