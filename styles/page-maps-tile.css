@@ -3433,27 +3433,27 @@ body.is-annotation-mode .annotation-exit-btn {
     .mobile-bottom-nav {
         display: flex;
         position: fixed;
-        bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+        bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%) translateZ(0) !important;
         -webkit-transform: translateX(-50%) translateZ(0) !important;
-        /* Height: 52px buttons + 2 * 8px padding = 68px (twice the 34px toolbar height) */
-        height: 68px !important;
+        /* Height: 38px buttons + 2 * 6px padding = 50px */
+        height: 50px !important;
         background: rgba(0, 0, 0, 0.6) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
         backdrop-filter: blur(10px) !important;
         -webkit-backdrop-filter: blur(10px) !important;
         /* Must be above all modals, tooltips, overlays */
         z-index: 99999;
-        justify-content: center !important;
+        justify-content: space-around !important;
         align-items: center !important;
-        padding: 8px !important;
+        padding: 6px 12px !important;
         gap: 8px !important;
         box-sizing: border-box;
-        border-radius: 34px !important;
-        width: auto !important;
-        max-width: calc(100% - 32px) !important;
+        border-radius: 25px !important;
+        width: calc(100% - 48px) !important;
+        max-width: 320px !important;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
     }
 
@@ -3462,9 +3462,9 @@ body.is-annotation-mode .annotation-exit-btn {
         align-items: center;
         justify-content: center;
         flex: none !important;
-        width: 52px !important;
-        height: 52px !important;
-        border-radius: 26px !important;
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 19px !important;
         color: #d1d1d6;
         cursor: pointer;
         transition: color 0.15s ease, transform 0.1s ease;
@@ -3472,8 +3472,8 @@ body.is-annotation-mode .annotation-exit-btn {
     }
 
     .mobile-bottom-nav-item__icon {
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
         background-color: currentColor;
         -webkit-mask-size: contain;
         mask-size: contain;
@@ -3485,8 +3485,8 @@ body.is-annotation-mode .annotation-exit-btn {
     }
 
     #mobile-nav-tab-home .mobile-bottom-nav-item__icon {
-        width: 17px;
-        height: 17px;
+        width: 16px;
+        height: 16px;
     }
 
     .mobile-bottom-nav-item:active {
@@ -3545,7 +3545,7 @@ body.is-annotation-mode .annotation-exit-btn {
         height: auto !important;
         min-height: 0 !important;
         /* Keep bottom padding so last tile isn't hidden behind bottom nav */
-        padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
     }
 }
 
