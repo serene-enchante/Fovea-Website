@@ -1,8 +1,8 @@
 :root {
-    --accent-color: #00d5a4;
-    --accent-light: #00f0b5;
-    --accent-hover: #1ae8b6;
-    --accent-rgb: 0, 213, 164;
+    --accent-color: #64b5f6;
+    --accent-light: #91cfff;
+    --accent-hover: #79c1f8;
+    --accent-rgb: 100, 181, 246;
 
     --accent-primary: var(--accent-color);
     --accent-green: var(--accent-color);
@@ -634,8 +634,9 @@ body.page-maps-tile {
     background: rgba(255, 255, 255, 0.08) !important;
 }
 
+.tile-zone-item:hover .tile-zone-item__title,
 .tile-zone-item.is-hovered .tile-zone-item__title {
-    color: var(--accent-primary);
+    color: #ffffff !important;
 }
 
 .tile-zone-item.is-active {
@@ -697,10 +698,11 @@ body.page-maps-tile {
 .tile-zone-item__title {
     font-size: 0.95rem;
     font-weight: 700;
-    color: #ffffff;
+    color: #a1a1aa;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: color var(--transition-fast);
 }
 
 .tile-zone-item.is-active .tile-zone-item__title {
@@ -1512,7 +1514,13 @@ body.is-transitioning .desktop-nav-tab__icon {
 
 .maps-tile-map-container .map-ctrl-styles__list .tile-zone-item__title {
     font-weight: 700 !important;
-    color: #b3b3b7 !important;
+    color: #a1a1aa !important;
+    transition: color var(--transition-fast);
+}
+
+.maps-tile-map-container .map-ctrl-styles__list .tile-zone-item:hover .tile-zone-item__title,
+.maps-tile-map-container .map-ctrl-styles__list .tile-zone-item.is-hovered .tile-zone-item__title {
+    color: #ffffff !important;
 }
 
 .maps-tile-map-container .map-ctrl-styles__list .tile-zone-item.is-active .tile-zone-item__title {

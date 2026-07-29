@@ -17,7 +17,7 @@ function getThemeAccent() {
         const val = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
         if (val && val.startsWith('#')) return val;
     }
-    return "#00d5a4";
+    return "#64b5f6";
 }
 
 function getThemeAccentLight() {
@@ -25,7 +25,7 @@ function getThemeAccentLight() {
         const val = getComputedStyle(document.documentElement).getPropertyValue('--accent-light').trim();
         if (val && val.startsWith('#')) return val;
     }
-    return "#00f0b5";
+    return "#91cfff";
 }
 
 const MAP_STYLES = {
