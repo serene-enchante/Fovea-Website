@@ -19,15 +19,15 @@ const MAP_STYLES = {
         fillOpacity: 0.07
     },
     hover: {
-        color: "#30d158",
+        color: "#00a2ff",
         weight: 1.8,
-        fillColor: "#30d158",
+        fillColor: "#00a2ff",
         fillOpacity: 0.2
     },
     selected: {
-        color: "#00ff66",
+        color: "#38bdf8",
         weight: 2.2,
-        fillColor: "#30d158",
+        fillColor: "#00a2ff",
         fillOpacity: 0.35
     }
 };
@@ -264,7 +264,7 @@ function updateAllFeatureStyles() {
     if (state.map.getLayer('zones-fill')) {
         state.map.setPaintProperty('zones-fill', 'fill-color', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], '#30d158',
+            ['boolean', ['feature-state', 'selected'], false], '#00a2ff',
             ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
                 0, ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false, noDataFillColor, defaultFillColor],
                 1, hoverFillColor
@@ -290,7 +290,7 @@ function updateAllFeatureStyles() {
     if (state.map.getLayer('zones-outline')) {
         state.map.setPaintProperty('zones-outline', 'line-color', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], '#00ff66',
+            ['boolean', ['feature-state', 'selected'], false], '#38bdf8',
             ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataLineColor,
             defaultLineColor
         ]);
@@ -312,7 +312,7 @@ function updateAllFeatureStyles() {
     if (state.map.getLayer('zones-outline-highlight')) {
         state.map.setPaintProperty('zones-outline-highlight', 'line-color', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], '#00ff66',
+            ['boolean', ['feature-state', 'selected'], false], '#38bdf8',
             'transparent'
         ]);
         state.map.setPaintProperty('zones-outline-highlight', 'line-width', [
@@ -2306,7 +2306,7 @@ function rebuildGeoJsonLayer() {
             paint: {
                 'fill-color': [
                     'case',
-                    ['boolean', ['feature-state', 'selected'], false], '#30d158',
+                    ['boolean', ['feature-state', 'selected'], false], '#00a2ff',
                     '#ffffff'
                 ],
                 'fill-opacity': [
@@ -2331,7 +2331,7 @@ function rebuildGeoJsonLayer() {
             paint: {
                 'line-color': [
                     'case',
-                    ['boolean', ['feature-state', 'selected'], false], '#00ff66',
+                    ['boolean', ['feature-state', 'selected'], false], '#38bdf8',
                     ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], 'rgba(255, 255, 255, 0.25)',
                     '#ffffff'
                 ],
@@ -2357,7 +2357,7 @@ function rebuildGeoJsonLayer() {
             paint: {
                 'line-color': [
                     'case',
-                    ['boolean', ['feature-state', 'selected'], false], '#00ff66',
+                    ['boolean', ['feature-state', 'selected'], false], '#38bdf8',
                     'transparent'
                 ],
                 'line-width': [
@@ -3855,8 +3855,8 @@ function setupSuggestFormAndDrawing(closeAllModals) {
             const addMarkerLayer = () => {
                 if (!state.map.hasImage("suggest-pin-icon")) {
                     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">
-                        <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 30 18 30S36 31.5 36 18C36 8.06 27.94 0 18 0z" fill="#30d158"/>
-                        <circle cx="18" cy="18" r="7" fill="#30d158"/>
+                        <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 30 18 30S36 31.5 36 18C36 8.06 27.94 0 18 0z" fill="#00a2ff"/>
+                        <circle cx="18" cy="18" r="7" fill="#00a2ff"/>
                     </svg>`;
                     const blob = new Blob([svg], { type: "image/svg+xml" });
                     const url = URL.createObjectURL(blob);
