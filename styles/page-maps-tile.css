@@ -3234,3 +3234,64 @@ body.is-annotation-mode .annotation-exit-btn {
         display: none !important;
     }
 }
+
+/* Sidebar Hierarchy Navigation Transitions */
+@keyframes navFlyOutLeft {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(-40px);
+        opacity: 0;
+    }
+}
+
+@keyframes navFlyInRight {
+    0% {
+        transform: translateX(40px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes navFlyOutRight {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(40px);
+        opacity: 0;
+    }
+}
+
+@keyframes navFlyInLeft {
+    0% {
+        transform: translateX(-40px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.anim-fly-out-left {
+    animation: navFlyOutLeft 0.18s cubic-bezier(0.4, 0.0, 0.2, 1) forwards !important;
+}
+
+.anim-fly-in-right {
+    animation: navFlyInRight 0.22s cubic-bezier(0.0, 0.0, 0.2, 1) forwards !important;
+}
+
+.anim-fly-out-right {
+    animation: navFlyOutRight 0.18s cubic-bezier(0.4, 0.0, 0.2, 1) forwards !important;
+}
+
+.anim-fly-in-left {
+    animation: navFlyInLeft 0.22s cubic-bezier(0.0, 0.0, 0.2, 1) forwards !important;
+}

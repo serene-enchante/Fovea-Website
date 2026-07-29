@@ -1387,82 +1387,136 @@ function switchToCirclesFeature() {
     selectSubject(CIRCLE_ID, true);
 }
 
+let _currentHierarchyLevel = 0;
+
+function _getHierarchyLevel(id) {
+    if (state.isCirclesFeature) return 0;
+    if (!id || id === CIRCLE_ID) return 1;
+    return 2;
+}
+
 function selectSubject(id, triggerMapZoom = true, animate = true) {
     window.scrollTo(0, 0);
     if (state.isHelpModeActive && window.innerWidth <= 768) return;
-    state.currentId = id;
-    const backBtn = document.getElementById("btn-capsule-back");
 
-    if (state.isCirclesFeature) {
-        updateHeader("Coast to Cascades Bird Alliance");
-        if (backBtn) backBtn.classList.remove("is-visible");
-        renderSidebarList();
-        updateUrl(id);
-        if (triggerMapZoom && state.map) {
-            state.map.fitBounds(getBbox(state.allFeatures), {
-                padding: getFitPadding(),
-                animate: animate,
-                speed: 0.8,
-                curve: 1.4
+    const oldLevel = _currentHierarchyLevel;
+    const newLevel = _getHierarchyLevel(id);
+    _currentHierarchyLevel = newLevel;
+
+    const isLevelChanged = oldLevel !== newLevel;
+
+    const performSelection = () => {
+        state.currentId = id;
+        const backBtn = document.getElementById("btn-capsule-back");
+
+        if (state.isCirclesFeature) {
+            updateHeader("Coast to Cascades Bird Alliance");
+            if (backBtn) backBtn.classList.remove("is-visible");
+            renderSidebarList();
+            updateUrl(id);
+            if (triggerMapZoom && state.map) {
+                state.map.fitBounds(getBbox(state.allFeatures), {
+                    padding: getFitPadding(),
+                    animate: animate,
+                    speed: 0.8,
+                    curve: 1.4
+                });
+            }
+            updateAllFeatureStyles();
+            return;
+        }
+
+        const isCircle = !id || id === CIRCLE_ID;
+        let targetFeature = null;
+        if (!isCircle) {
+            targetFeature = state.allFeatures.find(f => {
+                const zid = f.properties?.zid;
+                return zid && (zid.toLowerCase() === id.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(id));
             });
         }
-        updateAllFeatureStyles();
-        return;
-    }
 
-    const isCircle = !id || id === CIRCLE_ID;
-    let targetFeature = null;
-    if (!isCircle) {
-        targetFeature = state.allFeatures.find(f => {
-            const zid = f.properties?.zid;
-            return zid && (zid.toLowerCase() === id.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(id));
-        });
-    }
-
-    if (isCircle || !targetFeature) {
-        const titleName = state.currentFeature === "florence" ? "Florence Christmas Bird Count Circle" : "Eugene Christmas Bird Count Circle";
-        updateHeader(titleName);
-        if (backBtn) {
-            backBtn.classList.add("is-visible");
-            backBtn.setAttribute("aria-label", "Back to all circles");
-            backBtn.setAttribute("title", "Back to all circles");
-        }
-    } else {
-        const zid = displayZoneId(targetFeature.properties.zid);
-        updateHeader(`Zone ${zid}`);
-        if (backBtn) {
-            backBtn.classList.add("is-visible");
-            backBtn.setAttribute("aria-label", "Back to full circle");
-            backBtn.setAttribute("title", "Back to full circle");
-        }
-    }
-
-    renderSidebarList();
-
-    updateAllFeatureStyles();
-
-    if (triggerMapZoom && state.map) {
         if (isCircle || !targetFeature) {
-            state.map.fitBounds(getBbox(state.allFeatures), {
-                padding: getFitPadding(),
-                animate: animate,
-                speed: 0.8,
-                curve: 1.4
-            });
+            const titleName = state.currentFeature === "florence" ? "Florence Christmas Bird Count Circle" : "Eugene Christmas Bird Count Circle";
+            updateHeader(titleName);
+            if (backBtn) {
+                backBtn.classList.add("is-visible");
+                backBtn.setAttribute("aria-label", "Back to all circles");
+                backBtn.setAttribute("title", "Back to all circles");
+            }
         } else {
-            state.map.fitBounds(getBbox([targetFeature]), {
-                padding: getFitPadding(20),
-                maxZoom: 14,
-                animate: animate,
-                speed: 0.8,
-                curve: 1.4
-            });
+            const zid = displayZoneId(targetFeature.properties.zid);
+            updateHeader(`Zone ${zid}`);
+            if (backBtn) {
+                backBtn.classList.add("is-visible");
+                backBtn.setAttribute("aria-label", "Back to full circle");
+                backBtn.setAttribute("title", "Back to full circle");
+            }
         }
-    }
 
-    updateUrl(id);
-    if (typeof state.refreshLayersModal === "function") {
-        state.refreshLayersModal();
+        renderSidebarList();
+        updateAllFeatureStyles();
+
+        if (triggerMapZoom && state.map) {
+            if (isCircle || !targetFeature) {
+                state.map.fitBounds(getBbox(state.allFeatures), {
+                    padding: getFitPadding(),
+                    animate: animate,
+                    speed: 0.8,
+                    curve: 1.4
+                });
+            } else {
+                state.map.fitBounds(getBbox([targetFeature]), {
+                    padding: getFitPadding(20),
+                    maxZoom: 14,
+                    animate: animate,
+                    speed: 0.8,
+                    curve: 1.4
+                });
+            }
+        }
+
+        updateUrl(id);
+        if (typeof state.refreshLayersModal === "function") {
+            state.refreshLayersModal();
+        }
+    };
+
+    // Trigger immediate click fly-out on current contents, update DOM & map mid-flyout, then fly in new screen
+    if (isLevelChanged && animate) {
+        const animElements = [
+            document.querySelector('.maps-tile-header'),
+            document.getElementById('sidebar-header'),
+            document.querySelector('.sidebar-list-container'),
+            document.querySelector('.sidebar-about-panel')
+        ].filter(Boolean);
+
+        const isGoingUp = newLevel < oldLevel;
+        const outClass = isGoingUp ? 'anim-fly-out-right' : 'anim-fly-out-left';
+        const inClass  = isGoingUp ? 'anim-fly-in-left'   : 'anim-fly-in-right';
+
+        // 1. Immediately on click: fly out current contents
+        animElements.forEach(el => {
+            el.classList.remove('anim-fly-out-left', 'anim-fly-out-right', 'anim-fly-in-left', 'anim-fly-in-right');
+            el.classList.add(outClass);
+        });
+
+        // 2. Mid-flyout (130ms): Update DOM content & trigger map zoom, then fly in new content
+        setTimeout(() => {
+            performSelection();
+
+            animElements.forEach(el => {
+                el.classList.remove(outClass);
+                el.classList.add(inClass);
+            });
+
+            setTimeout(() => {
+                animElements.forEach(el => {
+                    el.classList.remove('anim-fly-out-left', 'anim-fly-out-right', 'anim-fly-in-left', 'anim-fly-in-right');
+                });
+            }, 220);
+        }, 130);
+    } else {
+        performSelection();
     }
 }
 
