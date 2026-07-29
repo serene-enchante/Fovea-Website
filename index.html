@@ -123,7 +123,6 @@
         }
 
         .search-box {
-            position: relative;
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -133,55 +132,12 @@
             padding: 0.75rem 1.25rem;
             transition: all 0.25s ease;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-            --mouse-x: 50%;
-            --mouse-y: 50%;
-            --glow-opacity: 0;
-            --spotlight-size: 240px;
         }
 
         .search-box:focus-within {
-            background: rgba(255, 255, 255, 0.09);
+            background: rgba(255, 255, 255, 0.09) !important;
             border-color: rgba(255, 255, 255, 0.28);
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15);
-        }
-
-        /* Proximity Glow for Search Box */
-        .search-box::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            pointer-events: none;
-            opacity: var(--glow-opacity, 0);
-            transition: opacity 0.1s linear;
-            z-index: 0;
-            background: radial-gradient(
-                var(--spotlight-size) circle at var(--mouse-x) var(--mouse-y),
-                rgba(255, 255, 255, 0.04) 0%,
-                rgba(255, 255, 255, 0.01) 50%,
-                transparent 75%
-            );
-        }
-
-        .search-box::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            border-radius: 9999px;
-            padding: 1px;
-            background: radial-gradient(
-                var(--spotlight-size) circle at var(--mouse-x) var(--mouse-y),
-                rgba(255, 255, 255, 0.35) 0%,
-                rgba(255, 255, 255, 0.1) 40%,
-                transparent 75%
-            );
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            pointer-events: none;
-            opacity: var(--glow-opacity, 0);
-            transition: opacity 0.1s linear;
-            z-index: 1;
         }
 
         .search-icon {
@@ -526,8 +482,6 @@
                 });
             };
 
-            const searchBox = document.querySelector(".search-box");
-            setupProximityGlow(searchBox, 140, 240);
             setupProximityGlow(dropdown, 140, 240);
 
             const renderDropdown = (query) => {

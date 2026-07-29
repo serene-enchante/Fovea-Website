@@ -3500,6 +3500,40 @@ function setupDownloadAppSearch() {
     const autocompleteBox = document.getElementById("download-app-autocomplete");
     if (!searchInput || !autocompleteBox) return;
 
+    const searchBox = document.querySelector(".maps-tile-download-search-box");
+    const setupBoxProximity = (element, threshold = 140, spotlightSize = 200) => {
+        if (!element) return;
+        element.style.setProperty("--mouse-x", "50%");
+        element.style.setProperty("--mouse-y", "50%");
+        element.style.setProperty("--glow-opacity", "0");
+        element.style.setProperty("--spotlight-size", `${spotlightSize}px`);
+
+        window.addEventListener("mousemove", (e) => {
+            if (window.getComputedStyle(element).display === "none") {
+                element.style.setProperty("--glow-opacity", "0");
+                return;
+            }
+            const rect = element.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
+            const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            element.style.setProperty("--mouse-x", `${x}px`);
+            element.style.setProperty("--mouse-y", `${y}px`);
+
+            let opacity = 0;
+            if (dist <= threshold) {
+                opacity = Math.pow(1 - dist / threshold, 1.2);
+            }
+            element.style.setProperty("--glow-opacity", opacity.toFixed(3));
+        });
+    };
+
+    setupBoxProximity(autocompleteBox, 140, 200);
+
     const allDownloadButtons = {
         "geojson": document.getElementById("download-geojson"),
         "kmz": document.getElementById("download-kmz"),
@@ -3551,13 +3585,13 @@ function setupDownloadAppSearch() {
 
         if (matches.length === 0) {
             autocompleteBox.style.display = "block";
-            autocompleteBox.innerHTML = `<div style="padding:0.6rem; font-size:0.8rem; color:rgba(255,255,255,0.4); text-align:center;">No matching viewer app found</div>`;
+            autocompleteBox.innerHTML = `<div class="download-autocomplete-scroll-container"><div style="padding:0.6rem; font-size:0.8rem; color:rgba(255,255,255,0.4); text-align:center;">No matching viewer app found</div></div>`;
             filterFormatsByApp(null);
             return;
         }
 
         autocompleteBox.style.display = "block";
-        autocompleteBox.innerHTML = matches.map(app => `
+        const itemsHtml = matches.map(app => `
             <div class="download-autocomplete-item" data-app-name="${app.name}">
                 <span class="download-autocomplete-item__name">${app.name}</span>
                 <div class="download-autocomplete-item__formats">
@@ -3565,6 +3599,8 @@ function setupDownloadAppSearch() {
                 </div>
             </div>
         `).join("");
+
+        autocompleteBox.innerHTML = `<div class="download-autocomplete-scroll-container">${itemsHtml}</div>`;
 
         autocompleteBox.querySelectorAll(".download-autocomplete-item").forEach(item => {
             item.addEventListener("click", (e) => {
