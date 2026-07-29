@@ -257,15 +257,18 @@ function updateAllFeatureStyles() {
     const noDataFillOpacity = isLightBasemap ? 0.30 : (isSatelliteBasemap ? 0.15 : 0.02);
     const noDataLineColor = isLightBasemap ? 'rgba(80, 80, 80, 0.60)' : dimLineColor;
 
-    const hoverFillOpacity = isLightBasemap ? 0.55 : (isSatelliteBasemap ? 0.50 : 0.35);
-    const noDataHoverFillOpacity = isLightBasemap ? 0.60 : (isSatelliteBasemap ? 0.45 : 0.25);
+    const hoverFillColor = isLightBasemap ? '#031024' : '#000000';
+    const hoverFillOpacity = isLightBasemap ? 0.45 : (isSatelliteBasemap ? 0.55 : 0.45);
+    const noDataHoverFillOpacity = isLightBasemap ? 0.50 : (isSatelliteBasemap ? 0.40 : 0.30);
 
     if (state.map.getLayer('zones-fill')) {
         state.map.setPaintProperty('zones-fill', 'fill-color', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], '#30d158',
-            ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataFillColor,
-            defaultFillColor
+            ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
+                0, ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false, noDataFillColor, defaultFillColor],
+                1, hoverFillColor
+            ]
         ]);
         const dimFillOpacity = defaultFillOpacity * 0.25;
         const dimNoDataFillOpacity = noDataFillOpacity * 0.25;
