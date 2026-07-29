@@ -2031,6 +2031,36 @@ body.is-transitioning .desktop-nav-tab__icon {
         background: var(--accent-primary);
     }
 
+    /* Gradient below the resize knob: fades in once the user has scrolled
+       down so the top of the content column has no hard edge */
+    .mobile-resize-bar {
+        position: relative !important;
+    }
+
+    .mobile-resize-bar::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        height: 28px;
+        background: linear-gradient(to bottom, #000000 0%, rgba(0, 0, 0, 0) 100%);
+        pointer-events: none;
+        z-index: 49;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+
+    /* body.sidebar-is-scrolled toggled by JS on the scroll listener */
+    body.sidebar-is-scrolled .mobile-resize-bar::after {
+        opacity: 1;
+    }
+
+    /* Suppress the old sticky-layout header gradient on mobile */
+    .maps-tile-sidebar__header::after {
+        display: none !important;
+    }
+
     .maps-tile-sidebar {
         order: 3 !important;
         width: 100% !important;
@@ -3499,31 +3529,8 @@ body.is-annotation-mode .annotation-exit-btn {
         /* Keep bottom padding so last tile isn't hidden behind bottom nav */
         padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
     }
-
-    /* Top gradient mask: fades in once the user scrolls down, covering the
-       top edge of the scroll area with a black gradient to signal content above */
-    .maps-tile-sidebar::before {
-        content: "";
-        position: sticky;
-        top: 0;
-        left: 0;
-        display: block;
-        width: 100%;
-        height: 32px;
-        margin-bottom: -32px; /* zero layout cost */
-        background: linear-gradient(to bottom, #000000 0%, rgba(0, 0, 0, 0) 100%);
-        pointer-events: none;
-        z-index: 5;
-        opacity: 0;
-        transition: opacity 0.25s ease;
-        flex-shrink: 0;
-    }
-
-    /* Fade in the top gradient once the sidebar has been scrolled */
-    .maps-tile-sidebar.is-scrolled::before {
-        opacity: 1;
-    }
 }
+
 
 
 

@@ -1486,6 +1486,19 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
     window.scrollTo(0, 0);
     if (state.isHelpModeActive && window.innerWidth <= 768) return;
 
+    if (window.innerWidth <= 768) {
+        const sidebar = document.querySelector(".maps-tile-sidebar");
+        if (sidebar) {
+            sidebar.scrollTop = 0;
+            sidebar.classList.remove("is-scrolled");
+        }
+        document.body.classList.remove("sidebar-is-scrolled");
+        const header = document.getElementById("sidebar-header");
+        if (header) {
+            header.classList.remove("is-scrolled");
+        }
+    }
+
     const oldLevel = _currentHierarchyLevel;
     const newLevel = _getHierarchyLevel(id);
     _currentHierarchyLevel = newLevel;
@@ -5524,6 +5537,8 @@ function setupSidebarScrollListener() {
 
         header.classList.toggle("is-scrolled", scrolled);
         sidebar.classList.toggle("is-scrolled", scrolled);
+        // body class lets the resize bar ::after gradient fire (sibling of sidebar)
+        document.body.classList.toggle("sidebar-is-scrolled", scrolled);
     };
 
     // Attach to both — only one will actually be scrolling at a time
