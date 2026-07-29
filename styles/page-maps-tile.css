@@ -3460,7 +3460,74 @@ body.is-annotation-mode .annotation-exit-btn {
     .map-ctrl-zoom {
         display: none !important;
     }
+
+    /* --- Unified scroll container on mobile ---
+       The sidebar itself becomes the scrolling element so the sub-header
+       (capsule tabs row) and the feature tile list all scroll together as
+       one continuous column, just like a regular page. The header naturally
+       disappears as you scroll down without any sticky freeze. */
+    .maps-tile-sidebar {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        /* Must NOT be overflow:hidden so scrolling is possible */
+        flex-direction: column !important;
+    }
+
+    /* The sub-header is now in-flow (not sticky), so just ensure it has no
+       position overrides that would make it stick */
+    .maps-tile-sidebar__header {
+        position: relative !important;
+        /* Remove any z-index that could cause stacking weirdness */
+        z-index: auto !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* The list container no longer needs its own overflow: the sidebar scrolls */
+    .sidebar-list-container {
+        flex: unset !important;
+        min-height: 0 !important;
+        height: auto !important;
+    }
+
+    /* The zone-list scroll container should NOT scroll independently —
+       let the sidebar be the single scroll root */
+    .maps-tile-sidebar__scroll {
+        overflow: visible !important;
+        flex: unset !important;
+        height: auto !important;
+        min-height: 0 !important;
+        /* Keep bottom padding so last tile isn't hidden behind bottom nav */
+        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    /* Top gradient mask: fades in once the user scrolls down, covering the
+       top edge of the scroll area with a black gradient to signal content above */
+    .maps-tile-sidebar::before {
+        content: "";
+        position: sticky;
+        top: 0;
+        left: 0;
+        display: block;
+        width: 100%;
+        height: 32px;
+        margin-bottom: -32px; /* zero layout cost */
+        background: linear-gradient(to bottom, #000000 0%, rgba(0, 0, 0, 0) 100%);
+        pointer-events: none;
+        z-index: 5;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        flex-shrink: 0;
+    }
+
+    /* Fade in the top gradient once the sidebar has been scrolled */
+    .maps-tile-sidebar.is-scrolled::before {
+        opacity: 1;
+    }
 }
+
+
+
+
 
 /* Sidebar Hierarchy Navigation Transitions */
 @keyframes navFlyOutLeft {
