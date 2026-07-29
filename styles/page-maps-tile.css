@@ -3433,32 +3433,39 @@ body.is-annotation-mode .annotation-exit-btn {
     .mobile-bottom-nav {
         display: flex;
         position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        /* Height of tap area + safe-area for iPhone home indicator */
-        height: calc(60px + env(safe-area-inset-bottom, 0px));
-        background: #000000;
-        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) translateZ(0) !important;
+        -webkit-transform: translateX(-50%) translateZ(0) !important;
+        /* Height: 52px buttons + 2 * 8px padding = 68px (twice the 34px toolbar height) */
+        height: 68px !important;
+        background: rgba(0, 0, 0, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
         /* Must be above all modals, tooltips, overlays */
         z-index: 99999;
-        justify-content: space-around;
-        align-items: flex-start;
-        padding-top: 0;
-        padding-bottom: env(safe-area-inset-bottom, 0px);
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 8px !important;
+        gap: 8px !important;
         box-sizing: border-box;
-        /* Safari: isolate stacking context from any ancestor transforms */
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
+        border-radius: 34px !important;
+        width: auto !important;
+        max-width: calc(100% - 32px) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
     }
 
     .mobile-bottom-nav-item {
         display: flex;
         align-items: center;
         justify-content: center;
-        flex: 1;
-        height: 60px; /* fixed tap area; nav total height = 60px + safe-area */
-        color: rgba(255, 255, 255, 0.55);
+        flex: none !important;
+        width: 52px !important;
+        height: 52px !important;
+        border-radius: 26px !important;
+        color: #d1d1d6;
         cursor: pointer;
         transition: color 0.15s ease, transform 0.1s ease;
         text-decoration: none;
@@ -3538,7 +3545,7 @@ body.is-annotation-mode .annotation-exit-btn {
         height: auto !important;
         min-height: 0 !important;
         /* Keep bottom padding so last tile isn't hidden behind bottom nav */
-        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
     }
 }
 
