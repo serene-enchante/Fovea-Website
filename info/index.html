@@ -176,16 +176,13 @@
         }
 
         :root {
-            /* Relational Accent Theme System */
-            --accent-h: 166;
-            --accent-s: 100%;
-            --accent-l: 42%;
-            --accent-primary: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
-            --accent-light:   hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 8%));
-            --accent-hover:   hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 4%));
-            --accent-dark:    hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 8%));
+            --accent-color: #00d5a4;
+            --accent-light: #00f0b5;
+            --accent-hover: #1ae8b6;
             --accent-rgb: 0, 213, 164;
-            --accent-green: var(--accent-primary);
+
+            --accent-primary: var(--accent-color);
+            --accent-green: var(--accent-color);
         }
 
         .action-pill-btn--primary {

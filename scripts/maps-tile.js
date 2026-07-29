@@ -11,11 +11,11 @@ if (typeof maplibregl !== 'undefined' && maplibregl.Map) {
     };
 }
 
-// Central Theme Accent Helpers — Dynamically read relational root CSS variables
+// Central Theme Accent Helpers — Dynamically read root CSS variables for MapLibre WebGL compatibility
 function getThemeAccent() {
     if (typeof window !== 'undefined' && document.documentElement) {
-        const val = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim();
-        if (val) return val;
+        const val = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
+        if (val && val.startsWith('#')) return val;
     }
     return "#00d5a4";
 }
@@ -23,7 +23,7 @@ function getThemeAccent() {
 function getThemeAccentLight() {
     if (typeof window !== 'undefined' && document.documentElement) {
         const val = getComputedStyle(document.documentElement).getPropertyValue('--accent-light').trim();
-        if (val) return val;
+        if (val && val.startsWith('#')) return val;
     }
     return "#00f0b5";
 }
