@@ -221,6 +221,95 @@ function findPointInsidePolygon(geom) {
     return [bestCell[0], bestCell[1]];
 }
 
+function generateZoneGeometrySVG(feature) {
+    if (!feature || !feature.geometry) return "";
+
+    const geom = feature.geometry;
+    let rings = [];
+
+    if (geom.type === "Polygon") {
+        rings = geom.coordinates;
+    } else if (geom.type === "MultiPolygon") {
+        geom.coordinates.forEach(poly => {
+            poly.forEach(r => rings.push(r));
+        });
+    }
+
+    if (!rings.length) return "";
+
+    let minLng = Infinity, maxLng = -Infinity;
+    let minLat = Infinity, maxLat = -Infinity;
+
+    rings.forEach(ring => {
+        ring.forEach(pt => {
+            const lng = pt[0], lat = pt[1];
+            if (lng < minLng) minLng = lng;
+            if (lng > maxLng) maxLng = lng;
+            if (lat < minLat) minLat = lat;
+            if (lat > maxLat) maxLat = lat;
+        });
+    });
+
+    if (!isFinite(minLng) || !isFinite(minLat)) return "";
+
+    let width = maxLng - minLng;
+    let height = maxLat - minLat;
+
+    if (width === 0) width = 0.001;
+    if (height === 0) height = 0.001;
+
+    // Add 12% padding around the bounding box
+    const paddingX = width * 0.12;
+    const paddingY = height * 0.12;
+    minLng -= paddingX;
+    maxLng += paddingX;
+    minLat -= paddingY;
+    maxLat += paddingY;
+    width = maxLng - minLng;
+    height = maxLat - minLat;
+
+    // Preserve 4:3 aspect ratio (80x60 viewBox) without distortion
+    const targetAspect = 80 / 60;
+    const currentAspect = width / height;
+
+    if (currentAspect < targetAspect) {
+        const targetWidth = height * targetAspect;
+        const diff = (targetWidth - width) / 2;
+        minLng -= diff;
+        maxLng += diff;
+        width = targetWidth;
+    } else {
+        const targetHeight = width / targetAspect;
+        const diff = (targetHeight - height) / 2;
+        minLat -= diff;
+        maxLat += diff;
+        height = targetHeight;
+    }
+
+    let pathD = "";
+    rings.forEach(ring => {
+        ring.forEach((pt, idx) => {
+            const lng = pt[0], lat = pt[1];
+            const x = ((lng - minLng) / width) * 80;
+            const y = 60 - (((lat - minLat) / height) * 60);
+
+            if (idx === 0) {
+                pathD += `M ${x.toFixed(2)},${y.toFixed(2)} `;
+            } else {
+                pathD += `L ${x.toFixed(2)},${y.toFixed(2)} `;
+            }
+        });
+        pathD += "Z ";
+    });
+
+    const primaryColor = getThemeAccent();
+
+    return `
+        <svg viewBox="0 0 80 60" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background: #09090b; border-radius: 4px; display: block;">
+            <path d="${pathD}" fill="rgba(var(--accent-rgb), 0.28)" stroke="${primaryColor}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd"/>
+        </svg>
+    `;
+}
 
 function getDefaultStyle() {
     return MAP_STYLES.default;
@@ -1719,22 +1808,25 @@ function renderSidebarList() {
         item.className = "tile-zone-item";
         item.setAttribute("data-id", String(props.zid));
 
-        const imgPath = zoneImagePath(props.zid);
+        const geomSvg = generateZoneGeometrySVG(feature);
+        let thumbHtml = "";
+        if (geomSvg) {
+            thumbHtml = `<div class="tile-zone-item__thumb">${geomSvg}</div>`;
+        } else {
+            const imgPath = zoneImagePath(props.zid);
+            thumbHtml = `
+                <div class="tile-zone-item__thumb">
+                    <img src="${imgPath}" alt="Zone ${zid}" loading="lazy">
+                </div>
+            `;
+        }
+
         item.innerHTML = `
-            <div class="tile-zone-item__thumb">
-                <img src="${imgPath}" alt="Zone ${zid}" loading="lazy">
-            </div>
+            ${thumbHtml}
             <div class="tile-zone-item__info">
                 <div class="tile-zone-item__title">Zone ${zid}</div>
             </div>
         `;
-
-        const img = item.querySelector("img");
-        if (img) {
-            img.addEventListener("error", () => {
-                img.src = FALLBACK_IMAGE;
-            });
-        }
 
         item.addEventListener("mouseenter", () => {
             const featureId = String(props.zid || "");
@@ -3140,6 +3232,7 @@ function initializeMap() {
                     name: `Zone ${zidDisplay}`,
                     isChild: true,
                     image: zoneImg,
+                    feature: targetZone,
                     isLogo: false,
                     action: () => selectSubject(state.currentId, true)
                 });
@@ -3159,12 +3252,22 @@ function initializeMap() {
                     const isCircleOverview = !state.currentId || state.currentId === CIRCLE_ID;
                     const isRowActive = l.id === "selected-zone" || (l.id === "circle" && isCircleOverview) || (l.id === "circles" && state.isCirclesFeature);
                     
+                    const geomSvg = l.feature ? generateZoneGeometrySVG(l.feature) : "";
+                    let thumbHtml = "";
+                    if (geomSvg) {
+                        thumbHtml = `<div class="tile-zone-item__thumb">${geomSvg}</div>`;
+                    } else {
+                        thumbHtml = `
+                            <div class="tile-zone-item__thumb ${l.isLogo ? 'tile-zone-item__thumb--logo' : ''}">
+                                <img src="${l.image}" alt="${l.name}" loading="lazy">
+                            </div>
+                        `;
+                    }
+
                     const row = document.createElement("div");
                     row.className = `tile-zone-item ${l.isChild ? 'is-child' : ''} ${isRowActive ? 'is-active' : ''}`;
                     row.innerHTML = `
-                        <div class="tile-zone-item__thumb ${l.isLogo ? 'tile-zone-item__thumb--logo' : ''}">
-                            <img src="${l.image}" alt="${l.name}" loading="lazy">
-                        </div>
+                        ${thumbHtml}
                         <div class="tile-zone-item__info">
                             <div class="tile-zone-item__title">${l.name}</div>
                         </div>
