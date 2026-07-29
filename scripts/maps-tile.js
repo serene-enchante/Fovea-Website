@@ -302,11 +302,9 @@ function generateZoneGeometrySVG(feature) {
         pathD += "Z ";
     });
 
-    const primaryColor = getThemeAccent();
-
     return `
-        <svg viewBox="0 0 80 60" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background: #09090b; border-radius: 4px; display: block;">
-            <path d="${pathD}" fill="rgba(var(--accent-rgb), 0.28)" stroke="${primaryColor}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd"/>
+        <svg viewBox="0 0 80 60" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background: #000000; border-radius: 4px; display: block;">
+            <path d="${pathD}" fill="#18181b" stroke="#71717a" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd"/>
         </svg>
     `;
 }
