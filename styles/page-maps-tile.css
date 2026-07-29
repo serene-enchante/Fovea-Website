@@ -152,13 +152,13 @@ body.page-maps-tile {
     flex-shrink: 0;
 }
 
-/* Header View Toggle Dropdown Button (Rounded edges, not capsule, grey shades, no outline) */
+/* Header View Toggle Dropdown Button (Transparent background fill, no outline) */
 .header-view-toggle {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     padding: 0.28rem 0.65rem;
-    background: rgba(255, 255, 255, 0.08);
+    background: transparent !important;
     border: none !important;
     outline: none !important;
     border-radius: 6px;
@@ -196,7 +196,7 @@ body.page-maps-tile {
 }
 
 .header-view-toggle:hover {
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff;
 }
 
@@ -262,15 +262,10 @@ body.page-maps-tile {
 .header-view-menu__icon {
     width: 13px;
     height: 13px;
-    stroke: #a1a1aa;
+    stroke: #e4e4e7;
     stroke-width: 2.2;
     flex-shrink: 0;
     transition: stroke var(--transition-fast);
-}
-
-.header-view-menu__item:hover .header-view-menu__icon,
-.header-view-menu__item.is-active .header-view-menu__icon {
-    stroke: var(--accent-primary);
 }
 
 .header-view-menu__item {
@@ -279,7 +274,7 @@ body.page-maps-tile {
     justify-content: space-between;
     padding: 0.45rem 0.65rem;
     border-radius: 8px;
-    color: #a1a1aa;
+    color: #e4e4e7 !important;
     font-family: 'Roboto', system-ui, -apple-system, sans-serif;
     font-size: 0.8rem;
     font-weight: 500;
@@ -291,12 +286,20 @@ body.page-maps-tile {
 
 .header-view-menu__item:hover {
     background: rgba(255, 255, 255, 0.12);
-    color: #ffffff;
+    color: #ffffff !important;
+}
+
+.header-view-menu__item:hover .header-view-menu__icon {
+    stroke: #ffffff;
 }
 
 .header-view-menu__item.is-active {
-    color: var(--accent-primary);
+    color: var(--accent-primary) !important;
     font-weight: 600;
+}
+
+.header-view-menu__item.is-active .header-view-menu__icon {
+    stroke: var(--accent-primary);
 }
 
 .header-view-menu__check {

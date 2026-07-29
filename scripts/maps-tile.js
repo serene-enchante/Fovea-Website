@@ -5465,6 +5465,7 @@ function setupViewToggleMenu() {
     const toggleBtn = document.getElementById("header-view-toggle");
     const menuEl = document.getElementById("header-view-menu");
     const labelEl = document.getElementById("header-view-toggle-label");
+    const iconWrapEl = document.getElementById("header-view-toggle-icon");
     if (!toggleBtn || !menuEl) return;
 
     let isOpen = false;
@@ -5503,6 +5504,19 @@ function setupViewToggleMenu() {
                 const checkSvg = i.querySelector(".header-view-menu__check");
                 if (checkSvg) checkSvg.style.display = isActive ? "block" : "none";
             });
+
+            // Update toggle button icon
+            if (iconWrapEl) {
+                const itemIcon = item.querySelector(".header-view-menu__icon");
+                if (itemIcon) {
+                    iconWrapEl.innerHTML = itemIcon.outerHTML;
+                    const clonedSvg = iconWrapEl.querySelector("svg");
+                    if (clonedSvg) {
+                        clonedSvg.setAttribute("width", "12");
+                        clonedSvg.setAttribute("height", "12");
+                    }
+                }
+            }
 
             // Update toggle label text
             if (labelEl) {
