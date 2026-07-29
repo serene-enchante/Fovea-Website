@@ -127,7 +127,7 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            background: var(--box-bg);
+            background: #000000 !important;
             border: 1px solid var(--border-color);
             border-radius: 9999px;
             padding: 0.75rem 1.25rem;
@@ -237,21 +237,28 @@
             top: calc(100% + 8px);
             left: 0;
             right: 0;
-            background: #000000;
+            background: #000000 !important;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 16px;
-            max-height: 280px;
-            overflow-y: auto;
             box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
             z-index: 50;
             padding: 0.4rem;
             display: none;
+            overflow: visible !important;
             --mouse-x: 50%;
             --mouse-y: 50%;
             --glow-opacity: 0;
             --spotlight-size: 240px;
+        }
+
+        .autocomplete-scroll-container {
+            max-height: 272px;
+            overflow-y: auto;
+            border-radius: 12px;
+            position: relative;
+            z-index: 2;
         }
 
         /* Proximity Glow for Autocomplete Dropdown */
@@ -543,13 +550,13 @@
 
                 if (matches.length === 0) {
                     dropdown.style.display = "block";
-                    dropdown.innerHTML = `<div class="no-results">No count circle matching "${q}"</div>`;
+                    dropdown.innerHTML = `<div class="autocomplete-scroll-container"><div class="no-results">No count circle matching "${q}"</div></div>`;
                     selectedIndex = -1;
                     return;
                 }
 
                 dropdown.style.display = "block";
-                dropdown.innerHTML = matches.map((circle, index) => {
+                const itemsHtml = matches.map((circle, index) => {
                     let iconHtml = "";
                     if (circle.hasData) {
                         iconHtml = `<img src="${circle.logo}" alt="${circle.name}" style="width: 100%; height: 100%; object-fit: contain;" />`;
@@ -574,6 +581,7 @@
                     `;
                 }).join("");
 
+                dropdown.innerHTML = `<div class="autocomplete-scroll-container">${itemsHtml}</div>`;
                 selectedIndex = -1;
             };
 
