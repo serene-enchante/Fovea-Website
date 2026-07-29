@@ -698,7 +698,7 @@ body.page-maps-tile {
 }
 
 .tile-zone-item__title {
-    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 0.95rem;
     font-weight: 400;
     color: #c4c4c8;
@@ -1516,7 +1516,7 @@ body.is-transitioning .desktop-nav-tab__icon {
 }
 
 .maps-tile-map-container .map-ctrl-styles__list .tile-zone-item__title {
-    font-family: 'Nunito', system-ui, -apple-system, sans-serif !important;
+    font-family: 'Roboto', sans-serif !important;
     font-weight: 400 !important;
     color: #c4c4c8 !important;
     transition: color var(--transition-fast);
