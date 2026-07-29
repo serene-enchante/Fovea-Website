@@ -144,6 +144,47 @@ body.page-maps-tile {
     color: var(--accent-primary);
 }
 
+/* Header View Toggle Dropdown Button (Rounded edges, not capsule, accent fill & text) */
+.header-view-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.65rem;
+    background: rgba(var(--accent-rgb), 0.12);
+    border: 1px solid rgba(var(--accent-rgb), 0.3);
+    border-radius: 6px;
+    color: var(--accent-primary);
+    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    line-height: 1;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+    margin-left: 0.2rem;
+}
+
+.header-view-toggle:hover {
+    background: rgba(var(--accent-rgb), 0.22);
+    border-color: rgba(var(--accent-rgb), 0.55);
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.25);
+}
+
+.header-view-toggle__chevron {
+    width: 11px;
+    height: 11px;
+    stroke: var(--accent-primary);
+    stroke-width: 2.5;
+    transition: transform var(--transition-fast), stroke var(--transition-fast);
+}
+
+.header-view-toggle:hover .header-view-toggle__chevron {
+    stroke: #ffffff;
+}
+
 .maps-tile-header__center {
     display: flex;
     align-items: center;
