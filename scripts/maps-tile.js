@@ -5506,7 +5506,16 @@ function setupViewToggleMenu() {
 
             // Update toggle label text
             if (labelEl) {
-                labelEl.textContent = val === "auto" ? "Auto" : "Map";
+                const labelMap = {
+                    auto: "Auto",
+                    map: "Map",
+                    graph: "Graph",
+                    table: "Table",
+                    image: "Image",
+                    people: "People",
+                    network: "Network"
+                };
+                labelEl.textContent = labelMap[val] || (val.charAt(0).toUpperCase() + val.slice(1));
             }
 
             // Close popup
