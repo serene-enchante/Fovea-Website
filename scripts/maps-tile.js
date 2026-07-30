@@ -838,35 +838,25 @@ async function handleAppDirectOpen(appName, triggerCard = null) {
   };
 
   try {
-    const isMobile = window.innerWidth <= 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-    // 1. Primary: Direct launch installed iOS/Android app via native URL scheme (osmandmaps://, gaiagps://, avenzamaps://, caltopo://)
-    if (isMobile && pref.scheme) {
-      window.location.href = pref.scheme;
-      setTimeout(() => {
-        resetUi();
-      }, 1200);
-      return;
-    }
-
-    // 2. Secondary/Desktop fallback: Generate optimal file and offer Web Share or Download
+    // 1. Generate optimal spatial file for the target app format (e.g. .gpx for OsmAnd/Gaia, .pdf for Avenza)
     const { blob, filename } = await generateAppSpatialBlob(pref.formatKey);
     const shareFile = createIosCompatibleFile(blob, filename);
 
+    // 2. Handshake execution via Web Share API (Passes file payload directly into iOS app import engine)
     if (navigator.share) {
       const canShare = navigator.canShare ? navigator.canShare({ files: [shareFile] }) : true;
       if (canShare) {
         await navigator.share({
           files: [shareFile],
           title: filename,
-          text: `Open ${filename} in ${pref.appName}`
+          text: `Import ${filename} into ${pref.appName}`
         });
         resetUi();
         return;
       }
     }
 
-    // 3. Desktop download fallback
+    // 3. Fallback for Desktop / Unsupported Browsers
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
