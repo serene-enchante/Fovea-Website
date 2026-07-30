@@ -561,18 +561,37 @@ const SPATIAL_MIME_TYPES = {
   kml: 'application/vnd.google-earth.kml+xml',
   kmz: 'application/vnd.google-earth.kmz',
   geojson: 'application/geo+json',
-  json: 'application/geo+json',
+  json: 'application/json',
   pdf: 'application/pdf',
   zip: 'application/zip',
   tif: 'image/tiff',
   tiff: 'image/tiff'
 };
 
+function createIosCompatibleFile(blob, fileName) {
+  const ext = fileName.split('.').pop().toLowerCase();
+  let mimeType = SPATIAL_MIME_TYPES[ext] || blob.type || 'application/octet-stream';
+  let shareName = fileName;
+
+  // iOS Safari canShare() requires iOS system-recognized MIME types & extensions
+  if (ext === 'geojson') {
+    mimeType = 'application/json';
+    shareName = fileName.replace(/\.geojson$/i, '.json');
+  } else if (ext === 'gpx' || ext === 'kml') {
+    mimeType = 'text/plain';
+  } else if (ext === 'kmz') {
+    mimeType = 'application/zip';
+  } else if (ext === 'pdf') {
+    mimeType = 'application/pdf';
+  } else if (ext === 'tif' || ext === 'tiff') {
+    mimeType = 'image/png';
+  }
+
+  return new File([blob], shareName, { type: mimeType });
+}
+
 async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton = null) {
   if (event && event.preventDefault) event.preventDefault();
-
-  const ext = fileName.split('.').pop().toLowerCase();
-  const mimeType = SPATIAL_MIME_TYPES[ext] || 'application/octet-stream';
 
   let originalButtonText = "";
   let originalButtonHtml = "";
@@ -615,20 +634,35 @@ async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton
       throw new Error('Invalid file format');
     }
 
-    const file = new File([blob], fileName, { type: mimeType });
+    const isMobile = window.innerWidth <= 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    // Test if device supports sharing files
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: fileName,
-        text: 'Open with your mapping app'
-      });
-      resetBtnState();
-      return;
+    if (isMobile && navigator.share) {
+      const file = createIosCompatibleFile(blob, fileName);
+
+      // Check if browser can share file, or execute direct share for mobile OS
+      const canShare = navigator.canShare ? navigator.canShare({ files: [file] }) : true;
+      if (canShare) {
+        await navigator.share({
+          files: [file],
+          title: fileName,
+          text: 'Open with your mapping app'
+        });
+        resetBtnState();
+        return;
+      } else {
+        // Fallback share with plain text for strict WebKit environments
+        const fallbackFile = new File([blob], fileName, { type: 'text/plain' });
+        await navigator.share({
+          files: [fallbackFile],
+          title: fileName,
+          text: 'Open with your mapping app'
+        });
+        resetBtnState();
+        return;
+      }
     }
   } catch (err) {
-    if (err.name === 'AbortError') {
+    if (err.name === 'AbortError' || err.name === 'NotAllowedError') {
       resetBtnState();
       return;
     }
