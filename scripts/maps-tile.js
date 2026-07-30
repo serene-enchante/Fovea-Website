@@ -806,31 +806,59 @@ async function generateAppSpatialBlob(formatKey) {
 
 /**
  * Direct Avenza Maps Deep Link Importer
- * Strips http(s):// and uses avenzamaps://<cleanUrl> to launch Avenza Maps and trigger an automated map import.
+ * Uses avenzamaps://<cleanUrl> for remote static files or delivers the physical GeoPDF File payload via Web Share for client-generated maps.
  */
-function openInAvenzaWithFallback(mapFileUrlOrBlob, filename, triggerCard = null) {
-  let remoteUrl = typeof mapFileUrlOrBlob === "string" ? mapFileUrlOrBlob : null;
+async function openInAvenzaWithFallback(mapFileUrlOrBlob, filename, triggerCard = null) {
+  // 1. If a direct static URL is explicitly provided (ending in .pdf or .tif), use avenzamaps:// URI scheme protocol
+  if (typeof mapFileUrlOrBlob === "string" && /^https?:\/\/.+\.(pdf|tif|tiff)$/i.test(mapFileUrlOrBlob)) {
+    const cleanUrl = mapFileUrlOrBlob.replace(/^https?:\/\//i, "");
+    window.location.href = `avenzamaps://${cleanUrl}`;
 
-  if (!remoteUrl && window.location.protocol.startsWith("http")) {
-    const currentBase = window.location.href.split("?")[0].replace(/\/index\.html$/i, "").replace(/\/+$/, "");
-    remoteUrl = `${currentBase}/${filename}`;
+    setTimeout(() => {
+      if (!document.hidden) {
+        handleSpatialFileShare(null, mapFileUrlOrBlob, filename, triggerCard);
+      }
+    }, 1400);
+    return;
   }
 
-  let deepLink = "avenzamaps://";
-  if (remoteUrl && /^https?:\/\//i.test(remoteUrl)) {
-    const cleanUrl = remoteUrl.replace(/^https?:\/\//i, "");
-    deepLink = `avenzamaps://${cleanUrl}`;
+  // 2. For dynamically rendered GeoPDF Blobs: deliver physical File binary payload via Web Share API
+  // This hands the PDF file directly to Avenza Maps via iOS document transfer (bypassing 404 URL errors)
+  let blob = mapFileUrlOrBlob;
+  if (!(blob instanceof Blob)) {
+    const { blob: generatedBlob } = await generateAppSpatialBlob("geopdf");
+    blob = generatedBlob;
   }
 
-  // Launch Avenza Maps directly via URI scheme protocol
-  window.location.href = deepLink;
+  const shareFile = createIosCompatibleFile(blob, filename.endsWith(".pdf") ? filename : `${filename}.pdf`);
 
-  setTimeout(() => {
-    if (!document.hidden) {
-      // Fall back to Web Share API file payload export if app isn't installed
-      handleSpatialFileShare(null, mapFileUrlOrBlob, filename, triggerCard);
+  if (navigator.share) {
+    const canShare = navigator.canShare ? navigator.canShare({ files: [shareFile] }) : true;
+    if (canShare) {
+      try {
+        await navigator.share({
+          files: [shareFile],
+          title: filename,
+          text: "Import GeoPDF into Avenza Maps"
+        });
+        return;
+      } catch (shareErr) {
+        if (shareErr.name === "AbortError" || shareErr.name === "NotAllowedError") return;
+      }
     }
-  }, 1400);
+  }
+
+  // Fallback for desktop / unsupported browsers
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
 }
 
 /**
