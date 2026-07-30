@@ -373,7 +373,7 @@
             opacity: 1;
         }
     </style>
-    <link rel="stylesheet" href="styles/mobile-bottom-nav.css?v=8">
+    <link rel="stylesheet" href="styles/mobile-bottom-nav.css?v=10">
 </head>
 
 <body>
@@ -865,21 +865,17 @@
             initMobileBottomNavAnimation();
 
             // Scroll tracking to hide/show the bottom nav capsule
-            let lastScrollTop = 0;
             const bottomNav = document.querySelector(".mobile-bottom-nav");
             
             window.addEventListener("scroll", () => {
                 if (window.innerWidth > 768) return;
                 const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                const delta = scrollTop - lastScrollTop;
                 
-                if (delta > 8 && scrollTop > 50) {
+                if (scrollTop > 12) {
                     if (bottomNav) bottomNav.classList.add("is-hidden");
-                } else if (delta < -8 || scrollTop <= 10) {
+                } else {
                     if (bottomNav) bottomNav.classList.remove("is-hidden");
                 }
-                
-                lastScrollTop = Math.max(0, scrollTop);
             }, { passive: true });
         });
     </script>

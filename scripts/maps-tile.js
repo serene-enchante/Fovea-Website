@@ -4437,6 +4437,17 @@ function setupCapsules() {
     });
 }
 
+function updateBottomNavVisibilityForSnapState(snapState) {
+    const bottomNavContainer = document.querySelector(".mobile-bottom-nav-container");
+    if (bottomNavContainer) {
+        if (snapState === "map-full") {
+            bottomNavContainer.classList.add("is-hidden-entirely");
+        } else {
+            bottomNavContainer.classList.remove("is-hidden-entirely");
+        }
+    }
+}
+
 function setMobileSnapState(snapState, animate = true) {
     const mapArea = document.querySelector(".maps-tile-map-area");
     const sidebar = document.querySelector(".maps-tile-sidebar");
@@ -4445,6 +4456,8 @@ function setMobileSnapState(snapState, animate = true) {
     const sidebarHeaderEl = document.getElementById("sidebar-header");
     
     if (!mapArea || !sidebar || !resizeBar || !headerEl || !sidebarHeaderEl) return;
+
+    updateBottomNavVisibilityForSnapState(snapState);
 
     state.snapState = snapState;
 
@@ -4944,6 +4957,9 @@ function setupMobileResizeBar() {
             document.body.classList.remove("is-selection-full");
             state.snapState = "custom";
         }
+
+        // Live update bottom nav bar visibility during vertical drag
+        updateBottomNavVisibilityForSnapState(state.snapState);
 
         if (state.map) {
             state.map.resize();
@@ -5530,7 +5546,6 @@ function setupSidebarScrollListener() {
     const isMobile = () => window.innerWidth <= 768;
     const getScrollTarget = () => isMobile() ? sidebar : scrollBox;
 
-    let lastScrollTop = 0;
     const bottomNav = document.querySelector(".mobile-bottom-nav");
 
     const onScroll = (e) => {
@@ -5543,15 +5558,13 @@ function setupSidebarScrollListener() {
         // body class lets the resize bar ::after gradient fire (sibling of sidebar)
         document.body.classList.toggle("sidebar-is-scrolled", scrolled);
 
-        // Hide/show mobile bottom nav on scroll down/up
+        // Hide mobile bottom nav when scrolling down, show only when back at the top
         if (isMobile() && bottomNav) {
-            const delta = scrollTop - lastScrollTop;
-            if (delta > 8 && scrollTop > 50) {
+            if (scrollTop > 12) {
                 bottomNav.classList.add("is-hidden");
-            } else if (delta < -8 || scrollTop <= 10) {
+            } else {
                 bottomNav.classList.remove("is-hidden");
             }
-            lastScrollTop = Math.max(0, scrollTop);
         }
     };
 
