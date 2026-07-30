@@ -5762,7 +5762,7 @@ function setupMobileBottomNav() {
         nav.style.setProperty("--active-x", `${left + width / 2}px`);
         nav.style.setProperty("--active-y", `${top + height / 2}px`);
 
-        const clipVal = `inset(${top}px ${navRect.width - (left + width)}px ${navRect.height - (top + height)}px ${left}px round 19px)`;
+        const clipVal = `inset(${top}px ${navRect.width - (left + width)}px ${navRect.height - (top + height)}px ${left}px round 17px)`;
         overlay.style.clipPath = clipVal;
         overlay.style.webkitClipPath = clipVal;
 
@@ -5842,7 +5842,7 @@ function setupMobileBottomNav() {
 
         const navRect = nav.getBoundingClientRect();
         const capsuleRect = capsule.getBoundingClientRect();
-        const paddingLeft = 6;
+        const paddingLeft = 4;
         const minLeft = paddingLeft;
         const maxLeft = navRect.width - paddingLeft - capsuleRect.width;
 
@@ -5851,15 +5851,15 @@ function setupMobileBottomNav() {
 
         currentLeft = newLeft;
 
-        capsule.style.transform = `translate(${newLeft}px, 6px)`;
+        capsule.style.transform = `translate(${newLeft}px, 4px)`;
 
-        const top = 6;
+        const top = 4;
         const width = capsuleRect.width;
         const height = capsuleRect.height;
 
         nav.style.setProperty("--active-x", `${newLeft + width / 2}px`);
         nav.style.setProperty("--active-y", `${top + height / 2}px`);
-        const clipVal = `inset(${top}px ${navRect.width - (newLeft + width)}px ${navRect.height - (top + height)}px ${newLeft}px round 19px)`;
+        const clipVal = `inset(${top}px ${navRect.width - (newLeft + width)}px ${navRect.height - (top + height)}px ${newLeft}px round 17px)`;
         overlay.style.clipPath = clipVal;
         overlay.style.webkitClipPath = clipVal;
     }, { passive: true });
@@ -5909,7 +5909,7 @@ function setupMobileBottomNav() {
             nav.style.setProperty("--active-x", `${left + width / 2}px`);
             nav.style.setProperty("--active-y", `${top + height / 2}px`);
 
-            const clipVal = `inset(${top}px ${navRect.width - (left + width)}px ${navRect.height - (top + height)}px ${left}px round 19px)`;
+            const clipVal = `inset(${top}px ${navRect.width - (left + width)}px ${navRect.height - (top + height)}px ${left}px round 17px)`;
             overlay.style.clipPath = clipVal;
             overlay.style.webkitClipPath = clipVal;
 
