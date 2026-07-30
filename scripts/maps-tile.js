@@ -806,7 +806,7 @@ async function generateAppSpatialBlob(formatKey) {
 
 /**
  * Direct Avenza Maps Deep Link Importer
- * Automatically downloads the GeoPDF to the device's Downloads folder, launches Avenza Maps via scheme, and provides import guidance.
+ * Background-downloads the GeoPDF (without tab takeover) and presents a full-screen blackout instructional modal.
  */
 async function openInAvenzaWithFallback(mapFileUrlOrBlob, filename, triggerCard = null) {
   let blob = mapFileUrlOrBlob;
@@ -817,8 +817,9 @@ async function openInAvenzaWithFallback(mapFileUrlOrBlob, filename, triggerCard 
 
   const pdfFilename = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
 
-  // 1. Download GeoPDF directly into the device's Downloads folder
-  const url = URL.createObjectURL(blob);
+  // 1. Force application/octet-stream to trigger background download WITHOUT opening a new tab
+  const downloadBlob = new Blob([blob], { type: "application/octet-stream" });
+  const url = URL.createObjectURL(downloadBlob);
   const a = document.createElement("a");
   a.href = url;
   a.download = pdfFilename;
@@ -829,14 +830,15 @@ async function openInAvenzaWithFallback(mapFileUrlOrBlob, filename, triggerCard 
     URL.revokeObjectURL(url);
   }, 100);
 
-  // 2. Launch Avenza Maps app directly
-  setTimeout(() => {
-    window.location.href = "avenzamaps://";
-  }, 500);
+  // 2. Open full-screen blackout instructional modal
+  const avenzaModal = document.getElementById("avenza-instruction-modal");
+  const filenamePill = document.getElementById("avenza-modal-filename");
+  if (filenamePill) filenamePill.textContent = pdfFilename;
 
-  // 3. Display toast notification with clear import instructions
-  if (typeof showToast === "function") {
-    showToast(`GeoPDF saved to Downloads! In Avenza, tap '+' -> 'From Storage Locations'.`);
+  if (avenzaModal) {
+    avenzaModal.setAttribute("aria-hidden", "false");
+    avenzaModal.classList.add("is-open");
+    document.body.classList.add("has-active-modal");
   }
 }
 
@@ -4182,6 +4184,11 @@ function setupActionButtons() {
     };
 
     const closeAllModals = () => {
+        const avenzaModal = document.getElementById("avenza-instruction-modal");
+        if (avenzaModal) {
+            avenzaModal.setAttribute("aria-hidden", "true");
+            avenzaModal.classList.remove("is-open");
+        }
         if (downloadModal) {
             downloadModal.setAttribute("aria-hidden", "true");
             downloadModal.classList.remove("is-open");
@@ -4200,6 +4207,19 @@ function setupActionButtons() {
         }
         window.updateActionButtonsState();
     };
+
+    const avenzaModal = document.getElementById("avenza-instruction-modal");
+    const avenzaContinueBtn = document.getElementById("btn-avenza-continue");
+
+    if (avenzaContinueBtn && avenzaModal) {
+        avenzaContinueBtn.addEventListener("click", () => {
+            avenzaModal.setAttribute("aria-hidden", "true");
+            avenzaModal.classList.remove("is-open");
+            window.updateActionButtonsState();
+            // Launch Avenza Maps app directly
+            window.location.href = "avenzamaps://";
+        });
+    }
 
     const handleToolsClick = (e) => {
         e.preventDefault();
