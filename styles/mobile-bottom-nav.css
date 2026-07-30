@@ -1,0 +1,260 @@
+/* Hidden on desktop */
+.mobile-bottom-nav-container {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    /* Container for both floating bars */
+    .mobile-bottom-nav-container {
+        display: flex !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        /* Extend into safe area so the gradient covers it */
+        height: calc(42px + env(safe-area-inset-bottom, 0px)) !important;
+        /* Pills sit in the 42px content zone; safe area is padding below */
+        padding: 0 16px env(safe-area-inset-bottom, 0px) 16px !important;
+        box-sizing: border-box !important;
+        gap: 12px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 99999 !important;
+        pointer-events: none !important;
+        /* Gradient separated from the #111 pill color:
+           solid black through safe area, fading to transparent above pills */
+        background: linear-gradient(to top, #000000 0%, rgba(0, 0, 0, 0) 100%) !important;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease !important;
+        will-change: transform, opacity;
+    }
+
+    .mobile-bottom-nav-container.is-hidden-entirely {
+        transform: translateY(80px) !important;
+        -webkit-transform: translateY(80px) !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+
+    /* Main capsule for Explore, Tools, Settings */
+    .mobile-bottom-nav {
+        display: flex !important;
+        position: relative !important;
+        bottom: auto !important;
+        left: auto !important;
+        transform: none !important;
+        -webkit-transform: none !important;
+        flex: 1 !important;
+        max-width: 318px !important;
+        height: 42px !important;
+        background: #000000 !important;
+        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        box-sizing: border-box;
+        border-radius: 21px !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+        overflow: visible !important;
+        pointer-events: auto !important;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        will-change: transform;
+        --active-x: 50%;
+        --active-y: 50%;
+    }
+
+    /* Proximity Border Outline Highlight */
+    .mobile-bottom-nav::before {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: 21px;
+        padding: 1px;
+        background: radial-gradient(
+            120px circle at var(--active-x) var(--active-y),
+            rgba(255, 255, 255, 0.14) 0%,
+            rgba(255, 255, 255, 0.04) 50%,
+            transparent 100%
+        ) !important;
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+        z-index: 4; /* Overlay is z-index 3 */
+    }
+
+    /* Proximity Background Fill Wash Highlight */
+    .mobile-bottom-nav::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 20px;
+        pointer-events: none;
+        z-index: 0;
+        background: radial-gradient(
+            80px circle at var(--active-x) var(--active-y),
+            rgba(255, 255, 255, 0.03) 0%,
+            transparent 60%
+        ) !important;
+    }
+
+    .mobile-bottom-nav.is-hidden {
+        transform: translateY(80px) !important;
+    }
+
+    /* Standalone Home capsule */
+    .mobile-bottom-nav-home {
+        display: flex !important;
+        position: relative !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 42px !important;
+        height: 42px !important;
+        background: #000000 !important;
+        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        box-sizing: border-box;
+        border-radius: 21px !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+        pointer-events: auto !important;
+        text-decoration: none;
+        color: #d1d1d6;
+        transition: color 0.15s ease, transform 0.1s ease;
+        overflow: visible !important;
+    }
+
+    .mobile-bottom-nav-home:active {
+        transform: scale(0.9) !important;
+    }
+
+    .mobile-bottom-nav-home.is-active {
+        color: var(--accent-primary) !important;
+    }
+
+    .mobile-bottom-nav-home.is-active::before {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: 21px;
+        padding: 1px;
+        background: radial-gradient(
+            42px circle at 50% 50%,
+            rgba(255, 255, 255, 0.14) 0%,
+            rgba(255, 255, 255, 0.04) 70%,
+            transparent 100%
+        ) !important;
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+        z-index: 4;
+    }
+
+    .mobile-bottom-nav-home.is-active::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 20px;
+        background: radial-gradient(
+            42px circle at 50% 50%,
+            rgba(255, 255, 255, 0.05) 0%,
+            rgba(255, 255, 255, 0.01) 70%,
+            transparent 100%
+        ) !important;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .mobile-bottom-nav-home__icon {
+        width: 16px;
+        height: 16px;
+        background-color: currentColor;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-position: center;
+        mask-position: center;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        display: block;
+    }
+
+    /* Container for the base layer tabs inside the main capsule */
+    .mobile-bottom-nav__base {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        justify-content: space-around !important;
+        align-items: center !important;
+        padding: 4px !important;
+        gap: 4px !important;
+        z-index: 2;
+        position: relative;
+        box-sizing: border-box;
+    }
+
+    .mobile-bottom-nav-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1 !important;
+        max-width: 80px !important;
+        height: 34px !important;
+        border-radius: 17px !important;
+        color: #d1d1d6;
+        cursor: pointer;
+        text-decoration: none;
+        box-sizing: border-box;
+    }
+
+    .mobile-bottom-nav-item__icon {
+        width: 18px;
+        height: 18px;
+        background-color: currentColor;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-position: center;
+        mask-position: center;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        display: block;
+    }
+
+    .mobile-bottom-nav-item:active {
+        transform: scale(0.9);
+    }
+
+    /* Sliding Capsule Background */
+    .mobile-bottom-nav__capsule {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-radius: 17px !important;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0 !important;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease !important;
+        will-change: transform, width, height, opacity;
+    }
+
+    .mobile-bottom-nav__capsule.is-dragging {
+        opacity: 1 !important;
+    }
+
+    /* Overlay Layer (Active Accent Icons, Clipped by Capsule) */
+    .mobile-bottom-nav__overlay {
+        display: flex;
+        position: absolute;
+        inset: 0;
+        justify-content: space-around !important;
+        align-items: center !important;
+        padding: 4px !important;
+        gap: 4px !important;
+        z-index: 3;
+        pointer-events: none;
+        color: var(--accent-primary) !important;
+        box-sizing: border-box;
+        clip-path: inset(0px 100% 100% 0px round 17px);
+        -webkit-clip-path: inset(0px 100% 100% 0px round 17px);
+    }
+
+    .mobile-bottom-nav__overlay .mobile-bottom-nav-item {
+        color: var(--accent-primary) !important;
+    }
+}

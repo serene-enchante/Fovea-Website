@@ -28,6 +28,13 @@
     box-sizing: border-box;
 }
 
+/* Explicitly set html background so Safari's safe-area zone is pure black.
+   Safari paints the home-indicator/safe-area using the html element's background,
+   NOT the body's — so this must be set independently of any nav or page styles. */
+html {
+    background-color: #000000;
+}
+
 body {
     margin: 0;
     overflow-y: auto;
