@@ -805,6 +805,32 @@ async function generateAppSpatialBlob(formatKey) {
 }
 
 /**
+ * Direct Avenza Maps Deep Link Importer
+ * Strips http(s):// and uses avenzamaps://<cleanUrl> to launch Avenza Maps and trigger an automated map import.
+ */
+function openInAvenzaWithFallback(mapFileUrlOrBlob, filename, triggerCard = null) {
+  let remoteUrl = typeof mapFileUrlOrBlob === "string" ? mapFileUrlOrBlob : null;
+
+  if (remoteUrl && /^https?:\/\//i.test(remoteUrl)) {
+    const cleanUrl = remoteUrl.replace(/^https?:\/\//i, "");
+    const avenzaDeepLink = `avenzamaps://${cleanUrl}`;
+
+    window.location.href = avenzaDeepLink;
+
+    setTimeout(() => {
+      if (!document.hidden) {
+        // Fall back to Web Share / File export if Avenza isn't installed
+        handleSpatialFileShare(null, mapFileUrlOrBlob, filename, triggerCard);
+      }
+    }, 1500);
+    return;
+  }
+
+  // Fallback to Web Share API file payload export
+  handleSpatialFileShare(null, mapFileUrlOrBlob, filename, triggerCard);
+}
+
+/**
  * Executes direct app handshake for Suggested Apps (Avenza, Gaia GPS, CalTopo, OsmAnd).
  */
 async function handleAppDirectOpen(appName, triggerCard = null) {
@@ -838,11 +864,19 @@ async function handleAppDirectOpen(appName, triggerCard = null) {
   };
 
   try {
-    // 1. Generate optimal spatial file for the target app format (e.g. .gpx for OsmAnd/Gaia, .pdf for Avenza)
+    // 1. Special handling for Avenza Maps using avenzamaps:// URI protocol
+    if (normName.includes("avenza")) {
+      const { blob, filename } = await generateAppSpatialBlob("geopdf");
+      await openInAvenzaWithFallback(blob, filename, triggerCard);
+      resetUi();
+      return;
+    }
+
+    // 2. Generate optimal spatial file for target app format (e.g. .gpx for OsmAnd/Gaia/CalTopo)
     const { blob, filename } = await generateAppSpatialBlob(pref.formatKey);
     const shareFile = createIosCompatibleFile(blob, filename);
 
-    // 2. Handshake execution via Web Share API (Passes file payload directly into iOS app import engine)
+    // 3. Handshake execution via Web Share API (Passes file payload directly into iOS app import engine)
     if (navigator.share) {
       const canShare = navigator.canShare ? navigator.canShare({ files: [shareFile] }) : true;
       if (canShare) {
@@ -856,7 +890,7 @@ async function handleAppDirectOpen(appName, triggerCard = null) {
       }
     }
 
-    // 3. Fallback for Desktop / Unsupported Browsers
+    // 4. Fallback for Desktop / Unsupported Browsers
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -877,7 +911,7 @@ async function handleAppDirectOpen(appName, triggerCard = null) {
       resetUi();
       return;
     }
-    console.warn("App launch error:", err);
+    console.warn("App handshake error:", err);
   } finally {
     resetUi();
   }
