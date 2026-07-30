@@ -2301,7 +2301,7 @@ body.has-active-modal .maps-tile-header__actions {
 /* Desktop-only positioning overrides */
 @media (min-width: 769px) {
     .maps-tile-header {
-        padding-top: 1.75rem !important;
+        padding-top: 2.5rem !important;
         padding-bottom: 0.75rem !important;
     }
 
