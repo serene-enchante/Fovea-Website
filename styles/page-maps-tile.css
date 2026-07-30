@@ -2461,7 +2461,7 @@ body.has-active-modal .maps-tile-header__actions {
 .suggested-apps-wrapper {
     width: 100%;
     max-width: 320px;
-    margin: 0.25rem auto 0.85rem auto;
+    margin: 1.35rem auto 1.0rem auto;
     display: flex;
     flex-direction: column;
     align-items: center;

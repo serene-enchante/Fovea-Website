@@ -4086,7 +4086,55 @@ const MAP_VIEWER_APPS = [
     }
 ];
 
+function setupSuggestedAppCards() {
+    document.querySelectorAll(".suggested-app-card").forEach(card => {
+        const iconWrap = card.querySelector(".suggested-app-icon-wrap");
+
+        if (iconWrap) {
+            card.addEventListener("mousemove", (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateX = ((y - centerY) / centerY) * -12;
+                const rotateY = ((x - centerX) / centerX) * 12;
+
+                iconWrap.style.transition = "transform 0.08s ease-out, box-shadow 0.15s ease";
+                iconWrap.style.transform = `perspective(400px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.08, 1.08, 1.08) translateZ(6px)`;
+                if (!card.classList.contains("is-active")) {
+                    iconWrap.style.boxShadow = "0 8px 22px rgba(0, 0, 0, 0.55), 0 0 14px rgba(255, 255, 255, 0.14)";
+                }
+            });
+
+            card.addEventListener("mouseleave", () => {
+                iconWrap.style.transition = "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease";
+                iconWrap.style.transform = "perspective(400px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1) translateZ(0px)";
+                iconWrap.style.boxShadow = card.classList.contains("is-active")
+                    ? "0 0 0 1.5px rgba(var(--accent-rgb), 0.5), 0 8px 24px rgba(0, 0, 0, 0.6)"
+                    : "0 4px 12px rgba(0, 0, 0, 0.4)";
+            });
+        }
+
+        card.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            const appName = card.getAttribute("data-app-name");
+            if (!appName) return;
+
+            const wasActive = card.classList.contains("is-active");
+            document.querySelectorAll(".suggested-app-card").forEach(c => c.classList.remove("is-active"));
+
+            if (!wasActive) {
+                card.classList.add("is-active");
+            }
+            await handleAppDirectOpen(appName, card);
+        });
+    });
+}
+
 function setupDownloadAppSearch() {
+    setupSuggestedAppCards();
     const searchInput = document.getElementById("download-app-search");
     const clearBtn = document.getElementById("download-app-search-clear");
     const autocompleteBox = document.getElementById("download-app-autocomplete");
