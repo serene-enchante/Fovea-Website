@@ -3657,14 +3657,14 @@ function setupDownloadAppSearch() {
                 const centerX = rect.width / 2;
                 const centerY = rect.height / 2;
 
-                // Subtle angle shift calculation (max tilt +-8deg)
-                const rotateX = ((y - centerY) / centerY) * -8;
-                const rotateY = ((x - centerX) / centerX) * 8;
+                // Balanced angle shift calculation (max tilt +-12deg)
+                const rotateX = ((y - centerY) / centerY) * -12;
+                const rotateY = ((x - centerX) / centerX) * 12;
 
                 iconWrap.style.transition = "transform 0.08s ease-out, box-shadow 0.15s ease";
-                iconWrap.style.transform = `perspective(400px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.05, 1.05, 1.05) translateZ(4px)`;
+                iconWrap.style.transform = `perspective(400px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.08, 1.08, 1.08) translateZ(6px)`;
                 if (!card.classList.contains("is-active")) {
-                    iconWrap.style.boxShadow = "0 6px 18px rgba(0, 0, 0, 0.5), 0 0 12px rgba(255, 255, 255, 0.12)";
+                    iconWrap.style.boxShadow = "0 8px 22px rgba(0, 0, 0, 0.55), 0 0 14px rgba(255, 255, 255, 0.14)";
                 }
             });
 
