@@ -221,7 +221,38 @@
                 border-radius: 24px;
             }
         }
+        /* Toast Popup Notification */
+        .toast-notification {
+            position: fixed;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(30, 33, 40, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+            padding: 0.75rem 1.4rem;
+            border-radius: 9999px;
+            font-size: 0.86rem;
+            font-weight: 500;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            white-space: nowrap;
+        }
+
+        .toast-notification.is-visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
     </style>
+    <link rel="stylesheet" href="../styles/mobile-bottom-nav.css?v=1">
 </head>
 
 <body>
@@ -259,6 +290,80 @@
             </div>
         </article>
     </main>
+    <!-- Toast Popup Notification -->
+    <div id="toast-notification" class="toast-notification"></div>
+
+    <!-- Mobile-only bottom navigation bar -->
+    <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+        <a id="mobile-nav-tab-explore" class="mobile-bottom-nav-item" href="../maps/" aria-label="Explore" title="Explore">
+            <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/binoculars-1-svgrepo-com.svg'); mask-image: url('../svg/binoculars-1-svgrepo-com.svg');"></span>
+        </a>
+        <a id="mobile-nav-tab-tools" class="mobile-bottom-nav-item" href="../maps/#tools" aria-label="Tools" title="Tools">
+            <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/hammer-tool-svgrepo-com.svg'); mask-image: url('../svg/hammer-tool-svgrepo-com.svg');"></span>
+        </a>
+        <a id="mobile-nav-tab-settings" class="mobile-bottom-nav-item" href="../maps/#settings" aria-label="Settings" title="Settings">
+            <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/settings-svgrepo-com.svg'); mask-image: url('../svg/settings-svgrepo-com.svg');"></span>
+        </a>
+        <a id="mobile-nav-tab-home" class="mobile-bottom-nav-item" href="../" aria-label="Home" title="Home">
+            <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/home-svgrepo-com.svg'); mask-image: url('../svg/home-svgrepo-com.svg');"></span>
+        </a>
+    </nav>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            let toastTimer = null;
+            function showComingSoonToast(featureName) {
+                const toast = document.getElementById("toast-notification");
+                if (!toast) return;
+                toast.innerHTML = `
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #00d5a4; flex-shrink: 0;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span><strong>${featureName}</strong> will be available soon</span>
+                `;
+                toast.classList.add("is-visible");
+                if (toastTimer) clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toast.classList.remove("is-visible");
+                }, 2800);
+            }
+
+            // Wire up mobile bottom navigation tabs on the info page
+            const exploreTab = document.getElementById("mobile-nav-tab-explore");
+            if (exploreTab) {
+                exploreTab.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    window.location.href = "../maps/";
+                });
+            }
+
+            const toolsTab = document.getElementById("mobile-nav-tab-tools");
+            if (toolsTab) {
+                toolsTab.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    showComingSoonToast("Tools");
+                });
+            }
+
+            const settingsTab = document.getElementById("mobile-nav-tab-settings");
+            if (settingsTab) {
+                settingsTab.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    showComingSoonToast("Settings");
+                });
+            }
+
+            const homeTab = document.getElementById("mobile-nav-tab-home");
+            if (homeTab) {
+                homeTab.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    window.location.href = "../";
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

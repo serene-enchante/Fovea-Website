@@ -373,6 +373,7 @@
             opacity: 1;
         }
     </style>
+    <link rel="stylesheet" href="styles/mobile-bottom-nav.css?v=1">
 </head>
 
 <body>
@@ -622,8 +623,57 @@
                     showComingSoonToast(name);
                 });
             });
+
+            // Wire up mobile bottom navigation tabs on the home page
+            const exploreTab = document.getElementById("mobile-nav-tab-explore");
+            if (exploreTab) {
+                exploreTab.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    window.location.href = "maps/";
+                });
+            }
+
+            const toolsTab = document.getElementById("mobile-nav-tab-tools");
+            if (toolsTab) {
+                toolsTab.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    showComingSoonToast("Tools");
+                });
+            }
+
+            const settingsTab = document.getElementById("mobile-nav-tab-settings");
+            if (settingsTab) {
+                settingsTab.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    showComingSoonToast("Settings");
+                });
+            }
+
+            const homeTab = document.getElementById("mobile-nav-tab-home");
+            if (homeTab) {
+                homeTab.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
         });
     </script>
+
+    <!-- Mobile-only bottom navigation bar -->
+    <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+        <a id="mobile-nav-tab-explore" class="mobile-bottom-nav-item" href="maps/" aria-label="Explore" title="Explore">
+            <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('svg/binoculars-1-svgrepo-com.svg'); mask-image: url('svg/binoculars-1-svgrepo-com.svg');"></span>
+        </a>
+        <a id="mobile-nav-tab-tools" class="mobile-bottom-nav-item" href="maps/#tools" aria-label="Tools" title="Tools">
+            <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('svg/hammer-tool-svgrepo-com.svg'); mask-image: url('svg/hammer-tool-svgrepo-com.svg');"></span>
+        </a>
+        <a id="mobile-nav-tab-settings" class="mobile-bottom-nav-item" href="maps/#settings" aria-label="Settings" title="Settings">
+            <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('svg/settings-svgrepo-com.svg'); mask-image: url('svg/settings-svgrepo-com.svg');"></span>
+        </a>
+        <a id="mobile-nav-tab-home" class="mobile-bottom-nav-item is-active" href="#" aria-label="Home" title="Home">
+            <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('svg/home-svgrepo-com.svg'); mask-image: url('svg/home-svgrepo-com.svg');"></span>
+        </a>
+    </nav>
 </body>
 
 </html>
