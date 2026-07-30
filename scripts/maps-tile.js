@@ -2847,8 +2847,21 @@ function rebuildHtmlLabels() {
 
     const zoom = state.map.getZoom();
     const isMobile = window.innerWidth <= 768;
-    const circleCutoff = isMobile ? 5.5 : 7.5;
-    const zoneCutoff = isMobile ? 8.0 : 10.0;
+    const isCirclesView = state.isCirclesFeature || state.currentFeature === 'circles';
+
+    // Separate zoom cutoffs for Circles Overview vs Zone Views on mobile
+    let circleCutoff;
+    let zoneCutoff;
+
+    if (isMobile) {
+        // In Circles Overview view: show circle labels at zoom >= 8.0
+        // Middle ground for Count Circle with Zones view: show zone labels at zoom >= 9.85
+        circleCutoff = isCirclesView ? 8.0 : 9.5;
+        zoneCutoff = 9.85;
+    } else {
+        circleCutoff = 7.5;
+        zoneCutoff = 9.0;
+    }
     const isLightBasemap = state.currentBaseLayer === 'esri-street' || state.currentBaseLayer === 'esri-topo';
 
     // Remove labels that no longer match current feature set
