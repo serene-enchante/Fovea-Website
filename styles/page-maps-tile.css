@@ -950,7 +950,8 @@ body.page-maps-tile {
     flex-direction: row;
     gap: 2px;
     width: 100%;
-    height: 1.25rem;
+    /* Half the sidebar selection header height */
+    height: calc(18px + 0.4rem);
     margin-bottom: 0.45rem;
     flex-shrink: 0;
     transition: height 0.5s cubic-bezier(0.25, 1, 0.5, 1), margin-bottom 0.5s cubic-bezier(0.25, 1, 0.5, 1), gap 0.5s cubic-bezier(0.25, 1, 0.5, 1);
@@ -961,14 +962,28 @@ body.page-maps-tile {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     flex: 1;
-    height: 1.25rem;          /* matches the old margin-top gap */
+    height: 100%;
     background: #0f0f0f;
     text-decoration: none;
     color: var(--color-text-muted, rgba(255,255,255,0.45));
     cursor: pointer;
     transition: color 0.18s ease, background 0.18s ease, height 0.5s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.5, 1);
     will-change: height, border-radius;
+}
+
+.desktop-nav-tab__label {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    transition: color 0.18s ease;
+}
+
+.desktop-nav-tab:hover .desktop-nav-tab__label {
+    color: rgba(255, 255, 255, 0.85);
 }
 
 #desktop-nav-tab-tools {
@@ -980,7 +995,7 @@ body.page-maps-tile {
 }
 
 #desktop-nav-tab-settings {
-    border-radius: 0;          /* right: both straight */
+    border-radius: 0 0 24px 0; /* bottom-right rounded outer corner */
 }
 
 .desktop-nav-tab__icon {
@@ -990,8 +1005,8 @@ body.page-maps-tile {
 }
 
 .desktop-nav-tab__icon--home {
-    width: 11px;
-    height: 11px;
+    width: 12px;
+    height: 12px;
 }
 
 .desktop-nav-tab__icon--tools,
