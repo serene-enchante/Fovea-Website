@@ -241,36 +241,6 @@
                             </button>
                         </div>
 
-                        <!-- Suggested Apps Quick Launcher Section -->
-                        <div class="suggested-apps-wrapper">
-                            <div class="suggested-apps-grid">
-                                <button type="button" class="suggested-app-card" data-app-name="Avenza Maps" title="Filter & Open in Avenza Maps">
-                                    <div class="suggested-app-icon-wrap">
-                                        <img src="../images/app_icons/avenza.webp" alt="Avenza Maps" class="suggested-app-icon" />
-                                    </div>
-                                    <span class="suggested-app-label">Avenza</span>
-                                </button>
-                                <button type="button" class="suggested-app-card" data-app-name="Gaia GPS" title="Filter & Open in Gaia GPS">
-                                    <div class="suggested-app-icon-wrap">
-                                        <img src="../images/app_icons/gaia.webp" alt="Gaia GPS" class="suggested-app-icon" />
-                                    </div>
-                                    <span class="suggested-app-label">Gaia GPS</span>
-                                </button>
-                                <button type="button" class="suggested-app-card" data-app-name="CalTopo" title="Filter & Open in CalTopo">
-                                    <div class="suggested-app-icon-wrap">
-                                        <img src="../images/app_icons/caltopo.webp" alt="CalTopo" class="suggested-app-icon" />
-                                    </div>
-                                    <span class="suggested-app-label">CalTopo</span>
-                                </button>
-                                <button type="button" class="suggested-app-card" data-app-name="OsmAnd Maps" title="Filter & Open in OsmAnd Maps">
-                                    <div class="suggested-app-icon-wrap">
-                                        <img src="../images/app_icons/osmandmaps.webp" alt="OsmAnd Maps" class="suggested-app-icon" />
-                                    </div>
-                                    <span class="suggested-app-label">OsmAnd</span>
-                                </button>
-                            </div>
-                        </div>
-
                         <div class="download-grid maps-tile-download-grid">
                             <section class="download-column maps-tile-download-col" aria-labelledby="vector-title">
                                 <h3 id="vector-title" class="maps-tile-download-col__title">Vector Formats</h3>
@@ -333,6 +303,48 @@
                                     </button>
                                 </div>
                             </section>
+                        </div>
+
+                        <!-- Suggested Apps Quick Launcher Section -->
+                        <div class="suggested-apps-wrapper">
+                            <div class="suggested-apps-grid">
+                                <button type="button" class="suggested-app-card" data-app-name="Avenza Maps" title="Filter & Open in Avenza Maps">
+                                    <div class="suggested-app-icon-wrap">
+                                        <img src="../images/app_icons/avenza.webp" alt="Avenza Maps" class="suggested-app-icon" />
+                                    </div>
+                                    <span class="suggested-app-label">Avenza</span>
+                                </button>
+                                <button type="button" class="suggested-app-card" data-app-name="Gaia GPS" title="Filter & Open in Gaia GPS">
+                                    <div class="suggested-app-icon-wrap">
+                                        <img src="../images/app_icons/gaia.webp" alt="Gaia GPS" class="suggested-app-icon" />
+                                    </div>
+                                    <span class="suggested-app-label">Gaia GPS</span>
+                                </button>
+                                <button type="button" class="suggested-app-card" data-app-name="CalTopo" title="Filter & Open in CalTopo">
+                                    <div class="suggested-app-icon-wrap">
+                                        <img src="../images/app_icons/caltopo.webp" alt="CalTopo" class="suggested-app-icon" />
+                                    </div>
+                                    <span class="suggested-app-label">CalTopo</span>
+                                </button>
+                                <button type="button" class="suggested-app-card" data-app-name="OsmAnd Maps" title="Filter & Open in OsmAnd Maps">
+                                    <div class="suggested-app-icon-wrap">
+                                        <img src="../images/app_icons/osmandmaps.webp" alt="OsmAnd Maps" class="suggested-app-icon" />
+                                    </div>
+                                    <span class="suggested-app-label">OsmAnd</span>
+                                </button>
+                                <!-- View All Button -->
+                                <button type="button" id="btn-view-all-apps" class="suggested-app-card suggested-app-card--view-all" title="View all compatible mapping apps">
+                                    <div class="suggested-app-icon-wrap suggested-app-icon-wrap--view-all">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                                            <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                                            <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                                            <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                                        </svg>
+                                    </div>
+                                    <span class="suggested-app-label">View All</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -667,6 +679,71 @@
                         <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Compatible Apps Full Blackout Screen Modal -->
+    <div id="all-apps-modal" class="modal avenza-blackout-modal all-apps-full-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="all-apps-modal-title">
+        <div class="modal__backdrop" data-modal-close="all-apps-modal"></div>
+        <div class="modal__panel avenza-modal-panel all-apps-modal-panel">
+            <div class="all-apps-modal-header">
+                <div class="all-apps-modal-header-top">
+                    <h2 id="all-apps-modal-title" class="avenza-modal-title">Download to compatible apps</h2>
+                    <button type="button" class="modal__close avenza-modal-close" aria-label="Close modal" data-modal-close="all-apps-modal">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Live Search Bar -->
+                <div class="all-apps-search-box">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="all-apps-search-input" class="all-apps-search-input" placeholder="Search app..." autocomplete="off" />
+                    <button type="button" id="all-apps-search-clear" class="all-apps-search-clear" aria-label="Clear search" style="display: none;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="all-apps-grid-container">
+                <div id="all-apps-grid" class="all-apps-grid">
+                    <button type="button" class="suggested-app-card" data-app-name="Avenza Maps" title="Open in Avenza Maps">
+                        <div class="suggested-app-icon-wrap">
+                            <img src="../images/app_icons/avenza.webp" alt="Avenza Maps" class="suggested-app-icon" />
+                        </div>
+                        <span class="suggested-app-label">Avenza</span>
+                    </button>
+                    <button type="button" class="suggested-app-card" data-app-name="Gaia GPS" title="Open in Gaia GPS">
+                        <div class="suggested-app-icon-wrap">
+                            <img src="../images/app_icons/gaia.webp" alt="Gaia GPS" class="suggested-app-icon" />
+                        </div>
+                        <span class="suggested-app-label">Gaia GPS</span>
+                    </button>
+                    <button type="button" class="suggested-app-card" data-app-name="CalTopo" title="Open in CalTopo">
+                        <div class="suggested-app-icon-wrap">
+                            <img src="../images/app_icons/caltopo.webp" alt="CalTopo" class="suggested-app-icon" />
+                        </div>
+                        <span class="suggested-app-label">CalTopo</span>
+                    </button>
+                    <button type="button" class="suggested-app-card" data-app-name="OsmAnd Maps" title="Open in OsmAnd Maps">
+                        <div class="suggested-app-icon-wrap">
+                            <img src="../images/app_icons/osmandmaps.webp" alt="OsmAnd Maps" class="suggested-app-icon" />
+                        </div>
+                        <span class="suggested-app-label">OsmAnd</span>
+                    </button>
+                </div>
+                <div id="all-apps-no-results" class="all-apps-no-results" style="display: none;">
+                    No matching apps found
+                </div>
             </div>
         </div>
     </div>

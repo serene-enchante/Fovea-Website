@@ -4086,8 +4086,154 @@ const MAP_VIEWER_APPS = [
     }
 ];
 
+function closeAllModals() {
+    const avenzaModal = document.getElementById("avenza-instruction-modal");
+    if (avenzaModal) {
+        avenzaModal.setAttribute("aria-hidden", "true");
+        avenzaModal.classList.remove("is-open");
+    }
+    document.body.classList.remove("has-avenza-modal");
+
+    const bottomNav = document.querySelector(".mobile-bottom-nav-container");
+    if (bottomNav) {
+        bottomNav.classList.remove("is-hidden-entirely");
+        bottomNav.style.removeProperty("display");
+    }
+
+    const downloadModal = document.getElementById("downloads-modal");
+    if (downloadModal) {
+        downloadModal.setAttribute("aria-hidden", "true");
+        downloadModal.classList.remove("is-open");
+    }
+
+    const copyModal = document.getElementById("copy-link-modal");
+    if (copyModal) {
+        copyModal.setAttribute("aria-hidden", "true");
+        copyModal.classList.remove("is-open");
+    }
+
+    const helpModal = document.getElementById("help-modal");
+    if (helpModal) {
+        helpModal.setAttribute("aria-hidden", "true");
+        helpModal.classList.remove("is-open");
+    }
+
+    const suggestModal = document.getElementById("suggest-modal");
+    if (suggestModal) {
+        suggestModal.setAttribute("aria-hidden", "true");
+        suggestModal.classList.remove("is-open");
+    }
+
+    const allAppsModal = document.getElementById("all-apps-modal");
+    if (allAppsModal) {
+        allAppsModal.setAttribute("aria-hidden", "true");
+        allAppsModal.classList.remove("is-open");
+    }
+
+    if (typeof window.updateActionButtonsState === "function") {
+        window.updateActionButtonsState();
+    }
+
+    if (typeof renderSidebarList === "function") {
+        renderSidebarList();
+    }
+}
+
+function setupAllAppsLiveSearch() {
+    const searchInput = document.getElementById("all-apps-search-input");
+    const clearBtn = document.getElementById("all-apps-search-clear");
+    const grid = document.getElementById("all-apps-grid");
+    const noResults = document.getElementById("all-apps-no-results");
+
+    if (!searchInput || !grid) return;
+
+    const filterApps = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        if (clearBtn) clearBtn.style.display = query ? "flex" : "none";
+
+        const cards = grid.querySelectorAll(".suggested-app-card");
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const appName = (card.getAttribute("data-app-name") || "").toLowerCase();
+            const label = card.querySelector(".suggested-app-label")?.textContent.toLowerCase() || "";
+
+            if (!query || appName.includes(query) || label.includes(query)) {
+                card.style.display = "";
+                visibleCount++;
+            } else {
+                card.style.display = "none";
+            }
+        });
+
+        if (noResults) {
+            noResults.style.display = visibleCount === 0 ? "block" : "none";
+        }
+    };
+
+    searchInput.addEventListener("input", filterApps);
+    if (clearBtn) {
+        clearBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            searchInput.value = "";
+            filterApps();
+            searchInput.focus();
+        });
+    }
+}
+
+function updateAllAppsModalHeaderTitle() {
+  const modalTitleEl = document.getElementById("all-apps-modal-title");
+  if (!modalTitleEl) return;
+
+  const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
+  const circleName = state.currentFeature === "florence" ? "Florence Count Circle" : "Eugene Count Circle";
+
+  if (state.isCirclesFeature) {
+    modalTitleEl.innerHTML = `Download the <span class="avenza-target-name">Coast to Cascades Bird Alliance</span> to compatible apps`;
+    return;
+  }
+
+  if (isCircle) {
+    modalTitleEl.innerHTML = `Download the <span class="avenza-target-name">${circleName}</span> to compatible apps`;
+    return;
+  }
+
+  const targetFeature = (state.allFeatures || []).find(f => {
+    const zid = f.properties?.zid;
+    return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || (typeof normalizeZoneId === "function" && normalizeZoneId(zid) === normalizeZoneId(state.currentId)));
+  });
+
+  const zoneName = (targetFeature && targetFeature.properties?.zid) 
+    ? `Zone ${displayZoneId(targetFeature.properties.zid)}`
+    : "Zone";
+
+  modalTitleEl.innerHTML = `Download <span class="avenza-target-name">${zoneName}</span> of the <span class="avenza-target-name">${circleName}</span> to compatible apps`;
+}
+
 function setupSuggestedAppCards() {
-    document.querySelectorAll(".suggested-app-card").forEach(card => {
+    setupAllAppsLiveSearch();
+    const viewAllBtn = document.getElementById("btn-view-all-apps");
+    const allAppsModal = document.getElementById("all-apps-modal");
+
+    if (viewAllBtn && allAppsModal) {
+        viewAllBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeAllModals();
+            updateAllAppsModalHeaderTitle();
+            allAppsModal.setAttribute("aria-hidden", "false");
+            allAppsModal.classList.add("is-open");
+            const searchInput = document.getElementById("all-apps-search-input");
+            if (searchInput) {
+                searchInput.value = "";
+                const event = new Event("input");
+                searchInput.dispatchEvent(event);
+            }
+        });
+    }
+
+    document.querySelectorAll(".suggested-app-card:not(#btn-view-all-apps)").forEach(card => {
         const iconWrap = card.querySelector(".suggested-app-icon-wrap");
 
         if (iconWrap) {
@@ -4118,6 +4264,7 @@ function setupSuggestedAppCards() {
         }
 
         card.addEventListener("click", async (e) => {
+            e.preventDefault();
             e.stopPropagation();
             const appName = card.getAttribute("data-app-name");
             if (!appName) return;
@@ -4128,6 +4275,7 @@ function setupSuggestedAppCards() {
             if (!wasActive) {
                 card.classList.add("is-active");
             }
+            closeAllModals();
             await handleAppDirectOpen(appName, card);
         });
     });
@@ -4445,44 +4593,7 @@ function setupActionButtons() {
         }
     };
 
-    const closeAllModals = () => {
-        const avenzaModal = document.getElementById("avenza-instruction-modal");
-        if (avenzaModal) {
-            avenzaModal.setAttribute("aria-hidden", "true");
-            avenzaModal.classList.remove("is-open");
-        }
-        document.body.classList.remove("has-avenza-modal");
 
-        // Restore mobile bottom navigation bar upon modal dismissal
-        const bottomNav = document.querySelector(".mobile-bottom-nav-container");
-        if (bottomNav) {
-            bottomNav.classList.remove("is-hidden-entirely");
-            bottomNav.style.removeProperty("display");
-        }
-
-        if (downloadModal) {
-            downloadModal.setAttribute("aria-hidden", "true");
-            downloadModal.classList.remove("is-open");
-        }
-        if (copyModal) {
-            copyModal.setAttribute("aria-hidden", "true");
-            copyModal.classList.remove("is-open");
-        }
-        if (helpModal) {
-            helpModal.setAttribute("aria-hidden", "true");
-            helpModal.classList.remove("is-open");
-        }
-        if (suggestModal) {
-            suggestModal.setAttribute("aria-hidden", "true");
-            suggestModal.classList.remove("is-open");
-        }
-        window.updateActionButtonsState();
-
-        // Refresh sidebar feature thumbnails upon modal dismissal
-        if (typeof renderSidebarList === "function") {
-            renderSidebarList();
-        }
-    };
 
     const avenzaModal = document.getElementById("avenza-instruction-modal");
     const avenzaContinueBtn = document.getElementById("btn-avenza-continue");
