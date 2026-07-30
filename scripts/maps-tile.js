@@ -3645,8 +3645,38 @@ function setupDownloadAppSearch() {
         }
     };
 
-    // Wire click handlers for Suggested App cards
+    // Wire 3D angle-shift tilt hover effect & click handlers for Suggested App cards
     document.querySelectorAll(".suggested-app-card").forEach(card => {
+        const iconWrap = card.querySelector(".suggested-app-icon-wrap");
+
+        if (iconWrap) {
+            card.addEventListener("mousemove", (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                // Angle shift calculation (max tilt +-16deg)
+                const rotateX = ((y - centerY) / centerY) * -16;
+                const rotateY = ((x - centerX) / centerX) * 16;
+
+                iconWrap.style.transition = "transform 0.08s ease-out, box-shadow 0.15s ease";
+                iconWrap.style.transform = `perspective(400px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.12, 1.12, 1.12) translateZ(8px)`;
+                if (!card.classList.contains("is-active")) {
+                    iconWrap.style.boxShadow = "0 10px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(255, 255, 255, 0.15)";
+                }
+            });
+
+            card.addEventListener("mouseleave", () => {
+                iconWrap.style.transition = "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease";
+                iconWrap.style.transform = "perspective(400px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1) translateZ(0px)";
+                iconWrap.style.boxShadow = card.classList.contains("is-active")
+                    ? "0 0 0 2px #7ef7b0, 0 0 16px rgba(126, 247, 176, 0.5)"
+                    : "0 4px 12px rgba(0, 0, 0, 0.4)";
+            });
+        }
+
         card.addEventListener("click", (e) => {
             e.stopPropagation();
             const appName = card.getAttribute("data-app-name");

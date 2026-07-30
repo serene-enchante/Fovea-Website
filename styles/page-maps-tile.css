@@ -2491,15 +2491,16 @@ body.has-active-modal .maps-tile-header__actions {
     min-width: 54px;
     box-shadow: none !important;
     box-sizing: border-box;
+    perspective: 500px;
+    transform-style: preserve-3d;
 }
 
 .suggested-app-card:hover {
     background: transparent !important;
-    transform: translateY(-3px);
 }
 
 .suggested-app-card:active {
-    transform: translateY(0) scale(0.95);
+    transform: scale(0.94);
 }
 
 .suggested-app-icon-wrap {
@@ -2513,17 +2514,13 @@ body.has-active-modal .maps-tile-header__actions {
     background: transparent;
     border: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    transition: all 0.2s ease;
-}
-
-.suggested-app-card:hover .suggested-app-icon-wrap {
-    transform: scale(1.08);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+    transform-style: preserve-3d;
+    will-change: transform, box-shadow;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 
 .suggested-app-card.is-active .suggested-app-icon-wrap {
     box-shadow: 0 0 0 2px #7ef7b0, 0 0 16px rgba(126, 247, 176, 0.5);
-    transform: scale(1.06);
 }
 
 .suggested-app-icon {
