@@ -556,17 +556,112 @@ function getSelectedGeoJSONData() {
     };
 }
 
-function saveBlob(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }, 100);
+const SPATIAL_MIME_TYPES = {
+    ".gpx": "application/gpx+xml",
+    ".kml": "application/vnd.google-earth.kml+xml",
+    ".kmz": "application/vnd.google-earth.kmz",
+    ".geojson": "application/geo+json",
+    ".json": "application/json",
+    ".pdf": "application/pdf",
+    ".tif": "image/tiff",
+    ".tiff": "image/tiff"
+};
+
+function getSpatialMimeType(filename) {
+    if (!filename) return "application/octet-stream";
+    const extMatch = String(filename).match(/\.[a-z0-9]+$/i);
+    const ext = extMatch ? extMatch[0].toLowerCase() : "";
+    return SPATIAL_MIME_TYPES[ext] || "application/octet-stream";
+}
+
+async function handleFileShareOrDownload(fileOrBlob, filename, triggerButton = null) {
+    let originalButtonText = "";
+    let originalButtonHtml = "";
+
+    if (triggerButton) {
+        triggerButton.disabled = true;
+        triggerButton.classList.add("is-preparing");
+        const span = triggerButton.querySelector("span");
+        if (span) {
+            originalButtonText = span.textContent;
+            span.textContent = "Preparing...";
+        } else {
+            originalButtonHtml = triggerButton.innerHTML;
+            triggerButton.textContent = "Preparing...";
+        }
+    }
+
+    const resetBtnState = () => {
+        if (triggerButton) {
+            triggerButton.disabled = false;
+            triggerButton.classList.remove("is-preparing");
+            const span = triggerButton.querySelector("span");
+            if (span && originalButtonText) {
+                span.textContent = originalButtonText;
+            } else if (originalButtonHtml) {
+                triggerButton.innerHTML = originalButtonHtml;
+            }
+        }
+    };
+
+    try {
+        // 1. Fetch target file as Blob if URL string is passed, or use Blob directly
+        let blob;
+        if (fileOrBlob instanceof Blob) {
+            blob = fileOrBlob;
+        } else if (typeof fileOrBlob === "string") {
+            const res = await fetch(fileOrBlob);
+            blob = await res.blob();
+        } else {
+            throw new Error("Invalid file or blob data");
+        }
+
+        const mimeType = getSpatialMimeType(filename);
+        const file = new File([blob], filename, { type: mimeType });
+
+        // 2 & 3. Check if navigator.canShare supports sharing that File object
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({
+                    files: [file],
+                    title: filename,
+                    text: `Exported ${filename} from Fovea`
+                });
+                resetBtnState();
+                return;
+            } catch (shareErr) {
+                if (shareErr.name === "AbortError") {
+                    resetBtnState();
+                    return;
+                }
+                console.warn("Native file share aborted or failed:", shareErr);
+            }
+        }
+
+        // 4. Automatic fallback: standard file download via Blob URL
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
+
+    } catch (err) {
+        console.error("File share/download error:", err);
+        if (typeof showToast === "function") {
+            showToast("Failed to process file download.", true);
+        }
+    } finally {
+        resetBtnState();
+    }
+}
+
+function saveBlob(blob, filename, triggerButton = null) {
+    return handleFileShareOrDownload(blob, filename, triggerButton);
 }
 
 function geojsonToKml(geojson, docName = "Map Data") {
@@ -1169,7 +1264,7 @@ function canvasToTiffBlob(canvas) {
     return new Blob([buffer], { type: "image/tiff" });
 }
 
-async function downloadGeoPdf() {
+async function downloadGeoPdf(triggerButton = null) {
     const canvas = await renderMapLayoutCanvas();
     const filename = getActiveDownloadFilename("pdf");
     
@@ -1191,21 +1286,22 @@ async function downloadGeoPdf() {
             creator: "Fovea Web Map Layout Engine"
         });
 
-        pdf.save(filename);
+        const pdfBlob = pdf.output("blob");
+        await handleFileShareOrDownload(pdfBlob, filename, triggerButton);
         showToast(`Exported ${filename}`);
     } else {
-        canvas.toBlob((blob) => {
-            saveBlob(blob, filename.replace(/\.pdf$/, "-layout.png"));
+        canvas.toBlob(async (blob) => {
+            await handleFileShareOrDownload(blob, filename.replace(/\.pdf$/, "-layout.png"), triggerButton);
             showToast(`Exported ${filename.replace(/\.pdf$/, "-layout.png")}`);
         }, "image/png");
     }
 }
 
-async function downloadGeoTiff() {
+async function downloadGeoTiff(triggerButton = null) {
     const canvas = await renderMapLayoutCanvas();
     const filename = getActiveDownloadFilename("tif");
     const tiffBlob = canvasToTiffBlob(canvas);
-    saveBlob(tiffBlob, filename);
+    await handleFileShareOrDownload(tiffBlob, filename, triggerButton);
     showToast(`Exported ${filename}`);
 }
 
@@ -3943,12 +4039,12 @@ function setupActionButtons() {
 
         const geojsonBtn = document.getElementById("download-geojson");
         if (geojsonBtn) {
-            geojsonBtn.addEventListener("click", () => {
+            geojsonBtn.addEventListener("click", async () => {
                 const geojson = getSelectedGeoJSONData();
                 const filename = getActiveDownloadFilename("geojson");
                 const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
-                saveBlob(blob, filename);
-                showToast(`Downloaded ${filename}`);
+                await handleFileShareOrDownload(blob, filename, geojsonBtn);
+                showToast(`Exported ${filename}`);
             });
         }
 
@@ -3958,42 +4054,42 @@ function setupActionButtons() {
                 const geojson = getSelectedGeoJSONData();
                 const filename = getActiveDownloadFilename("kmz");
                 const kmlStr = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
+                let blob;
                 if (typeof JSZip !== "undefined") {
                     const zip = new JSZip();
                     zip.file("doc.kml", kmlStr);
-                    const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
-                    saveBlob(blob, filename);
+                    blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
                 } else {
-                    const blob = new Blob([kmlStr], { type: "application/vnd.google-earth.kml+xml" });
-                    saveBlob(blob, filename.replace(/\.kmz$/i, ".kml"));
+                    blob = new Blob([kmlStr], { type: "application/vnd.google-earth.kml+xml" });
                 }
-                showToast(`Downloaded ${filename}`);
+                await handleFileShareOrDownload(blob, filename, kmzBtn);
+                showToast(`Exported ${filename}`);
             });
         }
 
         const gpxBtn = document.getElementById("download-gpx");
         if (gpxBtn) {
-            gpxBtn.addEventListener("click", () => {
+            gpxBtn.addEventListener("click", async () => {
                 const geojson = getSelectedGeoJSONData();
                 const filename = getActiveDownloadFilename("gpx");
                 const gpxStr = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
                 const blob = new Blob([gpxStr], { type: "application/gpx+xml" });
-                saveBlob(blob, filename);
-                showToast(`Downloaded ${filename}`);
+                await handleFileShareOrDownload(blob, filename, gpxBtn);
+                showToast(`Exported ${filename}`);
             });
         }
 
         const geopdfBtn = document.getElementById("download-geopdf");
         if (geopdfBtn) {
-            geopdfBtn.addEventListener("click", () => {
-                downloadGeoPdf();
+            geopdfBtn.addEventListener("click", async () => {
+                await downloadGeoPdf(geopdfBtn);
             });
         }
 
         const geotiffBtn = document.getElementById("download-geotiff");
         if (geotiffBtn) {
-            geotiffBtn.addEventListener("click", () => {
-                downloadGeoTiff();
+            geotiffBtn.addEventListener("click", async () => {
+                await downloadGeoTiff(geotiffBtn);
             });
         }
     }

@@ -2621,6 +2621,12 @@ body.has-active-modal .maps-tile-header__actions {
     color: #ffffff;
 }
 
+.maps-tile-download-item.is-preparing {
+    opacity: 0.7 !important;
+    cursor: wait !important;
+    pointer-events: none !important;
+}
+
 .maps-tile-download-autocomplete {
     position: absolute;
     top: calc(100% + 6px);
