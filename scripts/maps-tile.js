@@ -5714,14 +5714,11 @@ function setupMobileBottomNav() {
 
     if (!baseItems.length || !capsule || !overlay) return;
 
-    // Explore tab behavior: snap to map-full view on mobile
+    // Explore tab: on mobile, do nothing to snap state when already on the maps page.
     if (exploreTab) {
         exploreTab.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (window.innerWidth <= 768) {
-                setMobileSnapState("map-full", true);
-            }
         });
     }
 
