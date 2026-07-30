@@ -702,42 +702,49 @@ async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton
 const APP_FORMAT_PREFERENCES = {
   "avenza maps": {
     appName: "Avenza Maps",
+    scheme: "avenzamaps://",
     formatKey: "geopdf",
     ext: "pdf",
     mimeType: "application/pdf"
   },
   "avenza": {
     appName: "Avenza Maps",
+    scheme: "avenzamaps://",
     formatKey: "geopdf",
     ext: "pdf",
     mimeType: "application/pdf"
   },
   "gaia gps": {
     appName: "Gaia GPS",
+    scheme: "gaiagps://",
     formatKey: "gpx",
     ext: "gpx",
     mimeType: "application/gpx+xml"
   },
   "gaia": {
     appName: "Gaia GPS",
+    scheme: "gaiagps://",
     formatKey: "gpx",
     ext: "gpx",
     mimeType: "application/gpx+xml"
   },
   "caltopo": {
     appName: "CalTopo",
+    scheme: "caltopo://",
     formatKey: "gpx",
     ext: "gpx",
     mimeType: "application/gpx+xml"
   },
   "osmand maps": {
     appName: "OsmAnd",
+    scheme: "osmandmaps://",
     formatKey: "gpx",
     ext: "gpx",
     mimeType: "application/gpx+xml"
   },
   "osmand": {
     appName: "OsmAnd",
+    scheme: "osmandmaps://",
     formatKey: "gpx",
     ext: "gpx",
     mimeType: "application/gpx+xml"
@@ -778,7 +785,7 @@ async function generateAppSpatialBlob(formatKey) {
   } else if (formatKey === "gpx") {
     const gpxStr = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
     const blob = new Blob([gpxStr], { type: "application/gpx+xml" });
-    return { blob, filename };
+    return { blob, filename: filename.endsWith(".gpx") ? filename : `${filename}.gpx` };
   } else if (formatKey === "kmz") {
     const kmlStr = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
     if (typeof JSZip !== "undefined") {
@@ -804,6 +811,7 @@ async function handleAppDirectOpen(appName, triggerCard = null) {
   const normName = String(appName).toLowerCase().trim();
   const pref = APP_FORMAT_PREFERENCES[normName] || {
     appName: appName,
+    scheme: "gpx://",
     formatKey: "gpx",
     ext: "gpx",
     mimeType: "application/gpx+xml"
@@ -843,7 +851,7 @@ async function handleAppDirectOpen(appName, triggerCard = null) {
         await navigator.share({
           files: [shareFile],
           title: filename,
-          text: `Open with ${pref.appName}`
+          text: `Open ${filename} in ${pref.appName}`
         });
         resetUi();
         return;
