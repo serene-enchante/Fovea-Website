@@ -2467,6 +2467,7 @@ function setupMapEffectsAndFullscreen(mapWrapper) {
     if (!mapWrapper) return;
 
     mapWrapper.onmousemove = e => {
+        if (window.innerWidth <= 768) return;
         const rect = mapWrapper.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -2603,6 +2604,7 @@ function setupProximityTracking() {
     const canvas = state.map.getCanvas();
 
     canvas.addEventListener('mousemove', (e) => {
+        if (window.innerWidth <= 768) return;
         if (state.map && state.map.getZoom() >= 14.0) return;
         const rect = canvas.getBoundingClientRect();
         const cx = e.clientX - rect.left;
@@ -2698,7 +2700,7 @@ function setupProximityGlowCanvas() {
         const rect = mapCanvas.getBoundingClientRect();
         const w = Math.round(rect.width), h = Math.round(rect.height);
         ctx.clearRect(0, 0, w, h);
-        if (cx < 0 || !state.allFeatures?.length) return;
+        if (window.innerWidth <= 768 || cx < 0 || !state.allFeatures?.length) return;
 
         // Smooth zoom fade out between zoom 11.5 and 14.0
         const currentZoom = state.map ? state.map.getZoom() : 10;
@@ -2819,6 +2821,7 @@ function setupProximityGlowCanvas() {
     }
 
     mapCanvas.addEventListener('mousemove', (e) => {
+        if (window.innerWidth <= 768) return;
         const rect = mapCanvas.getBoundingClientRect();
         cx = e.clientX - rect.left;
         cy = e.clientY - rect.top;
