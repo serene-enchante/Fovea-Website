@@ -3722,6 +3722,7 @@ body.is-annotation-mode .annotation-exit-btn {
 
 
 
+@media (max-width: 768px) {
     /* Clear bottom nav layout */
     .maps-tile-sidebar__scroll {
         padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
