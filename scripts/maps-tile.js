@@ -669,10 +669,31 @@ async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton
       resetBtnState();
       return;
     }
-    console.warn('Web Share API failed or unsupported, falling back:', err);
   } finally {
     resetBtnState();
   }
+
+  // Fallback for Desktop / Unsupported Browsers
+  if (fileOrBlob instanceof Blob) {
+    const url = URL.createObjectURL(fileOrBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  } else if (typeof fileOrBlob === 'string') {
+    const a = document.createElement('a');
+    a.href = fileOrBlob;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+}
 
 /**
  * Suggested App Handshake Architecture & Format Preferences
