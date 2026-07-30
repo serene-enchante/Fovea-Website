@@ -2559,9 +2559,9 @@ body.has-active-modal .maps-tile-header__actions {
 }
 
 .suggested-app-card.is-active .suggested-app-label {
-    color: #ffffff;
+    color: var(--accent-primary) !important;
     font-weight: 600;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+    text-shadow: 0 0 10px rgba(var(--accent-rgb), 0.4);
 }
 
 /* App Compatibility Search & Autocomplete Styles */

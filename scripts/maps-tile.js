@@ -4001,7 +4001,7 @@ function setupDownloadAppSearch() {
                 iconWrap.style.transition = "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease";
                 iconWrap.style.transform = "perspective(400px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1) translateZ(0px)";
                 iconWrap.style.boxShadow = card.classList.contains("is-active")
-                    ? "0 0 0 1.5px rgba(255, 255, 255, 0.4), 0 8px 24px rgba(0, 0, 0, 0.6)"
+                    ? "0 0 0 1.5px rgba(var(--accent-rgb), 0.5), 0 8px 24px rgba(0, 0, 0, 0.6)"
                     : "0 4px 12px rgba(0, 0, 0, 0.4)";
             });
         }
