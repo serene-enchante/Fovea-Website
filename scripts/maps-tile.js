@@ -5064,23 +5064,14 @@ function setupSearch() {
 
     if (!header || !toggleBtn || !closeBtn || !searchInput || !listContainer) return;
 
-    let savedHeights = null;
+    let savedSnapState = null;
 
     const openSearch = (e) => {
         if (e) e.preventDefault();
-        const mapArea = document.querySelector(".maps-tile-map-area");
-        const sidebar = document.querySelector(".maps-tile-sidebar");
 
-        if (window.innerWidth <= 768 && mapArea && sidebar) {
-            savedHeights = {
-                map: mapArea.style.height || "",
-                sidebar: sidebar.style.height || ""
-            };
-            mapArea.style.setProperty("height", "50%", "important");
-            sidebar.style.setProperty("height", "50%", "important");
-            if (state.map) {
-                setTimeout(() => state.map.invalidateSize(), 300);
-            }
+        if (window.innerWidth <= 768) {
+            savedSnapState = state.snapState || "default";
+            setMobileSnapState("selection-full", true);
         }
 
         header.classList.add("is-searching");
@@ -5097,21 +5088,9 @@ function setupSearch() {
         searchInput.value = "";
         filterList("");
 
-        if (savedHeights) {
-            const mapArea = document.querySelector(".maps-tile-map-area");
-            const sidebar = document.querySelector(".maps-tile-sidebar");
-            if (mapArea && sidebar) {
-                if (savedHeights.map) mapArea.style.setProperty("height", savedHeights.map, "important");
-                else mapArea.style.removeProperty("height");
-
-                if (savedHeights.sidebar) sidebar.style.setProperty("height", savedHeights.sidebar, "important");
-                else sidebar.style.removeProperty("height");
-
-                if (state.map) {
-                    setTimeout(() => state.map.invalidateSize(), 300);
-                }
-            }
-            savedHeights = null;
+        if (window.innerWidth <= 768 && savedSnapState) {
+            setMobileSnapState(savedSnapState, true);
+            savedSnapState = null;
         }
     };
 
@@ -5143,6 +5122,20 @@ function setupSearch() {
     searchInput.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
             closeSearch();
+        }
+    });
+
+    searchInput.addEventListener("focus", () => {
+        if (window.innerWidth <= 768) {
+            window.scrollTo(0, 0);
+            document.body.scrollTop = 0;
+        }
+    });
+
+    searchInput.addEventListener("blur", () => {
+        if (window.innerWidth <= 768) {
+            window.scrollTo(0, 0);
+            document.body.scrollTop = 0;
         }
     });
 }
@@ -5487,7 +5480,23 @@ function setupListSwipeBack() {
         const indicator = document.getElementById("swipe-back-indicator");
         if (indicator) indicator.classList.remove("is-visible");
 
-        if (!isTracking) return;
+        if (!isTracking) {
+            const touch = e.changedTouches[0];
+            const diffX = touch.clientX - startX;
+            const diffY = touch.clientY - startY;
+            // Swiping left (right-to-left) inside feature tiles area -> open search
+            if (diffX < -50 && Math.abs(diffX) > Math.abs(diffY) * 1.4 && Math.abs(diffY) < 70) {
+                const header = document.getElementById("sidebar-header");
+                const isSearching = header && header.classList.contains("is-searching");
+                if (!isSearching) {
+                    const searchToggle = document.getElementById("btn-search-toggle");
+                    if (searchToggle) {
+                        searchToggle.click();
+                    }
+                }
+            }
+            return;
+        }
         isTracking = false;
         
         const touch = e.changedTouches[0];

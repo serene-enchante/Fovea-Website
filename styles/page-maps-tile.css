@@ -3307,6 +3307,16 @@ body.is-annotation-mode .annotation-exit-btn {
 }
 
 @media (max-width: 768px) {
+    /* Prevent iOS Safari forced auto-zoom & view hijacking on input focus */
+    input[type="text"],
+    input[type="search"],
+    input[type="email"],
+    textarea,
+    .sidebar-search-input,
+    .maps-tile-copy-input {
+        font-size: 16px !important;
+    }
+
     body.is-annotation-mode .annotation-exit-btn {
         bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
         left: 50% !important;
