@@ -806,59 +806,38 @@ async function generateAppSpatialBlob(formatKey) {
 
 /**
  * Direct Avenza Maps Deep Link Importer
- * Uses avenzamaps://<cleanUrl> for remote static files or delivers the physical GeoPDF File payload via Web Share for client-generated maps.
+ * Automatically downloads the GeoPDF to the device's Downloads folder, launches Avenza Maps via scheme, and provides import guidance.
  */
 async function openInAvenzaWithFallback(mapFileUrlOrBlob, filename, triggerCard = null) {
-  // 1. If a direct static URL is explicitly provided (ending in .pdf or .tif), use avenzamaps:// URI scheme protocol
-  if (typeof mapFileUrlOrBlob === "string" && /^https?:\/\/.+\.(pdf|tif|tiff)$/i.test(mapFileUrlOrBlob)) {
-    const cleanUrl = mapFileUrlOrBlob.replace(/^https?:\/\//i, "");
-    window.location.href = `avenzamaps://${cleanUrl}`;
-
-    setTimeout(() => {
-      if (!document.hidden) {
-        handleSpatialFileShare(null, mapFileUrlOrBlob, filename, triggerCard);
-      }
-    }, 1400);
-    return;
-  }
-
-  // 2. For dynamically rendered GeoPDF Blobs: deliver physical File binary payload via Web Share API
-  // This hands the PDF file directly to Avenza Maps via iOS document transfer (bypassing 404 URL errors)
   let blob = mapFileUrlOrBlob;
   if (!(blob instanceof Blob)) {
     const { blob: generatedBlob } = await generateAppSpatialBlob("geopdf");
     blob = generatedBlob;
   }
 
-  const shareFile = createIosCompatibleFile(blob, filename.endsWith(".pdf") ? filename : `${filename}.pdf`);
+  const pdfFilename = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
 
-  if (navigator.share) {
-    const canShare = navigator.canShare ? navigator.canShare({ files: [shareFile] }) : true;
-    if (canShare) {
-      try {
-        await navigator.share({
-          files: [shareFile],
-          title: filename,
-          text: "Import GeoPDF into Avenza Maps"
-        });
-        return;
-      } catch (shareErr) {
-        if (shareErr.name === "AbortError" || shareErr.name === "NotAllowedError") return;
-      }
-    }
-  }
-
-  // Fallback for desktop / unsupported browsers
+  // 1. Download GeoPDF directly into the device's Downloads folder
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename;
+  a.download = pdfFilename;
   document.body.appendChild(a);
   a.click();
   setTimeout(() => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, 100);
+
+  // 2. Launch Avenza Maps app directly
+  setTimeout(() => {
+    window.location.href = "avenzamaps://";
+  }, 500);
+
+  // 3. Display toast notification with clear import instructions
+  if (typeof showToast === "function") {
+    showToast(`GeoPDF saved to Downloads! In Avenza, tap '+' -> 'From Storage Locations'.`);
+  }
 }
 
 /**
