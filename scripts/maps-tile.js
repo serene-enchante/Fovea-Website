@@ -5752,11 +5752,140 @@ function setupMobileBottomNav() {
         updateCapsule(baseItems[activeIndex], true);
     }
 
+    // Touch Dragging Logic for the capsule (bound to nav to bypass z-index blocking)
+    let isDragging = false;
+    let hasMoved = false;
+    let startX = 0;
+    let initialLeft = 0;
+    let currentLeft = 0;
+
     baseItems.forEach((item, index) => {
         item.addEventListener("click", (e) => {
+            if (hasMoved) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
             sessionStorage.setItem("prev-nav-index", index);
             updateCapsule(item);
         });
+    });
+
+    nav.addEventListener("touchstart", (e) => {
+        const touch = e.touches[0];
+        const capsuleRect = capsule.getBoundingClientRect();
+        
+        // Check if touch starts within the bounds of the active capsule
+        if (
+            touch.clientX >= capsuleRect.left &&
+            touch.clientX <= capsuleRect.right &&
+            touch.clientY >= capsuleRect.top &&
+            touch.clientY <= capsuleRect.bottom
+        ) {
+            isDragging = true;
+            hasMoved = false;
+            capsule.style.cursor = "grabbing";
+            startX = touch.clientX;
+            
+            const style = window.getComputedStyle(capsule);
+            const DOMMatrixClass = window.DOMMatrix || window.WebKitCSSMatrix || window.MSCSSMatrix;
+            const matrix = new DOMMatrixClass(style.transform);
+            initialLeft = matrix.m41;
+            currentLeft = initialLeft;
+
+            capsule.style.transition = "none";
+            overlay.style.transition = "none";
+        }
+    }, { passive: true });
+
+    window.addEventListener("touchmove", (e) => {
+        if (!isDragging) return;
+        
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - startX;
+        
+        if (Math.abs(deltaX) > 4) {
+            hasMoved = true;
+        }
+
+        let newLeft = initialLeft + deltaX;
+
+        const navRect = nav.getBoundingClientRect();
+        const capsuleRect = capsule.getBoundingClientRect();
+        const paddingLeft = 6;
+        const minLeft = paddingLeft;
+        const maxLeft = navRect.width - paddingLeft - capsuleRect.width;
+
+        if (newLeft < minLeft) newLeft = minLeft;
+        if (newLeft > maxLeft) newLeft = maxLeft;
+
+        currentLeft = newLeft;
+
+        capsule.style.transform = `translate(${newLeft}px, 6px)`;
+
+        const top = 6;
+        const width = capsuleRect.width;
+        const height = capsuleRect.height;
+        const clipVal = `inset(${top}px ${navRect.width - (newLeft + width)}px ${navRect.height - (top + height)}px ${newLeft}px round 19px)`;
+        overlay.style.clipPath = clipVal;
+        overlay.style.webkitClipPath = clipVal;
+    }, { passive: true });
+
+    window.addEventListener("touchend", () => {
+        if (!isDragging) return;
+        isDragging = false;
+        capsule.style.cursor = "grab";
+
+        capsule.style.transition = "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s cubic-bezier(0.16, 1, 0.3, 1)";
+        overlay.style.transition = "clip-path 0.35s cubic-bezier(0.16, 1, 0.3, 1), -webkit-clip-path 0.35s cubic-bezier(0.16, 1, 0.3, 1)";
+
+        const navRect = nav.getBoundingClientRect();
+        const capsuleRect = capsule.getBoundingClientRect();
+        const capsuleCenter = currentLeft + capsuleRect.width / 2;
+
+        let closestItem = null;
+        let closestDist = Infinity;
+        let closestIndex = -1;
+
+        baseItems.forEach((item, index) => {
+            const itemRect = item.getBoundingClientRect();
+            const itemLeft = itemRect.left - navRect.left;
+            const itemCenter = itemLeft + itemRect.width / 2;
+            const dist = Math.abs(capsuleCenter - itemCenter);
+            
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestItem = item;
+                closestIndex = index;
+            }
+        });
+
+        if (closestItem) {
+            sessionStorage.setItem("prev-nav-index", closestIndex);
+            
+            const itemRect = closestItem.getBoundingClientRect();
+            const left = itemRect.left - navRect.left;
+            const top = itemRect.top - navRect.top;
+            const width = itemRect.width;
+            const height = itemRect.height;
+
+            capsule.style.transform = `translate(${left}px, ${top}px)`;
+            capsule.style.width = `${width}px`;
+            capsule.style.height = `${height}px`;
+
+            const clipVal = `inset(${top}px ${navRect.width - (left + width)}px ${navRect.height - (top + height)}px ${left}px round 19px)`;
+            overlay.style.clipPath = clipVal;
+            overlay.style.webkitClipPath = clipVal;
+
+            if (hasMoved) {
+                closestItem.click();
+            }
+        }
+        
+        // Reset hasMoved after a short delay to allow click cancellation to execute first
+        setTimeout(() => {
+            hasMoved = false;
+        }, 50);
     });
 
     window.addEventListener("resize", () => {
