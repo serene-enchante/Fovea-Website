@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../styles/cards.css">
     <link rel="stylesheet" href="../styles/maps-components.css">
     <link rel="stylesheet" href="../styles/page-maps-tile.css?v=113">
-    <link rel="stylesheet" href="../styles/mobile-bottom-nav.css?v=15">
+    <link rel="stylesheet" href="../styles/mobile-bottom-nav.css?v=16">
 
     <!-- MapLibre & Fonts -->
     <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
@@ -605,48 +605,14 @@
 
 
 
-    <!-- Mobile-only bottom navigation container -->
-    <div class="mobile-bottom-nav-container">
-        <!-- Main navigation bar (Explore, Tools, Settings) -->
-        <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
-            <div class="mobile-bottom-nav__capsule"></div>
-            <div class="mobile-bottom-nav__base">
-                <a id="mobile-nav-tab-explore" class="mobile-bottom-nav-item is-active" href="#explore" aria-label="Explore" title="Explore">
-                    <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/binoculars-1-svgrepo-com.svg'); mask-image: url('../svg/binoculars-1-svgrepo-com.svg');"></span>
-                </a>
-                <a id="mobile-nav-tab-tools" class="mobile-bottom-nav-item" href="#tools" aria-label="Tools" title="Tools">
-                    <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/hammer-tool-svgrepo-com.svg'); mask-image: url('../svg/hammer-tool-svgrepo-com.svg');"></span>
-                </a>
-                <a id="mobile-nav-tab-settings" class="mobile-bottom-nav-item" href="#settings" aria-label="Settings" title="Settings">
-                    <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/settings-svgrepo-com.svg'); mask-image: url('../svg/settings-svgrepo-com.svg');"></span>
-                </a>
-            </div>
-            <div class="mobile-bottom-nav__overlay" aria-hidden="true">
-                <div class="mobile-bottom-nav-item">
-                    <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/binoculars-1-svgrepo-com.svg'); mask-image: url('../svg/binoculars-1-svgrepo-com.svg');"></span>
-                </div>
-                <div class="mobile-bottom-nav-item">
-                    <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/hammer-tool-svgrepo-com.svg'); mask-image: url('../svg/hammer-tool-svgrepo-com.svg');"></span>
-                </div>
-                <div class="mobile-bottom-nav-item">
-                    <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/settings-svgrepo-com.svg'); mask-image: url('../svg/settings-svgrepo-com.svg');"></span>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Standalone Home pill -->
-        <a id="mobile-nav-tab-home" class="mobile-bottom-nav-home" href="../" aria-label="Home" title="Home">
-            <span class="mobile-bottom-nav-home__icon" style="-webkit-mask-image: url('../svg/home-svgrepo-com.svg'); mask-image: url('../svg/home-svgrepo-com.svg');"></span>
-        </a>
-    </div>
-
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
-    <script src="../scripts/maps-tile.js?v=191"></script>
+    <script src="../scripts/maps-tile.js?v=192"></script>
+    <script src="../scripts/mobile-bottom-nav.js?v=1" data-active-page="maps" data-root="../" data-no-scroll-listener></script>
 </body>
 
 </html>

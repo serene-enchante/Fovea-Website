@@ -5815,6 +5815,7 @@ function setupMobileBottomNav() {
             isDragging = true;
             hasMoved = false;
             capsule.style.cursor = "grabbing";
+            capsule.classList.add("is-dragging");
             startX = touch.clientX;
             
             const style = window.getComputedStyle(capsule);
@@ -5868,8 +5869,9 @@ function setupMobileBottomNav() {
         if (!isDragging) return;
         isDragging = false;
         capsule.style.cursor = "grab";
+        capsule.classList.remove("is-dragging");
 
-        capsule.style.transition = "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s cubic-bezier(0.16, 1, 0.3, 1)";
+        capsule.style.transition = "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease";
         overlay.style.transition = "clip-path 0.35s cubic-bezier(0.16, 1, 0.3, 1), -webkit-clip-path 0.35s cubic-bezier(0.16, 1, 0.3, 1)";
 
         const navRect = nav.getBoundingClientRect();
