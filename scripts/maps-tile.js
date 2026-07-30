@@ -2130,8 +2130,24 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
 
     // Trigger immediate click fly-out on current contents, update DOM & map mid-flyout, then fly in new screen
     if (isLevelChanged && animate) {
+        const isMobile = window.innerWidth <= 768;
+
+        // Lock sidebar height on mobile during horizontal slide transition to eliminate vertical stutter/jumps
+        const sidebar = document.querySelector(".maps-tile-sidebar");
+        if (isMobile && sidebar) {
+            const currentH = sidebar.offsetHeight;
+            if (currentH > 0) {
+                sidebar.style.minHeight = `${currentH}px`;
+                sidebar.style.maxHeight = `${currentH}px`;
+                setTimeout(() => {
+                    sidebar.style.minHeight = "";
+                    sidebar.style.maxHeight = "";
+                }, 380);
+            }
+        }
+
         const animElements = [
-            document.querySelector('.maps-tile-header'),
+            !isMobile ? document.querySelector('.maps-tile-header') : null,
             document.getElementById('sidebar-header'),
             document.querySelector('.sidebar-list-container'),
             document.querySelector('.sidebar-about-panel')
