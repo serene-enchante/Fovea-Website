@@ -634,9 +634,8 @@ async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton
       throw new Error('Invalid file format');
     }
 
-    const isMobile = window.innerWidth <= 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-    if (isMobile && navigator.share) {
+    // If browser supports Web Share API (iOS Safari, Mobile Chrome, Mac Safari), trigger native OS Share Sheet
+    if (navigator.share) {
       const file = createIosCompatibleFile(blob, fileName);
 
       // Check if browser can share file, or execute direct share for mobile OS
