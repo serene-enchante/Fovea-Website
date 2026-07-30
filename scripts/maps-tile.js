@@ -811,23 +811,26 @@ async function generateAppSpatialBlob(formatKey) {
 function openInAvenzaWithFallback(mapFileUrlOrBlob, filename, triggerCard = null) {
   let remoteUrl = typeof mapFileUrlOrBlob === "string" ? mapFileUrlOrBlob : null;
 
-  if (remoteUrl && /^https?:\/\//i.test(remoteUrl)) {
-    const cleanUrl = remoteUrl.replace(/^https?:\/\//i, "");
-    const avenzaDeepLink = `avenzamaps://${cleanUrl}`;
-
-    window.location.href = avenzaDeepLink;
-
-    setTimeout(() => {
-      if (!document.hidden) {
-        // Fall back to Web Share / File export if Avenza isn't installed
-        handleSpatialFileShare(null, mapFileUrlOrBlob, filename, triggerCard);
-      }
-    }, 1500);
-    return;
+  if (!remoteUrl && window.location.protocol.startsWith("http")) {
+    const currentBase = window.location.href.split("?")[0].replace(/\/index\.html$/i, "").replace(/\/+$/, "");
+    remoteUrl = `${currentBase}/${filename}`;
   }
 
-  // Fallback to Web Share API file payload export
-  handleSpatialFileShare(null, mapFileUrlOrBlob, filename, triggerCard);
+  let deepLink = "avenzamaps://";
+  if (remoteUrl && /^https?:\/\//i.test(remoteUrl)) {
+    const cleanUrl = remoteUrl.replace(/^https?:\/\//i, "");
+    deepLink = `avenzamaps://${cleanUrl}`;
+  }
+
+  // Launch Avenza Maps directly via URI scheme protocol
+  window.location.href = deepLink;
+
+  setTimeout(() => {
+    if (!document.hidden) {
+      // Fall back to Web Share API file payload export if app isn't installed
+      handleSpatialFileShare(null, mapFileUrlOrBlob, filename, triggerCard);
+    }
+  }, 1400);
 }
 
 /**
