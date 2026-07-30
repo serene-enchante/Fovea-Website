@@ -3588,6 +3588,7 @@ function setupDownloadAppSearch() {
             autocompleteBox.style.display = "none";
             autocompleteBox.innerHTML = "";
             filterFormatsByApp(null);
+            document.querySelectorAll(".suggested-app-card").forEach(c => c.classList.remove("is-active"));
             return;
         }
 
@@ -3595,6 +3596,13 @@ function setupDownloadAppSearch() {
             app.name.toLowerCase().includes(query) || 
             app.aliases.some(a => a.includes(query))
         );
+
+        // Sync active state on suggested app cards with search query
+        document.querySelectorAll(".suggested-app-card").forEach(card => {
+            const cardAppName = card.getAttribute("data-app-name") || "";
+            const isMatch = matches.some(m => m.name.toLowerCase() === cardAppName.toLowerCase());
+            card.classList.toggle("is-active", isMatch && query.length > 0);
+        });
 
         if (matches.length === 0) {
             autocompleteBox.style.display = "block";
@@ -3636,6 +3644,47 @@ function setupDownloadAppSearch() {
             filterFormatsByApp(matches[0].formats);
         }
     };
+
+    // Wire click handlers for Suggested App cards
+    document.querySelectorAll(".suggested-app-card").forEach(card => {
+        card.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const appName = card.getAttribute("data-app-name");
+            if (!appName) return;
+
+            const selectedApp = MAP_VIEWER_APPS.find(a => 
+                a.name.toLowerCase() === appName.toLowerCase() || 
+                a.aliases.some(alias => alias.toLowerCase() === appName.toLowerCase())
+            );
+
+            const wasActive = card.classList.contains("is-active");
+            document.querySelectorAll(".suggested-app-card").forEach(c => c.classList.remove("is-active"));
+
+            if (wasActive) {
+                searchInput.value = "";
+                if (clearBtn) clearBtn.style.display = "none";
+                autocompleteBox.style.display = "none";
+                filterFormatsByApp(null);
+            } else {
+                card.classList.add("is-active");
+                if (selectedApp) {
+                    searchInput.value = selectedApp.name;
+                    if (clearBtn) clearBtn.style.display = "flex";
+                    autocompleteBox.style.display = "none";
+                    filterFormatsByApp(selectedApp.formats);
+                    if (typeof showToast === "function") {
+                        showToast(`Opening file in ${selectedApp.name}... (Placeholder)`);
+                    }
+                } else {
+                    searchInput.value = appName;
+                    if (clearBtn) clearBtn.style.display = "flex";
+                    if (typeof showToast === "function") {
+                        showToast(`Opening file in ${appName}... (Placeholder)`);
+                    }
+                }
+            }
+        });
+    });
 
     searchInput.addEventListener("input", updateAutocomplete);
     searchInput.addEventListener("focus", updateAutocomplete);

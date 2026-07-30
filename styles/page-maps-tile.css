@@ -2457,6 +2457,107 @@ body.has-active-modal .maps-tile-header__actions {
     color: rgba(255, 255, 255, 0.35);
 }
 
+/* ── Suggested Apps Quick Launcher ── */
+.suggested-apps-wrapper {
+    width: 100%;
+    max-width: 320px;
+    margin: 0.25rem auto 1rem auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.suggested-apps-header {
+    width: 100%;
+    text-align: center;
+}
+
+.suggested-apps-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.suggested-apps-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.suggested-app-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.45rem 0.55rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    min-width: 62px;
+    box-sizing: border-box;
+}
+
+.suggested-app-card:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.28);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.suggested-app-card:active {
+    transform: translateY(0) scale(0.96);
+}
+
+.suggested-app-card.is-active {
+    background: rgba(126, 247, 176, 0.15);
+    border-color: #7ef7b0;
+    box-shadow: 0 0 12px rgba(126, 247, 176, 0.35);
+}
+
+.suggested-app-icon-wrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000000;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease;
+}
+
+.suggested-app-card:hover .suggested-app-icon-wrap {
+    transform: scale(1.06);
+}
+
+.suggested-app-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.suggested-app-label {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    white-space: nowrap;
+}
+
+.suggested-app-card.is-active .suggested-app-label {
+    color: #7ef7b0;
+    font-weight: 600;
+}
+
 /* App Compatibility Search & Autocomplete Styles */
 .maps-tile-download-search-wrapper {
     position: relative;
