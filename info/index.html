@@ -252,7 +252,7 @@
             opacity: 1;
         }
     </style>
-    <link rel="stylesheet" href="../styles/mobile-bottom-nav.css?v=4">
+    <link rel="stylesheet" href="../styles/mobile-bottom-nav.css?v=5">
 </head>
 
 <body>
@@ -293,38 +293,40 @@
     <!-- Toast Popup Notification -->
     <div id="toast-notification" class="toast-notification"></div>
 
-    <!-- Mobile-only bottom navigation bar -->
-    <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
-        <div class="mobile-bottom-nav__capsule"></div>
-        <div class="mobile-bottom-nav__base">
-            <a id="mobile-nav-tab-explore" class="mobile-bottom-nav-item" href="../maps/" aria-label="Explore" title="Explore">
-                <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/binoculars-1-svgrepo-com.svg'); mask-image: url('../svg/binoculars-1-svgrepo-com.svg');"></span>
-            </a>
-            <a id="mobile-nav-tab-tools" class="mobile-bottom-nav-item" href="../maps/#tools" aria-label="Tools" title="Tools">
-                <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/hammer-tool-svgrepo-com.svg'); mask-image: url('../svg/hammer-tool-svgrepo-com.svg');"></span>
-            </a>
-            <a id="mobile-nav-tab-settings" class="mobile-bottom-nav-item" href="../maps/#settings" aria-label="Settings" title="Settings">
-                <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/settings-svgrepo-com.svg'); mask-image: url('../svg/settings-svgrepo-com.svg');"></span>
-            </a>
-            <a id="mobile-nav-tab-home" class="mobile-bottom-nav-item" href="../" aria-label="Home" title="Home">
-                <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/home-svgrepo-com.svg'); mask-image: url('../svg/home-svgrepo-com.svg');"></span>
-            </a>
-        </div>
-        <div class="mobile-bottom-nav__overlay" aria-hidden="true">
-            <div class="mobile-bottom-nav-item">
-                <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/binoculars-1-svgrepo-com.svg'); mask-image: url('../svg/binoculars-1-svgrepo-com.svg');"></span>
+    <!-- Mobile-only bottom navigation container -->
+    <div class="mobile-bottom-nav-container">
+        <!-- Main navigation bar (Explore, Tools, Settings) -->
+        <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+            <div class="mobile-bottom-nav__capsule"></div>
+            <div class="mobile-bottom-nav__base">
+                <a id="mobile-nav-tab-explore" class="mobile-bottom-nav-item" href="../maps/" aria-label="Explore" title="Explore">
+                    <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/binoculars-1-svgrepo-com.svg'); mask-image: url('../svg/binoculars-1-svgrepo-com.svg');"></span>
+                </a>
+                <a id="mobile-nav-tab-tools" class="mobile-bottom-nav-item" href="../maps/#tools" aria-label="Tools" title="Tools">
+                    <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/hammer-tool-svgrepo-com.svg'); mask-image: url('../svg/hammer-tool-svgrepo-com.svg');"></span>
+                </a>
+                <a id="mobile-nav-tab-settings" class="mobile-bottom-nav-item" href="../maps/#settings" aria-label="Settings" title="Settings">
+                    <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/settings-svgrepo-com.svg'); mask-image: url('../svg/settings-svgrepo-com.svg');"></span>
+                </a>
             </div>
-            <div class="mobile-bottom-nav-item">
-                <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/hammer-tool-svgrepo-com.svg'); mask-image: url('../svg/hammer-tool-svgrepo-com.svg');"></span>
+            <div class="mobile-bottom-nav__overlay" aria-hidden="true">
+                <div class="mobile-bottom-nav-item">
+                    <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/binoculars-1-svgrepo-com.svg'); mask-image: url('../svg/binoculars-1-svgrepo-com.svg');"></span>
+                </div>
+                <div class="mobile-bottom-nav-item">
+                    <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/hammer-tool-svgrepo-com.svg'); mask-image: url('../svg/hammer-tool-svgrepo-com.svg');"></span>
+                </div>
+                <div class="mobile-bottom-nav-item">
+                    <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/settings-svgrepo-com.svg'); mask-image: url('../svg/settings-svgrepo-com.svg');"></span>
+                </div>
             </div>
-            <div class="mobile-bottom-nav-item">
-                <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/settings-svgrepo-com.svg'); mask-image: url('../svg/settings-svgrepo-com.svg');"></span>
-            </div>
-            <div class="mobile-bottom-nav-item">
-                <span class="mobile-bottom-nav-item__icon" style="-webkit-mask-image: url('../svg/home-svgrepo-com.svg'); mask-image: url('../svg/home-svgrepo-com.svg');"></span>
-            </div>
-        </div>
-    </nav>
+        </nav>
+
+        <!-- Standalone Home pill -->
+        <a id="mobile-nav-tab-home" class="mobile-bottom-nav-home" href="../" aria-label="Home" title="Home">
+            <span class="mobile-bottom-nav-home__icon" style="-webkit-mask-image: url('../svg/home-svgrepo-com.svg'); mask-image: url('../svg/home-svgrepo-com.svg');"></span>
+        </a>
+    </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
