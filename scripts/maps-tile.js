@@ -5677,8 +5677,17 @@ document.addEventListener("DOMContentLoaded", init);
 
 
 function setupMobileBottomNav() {
-    // Wire up the Explore tab: snap to map-full view on mobile
+    const nav = document.querySelector(".mobile-bottom-nav");
+    if (!nav) return;
+
+    const baseItems = nav.querySelectorAll(".mobile-bottom-nav__base .mobile-bottom-nav-item");
     const exploreTab = document.getElementById("mobile-nav-tab-explore");
+    const capsule = nav.querySelector(".mobile-bottom-nav__capsule");
+    const overlay = nav.querySelector(".mobile-bottom-nav__overlay");
+
+    if (!baseItems.length || !capsule || !overlay) return;
+
+    // Explore tab behavior: snap to map-full view on mobile
     if (exploreTab) {
         exploreTab.addEventListener("click", (e) => {
             e.preventDefault();
@@ -5688,7 +5697,74 @@ function setupMobileBottomNav() {
             }
         });
     }
-    // Tools/Settings/Home tabs are handled by setupActionButtons and the transition listener above
+
+    let activeIndex = -1;
+    baseItems.forEach((item, index) => {
+        if (item.classList.contains("is-active")) {
+            activeIndex = index;
+        }
+    });
+
+    const prevIndexStr = sessionStorage.getItem("prev-nav-index");
+    let prevIndex = prevIndexStr !== null ? parseInt(prevIndexStr, 10) : -1;
+    sessionStorage.removeItem("prev-nav-index");
+
+    function updateCapsule(targetEl, immediate = false) {
+        if (!targetEl) return;
+        
+        if (immediate) {
+            capsule.style.transition = "none";
+            overlay.style.transition = "none";
+        } else {
+            capsule.style.transition = "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s cubic-bezier(0.16, 1, 0.3, 1)";
+            overlay.style.transition = "clip-path 0.35s cubic-bezier(0.16, 1, 0.3, 1), -webkit-clip-path 0.35s cubic-bezier(0.16, 1, 0.3, 1)";
+        }
+
+        const navRect = nav.getBoundingClientRect();
+        const targetRect = targetEl.getBoundingClientRect();
+
+        const left = targetRect.left - navRect.left;
+        const top = targetRect.top - navRect.top;
+        const width = targetRect.width;
+        const height = targetRect.height;
+
+        capsule.style.transform = `translate(${left}px, ${top}px)`;
+        capsule.style.width = `${width}px`;
+        capsule.style.height = `${height}px`;
+
+        const clipVal = `inset(${top}px ${navRect.width - (left + width)}px ${navRect.height - (top + height)}px ${left}px round 19px)`;
+        overlay.style.clipPath = clipVal;
+        overlay.style.webkitClipPath = clipVal;
+
+        if (immediate) {
+            capsule.offsetHeight;
+            capsule.style.transition = "";
+            overlay.style.transition = "";
+        }
+    }
+
+    if (prevIndex !== -1 && prevIndex !== activeIndex && baseItems[prevIndex]) {
+        updateCapsule(baseItems[prevIndex], true);
+        requestAnimationFrame(() => {
+            updateCapsule(baseItems[activeIndex]);
+        });
+    } else if (activeIndex !== -1) {
+        updateCapsule(baseItems[activeIndex], true);
+    }
+
+    baseItems.forEach((item, index) => {
+        item.addEventListener("click", (e) => {
+            sessionStorage.setItem("prev-nav-index", index);
+            updateCapsule(item);
+        });
+    });
+
+    window.addEventListener("resize", () => {
+        const activeTab = nav.querySelector(".mobile-bottom-nav__base .mobile-bottom-nav-item.is-active");
+        if (activeTab) {
+            updateCapsule(activeTab, true);
+        }
+    });
 }
 
 
