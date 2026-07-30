@@ -659,6 +659,10 @@ async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton
         resetBtnState();
         return;
       }
+    } else if (location.protocol === "http:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+      if (typeof showToast === "function") {
+        showToast("Notice: Apple requires HTTPS for iOS Share Sheet (accessing via HTTP 10.0.0.194).", true);
+      }
     }
   } catch (err) {
     if (err.name === 'AbortError' || err.name === 'NotAllowedError') {
