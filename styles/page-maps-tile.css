@@ -2533,14 +2533,20 @@ body.has-active-modal .maps-tile-header__actions {
 .suggested-app-label {
     font-size: 0.7rem;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.45);
     white-space: nowrap;
-    transition: color 0.2s ease;
+    transition: all 0.2s ease;
+}
+
+.suggested-app-card:hover .suggested-app-label {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
 }
 
 .suggested-app-card.is-active .suggested-app-label {
     color: #7ef7b0;
     font-weight: 600;
+    text-shadow: 0 0 10px rgba(126, 247, 176, 0.5);
 }
 
 /* App Compatibility Search & Autocomplete Styles */
