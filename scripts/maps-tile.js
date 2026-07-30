@@ -5530,6 +5530,9 @@ function setupSidebarScrollListener() {
     const isMobile = () => window.innerWidth <= 768;
     const getScrollTarget = () => isMobile() ? sidebar : scrollBox;
 
+    let lastScrollTop = 0;
+    const bottomNav = document.querySelector(".mobile-bottom-nav");
+
     const onScroll = (e) => {
         const target = e.currentTarget;
         const scrollTop = target.scrollTop;
@@ -5539,6 +5542,17 @@ function setupSidebarScrollListener() {
         sidebar.classList.toggle("is-scrolled", scrolled);
         // body class lets the resize bar ::after gradient fire (sibling of sidebar)
         document.body.classList.toggle("sidebar-is-scrolled", scrolled);
+
+        // Hide/show mobile bottom nav on scroll down/up
+        if (isMobile() && bottomNav) {
+            const delta = scrollTop - lastScrollTop;
+            if (delta > 8 && scrollTop > 50) {
+                bottomNav.classList.add("is-hidden");
+            } else if (delta < -8 || scrollTop <= 10) {
+                bottomNav.classList.remove("is-hidden");
+            }
+            lastScrollTop = Math.max(0, scrollTop);
+        }
     };
 
     // Attach to both — only one will actually be scrolling at a time
