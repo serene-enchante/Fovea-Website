@@ -674,25 +674,188 @@ async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton
     resetBtnState();
   }
 
-  // Fallback for Desktop / Unsupported Browsers
-  if (fileOrBlob instanceof Blob) {
-    const url = URL.createObjectURL(fileOrBlob);
-    const a = document.createElement('a');
+/**
+ * Suggested App Handshake Architecture & Format Preferences
+ * Maps mobile navigation and mapping applications to their optimal spatial file formats and MIME types.
+ */
+const APP_FORMAT_PREFERENCES = {
+  "avenza maps": {
+    appName: "Avenza Maps",
+    formatKey: "geopdf",
+    ext: "pdf",
+    mimeType: "application/pdf"
+  },
+  "avenza": {
+    appName: "Avenza Maps",
+    formatKey: "geopdf",
+    ext: "pdf",
+    mimeType: "application/pdf"
+  },
+  "gaia gps": {
+    appName: "Gaia GPS",
+    formatKey: "gpx",
+    ext: "gpx",
+    mimeType: "application/gpx+xml"
+  },
+  "gaia": {
+    appName: "Gaia GPS",
+    formatKey: "gpx",
+    ext: "gpx",
+    mimeType: "application/gpx+xml"
+  },
+  "caltopo": {
+    appName: "CalTopo",
+    formatKey: "gpx",
+    ext: "gpx",
+    mimeType: "application/gpx+xml"
+  },
+  "osmand maps": {
+    appName: "OsmAnd",
+    formatKey: "gpx",
+    ext: "gpx",
+    mimeType: "application/gpx+xml"
+  },
+  "osmand": {
+    appName: "OsmAnd",
+    formatKey: "gpx",
+    ext: "gpx",
+    mimeType: "application/gpx+xml"
+  }
+};
+
+/**
+ * Generates/retrieves the active spatial dataset as a Blob for a given format key.
+ */
+async function generateAppSpatialBlob(formatKey) {
+  const geojson = getSelectedGeoJSONData();
+  const filename = getActiveDownloadFilename(formatKey === "geopdf" ? "pdf" : formatKey);
+
+  if (formatKey === "geopdf") {
+    const canvas = await renderMapLayoutCanvas();
+    if (window.jspdf && window.jspdf.jsPDF) {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4"
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
+      pdf.setProperties({
+        title: filename.replace(/\.pdf$/, ""),
+        subject: "GeoPDF Map Layout Export - Esri Topo Basemap",
+        creator: "Fovea Web Map Layout Engine"
+      });
+      return { blob: pdf.output("blob"), filename };
+    } else {
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          resolve({ blob, filename: filename.replace(/\.pdf$/, "-layout.png") });
+        }, "image/png");
+      });
+    }
+  } else if (formatKey === "gpx") {
+    const gpxStr = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
+    const blob = new Blob([gpxStr], { type: "application/gpx+xml" });
+    return { blob, filename };
+  } else if (formatKey === "kmz") {
+    const kmlStr = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
+    if (typeof JSZip !== "undefined") {
+      const zip = new JSZip();
+      zip.file("doc.kml", kmlStr);
+      const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
+      return { blob, filename };
+    } else {
+      const blob = new Blob([kmlStr], { type: "application/vnd.google-earth.kml+xml" });
+      return { blob, filename: filename.replace(/\.kmz$/i, ".kml") };
+    }
+  } else {
+    // Default GeoJSON
+    const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
+    return { blob, filename };
+  }
+}
+
+/**
+ * Executes direct app handshake for Suggested Apps (Avenza, Gaia GPS, CalTopo, OsmAnd).
+ */
+async function handleAppDirectOpen(appName, triggerCard = null) {
+  const normName = String(appName).toLowerCase().trim();
+  const pref = APP_FORMAT_PREFERENCES[normName] || {
+    appName: appName,
+    formatKey: "gpx",
+    ext: "gpx",
+    mimeType: "application/gpx+xml"
+  };
+
+  let originalLabelText = "";
+  const labelEl = triggerCard ? triggerCard.querySelector(".suggested-app-name") : null;
+
+  if (triggerCard) {
+    triggerCard.classList.add("is-preparing");
+    if (labelEl) {
+      originalLabelText = labelEl.textContent;
+      labelEl.textContent = "Preparing...";
+    }
+  }
+
+  const resetUi = () => {
+    if (triggerCard) {
+      triggerCard.classList.remove("is-preparing");
+      if (labelEl && originalLabelText) {
+        labelEl.textContent = originalLabelText;
+      }
+    }
+  };
+
+  try {
+    // 1. Fetch/generate spatial file for target app format
+    const { blob, filename } = await generateAppSpatialBlob(pref.formatKey);
+
+    // 2. Prepare iOS/Android compliant File object
+    const shareFile = createIosCompatibleFile(blob, filename);
+
+    // 3. Handshake execution via Web Share API
+    if (navigator.share) {
+      const canShare = navigator.canShare ? navigator.canShare({ files: [shareFile] }) : true;
+      if (canShare) {
+        await navigator.share({
+          files: [shareFile],
+          title: filename,
+          text: `Open with ${pref.appName}`
+        });
+        resetUi();
+        return;
+      }
+    }
+
+    // 4. Fallback for Desktop / Unsupported Browsers
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
     a.href = url;
-    a.download = fileName;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }, 100);
-  } else if (typeof fileOrBlob === 'string') {
-    const a = document.createElement('a');
-    a.href = fileOrBlob;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+
+    if (typeof showToast === "function") {
+      showToast(`File downloaded! Import this file into ${pref.appName}.`);
+    }
+
+  } catch (err) {
+    if (err.name === "AbortError" || err.name === "NotAllowedError") {
+      resetUi();
+      return;
+    }
+    console.warn("App handshake error:", err);
+    if (typeof showToast === "function") {
+      showToast(`Failed to prepare file for ${pref.appName}.`, true);
+    }
+  } finally {
+    resetUi();
   }
 }
 
@@ -3809,7 +3972,7 @@ function setupDownloadAppSearch() {
             });
         }
 
-        card.addEventListener("click", (e) => {
+        card.addEventListener("click", async (e) => {
             e.stopPropagation();
             const appName = card.getAttribute("data-app-name");
             if (!appName) return;
@@ -3834,16 +3997,13 @@ function setupDownloadAppSearch() {
                     if (clearBtn) clearBtn.style.display = "flex";
                     autocompleteBox.style.display = "none";
                     filterFormatsByApp(selectedApp.formats);
-                    if (typeof showToast === "function") {
-                        showToast(`Opening file in ${selectedApp.name}... (Placeholder)`);
-                    }
                 } else {
                     searchInput.value = appName;
                     if (clearBtn) clearBtn.style.display = "flex";
-                    if (typeof showToast === "function") {
-                        showToast(`Opening file in ${appName}... (Placeholder)`);
-                    }
                 }
+                
+                // Execute direct app handshake workflow (Blob fetch -> Web Share -> Fallback Download)
+                await handleAppDirectOpen(appName, card);
             }
         });
     });
