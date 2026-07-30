@@ -557,111 +557,110 @@ function getSelectedGeoJSONData() {
 }
 
 const SPATIAL_MIME_TYPES = {
-    ".gpx": "application/gpx+xml",
-    ".kml": "application/vnd.google-earth.kml+xml",
-    ".kmz": "application/vnd.google-earth.kmz",
-    ".geojson": "application/geo+json",
-    ".json": "application/json",
-    ".pdf": "application/pdf",
-    ".tif": "image/tiff",
-    ".tiff": "image/tiff"
+  gpx: 'application/gpx+xml',
+  kml: 'application/vnd.google-earth.kml+xml',
+  kmz: 'application/vnd.google-earth.kmz',
+  geojson: 'application/geo+json',
+  json: 'application/geo+json',
+  pdf: 'application/pdf',
+  zip: 'application/zip',
+  tif: 'image/tiff',
+  tiff: 'image/tiff'
 };
 
-function getSpatialMimeType(filename) {
-    if (!filename) return "application/octet-stream";
-    const extMatch = String(filename).match(/\.[a-z0-9]+$/i);
-    const ext = extMatch ? extMatch[0].toLowerCase() : "";
-    return SPATIAL_MIME_TYPES[ext] || "application/octet-stream";
-}
+async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton = null) {
+  if (event && event.preventDefault) event.preventDefault();
 
-async function handleFileShareOrDownload(fileOrBlob, filename, triggerButton = null) {
-    let originalButtonText = "";
-    let originalButtonHtml = "";
+  const ext = fileName.split('.').pop().toLowerCase();
+  const mimeType = SPATIAL_MIME_TYPES[ext] || 'application/octet-stream';
 
+  let originalButtonText = "";
+  let originalButtonHtml = "";
+
+  if (triggerButton) {
+    triggerButton.disabled = true;
+    triggerButton.classList.add("is-preparing");
+    const span = triggerButton.querySelector("span");
+    if (span) {
+      originalButtonText = span.textContent;
+      span.textContent = "Preparing...";
+    } else {
+      originalButtonHtml = triggerButton.innerHTML;
+      triggerButton.textContent = "Preparing...";
+    }
+  }
+
+  const resetBtnState = () => {
     if (triggerButton) {
-        triggerButton.disabled = true;
-        triggerButton.classList.add("is-preparing");
-        const span = triggerButton.querySelector("span");
-        if (span) {
-            originalButtonText = span.textContent;
-            span.textContent = "Preparing...";
-        } else {
-            originalButtonHtml = triggerButton.innerHTML;
-            triggerButton.textContent = "Preparing...";
-        }
+      triggerButton.disabled = false;
+      triggerButton.classList.remove("is-preparing");
+      const span = triggerButton.querySelector("span");
+      if (span && originalButtonText) {
+        span.textContent = originalButtonText;
+      } else if (originalButtonHtml) {
+        triggerButton.innerHTML = originalButtonHtml;
+      }
+    }
+  };
+
+  try {
+    let blob;
+    if (fileOrBlob instanceof Blob) {
+      blob = fileOrBlob;
+    } else if (typeof fileOrBlob === 'string') {
+      const response = await fetch(fileOrBlob);
+      if (!response.ok) throw new Error('File download failed');
+      blob = await response.blob();
+    } else {
+      throw new Error('Invalid file format');
     }
 
-    const resetBtnState = () => {
-        if (triggerButton) {
-            triggerButton.disabled = false;
-            triggerButton.classList.remove("is-preparing");
-            const span = triggerButton.querySelector("span");
-            if (span && originalButtonText) {
-                span.textContent = originalButtonText;
-            } else if (originalButtonHtml) {
-                triggerButton.innerHTML = originalButtonHtml;
-            }
-        }
-    };
+    const file = new File([blob], fileName, { type: mimeType });
 
-    try {
-        // 1. Fetch target file as Blob if URL string is passed, or use Blob directly
-        let blob;
-        if (fileOrBlob instanceof Blob) {
-            blob = fileOrBlob;
-        } else if (typeof fileOrBlob === "string") {
-            const res = await fetch(fileOrBlob);
-            blob = await res.blob();
-        } else {
-            throw new Error("Invalid file or blob data");
-        }
-
-        const mimeType = getSpatialMimeType(filename);
-        const file = new File([blob], filename, { type: mimeType });
-
-        // 2 & 3. Check if navigator.canShare supports sharing that File object
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-                await navigator.share({
-                    files: [file],
-                    title: filename,
-                    text: `Exported ${filename} from Fovea`
-                });
-                resetBtnState();
-                return;
-            } catch (shareErr) {
-                if (shareErr.name === "AbortError") {
-                    resetBtnState();
-                    return;
-                }
-                console.warn("Native file share aborted or failed:", shareErr);
-            }
-        }
-
-        // 4. Automatic fallback: standard file download via Blob URL
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 100);
-
-    } catch (err) {
-        console.error("File share/download error:", err);
-        if (typeof showToast === "function") {
-            showToast("Failed to process file download.", true);
-        }
-    } finally {
-        resetBtnState();
+    // Test if device supports sharing files
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: fileName,
+        text: 'Open with your mapping app'
+      });
+      resetBtnState();
+      return;
     }
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      resetBtnState();
+      return;
+    }
+    console.warn('Web Share API failed or unsupported, falling back:', err);
+  } finally {
+    resetBtnState();
+  }
+
+  // Fallback for Desktop / Unsupported Browsers
+  if (fileOrBlob instanceof Blob) {
+    const url = URL.createObjectURL(fileOrBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  } else if (typeof fileOrBlob === 'string') {
+    const a = document.createElement('a');
+    a.href = fileOrBlob;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 }
 
 function saveBlob(blob, filename, triggerButton = null) {
-    return handleFileShareOrDownload(blob, filename, triggerButton);
+  return handleSpatialFileShare(null, blob, filename, triggerButton);
 }
 
 function geojsonToKml(geojson, docName = "Map Data") {
@@ -1287,11 +1286,11 @@ async function downloadGeoPdf(triggerButton = null) {
         });
 
         const pdfBlob = pdf.output("blob");
-        await handleFileShareOrDownload(pdfBlob, filename, triggerButton);
+        await handleSpatialFileShare(null, pdfBlob, filename, triggerButton);
         showToast(`Exported ${filename}`);
     } else {
         canvas.toBlob(async (blob) => {
-            await handleFileShareOrDownload(blob, filename.replace(/\.pdf$/, "-layout.png"), triggerButton);
+            await handleSpatialFileShare(null, blob, filename.replace(/\.pdf$/, "-layout.png"), triggerButton);
             showToast(`Exported ${filename.replace(/\.pdf$/, "-layout.png")}`);
         }, "image/png");
     }
@@ -1301,7 +1300,7 @@ async function downloadGeoTiff(triggerButton = null) {
     const canvas = await renderMapLayoutCanvas();
     const filename = getActiveDownloadFilename("tif");
     const tiffBlob = canvasToTiffBlob(canvas);
-    await handleFileShareOrDownload(tiffBlob, filename, triggerButton);
+    await handleSpatialFileShare(null, tiffBlob, filename, triggerButton);
     showToast(`Exported ${filename}`);
 }
 
@@ -4039,18 +4038,18 @@ function setupActionButtons() {
 
         const geojsonBtn = document.getElementById("download-geojson");
         if (geojsonBtn) {
-            geojsonBtn.addEventListener("click", async () => {
+            geojsonBtn.addEventListener("click", async (e) => {
                 const geojson = getSelectedGeoJSONData();
                 const filename = getActiveDownloadFilename("geojson");
                 const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
-                await handleFileShareOrDownload(blob, filename, geojsonBtn);
+                await handleSpatialFileShare(e, blob, filename, geojsonBtn);
                 showToast(`Exported ${filename}`);
             });
         }
 
         const kmzBtn = document.getElementById("download-kmz");
         if (kmzBtn) {
-            kmzBtn.addEventListener("click", async () => {
+            kmzBtn.addEventListener("click", async (e) => {
                 const geojson = getSelectedGeoJSONData();
                 const filename = getActiveDownloadFilename("kmz");
                 const kmlStr = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
@@ -4062,19 +4061,19 @@ function setupActionButtons() {
                 } else {
                     blob = new Blob([kmlStr], { type: "application/vnd.google-earth.kml+xml" });
                 }
-                await handleFileShareOrDownload(blob, filename, kmzBtn);
+                await handleSpatialFileShare(e, blob, filename, kmzBtn);
                 showToast(`Exported ${filename}`);
             });
         }
 
         const gpxBtn = document.getElementById("download-gpx");
         if (gpxBtn) {
-            gpxBtn.addEventListener("click", async () => {
+            gpxBtn.addEventListener("click", async (e) => {
                 const geojson = getSelectedGeoJSONData();
                 const filename = getActiveDownloadFilename("gpx");
                 const gpxStr = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
                 const blob = new Blob([gpxStr], { type: "application/gpx+xml" });
-                await handleFileShareOrDownload(blob, filename, gpxBtn);
+                await handleSpatialFileShare(e, blob, filename, gpxBtn);
                 showToast(`Exported ${filename}`);
             });
         }
