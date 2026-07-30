@@ -5759,6 +5759,9 @@ function setupMobileBottomNav() {
         capsule.style.width = `${width}px`;
         capsule.style.height = `${height}px`;
 
+        nav.style.setProperty("--active-x", `${left + width / 2}px`);
+        nav.style.setProperty("--active-y", `${top + height / 2}px`);
+
         const clipVal = `inset(${top}px ${navRect.width - (left + width)}px ${navRect.height - (top + height)}px ${left}px round 19px)`;
         overlay.style.clipPath = clipVal;
         overlay.style.webkitClipPath = clipVal;
@@ -5853,6 +5856,9 @@ function setupMobileBottomNav() {
         const top = 6;
         const width = capsuleRect.width;
         const height = capsuleRect.height;
+
+        nav.style.setProperty("--active-x", `${newLeft + width / 2}px`);
+        nav.style.setProperty("--active-y", `${top + height / 2}px`);
         const clipVal = `inset(${top}px ${navRect.width - (newLeft + width)}px ${navRect.height - (top + height)}px ${newLeft}px round 19px)`;
         overlay.style.clipPath = clipVal;
         overlay.style.webkitClipPath = clipVal;
@@ -5899,6 +5905,9 @@ function setupMobileBottomNav() {
             capsule.style.transform = `translate(${left}px, ${top}px)`;
             capsule.style.width = `${width}px`;
             capsule.style.height = `${height}px`;
+
+            nav.style.setProperty("--active-x", `${left + width / 2}px`);
+            nav.style.setProperty("--active-y", `${top + height / 2}px`);
 
             const clipVal = `inset(${top}px ${navRect.width - (left + width)}px ${navRect.height - (top + height)}px ${left}px round 19px)`;
             overlay.style.clipPath = clipVal;
