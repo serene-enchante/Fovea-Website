@@ -805,56 +805,281 @@ async function generateAppSpatialBlob(formatKey) {
 }
 
 /**
- * Direct Avenza Maps Deep Link Importer
- * Background-downloads the GeoPDF (without tab takeover) and presents a full-screen blackout instructional modal.
+ * APP INSTRUCTION CONFIGURATIONS
+ * Dynamic instruction modal settings for suggested mapping apps (Avenza, Gaia GPS, CalTopo, OsmAnd).
  */
-async function openInAvenzaWithFallback(mapFileUrlOrBlob, filename, triggerCard = null) {
-  let blob = mapFileUrlOrBlob;
-  if (!(blob instanceof Blob)) {
-    const { blob: generatedBlob } = await generateAppSpatialBlob("geopdf");
-    blob = generatedBlob;
+const APP_INSTRUCTION_CONFIGS = {
+  avenza: {
+    appKey: "avenza",
+    appName: "Avenza Maps",
+    scheme: "avenzamaps://",
+    formatKey: "geopdf",
+    ext: "pdf",
+    iconSrc: "../images/app_icons/avenza.webp",
+    step1Heading: "Download the GeoPDF",
+    step2Heading: "Launch Avenza Maps",
+    step2Text: "Tap <strong>Continue to Avenza Maps</strong> below to open the app.",
+    step3Heading: "Import Map",
+    step3Text: `Inside Avenza, tap <span class="avenza-ui-badge">+</span> → <strong>From Storage Locations</strong> and select your map PDF from the <strong>Downloads</strong> folder.`,
+    continueBtnText: "Continue to Avenza Maps"
+  },
+  gaia: {
+    appKey: "gaia",
+    appName: "Gaia GPS",
+    scheme: "gaiagps://",
+    formatKey: "gpx",
+    ext: "gpx",
+    iconSrc: "../images/app_icons/gaia.webp",
+    step1Heading: "Download the GPX File",
+    step2Heading: "Launch Gaia GPS",
+    step2Text: "Tap <strong>Continue to Gaia GPS</strong> below to open the app.",
+    step3Heading: "Import Map",
+    step3Text: `Inside Gaia GPS, tap <span class="avenza-ui-badge">+</span> → <strong>Import File</strong> and select your map file from the <strong>Downloads</strong> folder.`,
+    continueBtnText: "Continue to Gaia GPS"
+  },
+  caltopo: {
+    appKey: "caltopo",
+    appName: "CalTopo",
+    scheme: "caltopo://",
+    formatKey: "geojson",
+    ext: "geojson",
+    iconSrc: "../images/app_icons/caltopo.webp",
+    step1Heading: "Download the GeoJSON File",
+    step2Heading: "Launch CalTopo",
+    step2Text: "Tap <strong>Continue to CalTopo</strong> below to open the app.",
+    step3Heading: "Import Map",
+    step3Text: `Inside CalTopo, tap <strong>Import</strong> and select your map file from the <strong>Downloads</strong> folder.`,
+    continueBtnText: "Continue to CalTopo"
+  },
+  osmand: {
+    appKey: "osmand",
+    appName: "OsmAnd",
+    scheme: "osmand://",
+    formatKey: "gpx",
+    ext: "gpx",
+    iconSrc: "../images/app_icons/osmandmaps.webp",
+    step1Heading: "Download the GPX File",
+    step2Heading: "Launch OsmAnd",
+    step2Text: "Tap <strong>Continue to OsmAnd</strong> below to open the app.",
+    step3Heading: "Import Map",
+    step3Text: `Inside OsmAnd, tap <strong>My Places</strong> → <strong>+</strong> and select your map file from the <strong>Downloads</strong> folder.`,
+    continueBtnText: "Continue to OsmAnd"
+  }
+};
+
+/**
+ * Resolves App Store (iOS) or Google Play Store (Android) URL for a given app.
+ */
+function getAppStoreUrl(appKey) {
+  const normKey = String(appKey).toLowerCase().replace(/[^a-z]/g, "");
+  const isAndroid = /android/i.test(navigator.userAgent || "");
+  
+  const storeUrls = {
+    avenza: {
+      ios: "https://apps.apple.com/app/id388424049",
+      android: "https://play.google.com/store/apps/details?id=com.Avenza"
+    },
+    gaia: {
+      ios: "https://apps.apple.com/app/id355727877",
+      android: "https://play.google.com/store/apps/details?id=com.trailbehind.android.gaiagps.pro"
+    },
+    caltopo: {
+      ios: "https://apps.apple.com/app/id1489069904",
+      android: "https://play.google.com/store/apps/details?id=com.caltopo.android"
+    },
+    osmand: {
+      ios: "https://apps.apple.com/app/id934850375",
+      android: "https://play.google.com/store/apps/details?id=net.osmand"
+    }
+  };
+
+  const appStore = storeUrls[normKey] || storeUrls.avenza;
+  return isAndroid ? appStore.android : appStore.ios;
+}
+
+/**
+ * Attempts to launch custom URI scheme. If app is not installed (page context stays active after 1500ms), fallback to App Store / Play Store.
+ */
+function launchAppWithStoreFallback(appScheme, appKey) {
+  const storeUrl = getAppStoreUrl(appKey);
+  const startTime = Date.now();
+
+  let fallbackTimer = setTimeout(() => {
+    if (Date.now() - startTime < 2500) {
+      window.open(storeUrl, "_blank");
+    }
+  }, 1500);
+
+  const clearFallback = () => {
+    clearTimeout(fallbackTimer);
+    window.removeEventListener("blur", clearFallback);
+    document.removeEventListener("visibilitychange", clearFallback);
+  };
+
+  window.addEventListener("blur", clearFallback);
+  document.addEventListener("visibilitychange", clearFallback);
+
+  window.location.href = appScheme;
+}
+
+/**
+ * Dynamically updates the Avenza modal title to match selection type (Zones vs Circles).
+ */
+function updateAvenzaModalHeaderTitle(targetAppName = "Avenza Maps") {
+  const modalTitleEl = document.getElementById("avenza-modal-title");
+  if (!modalTitleEl) return;
+
+  const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
+  const circleName = state.currentFeature === "florence" ? "Florence Count Circle" : "Eugene Count Circle";
+
+  if (state.isCirclesFeature) {
+    modalTitleEl.innerHTML = `Import the <span class="avenza-target-name">Coast to Cascades Bird Alliance</span> into ${targetAppName}`;
+    return;
   }
 
-  const pdfFilename = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
+  if (isCircle) {
+    modalTitleEl.innerHTML = `Import the <span class="avenza-target-name">${circleName}</span> into ${targetAppName}`;
+    return;
+  }
 
-  // 1. Force application/octet-stream to trigger background download WITHOUT opening a new tab
-  const downloadBlob = new Blob([blob], { type: "application/octet-stream" });
-  const url = URL.createObjectURL(downloadBlob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = pdfFilename;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 100);
+  // Zone specific selection
+  const targetFeature = (state.allFeatures || []).find(f => {
+    const zid = f.properties?.zid;
+    return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || (typeof normalizeZoneId === "function" && normalizeZoneId(zid) === normalizeZoneId(state.currentId)));
+  });
 
-  // 2. Open full-screen blackout instructional modal
+  const zoneName = (targetFeature && targetFeature.properties?.zid) 
+    ? `Zone ${displayZoneId(targetFeature.properties.zid)}`
+    : "Zone";
+
+  modalTitleEl.innerHTML = `Import <span class="avenza-target-name">${zoneName}</span> of the <span class="avenza-target-name">${circleName}</span> into ${targetAppName}`;
+}
+
+/**
+ * Returns count circle thumbnail/logo for the current selection (matching top-left header logo).
+ */
+function getActiveSelectionThumbnail() {
+  if (state.isCirclesFeature || state.currentFeature === "circles") {
+    return "../images/whiteLane-Audubon-favicon-152.png";
+  }
+  if (state.currentFeature === "florence") {
+    return "../images/florence.png";
+  }
+  return "../images/logo-small.png";
+}
+
+/**
+ * Opens the blackout instruction modal dynamically configured for any app (Avenza, Gaia GPS, CalTopo, OsmAnd).
+ */
+async function openAppInstructionModal(appKeyOrName, mapFileUrlOrBlob = null, filename = null, triggerCard = null) {
+  const normKey = String(appKeyOrName).toLowerCase().replace(/[^a-z]/g, "");
+  let config = null;
+
+  if (normKey.includes("avenza")) config = APP_INSTRUCTION_CONFIGS.avenza;
+  else if (normKey.includes("gaia")) config = APP_INSTRUCTION_CONFIGS.gaia;
+  else if (normKey.includes("caltopo")) config = APP_INSTRUCTION_CONFIGS.caltopo;
+  else if (normKey.includes("osmand")) config = APP_INSTRUCTION_CONFIGS.osmand;
+  else {
+    config = {
+      appName: appKeyOrName,
+      scheme: `${normKey}://`,
+      formatKey: "gpx",
+      ext: "gpx",
+      iconSrc: "../images/app_icons/gaia.webp",
+      step1Heading: "Download the Map File",
+      step2Heading: `Launch ${appKeyOrName}`,
+      step2Text: `Tap <strong>Continue to ${appKeyOrName}</strong> below to open the app.`,
+      step3Heading: "Import Map",
+      step3Text: `Inside ${appKeyOrName}, select your downloaded map file from the <strong>Downloads</strong> folder.`,
+      continueBtnText: `Continue to ${appKeyOrName}`
+    };
+  }
+
+  let blob = mapFileUrlOrBlob;
+  let mapFilename = filename;
+  if (!(blob instanceof Blob)) {
+    const generated = await generateAppSpatialBlob(config.formatKey);
+    blob = generated.blob;
+    mapFilename = generated.filename;
+  }
+
+  const finalFilename = mapFilename || `map.${config.ext}`;
+  window._pendingAppBlob = blob;
+  window._pendingAppFilename = finalFilename;
+  window._pendingAppScheme = config.scheme;
+  window._pendingAppFormatKey = config.formatKey;
+  window._pendingAppKey = config.appKey || normKey;
+
+  const appIconEl = document.getElementById("avenza-modal-app-icon");
+  if (appIconEl) {
+    appIconEl.src = config.iconSrc;
+    appIconEl.alt = config.appName;
+  }
+
+  updateAvenzaModalHeaderTitle(config.appName);
+
+  const selectionThumbEl = document.getElementById("avenza-selection-thumb");
+  if (selectionThumbEl) selectionThumbEl.src = getActiveSelectionThumbnail();
+
+  const step1Heading = document.getElementById("avenza-step1-heading");
+  if (step1Heading) step1Heading.textContent = config.step1Heading;
+
+  const downloadBtn = document.getElementById("avenza-modal-download-btn");
+  if (downloadBtn) {
+    downloadBtn.classList.remove("is-downloaded");
+    downloadBtn.innerHTML = `
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      <span>Download</span>
+    `;
+  }
+
+  const step2Heading = document.getElementById("avenza-step2-heading");
+  if (step2Heading) step2Heading.textContent = config.step2Heading;
+
+  const step2Text = document.getElementById("avenza-step2-text");
+  if (step2Text) step2Text.innerHTML = config.step2Text;
+
+  const step3Heading = document.getElementById("avenza-step3-heading");
+  if (step3Heading) step3Heading.textContent = config.step3Heading;
+
+  const step3Text = document.getElementById("avenza-step3-text");
+  if (step3Text) step3Text.innerHTML = config.step3Text;
+
+  const continueBtn = document.getElementById("btn-avenza-continue");
+  if (continueBtn) {
+    const continueSpan = continueBtn.querySelector("span");
+    if (continueSpan) continueSpan.textContent = config.continueBtnText;
+  }
+
   const avenzaModal = document.getElementById("avenza-instruction-modal");
-  const filenamePill = document.getElementById("avenza-modal-filename");
-  if (filenamePill) filenamePill.textContent = pdfFilename;
-
   if (avenzaModal) {
     avenzaModal.setAttribute("aria-hidden", "false");
     avenzaModal.classList.add("is-open");
-    document.body.classList.add("has-active-modal");
+    document.body.classList.add("has-active-modal", "has-avenza-modal");
+
+    const bottomNav = document.querySelector(".mobile-bottom-nav-container");
+    if (bottomNav) {
+      bottomNav.classList.add("is-hidden-entirely");
+      bottomNav.style.setProperty("display", "none", "important");
+    }
   }
+}
+
+/**
+ * Direct Avenza Maps Deep Link Importer (Legacy Wrapper)
+ */
+async function openInAvenzaWithFallback(mapFileUrlOrBlob, filename, triggerCard = null) {
+  await openAppInstructionModal("Avenza Maps", mapFileUrlOrBlob, filename, triggerCard);
 }
 
 /**
  * Executes direct app handshake for Suggested Apps (Avenza, Gaia GPS, CalTopo, OsmAnd).
  */
 async function handleAppDirectOpen(appName, triggerCard = null) {
-  const normName = String(appName).toLowerCase().trim();
-  const pref = APP_FORMAT_PREFERENCES[normName] || {
-    appName: appName,
-    scheme: "gpx://",
-    formatKey: "gpx",
-    ext: "gpx",
-    mimeType: "application/gpx+xml"
-  };
-
   let originalLabelText = "";
   const labelEl = triggerCard ? triggerCard.querySelector(".suggested-app-name") : null;
 
@@ -876,56 +1101,13 @@ async function handleAppDirectOpen(appName, triggerCard = null) {
   };
 
   try {
-    // 1. Special handling for Avenza Maps using avenzamaps:// URI protocol
-    if (normName.includes("avenza")) {
-      const { blob, filename } = await generateAppSpatialBlob("geopdf");
-      await openInAvenzaWithFallback(blob, filename, triggerCard);
-      resetUi();
-      return;
-    }
-
-    // 2. Generate optimal spatial file for target app format (e.g. .gpx for OsmAnd/Gaia/CalTopo)
-    const { blob, filename } = await generateAppSpatialBlob(pref.formatKey);
-    const shareFile = createIosCompatibleFile(blob, filename);
-
-    // 3. Handshake execution via Web Share API (Passes file payload directly into iOS app import engine)
-    if (navigator.share) {
-      const canShare = navigator.canShare ? navigator.canShare({ files: [shareFile] }) : true;
-      if (canShare) {
-        await navigator.share({
-          files: [shareFile],
-          title: filename,
-          text: `Import ${filename} into ${pref.appName}`
-        });
-        resetUi();
-        return;
-      }
-    }
-
-    // 4. Fallback for Desktop / Unsupported Browsers
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 100);
-
-    if (typeof showToast === "function") {
-      showToast(`File downloaded! Import this file into ${pref.appName}.`);
-    }
-
-  } catch (err) {
-    if (err.name === "AbortError" || err.name === "NotAllowedError") {
-      resetUi();
-      return;
-    }
-    console.warn("App handshake error:", err);
-  } finally {
+    await openAppInstructionModal(appName, null, null, triggerCard);
     resetUi();
+  } catch (err) {
+    resetUi();
+    if (typeof showToast === "function") {
+      showToast(`Could not open instructions for ${appName}`);
+    }
   }
 }
 
@@ -2002,7 +2184,7 @@ function renderSidebarList() {
             aboutEl.innerHTML = `
                 <div class="sidebar-about-content">
                     <div class="sidebar-about-media">
-                        <img src="../images/wetlands.jpg" alt="Audubon Circles" loading="lazy" />
+                        <img src="../images/wetlands.jpg" alt="Audubon Circles" loading="eager" />
                     </div>
                     <p class="sidebar-about-text">Audubon Christmas Bird Count regional count circles. Click a circle to explore its subdivided survey zones.</p>
                 </div>
@@ -2056,7 +2238,7 @@ function renderSidebarList() {
             } else {
                 thumbHtml = `
                     <div class="tile-zone-item__thumb ${isLogo ? "tile-zone-item__thumb--logo" : ""}">
-                        <img src="${thumbImg}" alt="${cid}" loading="lazy">
+                        <img src="${thumbImg}" alt="${cid}" loading="eager">
                     </div>
                 `;
             }
@@ -2187,7 +2369,7 @@ function renderSidebarList() {
         const imgPath = zoneImagePath(props.zid);
         item.innerHTML = `
             <div class="tile-zone-item__thumb">
-                <img src="${imgPath}" alt="Zone ${zid}" loading="lazy">
+                <img src="${imgPath}" alt="Zone ${zid}" loading="eager">
             </div>
             <div class="tile-zone-item__info">
                 <div class="tile-zone-item__title">Zone ${zid}</div>
@@ -4189,6 +4371,15 @@ function setupActionButtons() {
             avenzaModal.setAttribute("aria-hidden", "true");
             avenzaModal.classList.remove("is-open");
         }
+        document.body.classList.remove("has-avenza-modal");
+
+        // Restore mobile bottom navigation bar upon modal dismissal
+        const bottomNav = document.querySelector(".mobile-bottom-nav-container");
+        if (bottomNav) {
+            bottomNav.classList.remove("is-hidden-entirely");
+            bottomNav.style.removeProperty("display");
+        }
+
         if (downloadModal) {
             downloadModal.setAttribute("aria-hidden", "true");
             downloadModal.classList.remove("is-open");
@@ -4206,20 +4397,68 @@ function setupActionButtons() {
             suggestModal.classList.remove("is-open");
         }
         window.updateActionButtonsState();
+
+        // Refresh sidebar feature thumbnails upon modal dismissal
+        if (typeof renderSidebarList === "function") {
+            renderSidebarList();
+        }
     };
 
     const avenzaModal = document.getElementById("avenza-instruction-modal");
     const avenzaContinueBtn = document.getElementById("btn-avenza-continue");
+    const avenzaDownloadBtn = document.getElementById("avenza-modal-download-btn");
+
+    if (avenzaDownloadBtn) {
+        avenzaDownloadBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            let blob = window._pendingAppBlob || window._pendingAvenzaBlob;
+            let filename = window._pendingAppFilename || window._pendingAvenzaFilename || "map.pdf";
+            let formatKey = window._pendingAppFormatKey || "geopdf";
+
+            if (!(blob instanceof Blob)) {
+                const { blob: generatedBlob, filename: genFilename } = await generateAppSpatialBlob(formatKey);
+                blob = generatedBlob;
+                if (genFilename) filename = genFilename;
+                window._pendingAppBlob = blob;
+            }
+
+            const downloadBlob = new Blob([blob], { type: "application/octet-stream" });
+            const url = URL.createObjectURL(downloadBlob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+
+            avenzaDownloadBtn.classList.add("is-downloaded");
+            avenzaDownloadBtn.innerHTML = `
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Downloaded</span>
+            `;
+        });
+    }
 
     if (avenzaContinueBtn && avenzaModal) {
         avenzaContinueBtn.addEventListener("click", () => {
-            avenzaModal.setAttribute("aria-hidden", "true");
-            avenzaModal.classList.remove("is-open");
-            window.updateActionButtonsState();
-            // Launch Avenza Maps app directly
-            window.location.href = "avenzamaps://";
+            // Launch target app directly with App Store fallback if app is not installed
+            const scheme = window._pendingAppScheme || "avenzamaps://";
+            const appKey = window._pendingAppKey || "avenza";
+            launchAppWithStoreFallback(scheme, appKey);
         });
     }
+
+    // Bind data-modal-close listeners across all modals (including avenza-instruction-modal)
+    document.querySelectorAll("[data-modal-close]").forEach(closeEl => {
+        closeEl.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeAllModals();
+        });
+    });
 
     const handleToolsClick = (e) => {
         e.preventDefault();
@@ -4265,7 +4504,12 @@ function setupActionButtons() {
             const isOpen = copyModal.getAttribute("aria-hidden") === "false";
             closeAllModals();
             if (!isOpen) {
-                if (copyInput) copyInput.value = window.location.href;
+                const currentUrl = window.location.href;
+                if (copyInput) copyInput.value = currentUrl;
+                const qrImg = document.getElementById("copy-link-qr-code");
+                if (qrImg) {
+                    qrImg.src = `https://quickchart.io/qr?text=${encodeURIComponent(currentUrl)}&light=00000000&dark=b8b8b8&size=500&margin=0`;
+                }
                 copyModal.setAttribute("aria-hidden", "false");
                 copyModal.classList.add("is-open");
             }

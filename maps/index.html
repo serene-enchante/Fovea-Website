@@ -385,6 +385,10 @@
                                     </svg>
                                 </button>
                             </div>
+                            <!-- QR Code Section -->
+                            <div class="maps-tile-qr-container">
+                                <img id="copy-link-qr-code" src="" alt="Scan QR Code" class="maps-tile-qr-img" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -612,26 +616,62 @@
     <div id="avenza-instruction-modal" class="modal maps-tile-modal avenza-blackout-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="avenza-modal-title">
         <div class="modal__backdrop avenza-modal-backdrop" data-modal-close="avenza-instruction-modal"></div>
         <div class="modal__panel avenza-modal-panel">
+            <button type="button" class="modal__close maps-tile-modal__close avenza-modal-close"
+                aria-label="Close instructions" data-modal-close="avenza-instruction-modal">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
             <div class="avenza-modal-header">
-                <div class="avenza-modal-icon-badge">
-                    <img src="../images/app_icons/avenza.webp" alt="Avenza Maps" class="avenza-modal-app-icon" />
+                <div class="avenza-transfer-flow">
+                    <div class="avenza-modal-icon-badge avenza-selection-badge">
+                        <img id="avenza-selection-thumb" src="../images/wetlands.jpg" alt="Selected Item" class="avenza-modal-app-icon" />
+                    </div>
+                    <div class="avenza-transfer-arrow">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </div>
+                    <div class="avenza-modal-icon-badge">
+                        <img id="avenza-modal-app-icon" src="../images/app_icons/avenza.webp" alt="Avenza Maps" class="avenza-modal-app-icon" />
+                    </div>
                 </div>
-                <h2 id="avenza-modal-title" class="avenza-modal-title">Import into Avenza Maps</h2>
+                <h2 id="avenza-modal-title" class="avenza-modal-title">Import the <span id="avenza-target-name" class="avenza-target-name">Map</span> into Avenza Maps</h2>
             </div>
             <div class="avenza-modal-body">
                 <div class="avenza-step-list">
+                    <!-- Step 1 -->
                     <div class="avenza-step-item">
-                        <span class="avenza-step-num">1</span>
+                        <div class="avenza-step-badge">1</div>
                         <div class="avenza-step-content">
-                            <strong>GeoPDF Saved to Downloads</strong>
-                            <p>Your map file <span id="avenza-modal-filename" class="avenza-filename-pill">map.pdf</span> was saved to your device's <strong>Downloads</strong> folder.</p>
+                            <h3 id="avenza-step1-heading" class="avenza-step-heading">Download the GeoPDF</h3>
+                            <button type="button" id="avenza-modal-download-btn" class="avenza-step-action-btn">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span>Download</span>
+                            </button>
                         </div>
                     </div>
+                    <!-- Step 2 -->
                     <div class="avenza-step-item">
-                        <span class="avenza-step-num">2</span>
+                        <div class="avenza-step-badge">2</div>
                         <div class="avenza-step-content">
-                            <strong>Open Avenza & Import</strong>
-                            <p>Tap <strong>Continue</strong> below to open Avenza Maps. Inside Avenza, tap <span class="avenza-ui-badge">+</span> → <strong>From Storage Locations</strong> and select your downloaded PDF.</p>
+                            <h3 id="avenza-step2-heading" class="avenza-step-heading">Launch Avenza Maps</h3>
+                            <p id="avenza-step2-text" class="avenza-step-text">Tap <strong>Continue to Avenza Maps</strong> below to open the app.</p>
+                        </div>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="avenza-step-item">
+                        <div class="avenza-step-badge">3</div>
+                        <div class="avenza-step-content">
+                            <h3 id="avenza-step3-heading" class="avenza-step-heading">Import Map</h3>
+                            <p id="avenza-step3-text" class="avenza-step-text">Inside Avenza, tap <span class="avenza-ui-badge">+</span> → <strong>From Storage Locations</strong> and select your map PDF from the <strong>Downloads</strong> folder.</p>
                         </div>
                     </div>
                 </div>
