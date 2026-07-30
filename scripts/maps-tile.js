@@ -838,13 +838,21 @@ async function handleAppDirectOpen(appName, triggerCard = null) {
   };
 
   try {
-    // 1. Fetch/generate spatial file for target app format
-    const { blob, filename } = await generateAppSpatialBlob(pref.formatKey);
+    const isMobile = window.innerWidth <= 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    // 2. Prepare iOS/Android compliant File object
+    // 1. Primary: Direct launch installed iOS/Android app via native URL scheme (osmandmaps://, gaiagps://, avenzamaps://, caltopo://)
+    if (isMobile && pref.scheme) {
+      window.location.href = pref.scheme;
+      setTimeout(() => {
+        resetUi();
+      }, 1200);
+      return;
+    }
+
+    // 2. Secondary/Desktop fallback: Generate optimal file and offer Web Share or Download
+    const { blob, filename } = await generateAppSpatialBlob(pref.formatKey);
     const shareFile = createIosCompatibleFile(blob, filename);
 
-    // 3. Handshake execution via Web Share API
     if (navigator.share) {
       const canShare = navigator.canShare ? navigator.canShare({ files: [shareFile] }) : true;
       if (canShare) {
@@ -858,7 +866,7 @@ async function handleAppDirectOpen(appName, triggerCard = null) {
       }
     }
 
-    // 4. Fallback for Desktop / Unsupported Browsers
+    // 3. Desktop download fallback
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -879,10 +887,7 @@ async function handleAppDirectOpen(appName, triggerCard = null) {
       resetUi();
       return;
     }
-    console.warn("App handshake error:", err);
-    if (typeof showToast === "function") {
-      showToast(`Failed to prepare file for ${pref.appName}.`, true);
-    }
+    console.warn("App launch error:", err);
   } finally {
     resetUi();
   }
