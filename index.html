@@ -706,6 +706,52 @@
         .corner-nav-right:hover span {
             transform: translateX(4px);
         }
+
+        /* Centered Hover Arrow Button (No capsule outline/fill) */
+        .corner-arrow-circle {
+            position: absolute;
+            top: 50%;
+            width: 54px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #72767d; /* Solid grey to prevent transparency overlap artifacts */
+            transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        color 0.25s ease,
+                        left 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        right 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .corner-nav-left .corner-arrow-circle {
+            left: 0;
+            transform: translateY(-50%) translateX(-120%);
+        }
+
+        .corner-nav-left:hover .corner-arrow-circle {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
+            left: 2rem;
+        }
+
+        .corner-nav-right .corner-arrow-circle {
+            right: 0;
+            transform: translateY(-50%) translateX(120%);
+        }
+
+        .corner-nav-right:hover .corner-arrow-circle {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
+            right: 2rem;
+        }
+
+        /* Active highlight for the arrow circle when hovered */
+        .corner-nav-btn:hover .corner-arrow-circle {
+            color: #bfc1c5; /* Solid light grey to prevent transparency overlap artifacts */
+        }
     </style>
     <link rel="stylesheet" href="styles/mobile-bottom-nav.css?v=16">
 </head>
@@ -729,8 +775,24 @@
     </div>
 
     <!-- Corner Navigation Buttons (About & Tools) -->
-    <a href="info/" class="corner-nav-btn corner-nav-left"><span>&lt; About</span></a>
-    <a href="#" class="corner-nav-btn corner-nav-right" data-coming-soon="Tools Page"><span>Tools &gt;</span></a>
+    <a href="info/" class="corner-nav-btn corner-nav-left">
+        <span>About</span>
+        <div class="corner-arrow-circle">
+            <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </div>
+    </a>
+    <a href="#" class="corner-nav-btn corner-nav-right" data-coming-soon="Tools Page">
+        <span>Tools</span>
+        <div class="corner-arrow-circle">
+            <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+        </div>
+    </a>
 
     <main class="home-container">
         <h1 class="logo-title">fovea</h1>
