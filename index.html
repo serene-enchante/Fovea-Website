@@ -66,10 +66,18 @@
             align-items: center;
             justify-content: flex-start;
             min-height: 100vh;
-            padding: clamp(90px, 18vh, 200px) 1.5rem clamp(170px, 30vh, 260px) 1.5rem;
+            padding-top: clamp(170px, 30vh, 280px); /* Centered vertically by default */
+            padding-bottom: clamp(170px, 30vh, 260px);
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
             position: relative;
             z-index: 10;
             pointer-events: none; /* Let clicks pass through empty spaces to globe container underneath */
+            transition: padding-top 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .home-container.search-active {
+            padding-top: clamp(80px, 13vh, 140px); /* Shifts upwards to make room for suggestions dropdown */
         }
 
         /* Ambient Glow Effect */
@@ -666,6 +674,7 @@
             const input = document.getElementById("home-search-input");
             const clearBtn = document.getElementById("home-search-clear");
             const dropdown = document.getElementById("home-autocomplete");
+            const homeContainer = document.querySelector(".home-container");
             let selectedIndex = -1;
             let currentMatches = [];
             let homeMap = null;
@@ -748,6 +757,9 @@
                     dropdown.innerHTML = "";
                     clearBtn.style.display = "none";
                     selectedIndex = -1;
+                    if (homeContainer) {
+                        homeContainer.classList.remove("search-active");
+                    }
 
                     // Restore automatic horizontal rotation centered at the Equator (0)
                     isSpinning = true;
@@ -767,6 +779,9 @@
                 }
 
                 clearBtn.style.display = "flex";
+                if (homeContainer) {
+                    homeContainer.classList.add("search-active");
+                }
 
                 const matches = COUNT_CIRCLES_DATA.filter(circle => 
                     circle.name.toLowerCase().includes(q) ||
@@ -870,6 +885,9 @@
                     dropdown.style.display = "none";
                     currentMatches = [];
                     updateMapMarkers([]);
+                    if (homeContainer) {
+                        homeContainer.classList.remove("search-active");
+                    }
                     // Restore spinning centered at the Equator (0)
                     isSpinning = true;
                     try {
@@ -1013,6 +1031,9 @@
                     if (dropdown) {
                         dropdown.style.display = "none";
                         dropdown.innerHTML = "";
+                    }
+                    if (homeContainer) {
+                        homeContainer.classList.remove("search-active");
                     }
                     currentMatches = [];
                     updateMapMarkers([]);
