@@ -8,6 +8,9 @@
     <meta name="description" content="Fovea - Spatial mapping and count circle data engine. Search and access Christmas Bird Count circles.">
 
     <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="images/logo-fav.png">
 
     <!-- MapLibre GL -->
@@ -604,6 +607,42 @@
             .globe-container.is-flying {
                 transform: translateX(-50%) translateY(-120vh) scale(1.1) !important; /* Keep scale constant at mobile 1.1 */
             }
+            .corner-nav-btn {
+                display: none !important;
+            }
+        }
+
+        /* Corner Navigation Text Buttons (About & Tools) */
+        .corner-nav-btn {
+            position: fixed;
+            bottom: 2.2rem;
+            font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--subtext-color);
+            text-decoration: none;
+            transition: color 0.25s ease, transform 0.25s ease;
+            z-index: 100;
+            user-select: none;
+            pointer-events: auto;
+        }
+
+        .corner-nav-left {
+            left: 2.5rem;
+        }
+
+        .corner-nav-left:hover {
+            color: #ffffff;
+            transform: translateX(-4px);
+        }
+
+        .corner-nav-right {
+            right: 2.5rem;
+        }
+
+        .corner-nav-right:hover {
+            color: #ffffff;
+            transform: translateX(4px);
         }
     </style>
     <link rel="stylesheet" href="styles/mobile-bottom-nav.css?v=16">
@@ -626,6 +665,10 @@
             <span class="status-text">Log in / Sign up</span>
         </div>
     </div>
+
+    <!-- Corner Navigation Buttons (About & Tools) -->
+    <a href="info/" class="corner-nav-btn corner-nav-left">&lt; About</a>
+    <a href="#" class="corner-nav-btn corner-nav-right" data-coming-soon="Tools Page">Tools &gt;</a>
 
     <main class="home-container">
         <h1 class="logo-title">fovea</h1>
