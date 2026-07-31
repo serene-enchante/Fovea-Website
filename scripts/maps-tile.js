@@ -1186,6 +1186,7 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
     }
 }
 
+window.renderSidebarList = renderSidebarList;
 function renderSidebarList() {
     const itemsCapsule = document.querySelector('.sidebar-capsule[data-tab="items"]');
     if (itemsCapsule) {

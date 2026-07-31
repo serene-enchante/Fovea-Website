@@ -48,7 +48,7 @@ export function closeAllModals() {
         window.updateActionButtonsState();
     }
 
-    if (typeof renderSidebarList === "function") {
-        renderSidebarList();
+    if (typeof window.renderSidebarList === "function") {
+        window.renderSidebarList();
     }
 }
