@@ -4533,6 +4533,35 @@ function updateAllAppsModalHeaderTitle() {
   modalTitleEl.innerHTML = `Download <span class="avenza-target-name">${zoneName}</span> of the <span class="avenza-target-name">${circleName}</span> to compatible apps`;
 }
 
+function updateShareModalDescription() {
+    const descEl = document.querySelector(".maps-tile-copy-desc");
+    if (!descEl) return;
+
+    const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
+    const circleName = state.currentFeature === "florence" ? "Florence Count Circle" : "Eugene Count Circle";
+
+    if (state.isCirclesFeature) {
+        descEl.innerHTML = `Copy the link to the <span class="avenza-target-name">Coast to Cascades Bird Alliance</span> map:`;
+        return;
+    }
+
+    if (isCircle) {
+        descEl.innerHTML = `Copy the link to the <span class="avenza-target-name">${circleName}</span>:`;
+        return;
+    }
+
+    const targetFeature = (state.allFeatures || []).find(f => {
+        const zid = f.properties?.zid;
+        return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || (typeof normalizeZoneId === "function" && normalizeZoneId(zid) === normalizeZoneId(state.currentId)));
+    });
+
+    const zoneName = (targetFeature && targetFeature.properties?.zid) 
+        ? `Zone ${displayZoneId(targetFeature.properties.zid)}`
+        : "Zone";
+
+    descEl.innerHTML = `Copy the link to <span class="avenza-target-name">${zoneName}</span> of the <span class="avenza-target-name">${circleName}</span>:`;
+}
+
 function setupSuggestedAppCards() {
     setupAllAppsLiveSearch();
     const viewAllBtn = document.getElementById("btn-view-all-apps");
@@ -5017,10 +5046,24 @@ function setupActionButtons() {
             const isOpen = copyModal.getAttribute("aria-hidden") === "false";
             closeAllModals();
             if (!isOpen) {
+                updateShareModalDescription();
                 const currentUrl = window.location.href;
-                if (copyInput) copyInput.value = currentUrl;
+                if (copyInput) copyInput.value = currentUrl.replace(/^(https?:\/\/)/i, "");
                 const qrImg = document.getElementById("copy-link-qr-code");
                 if (qrImg) {
+                    const qrWrapper = qrImg.parentElement;
+                    if (qrWrapper) {
+                        qrWrapper.classList.add("loading");
+                    }
+                    qrImg.style.opacity = "0";
+                    qrImg.onload = () => {
+                        if (qrWrapper) qrWrapper.classList.remove("loading");
+                        qrImg.style.opacity = "1";
+                    };
+                    qrImg.onerror = () => {
+                        if (qrWrapper) qrWrapper.classList.remove("loading");
+                        qrImg.style.opacity = "0.3";
+                    };
                     qrImg.src = `https://quickchart.io/qr?text=${encodeURIComponent(currentUrl)}&light=00000000&dark=b8b8b8&size=500&margin=0`;
                 }
                 copyModal.setAttribute("aria-hidden", "false");
@@ -5033,7 +5076,7 @@ function setupActionButtons() {
             copyActionBtn.addEventListener("click", async (e) => {
                 e.stopPropagation();
                 try {
-                    await navigator.clipboard.writeText(copyInput.value);
+                    await navigator.clipboard.writeText(window.location.href);
                     showToast("Link copied to clipboard!");
                 } catch (err) {
                     copyInput.select();

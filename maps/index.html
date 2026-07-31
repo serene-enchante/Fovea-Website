@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="../styles/header.css">
     <link rel="stylesheet" href="../styles/cards.css">
     <link rel="stylesheet" href="../styles/maps-components.css">
-    <link rel="stylesheet" href="../styles/page-maps-tile.css?v=113">
+    <link rel="stylesheet" href="../styles/page-maps-tile.css?v=116">
     <link rel="stylesheet" href="../styles/mobile-bottom-nav.css?v=16">
 
     <!-- MapLibre & Fonts -->
@@ -382,7 +382,9 @@
                             </div>
                             <!-- QR Code Section -->
                             <div class="maps-tile-qr-container">
-                                <img id="copy-link-qr-code" src="" alt="Scan QR Code" class="maps-tile-qr-img" />
+                                <div class="maps-tile-qr-wrapper loading">
+                                    <img id="copy-link-qr-code" src="" alt="Scan QR Code" class="maps-tile-qr-img" />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -784,7 +786,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
-    <script src="../scripts/maps-tile.js?v=209"></script>
+    <script src="../scripts/maps-tile.js?v=213"></script>
     <script src="../scripts/mobile-bottom-nav.js?v=1" data-active-page="maps" data-root="../" data-no-scroll-listener></script>
 </body>
 

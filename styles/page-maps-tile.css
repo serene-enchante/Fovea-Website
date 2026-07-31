@@ -2998,14 +2998,51 @@ body.has-active-modal .maps-tile-header__actions {
     width: 100%;
 }
 
+.maps-tile-qr-wrapper {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .maps-tile-qr-img {
     width: 100%;
+    height: 100%;
     max-width: 250px;
-    height: auto;
-    aspect-ratio: 1 / 1;
     display: block;
     object-fit: contain;
     filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4));
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    z-index: 2;
+}
+
+/* Premium shimmer loading skeleton */
+.maps-tile-qr-wrapper.loading::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.05),
+        transparent
+    );
+    transform: translateX(-100%);
+    animation: maps-tile-qr-shimmer 1.5s infinite;
+    z-index: 1;
+}
+
+@keyframes maps-tile-qr-shimmer {
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 /* Suggest Modal & Form Styles */
