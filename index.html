@@ -461,23 +461,7 @@
             z-index: 10;
         }
 
-        /* Proximity Radial Fill Highlight overlay for Earth Globe */
-        .globe-container::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            pointer-events: none;
-            opacity: var(--glow-opacity, 0);
-            transition: opacity 0.1s linear;
-            z-index: 2; /* Renders above MapLibre canvas (0) but below border outline (10) */
-            background: radial-gradient(
-                var(--spotlight-size, 300px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-                rgba(255, 255, 255, 0.15) 0%,
-                rgba(255, 255, 255, 0.04) 50%,
-                transparent 75%
-            );
-        }
+
 
         .globe-container.is-flying {
             transform: translateX(-50%) translateY(-120vh) scale(1.2) !important; /* Keep scale constant at desktop 1.2 */
