@@ -251,11 +251,26 @@
             transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
+
+        /* Fade Overlay for transition */
+        .fade-overlay {
+            position: fixed;
+            inset: 0;
+            background: #000000;
+            opacity: 1;
+            pointer-events: none;
+            z-index: 99999;
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .fade-overlay.is-loaded {
+            opacity: 0;
+        }
     </style>
     <link rel="stylesheet" href="../styles/mobile-bottom-nav.css?v=16">
 </head>
 
 <body>
+    <div class="fade-overlay"></div>
     <div class="ambient-glow"></div>
     <div class="bg-eye-wrapper">
         <img src="../images/eye.jpg" alt="" class="bg-eye-img" />
@@ -296,6 +311,14 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // Fade out page overlay on load
+            const overlay = document.querySelector(".fade-overlay");
+            if (overlay) {
+                setTimeout(() => {
+                    overlay.classList.add("is-loaded");
+                }, 100);
+            }
+
             let toastTimer = null;
             function showComingSoonToast(featureName) {
                 const toast = document.getElementById("toast-notification");

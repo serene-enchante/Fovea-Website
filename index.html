@@ -749,6 +749,124 @@
         .corner-nav-btn:hover .corner-arrow-circle {
             color: #bfc1c5; /* Solid light grey to prevent transparency overlap artifacts */
         }
+
+        /* Page Transition Animations */
+        body.is-transitioning-left,
+        body.is-transitioning-right {
+            background-color: #000000 !important;
+            overflow: hidden !important;
+        }
+
+        /* Prevent pointer events on the page during transitions */
+        body[class*="is-transitioning-"] {
+            pointer-events: none !important;
+        }
+        
+        /* But allow pointer events inside the coming soon screen when it's active */
+        body[class*="is-transitioning-"] .coming-soon-screen {
+            pointer-events: auto !important;
+        }
+
+        /* Left side panel zoom and center */
+        body.is-transitioning-left .corner-nav-left::before {
+            transform: translateY(-50%) translateX(calc(50vw - 50px)) scale(30) !important;
+            border-radius: 0 !important;
+            opacity: 1 !important;
+            z-index: 99999 !important;
+            transition: transform 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                        border-radius 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                        opacity 0.8s ease !important;
+        }
+
+        /* Right side panel zoom and center */
+        body.is-transitioning-right .corner-nav-right::before {
+            transform: translateY(-50%) translateX(calc(-50vw + 50px)) scale(30) !important;
+            border-radius: 0 !important;
+            opacity: 1 !important;
+            z-index: 99999 !important;
+            transition: transform 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                        border-radius 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                        opacity 0.8s ease !important;
+        }
+
+        /* Fade out main elements during transition */
+        body[class*="is-transitioning-"] .home-container,
+        body[class*="is-transitioning-"] .intro-header,
+        body[class*="is-transitioning-"] .settings-btn,
+        body[class*="is-transitioning-"] .profile-pic-container,
+        body[class*="is-transitioning-"] .corner-nav-btn span,
+        body[class*="is-transitioning-"] .corner-arrow-circle {
+            opacity: 0 !important;
+            transition: opacity 0.4s ease !important;
+        }
+
+        /* Keep the transitioning card's parent container visible and in front */
+        body.is-transitioning-left .corner-nav-left,
+        body.is-transitioning-right .corner-nav-right {
+            z-index: 99999 !important;
+        }
+
+        /* Coming Soon Screen style */
+        .coming-soon-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+            text-align: center;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        .coming-soon-screen.is-active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .coming-soon-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .coming-soon-text {
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.55);
+            max-width: 480px;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+
+        .coming-soon-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 9999px;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 0.65rem 1.8rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+        }
+
+        .coming-soon-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            transform: scale(1.02);
+        }
     </style>
     <link rel="stylesheet" href="styles/mobile-bottom-nav.css?v=16">
 </head>
@@ -1150,6 +1268,9 @@
             }
 
             document.querySelectorAll("[data-coming-soon]").forEach(el => {
+                // Skip corner buttons which use advanced page transitions
+                if (el.classList.contains("corner-nav-btn")) return;
+
                 el.addEventListener("click", (e) => {
                     e.preventDefault();
                     const name = el.getAttribute("data-coming-soon");
@@ -1392,11 +1513,90 @@
                         window.location.href = "maps/";
                     }, 1000);
                 });
+
+                // Corner Nav Page Transitions
+                const aboutNavBtn = document.querySelector(".corner-nav-right");
+                const toolsNavBtn = document.querySelector(".corner-nav-left");
+
+                if (aboutNavBtn) {
+                    aboutNavBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        if (document.body.className.includes("is-transitioning-")) return;
+
+                        // Stop globe auto rotation
+                        isSpinning = false;
+                        if (rotationId) cancelAnimationFrame(rotationId);
+
+                        // Trigger transition
+                        document.body.classList.add("is-transitioning-right");
+                        if (fadeOverlay) {
+                            fadeOverlay.classList.add("is-active");
+                        }
+
+                        // Redirect after transition completes
+                        setTimeout(() => {
+                            window.location.href = aboutNavBtn.getAttribute("href");
+                        }, 800);
+                    });
+                }
+
+                if (toolsNavBtn) {
+                    toolsNavBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        if (document.body.className.includes("is-transitioning-")) return;
+
+                        isSpinning = false;
+                        if (rotationId) cancelAnimationFrame(rotationId);
+
+                        document.body.classList.add("is-transitioning-left");
+                        if (fadeOverlay) {
+                            fadeOverlay.classList.add("is-active");
+                        }
+
+                        // Wait for card to fill screen, then show coming soon panel
+                        setTimeout(() => {
+                            const csScreen = document.getElementById("tools-coming-soon-screen");
+                            if (csScreen) {
+                                csScreen.classList.add("is-active");
+                            }
+                        }, 700);
+                    });
+                }
+
+                const backHomeBtn = document.getElementById("back-home-btn");
+                if (backHomeBtn) {
+                    backHomeBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const csScreen = document.getElementById("tools-coming-soon-screen");
+                        if (csScreen) {
+                            csScreen.classList.remove("is-active");
+                        }
+
+                        // Fly card back to the left side
+                        setTimeout(() => {
+                            document.body.classList.remove("is-transitioning-left");
+                            if (fadeOverlay) {
+                                fadeOverlay.classList.remove("is-active");
+                            }
+                            // Resume spinning after returning
+                            isSpinning = true;
+                            rotateGlobe();
+                        }, 300);
+                    });
+                }
             }
 
         });
     </script>
 
+    <!-- Full-Screen Tools Coming Soon Panel Overlay -->
+    <div id="tools-coming-soon-screen" class="coming-soon-screen">
+        <h2 class="coming-soon-title">Tools</h2>
+        <p class="coming-soon-text">Fovea spatial analytics and dataset management tools are under active development.</p>
+        <button type="button" id="back-home-btn" class="coming-soon-btn">Back to Home</button>
+    </div>
 
     <script src="scripts/mobile-bottom-nav.js?v=1" data-active-page="home" data-root="./"></script>
 </body>
