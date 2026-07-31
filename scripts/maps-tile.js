@@ -1,6 +1,3 @@
-
-
-
 // MapLibre prototype polyfill for Leaflet legacy compatibility
 if (typeof maplibregl !== 'undefined' && maplibregl.Map) {
     maplibregl.Map.prototype.invalidateSize = function() {
@@ -8,28 +5,28 @@ if (typeof maplibregl !== 'undefined' && maplibregl.Map) {
     };
 }
 
-import { darkenHexColor, hexToRgba, getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
-import { FALLBACK_IMAGE, normalizeZoneId, displayZoneId, zoneImagePath, formatDate, formatArea } from './utils/format-utils.js';
-import { EUGENE_GEOJSON_PATH, FLORENCE_GEOJSON_PATH, CIRCLES_GEOJSON_PATH, CIRCLE_ID, SPATIAL_MIME_TYPES, APP_FORMAT_PREFERENCES, APP_INSTRUCTION_CONFIGS } from './config/app-config.js';
-import { MAP_STYLES } from './config/map-styles.js';
-import { geojsonToKml, geojsonToGpx, canvasToTiffBlob } from './services/format-converters.js';
-import { toExpression, updatePlaceLabelsFilter, updateAllFeatureStyles, rebuildHtmlLabels, setupMapLayers, selectMapStyleByIndex } from './map/map-layers.js';
+// --- Utils ---
+import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
+import { FALLBACK_IMAGE, normalizeZoneId, displayZoneId, zoneImagePath } from './utils/format-utils.js';
+import { getBbox, findPointInsidePolygon } from './utils/geometry-math.js';
 
+// --- Config ---
+import { EUGENE_GEOJSON_PATH, FLORENCE_GEOJSON_PATH, CIRCLES_GEOJSON_PATH, CIRCLE_ID } from './config/app-config.js';
+
+// --- Services ---
+import { geojsonToKml, geojsonToGpx, canvasToTiffBlob } from './services/format-converters.js';
+import { handleSpatialFileShare } from './services/file-download-service.js';
+
+// --- Map Layers ---
+import { updateAllFeatureStyles, rebuildHtmlLabels, setupMapLayers, selectMapStyleByIndex } from './map/map-layers.js';
+
+// --- Components ---
 import { showToast } from './components/toast-view.js';
-import { updateHeaderLogo, adjustHeaderFontSize, balancedHeaderHTML, updateHeader, getFitPadding } from './components/header-view.js';
-import { getAppStoreUrl, launchAppWithStoreFallback, updateAvenzaModalHeaderTitle, getActiveSelectionThumbnail, openAppInstructionModal, openInAvenzaWithFallback, handleAppDirectOpen } from './components/avenza-modal-view.js';
+import { adjustHeaderFontSize, updateHeader, getFitPadding } from './components/header-view.js';
+import { launchAppWithStoreFallback, handleAppDirectOpen } from './components/avenza-modal-view.js';
 import { setupMobileBottomNav } from './components/bottom-nav-view.js';
 import { closeAllModals } from './components/modal-view.js';
-import { handleSpatialFileShare, saveBlob } from './services/file-download-service.js';
 
-
-
-
-import { getBbox, findPointInsidePolygon, generateZoneGeometrySVG } from './utils/geometry-math.js';
-
-function getDefaultStyle() {
-    return MAP_STYLES.default;
-}
 
 
 
@@ -5129,7 +5126,5 @@ document.addEventListener("DOMContentLoaded", init);
         }
     });
 })();
-
-
 
 
