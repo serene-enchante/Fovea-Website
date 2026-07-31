@@ -347,27 +347,7 @@
             color: var(--subtext-color);
         }
 
-        /* Bottom Quick Links Footer */
-        .home-footer {
-            margin-top: 3rem;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            opacity: 0;
-            animation: fadeInSearch 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.4s;
-            pointer-events: auto; /* Restore interactivity for links */
-        }
 
-        .footer-link {
-            font-size: 0.82rem;
-            color: var(--subtext-color);
-            text-decoration: none;
-            transition: color 0.2s ease;
-        }
-
-        .footer-link:hover {
-            color: #ffffff;
-        }
 
         /* Toast Popup Notification */
         .toast-notification {
@@ -564,12 +544,7 @@
             <div id="home-autocomplete" class="autocomplete-dropdown"></div>
         </div>
 
-        <nav class="home-footer">
-            <a href="maps/" class="footer-link">Interactive Map</a>
-            <a href="info/" class="footer-link">Information</a>
-            <a href="#" class="footer-link" data-coming-soon="Results Data">Results Data</a>
-            <a href="#" class="footer-link" data-coming-soon="Directory">Directory</a>
-        </nav>
+
     </main>
 
     <!-- Globe Portal Container -->
