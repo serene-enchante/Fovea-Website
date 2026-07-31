@@ -11,6 +11,40 @@ if (typeof maplibregl !== 'undefined' && maplibregl.Map) {
     };
 }
 
+// Darken a hex color by a specified percentage factor (0.0 to 1.0)
+function darkenHexColor(hex, percent) {
+    hex = hex.replace(/^s*#|s*$/g, '');
+    if (hex.length === 3) {
+        hex = hex.replace(/(.)/g, '$1$1');
+    }
+    let r = parseInt(hex.substr(0, 2), 16);
+    let g = parseInt(hex.substr(2, 2), 16);
+    let b = parseInt(hex.substr(4, 2), 16);
+
+    const factor = 1 - percent;
+    r = Math.max(0, Math.min(255, Math.round(r * factor)));
+    g = Math.max(0, Math.min(255, Math.round(g * factor)));
+    b = Math.max(0, Math.min(255, Math.round(b * factor)));
+
+    const rs = r.toString(16).padStart(2, '0');
+    const gs = g.toString(16).padStart(2, '0');
+    const bs = b.toString(16).padStart(2, '0');
+
+    return `#${rs}${gs}${bs}`;
+}
+
+// Convert a hex color string to rgba format
+function hexToRgba(hex, alpha) {
+    hex = hex.replace(/^s*#|s*$/g, '');
+    if (hex.length === 3) {
+        hex = hex.replace(/(.)/g, '$1$1');
+    }
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 // Central Theme Accent Helpers — Dynamically read root CSS variables for MapLibre WebGL compatibility
 function getThemeAccent() {
     if (typeof window !== 'undefined' && document.documentElement) {
@@ -464,8 +498,8 @@ function updateAllFeatureStyles() {
         defaultFillColor = '#0d47a1';
         defaultFillOpacity = 0.22;
     } else if (isSatelliteBasemap) {
-        defaultFillColor = '#000000';
-        defaultFillOpacity = 0.25;
+        defaultFillColor = '#000000'; // black fill for satellite only
+        defaultFillOpacity = 0.75; // unselected black fill opacity increased significantly for satellite
     }
 
     const defaultLineColor = isLightBasemap ? '#000000' : '#ffffff';
@@ -473,17 +507,22 @@ function updateAllFeatureStyles() {
     const defaultLineWidth = isLightBasemap ? 2.8 : 1.0;
 
     const noDataFillColor = isLightBasemap ? '#8e8e93' : defaultFillColor;
-    const noDataFillOpacity = isLightBasemap ? 0.30 : (isSatelliteBasemap ? 0.15 : 0.02);
+    const noDataFillOpacity = isLightBasemap ? 0.30 : (isSatelliteBasemap ? 0.60 : 0.02);
     const noDataLineColor = isLightBasemap ? 'rgba(80, 80, 80, 0.60)' : dimLineColor;
 
     const hoverFillColor = isLightBasemap ? '#1e293b' : '#3f3f46';
-    const hoverFillOpacity = isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.06 : 0.05);
-    const noDataHoverFillOpacity = isLightBasemap ? 0.06 : (isSatelliteBasemap ? 0.04 : 0.02);
+    const hoverFillOpacity = isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.88 : 0.05);
+    const noDataHoverFillOpacity = isLightBasemap ? 0.06 : (isSatelliteBasemap ? 0.75 : 0.02);
+
+    const selectedFillColor = getThemeAccent();
+    const selectedFillOpacity = 0.0;
+    const selectedLineColor = getThemeAccentLight();
+    const unselectedOutlineOpacity = isSatelliteBasemap ? 0.70 : 0.18; // significantly increased unselected outline opacity for satellite
 
     if (state.map.getLayer('zones-fill')) {
         state.map.setPaintProperty('zones-fill', 'fill-color', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], getThemeAccent(),
+            ['boolean', ['feature-state', 'selected'], false], selectedFillColor,
             ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
                 0, ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], noDataFillColor, defaultFillColor],
                 1, hoverFillColor
@@ -493,7 +532,7 @@ function updateAllFeatureStyles() {
         const dimNoDataFillOpacity = noDataFillOpacity * 0.25;
         state.map.setPaintProperty('zones-fill', 'fill-opacity', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], 0.0,
+            ['boolean', ['feature-state', 'selected'], false], selectedFillOpacity,
             ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
                 0, ['interpolate', ['linear'], ['coalesce', ['feature-state', 'proximity'], 0],
                     0, ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], dimNoDataFillOpacity, dimFillOpacity],
@@ -509,7 +548,7 @@ function updateAllFeatureStyles() {
     if (state.map.getLayer('zones-outline')) {
         state.map.setPaintProperty('zones-outline', 'line-color', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], getThemeAccentLight(),
+            ['boolean', ['feature-state', 'selected'], false], selectedLineColor,
             ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataLineColor,
             defaultLineColor
         ]);
@@ -521,7 +560,7 @@ function updateAllFeatureStyles() {
         state.map.setPaintProperty('zones-outline', 'line-opacity', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], 1.0,
-            0.18  // constant dim outline; hover no longer changes outline opacity
+            unselectedOutlineOpacity  // dynamic outline opacity based on basemap
         ]);
         state.map.setPaintProperty('zones-outline', 'line-color-transition', { duration: 0 });
         state.map.setPaintProperty('zones-outline', 'line-width-transition', { duration: 0 });
@@ -531,7 +570,7 @@ function updateAllFeatureStyles() {
     if (state.map.getLayer('zones-outline-highlight')) {
         state.map.setPaintProperty('zones-outline-highlight', 'line-color', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], getThemeAccentLight(),
+            ['boolean', ['feature-state', 'selected'], false], selectedLineColor,
             'transparent'
         ]);
         state.map.setPaintProperty('zones-outline-highlight', 'line-width', [
