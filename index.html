@@ -436,7 +436,29 @@
 
         .globe-container:hover {
             transform: translateX(-50%) translateY(-25px) scale(1.26);
-            box-shadow: 0 -8px 50px rgba(0, 0, 0, 0.95), 0 0 30px rgba(var(--accent-rgb), 0.15);
+            box-shadow: 0 -8px 50px rgba(0, 0, 0, 0.95), 0 0 35px rgba(var(--accent-rgb), 0.22);
+        }
+
+        /* Proximity Border Glow/Highlight Outline for Circular Earth Globe */
+        .globe-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            padding: 1.5px;
+            background: radial-gradient(
+                var(--spotlight-size, 300px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(255, 255, 255, 0.38) 0%,
+                rgba(255, 255, 255, 0.12) 40%,
+                transparent 75%
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: var(--glow-opacity, 0);
+            transition: opacity 0.1s linear;
+            z-index: 10;
         }
 
         .globe-container.is-flying {
@@ -882,6 +904,9 @@
             const globePortal = document.getElementById("globe-portal-container");
             const globeDiv = document.getElementById("home-globe");
             const fadeOverlay = document.querySelector(".fade-overlay");
+
+            // Setup proximity glow outline for the globe container
+            setupProximityGlow(globePortal, 250, 300);
 
             if (globePortal && globeDiv) {
                 homeMap = new maplibregl.Map({
