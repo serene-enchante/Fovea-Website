@@ -1500,6 +1500,9 @@
                     isSpinning = false;
                     if (rotationId) cancelAnimationFrame(rotationId);
 
+                    // Save origin for back transitions
+                    sessionStorage.setItem("fovea_nav_origin", "maps");
+
                     // Add transition flight class to container (slides the container straight up with no scale zoom)
                     globePortal.classList.add("is-flying");
 
@@ -1526,6 +1529,9 @@
                         // Stop globe auto rotation
                         isSpinning = false;
                         if (rotationId) cancelAnimationFrame(rotationId);
+
+                        // Save origin for back transitions
+                        sessionStorage.setItem("fovea_nav_origin", "about");
 
                         // Trigger transition
                         document.body.classList.add("is-transitioning-right");
@@ -1588,6 +1594,84 @@
                 }
             }
 
+        });
+
+        // Handle page show event to clear animations and support reverse transition on browser back button
+        window.addEventListener("pageshow", (event) => {
+            const isBackNavigation = event.persisted || 
+                (window.performance && window.performance.navigation.type === 2);
+
+            const origin = sessionStorage.getItem("fovea_nav_origin");
+
+            if (isBackNavigation) {
+                // If we went to the About page, play reverse card zoom animation
+                if (origin === "about") {
+                    document.body.classList.add("is-transitioning-right");
+                    const overlay = document.querySelector(".fade-overlay");
+                    if (overlay) {
+                        overlay.classList.add("is-active");
+                    }
+
+                    // Force layout reflow to register style change before starting transition
+                    void document.body.offsetHeight;
+
+                    // Remove transitioning classes to trigger reverse animation
+                    setTimeout(() => {
+                        document.body.classList.remove("is-transitioning-right");
+                        if (overlay) {
+                            overlay.classList.remove("is-active");
+                        }
+                    }, 50);
+                } 
+                // If we went to the Maps page, play reverse globe fly animation
+                else if (origin === "maps") {
+                    const globePortal = document.getElementById("globe-portal-container");
+                    const overlay = document.querySelector(".fade-overlay");
+                    if (globePortal) {
+                        globePortal.classList.add("is-flying");
+                    }
+                    if (overlay) {
+                        overlay.classList.add("is-active");
+                    }
+
+                    void document.body.offsetHeight;
+
+                    setTimeout(() => {
+                        if (globePortal) {
+                            globePortal.classList.remove("is-flying");
+                        }
+                        if (overlay) {
+                            overlay.classList.remove("is-active");
+                        }
+                    }, 50);
+                }
+                // Fallback cleanup if session storage got cleared or unknown origin
+                else {
+                    document.body.classList.remove("is-transitioning-left", "is-transitioning-right");
+                    const globePortal = document.getElementById("globe-portal-container");
+                    if (globePortal) {
+                        globePortal.classList.remove("is-flying");
+                    }
+                    const overlay = document.querySelector(".fade-overlay");
+                    if (overlay) {
+                        overlay.classList.remove("is-active");
+                    }
+                }
+
+                // Clean up sessionStorage
+                sessionStorage.removeItem("fovea_nav_origin");
+            } else {
+                // On regular first load, always clean up stale states
+                document.body.classList.remove("is-transitioning-left", "is-transitioning-right");
+                const globePortal = document.getElementById("globe-portal-container");
+                if (globePortal) {
+                    globePortal.classList.remove("is-flying");
+                }
+                const overlay = document.querySelector(".fade-overlay");
+                if (overlay) {
+                    overlay.classList.remove("is-active");
+                }
+            }
         });
     </script>
 
