@@ -1258,6 +1258,31 @@ function switchBaseMap(baseMapId) {
     });
     state.currentBaseLayer = baseMapId;
 
+    // Apply road network line opacity dynamically: semi-transparent on satellite, solid on dark
+    const isSatellite = baseMapId === 'satellite';
+    const roadLayers = [
+        'road_service_case', 'road_minor_case', 'road_pri_case_ramp', 'road_trunk_case_ramp', 'road_mot_case_ramp',
+        'road_sec_case_noramp', 'road_pri_case_noramp', 'road_trunk_case_noramp', 'road_mot_case_noramp', 'road_path',
+        'road_service_fill', 'road_minor_fill', 'road_pri_fill_ramp', 'road_trunk_fill_ramp', 'road_mot_fill_ramp',
+        'road_sec_fill_noramp', 'road_pri_fill_noramp', 'road_trunk_fill_noramp', 'road_mot_fill_noramp',
+        'tunnel_service_case', 'tunnel_minor_case', 'tunnel_sec_case', 'tunnel_pri_case', 'tunnel_trunk_case', 'tunnel_mot_case',
+        'tunnel_path', 'tunnel_service_fill', 'tunnel_minor_fill', 'tunnel_sec_fill', 'tunnel_pri_fill', 'tunnel_trunk_fill',
+        'tunnel_mot_fill', 'tunnel_rail', 'tunnel_rail_dash', 'rail', 'rail_dash',
+        'bridge_service_case', 'bridge_minor_case', 'bridge_sec_case', 'bridge_pri_case', 'bridge_trunk_case', 'bridge_mot_case',
+        'bridge_path', 'bridge_service_fill', 'bridge_minor_fill', 'bridge_sec_fill', 'bridge_pri_fill', 'bridge_trunk_fill',
+        'bridge_mot_fill'
+    ];
+    roadLayers.forEach(lId => {
+        if (state.map.getLayer(lId)) {
+            state.map.setPaintProperty(lId, 'line-opacity', isSatellite ? 0.35 : 1.0);
+            if (isSatellite) {
+                state.map.setPaintProperty(lId, 'line-color', '#ffffff');
+            } else if (state._originalRoadColors && state._originalRoadColors[lId] !== undefined) {
+                state.map.setPaintProperty(lId, 'line-color', state._originalRoadColors[lId]);
+            }
+        }
+    });
+
     const tileMapEl = document.getElementById("tile-map");
     if (tileMapEl) {
         tileMapEl.style.setProperty("background-color", "#000000", "important");
@@ -3521,6 +3546,11 @@ function initializeMap() {
         // 2. Add raster layers on top of vector layers (initially hidden unless active)
         const activeLayerId = state.currentBaseLayer || "dark";
 
+        // Insert satellite layer below road network/labels so street lines and labels render as an overlay on top of satellite imagery
+        const beforeId = state.map.getLayer('tunnel_service_case') ? 'tunnel_service_case' :
+                         (state.map.getLayer('road_service_case') ? 'road_service_case' :
+                         (state.map.getLayer('waterway_label') ? 'waterway_label' : undefined));
+
         try {
             state.map.addLayer({
                 id: 'base-satellite',
@@ -3529,7 +3559,7 @@ function initializeMap() {
                 minzoom: 0,
                 maxzoom: 22,
                 layout: { visibility: activeLayerId === 'satellite' ? 'visible' : 'none' }
-            });
+            }, beforeId);
         } catch(e) { console.warn("Error adding base-satellite layer:", e); }
 
         try {
@@ -3567,6 +3597,26 @@ function initializeMap() {
 
         // 3. Tweak vector styles to brighten land, forest green parks, and enlarge road/label names
         try {
+            // Cache original road colors so we can restore them when switching back from Satellite hybrid map
+            state._originalRoadColors = {};
+            const cacheRoadLayers = [
+                'road_service_case', 'road_minor_case', 'road_pri_case_ramp', 'road_trunk_case_ramp', 'road_mot_case_ramp',
+                'road_sec_case_noramp', 'road_pri_case_noramp', 'road_trunk_case_noramp', 'road_mot_case_noramp', 'road_path',
+                'road_service_fill', 'road_minor_fill', 'road_pri_fill_ramp', 'road_trunk_fill_ramp', 'road_mot_fill_ramp',
+                'road_sec_fill_noramp', 'road_pri_fill_noramp', 'road_trunk_fill_noramp', 'road_mot_fill_noramp',
+                'tunnel_service_case', 'tunnel_minor_case', 'tunnel_sec_case', 'tunnel_pri_case', 'tunnel_trunk_case', 'tunnel_mot_case',
+                'tunnel_path', 'tunnel_service_fill', 'tunnel_minor_fill', 'tunnel_sec_fill', 'tunnel_pri_fill', 'tunnel_trunk_fill',
+                'tunnel_mot_fill', 'tunnel_rail', 'tunnel_rail_dash', 'rail', 'rail_dash',
+                'bridge_service_case', 'bridge_minor_case', 'bridge_sec_case', 'bridge_pri_case', 'bridge_trunk_case', 'bridge_mot_case',
+                'bridge_path', 'bridge_service_fill', 'bridge_minor_fill', 'bridge_sec_fill', 'bridge_pri_fill', 'bridge_trunk_fill',
+                'bridge_mot_fill'
+            ];
+            cacheRoadLayers.forEach(lId => {
+                if (state.map.getLayer(lId)) {
+                    state._originalRoadColors[lId] = state.map.getPaintProperty(lId, 'line-color');
+                }
+            });
+
             // Brighten land covers (originally very dark #0e0e0e) to slate-charcoal (#1a1b1e) to separate from black map boundaries
             const landColor = '#1a1b1e';
             const landLayers = ['background', 'landcover', 'park_national_park', 'park_nature_reserve', 'landuse'];
@@ -3660,6 +3710,31 @@ function initializeMap() {
                     const color = placeColors[lId] || '#e2bd7e';
                     state.map.setPaintProperty(lId, 'text-color', color);
                     state.map.setLayoutProperty(lId, 'text-transform', 'none');
+                }
+            });
+
+            // Set initial road network line opacity dynamically: semi-transparent white on satellite, solid default on dark
+            const isSatelliteInitial = (state.currentBaseLayer || 'dark') === 'satellite';
+            const initialRoadLayers = [
+                'road_service_case', 'road_minor_case', 'road_pri_case_ramp', 'road_trunk_case_ramp', 'road_mot_case_ramp',
+                'road_sec_case_noramp', 'road_pri_case_noramp', 'road_trunk_case_noramp', 'road_mot_case_noramp', 'road_path',
+                'road_service_fill', 'road_minor_fill', 'road_pri_fill_ramp', 'road_trunk_fill_ramp', 'road_mot_fill_ramp',
+                'road_sec_fill_noramp', 'road_pri_fill_noramp', 'road_trunk_fill_noramp', 'road_mot_fill_noramp',
+                'tunnel_service_case', 'tunnel_minor_case', 'tunnel_sec_case', 'tunnel_pri_case', 'tunnel_trunk_case', 'tunnel_mot_case',
+                'tunnel_path', 'tunnel_service_fill', 'tunnel_minor_fill', 'tunnel_sec_fill', 'tunnel_pri_fill', 'tunnel_trunk_fill',
+                'tunnel_mot_fill', 'tunnel_rail', 'tunnel_rail_dash', 'rail', 'rail_dash',
+                'bridge_service_case', 'bridge_minor_case', 'bridge_sec_case', 'bridge_pri_case', 'bridge_trunk_case', 'bridge_mot_case',
+                'bridge_path', 'bridge_service_fill', 'bridge_minor_fill', 'bridge_sec_fill', 'bridge_pri_fill', 'bridge_trunk_fill',
+                'bridge_mot_fill'
+            ];
+            initialRoadLayers.forEach(lId => {
+                if (state.map.getLayer(lId)) {
+                    state.map.setPaintProperty(lId, 'line-opacity', isSatelliteInitial ? 0.35 : 1.0);
+                    if (isSatelliteInitial) {
+                        state.map.setPaintProperty(lId, 'line-color', '#ffffff');
+                    } else if (state._originalRoadColors && state._originalRoadColors[lId] !== undefined) {
+                        state.map.setPaintProperty(lId, 'line-color', state._originalRoadColors[lId]);
+                    }
                 }
             });
         } catch(e) {
