@@ -147,6 +147,30 @@
             padding: 0.75rem 1.25rem;
             transition: all 0.25s ease;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            position: relative; /* Relative positioning for glow pseudo-elements */
+            overflow: visible; /* Allows outline highlight to extend slightly outside bounds */
+        }
+
+        /* Proximity Border Highlight Outline for Search Box */
+        .search-box::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 10000px;
+            padding: 1px;
+            background: radial-gradient(
+                var(--spotlight-size, 240px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(255, 255, 255, 0.35) 0%,
+                rgba(255, 255, 255, 0.1) 40%,
+                transparent 75%
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: var(--glow-opacity, 0);
+            transition: opacity 0.1s linear;
+            z-index: 1;
         }
 
         .search-box:focus-within {
@@ -745,6 +769,9 @@
             };
 
             setupProximityGlow(dropdown, 140, 240);
+            
+            const searchBox = document.querySelector(".search-box");
+            setupProximityGlow(searchBox, 140, 240);
 
             const renderDropdown = (query) => {
                 const q = query.trim().toLowerCase();
