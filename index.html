@@ -346,8 +346,66 @@
             font-size: 0.84rem;
             color: var(--subtext-color);
         }
+        /* Top Right Controls */
+        .top-right-controls {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.95rem;
+            z-index: 100;
+            pointer-events: auto;
+            opacity: 0;
+            animation: fadeInSearch 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.4s;
+        }
 
+        .settings-btn {
+            background: none;
+            border: none;
+            padding: 4px;
+            margin: 0;
+            cursor: pointer;
+            color: var(--subtext-color);
+            transition: color 0.25s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
+        .settings-btn:hover {
+            color: #ffffff;
+            transform: rotate(45deg);
+        }
+
+        .user-profile-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--subtext-color);
+            transition: color 0.25s ease;
+            user-select: none;
+        }
+
+        .user-profile-status:hover {
+            color: #ffffff;
+        }
+
+        .profile-pic {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            transition: border-color 0.25s ease;
+        }
+
+        .user-profile-status:hover .profile-pic {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
 
         /* Toast Popup Notification */
         .toast-notification {
@@ -523,6 +581,19 @@
     <div class="fade-overlay is-active"></div>
     <div class="ambient-glow"></div>
     <div id="toast-notification" class="toast-notification"></div>
+
+    <!-- Top Right Controls (Settings & User Profile status) -->
+    <div class="top-right-controls">
+        <button class="settings-btn" aria-label="Settings">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+        </button>
+        <div class="user-profile-status" id="user-profile-status">
+            <span class="status-text">Not logged in</span>
+        </div>
+    </div>
 
     <main class="home-container">
         <h1 class="logo-title">fovea</h1>
@@ -876,6 +947,23 @@
                     showComingSoonToast(name);
                 });
             });
+
+            // Bind click listener for settings button
+            const settingsBtn = document.querySelector(".settings-btn");
+            if (settingsBtn) {
+                settingsBtn.addEventListener("click", () => {
+                    showComingSoonToast("Settings Panel");
+                });
+            }
+
+            // Bind click listener for user profile status
+            const profileStatus = document.getElementById("user-profile-status");
+            if (profileStatus) {
+                profileStatus.style.cursor = "pointer";
+                profileStatus.addEventListener("click", () => {
+                    showComingSoonToast("GitHub Sign-In");
+                });
+            }
 
             // Globe portal initialization and auto-spinning animation logic
             const globePortal = document.getElementById("globe-portal-container");
