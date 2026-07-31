@@ -612,36 +612,56 @@
             }
         }
 
-        /* Corner Navigation Text Buttons (About & Tools) */
+        /* Corner Navigation Text Buttons (About & Tools as Full-Height viewport slivers) */
         .corner-nav-btn {
             position: fixed;
-            bottom: 2.2rem;
+            top: 0;
+            bottom: 0;
+            width: 120px;
             font-family: 'Nunito', system-ui, -apple-system, sans-serif;
             font-size: 1.15rem;
             font-weight: 600;
             color: var(--subtext-color);
             text-decoration: none;
-            transition: color 0.25s ease, transform 0.25s ease;
             z-index: 100;
             user-select: none;
             pointer-events: auto;
+            display: flex;
+            align-items: flex-end;
+            padding-bottom: 2.2rem;
+            transition: color 0.25s ease;
+        }
+
+        .corner-nav-btn span {
+            display: inline-block;
+            transition: transform 0.25s ease;
         }
 
         .corner-nav-left {
-            left: 2.5rem;
+            left: 0;
+            padding-left: 2.5rem;
+            justify-content: flex-start;
         }
 
         .corner-nav-left:hover {
             color: #ffffff;
+        }
+
+        .corner-nav-left:hover span {
             transform: translateX(-4px);
         }
 
         .corner-nav-right {
-            right: 2.5rem;
+            right: 0;
+            padding-right: 2.5rem;
+            justify-content: flex-end;
         }
 
         .corner-nav-right:hover {
             color: #ffffff;
+        }
+
+        .corner-nav-right:hover span {
             transform: translateX(4px);
         }
     </style>
@@ -667,8 +687,8 @@
     </div>
 
     <!-- Corner Navigation Buttons (About & Tools) -->
-    <a href="info/" class="corner-nav-btn corner-nav-left">&lt; About</a>
-    <a href="#" class="corner-nav-btn corner-nav-right" data-coming-soon="Tools Page">Tools &gt;</a>
+    <a href="info/" class="corner-nav-btn corner-nav-left"><span>&lt; About</span></a>
+    <a href="#" class="corner-nav-btn corner-nav-right" data-coming-soon="Tools Page"><span>Tools &gt;</span></a>
 
     <main class="home-container">
         <h1 class="logo-title">fovea</h1>
