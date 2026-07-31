@@ -2625,10 +2625,10 @@ body.has-active-modal .maps-tile-header__actions {
 .all-apps-modal-header {
     width: 100%;
     max-width: 640px;
-    margin: 0 auto 1.25rem auto;
+    margin: 0 auto 2.2rem auto;
     display: flex;
     flex-direction: column;
-    gap: 1.1rem;
+    gap: 1.6rem;
 }
 
 .all-apps-modal-header-top {
@@ -2651,19 +2651,31 @@ body.has-active-modal .maps-tile-header__actions {
 .all-apps-search-box {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    gap: 0.75rem;
+    background: #000000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 9999px;
-    padding: 0.65rem 1.15rem;
+    padding: 0.75rem 1.25rem;
     width: 100%;
     box-sizing: border-box;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .all-apps-search-box:focus-within {
-    border-color: rgba(255, 255, 255, 0.35);
-    box-shadow: 0 0 16px rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.09) !important;
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.all-apps-search-box .search-icon {
+    color: rgba(255, 255, 255, 0.4);
+    flex-shrink: 0;
+    transition: color 0.2s ease;
+}
+
+.all-apps-search-box:focus-within .search-icon {
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .all-apps-search-input {
@@ -2683,15 +2695,15 @@ body.has-active-modal .maps-tile-header__actions {
 }
 
 .all-apps-search-input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.35);
 }
 
 .all-apps-search-clear {
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.4);
     cursor: pointer;
-    padding: 2px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
