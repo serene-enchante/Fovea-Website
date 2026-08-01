@@ -31,33 +31,8 @@ import { closeAllModals } from './components/modal-view.js';
 
 
 
-export const state = {
-    allFeatures: [],
-    circlesFeatures: [],
-    eugeneFeatures: [],
-    florenceFeatures: [],
-    currentFeature: "circles", // "circles", "eugene", "florence"
-    isCirclesFeature: true,
-    currentId: CIRCLE_ID,
-    activeTab: "items",
-    isSwipeTransitionActive: false,
-    map: null,
-    geoJsonLayer: null,
-    featureLayersMap: new Map(), // maps zoneId/cid -> leaflet layer
-    lastZoneClickTime: 0,
-    userLocationMarker: null,
-    userLocationAccuracy: null,
-    isLocating: false,
-    locateControl: null,
-    fullscreenControl: null,
-    layersControl: null,
-    focusedTileIndex: -1,
-    lastNavSource: "click",
-    baseMapsList: [],
-    currentBaseLayer: "dark",
-    snapState: "default"
-};
-
+import { switchToFeature, switchToCirclesFeature, selectSubject } from './map/map-selection.js';
+import { state } from "./state.js";
 
 
 
@@ -683,7 +658,7 @@ function getInitialIdFromUrl() {
     return id ? id.trim() : CIRCLE_ID;
 }
 
-function updateUrl(id) {
+export function updateUrl(id) {
     const url = new URL(window.location.href);
     url.searchParams.delete("id");
 
@@ -746,210 +721,8 @@ function updateControlPositions() {
 
 
 
-function switchToFeature(featureName, circleLayer) {
-    if (!state.map) return;
-
-    let transitionFinished = false;
-
-    const performSwap = () => {
-        if (transitionFinished) return;
-        transitionFinished = true;
-
-        state.currentFeature = featureName;
-        state.isCirclesFeature = false;
-        state.allFeatures = (featureName === "florence") ? state.florenceFeatures : state.eugeneFeatures;
-        state.currentId = CIRCLE_ID;
-
-        rebuildGeoJsonLayer();
-        selectSubject(CIRCLE_ID, false);
-    };
-
-    if (circleLayer) {
-        state.map.once("moveend", performSwap);
-        state.map.fitBounds(circleLayer, {
-            speed: 0.8,
-            curve: 1.4,
-            padding: getFitPadding()
-        });
-        setTimeout(performSwap, 1000);
-    } else {
-        performSwap();
-    }
-}
-
-function switchToCirclesFeature() {
-    state.currentFeature = "circles";
-    state.isCirclesFeature = true;
-    state.allFeatures = state.circlesFeatures;
-    state.currentId = CIRCLE_ID;
-    rebuildGeoJsonLayer();
-    selectSubject(CIRCLE_ID, true);
-}
-
-let _currentHierarchyLevel = 0;
-
-function _getHierarchyLevel(id) {
-    if (state.isCirclesFeature) return 0;
-    if (!id || id === CIRCLE_ID) return 1;
-    return 2;
-}
-
-function selectSubject(id, triggerMapZoom = true, animate = true) {
-    window.scrollTo(0, 0);
-    if (state.isHelpModeActive && window.innerWidth <= 768) return;
-
-    if (window.innerWidth <= 768) {
-        const sidebar = document.querySelector(".maps-tile-sidebar");
-        if (sidebar) {
-            sidebar.scrollTop = 0;
-            sidebar.classList.remove("is-scrolled");
-        }
-        document.body.classList.remove("sidebar-is-scrolled");
-        const header = document.getElementById("sidebar-header");
-        if (header) {
-            header.classList.remove("is-scrolled");
-        }
-    }
-
-    const oldLevel = _currentHierarchyLevel;
-    const newLevel = _getHierarchyLevel(id);
-    _currentHierarchyLevel = newLevel;
-
-    const isLevelChanged = oldLevel !== newLevel;
-
-    const performSelection = () => {
-        state.currentId = id;
-        const backBtn = document.getElementById("btn-capsule-back");
-
-        if (state.isCirclesFeature) {
-            updateHeader("Coast to Cascades Bird Alliance");
-            if (backBtn) backBtn.classList.remove("is-visible");
-            renderSidebarList();
-            updateUrl(id);
-            if (triggerMapZoom && state.map) {
-                state.map.fitBounds(getBbox(state.allFeatures), {
-                    padding: getFitPadding(),
-                    animate: animate,
-                    speed: 0.8,
-                    curve: 1.4
-                });
-            }
-            updateAllFeatureStyles();
-            return;
-        }
-
-        const isCircle = !id || id === CIRCLE_ID;
-        let targetFeature = null;
-        if (!isCircle) {
-            targetFeature = state.allFeatures.find(f => {
-                const zid = f.properties?.zid;
-                return zid && (zid.toLowerCase() === id.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(id));
-            });
-        }
-
-        if (isCircle || !targetFeature) {
-            const titleName = state.currentFeature === "florence" ? "Florence Christmas Bird Count Circle" : "Eugene Christmas Bird Count Circle";
-            updateHeader(titleName);
-            if (backBtn) {
-                backBtn.classList.add("is-visible");
-                backBtn.setAttribute("aria-label", "Back to all circles");
-                backBtn.setAttribute("title", "Back to all circles");
-            }
-        } else {
-            const zid = displayZoneId(targetFeature.properties.zid);
-            updateHeader(`Zone ${zid}`);
-            if (backBtn) {
-                backBtn.classList.add("is-visible");
-                backBtn.setAttribute("aria-label", "Back to full circle");
-                backBtn.setAttribute("title", "Back to full circle");
-            }
-        }
-
-        renderSidebarList();
-        updateAllFeatureStyles();
-
-        if (triggerMapZoom && state.map) {
-            if (isCircle || !targetFeature) {
-                state.map.fitBounds(getBbox(state.allFeatures), {
-                    padding: getFitPadding(),
-                    animate: animate,
-                    speed: 0.8,
-                    curve: 1.4
-                });
-            } else {
-                state.map.fitBounds(getBbox([targetFeature]), {
-                    padding: getFitPadding(20),
-                    maxZoom: 14,
-                    animate: animate,
-                    speed: 0.8,
-                    curve: 1.4
-                });
-            }
-        }
-
-        updateUrl(id);
-        if (typeof state.refreshLayersModal === "function") {
-            state.refreshLayersModal();
-        }
-    };
-
-    // Trigger immediate click fly-out on current contents, update DOM & map mid-flyout, then fly in new screen
-    if (isLevelChanged && animate) {
-        const isMobile = window.innerWidth <= 768;
-
-        // Lock sidebar height on mobile during horizontal slide transition to eliminate vertical stutter/jumps
-        const sidebar = document.querySelector(".maps-tile-sidebar");
-        if (isMobile && sidebar) {
-            const currentH = sidebar.offsetHeight;
-            if (currentH > 0) {
-                sidebar.style.minHeight = `${currentH}px`;
-                sidebar.style.maxHeight = `${currentH}px`;
-                setTimeout(() => {
-                    sidebar.style.minHeight = "";
-                    sidebar.style.maxHeight = "";
-                }, 380);
-            }
-        }
-
-        const animElements = [
-            !isMobile ? document.querySelector('.maps-tile-header') : null,
-            document.getElementById('sidebar-header'),
-            document.querySelector('.sidebar-list-container'),
-            document.querySelector('.sidebar-about-panel')
-        ].filter(Boolean);
-
-        const isGoingUp = newLevel < oldLevel;
-        const outClass = isGoingUp ? 'anim-fly-out-right' : 'anim-fly-out-left';
-        const inClass  = isGoingUp ? 'anim-fly-in-left'   : 'anim-fly-in-right';
-
-        // 1. Immediately on click: fly out current contents
-        animElements.forEach(el => {
-            el.classList.remove('anim-fly-out-left', 'anim-fly-out-right', 'anim-fly-in-left', 'anim-fly-in-right');
-            el.classList.add(outClass);
-        });
-
-        // 2. Mid-flyout (130ms): Update DOM content & trigger map zoom, then fly in new content
-        setTimeout(() => {
-            performSelection();
-
-            animElements.forEach(el => {
-                el.classList.remove(outClass);
-                el.classList.add(inClass);
-            });
-
-            setTimeout(() => {
-                animElements.forEach(el => {
-                    el.classList.remove('anim-fly-out-left', 'anim-fly-out-right', 'anim-fly-in-left', 'anim-fly-in-right');
-                });
-            }, 220);
-        }, 130);
-    } else {
-        performSelection();
-    }
-}
-
 window.renderSidebarList = renderSidebarList;
-function renderSidebarList() {
+export function renderSidebarList() {
     const itemsCapsule = document.querySelector('.sidebar-capsule[data-tab="items"]');
     if (itemsCapsule) {
         itemsCapsule.textContent = state.isCirclesFeature ? "Circles" : "Circle Zones";
@@ -1047,9 +820,9 @@ function renderSidebarList() {
                 const feature = state.circlesFeatures.find(f => f.properties.cid === cid);
                 const bbox = feature ? getBbox(feature) : null;
                 if (cid === "Eugene") {
-                    switchToFeature("eugene", bbox);
+                    switchToFeature("eugene");
                 } else if (cid === "Florence") {
-                    switchToFeature("florence", bbox);
+                    switchToFeature("florence");
                 } else if (cid === "Oakridge" || cid === "Cottage Grove") {
                     showToast("There is no data for this count circle");
                 }
@@ -1598,7 +1371,7 @@ function updateLabelZoomVisibility() {
 }
 
 
-function rebuildGeoJsonLayer() {
+export function rebuildGeoJsonLayer() {
     if (!state.map) return;
     
     const grouped = {};
@@ -1893,9 +1666,9 @@ function rebuildGeoJsonLayer() {
                 
                 if (state.isCirclesFeature) {
                     if (props.cid === "Eugene") {
-                        switchToFeature("eugene", getBbox([e.features[0]]));
+                        switchToFeature("eugene");
                     } else if (props.cid === "Florence") {
-                        switchToFeature("florence", getBbox([e.features[0]]));
+                        switchToFeature("florence");
                     } else if (props.cid === "Oakridge" || props.cid === "Cottage Grove") {
                         showToast("There is no data for this count circle");
                     }

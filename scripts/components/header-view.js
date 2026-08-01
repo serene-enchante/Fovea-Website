@@ -1,4 +1,4 @@
-import { state } from '../maps-tile.js';
+import { state } from '../state.js';
 import { normalizeZoneId } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 
