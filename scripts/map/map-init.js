@@ -160,3 +160,43 @@ export function toggleLocationTracking() {
         );
     }
 }
+
+export function preloadGlobalLowResTiles() {
+    const tileUrls = [];
+    
+    // 1. Dark tiles (balanced across a, b, c, d subdomains)
+    const darkSubdomains = ['a', 'b', 'c', 'd'];
+    for (let z = 0; z <= 2; z++) {
+        const limit = Math.pow(2, z);
+        for (let x = 0; x < limit; x++) {
+            for (let y = 0; y < limit; y++) {
+                const subdomain = darkSubdomains[(x + y) % 4];
+                tileUrls.push(`https://${subdomain}.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png`);
+            }
+        }
+    }
+    
+    // 2. Satellite, Street, Topo tiles
+    const templates = [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+    ];
+    
+    templates.forEach(template => {
+        for (let z = 0; z <= 2; z++) {
+            const limit = Math.pow(2, z);
+            for (let x = 0; x < limit; x++) {
+                for (let y = 0; y < limit; y++) {
+                    tileUrls.push(template.replace("{z}", z).replace("{y}", y).replace("{x}", x));
+                }
+            }
+        }
+    });
+
+    // Load all in parallel via browser cache preloading
+    tileUrls.forEach(url => {
+        const img = new Image();
+        img.src = url;
+    });
+}
