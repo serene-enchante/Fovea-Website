@@ -9,26 +9,55 @@ import { getBbox } from '../utils/geometry-math.js';
 export function switchToFeature(featureName) {
     if (!state.map) return;
     
-    // 1. Consolidate State Updates Synchronously FIRST
-    state.currentFeature = featureName;
-    state.isCirclesFeature = false;
-    state.allFeatures = (featureName === "florence") ? state.florenceFeatures : state.eugeneFeatures;
-    state.currentId = CIRCLE_ID;
+    let transitionFinished = false;
+    const targetFeatures = (featureName === "florence") ? state.florenceFeatures : state.eugeneFeatures;
+    const circleLayer = getBbox(targetFeatures);
 
-    // 2. Rebuild the map layer data (synchronously updates the source)
-    rebuildGeoJsonLayer();
-    
-    // 3. Trigger selectSubject which will update the header, render the sidebar ONCE, and fly to the new bounds
-    selectSubject(CIRCLE_ID, true, true);
+    const performSwap = () => {
+        if (transitionFinished) return;
+        transitionFinished = true;
+
+        state.currentFeature = featureName;
+        state.isCirclesFeature = false;
+        state.allFeatures = targetFeatures;
+        state.currentId = CIRCLE_ID;
+
+        rebuildGeoJsonLayer();
+        selectSubject(CIRCLE_ID, false, false);
+    };
+
+    if (circleLayer) {
+        state.map.once("moveend", performSwap);
+        state.map.fitBounds(circleLayer, {
+            speed: 0.8,
+            curve: 1.4,
+            padding: getFitPadding()
+        });
+        setTimeout(performSwap, 1500);
+    } else {
+        performSwap();
+    }
 }
 
 export function switchToCirclesFeature() {
+    if (!state.map) return;
     state.currentFeature = "circles";
     state.isCirclesFeature = true;
     state.allFeatures = state.circlesFeatures;
     state.currentId = CIRCLE_ID;
+
     rebuildGeoJsonLayer();
     selectSubject(CIRCLE_ID, true);
+
+    const macroBbox = getBbox(state.circlesFeatures);
+    if (macroBbox) {
+        if (state.map.isMoving()) state.map.stop();
+        state.map.fitBounds(macroBbox, {
+            speed: 0.8,
+            curve: 1.4,
+            padding: typeof getFitPadding === 'function' ? getFitPadding() : 0
+        });
+    }
 }
 
 let _currentHierarchyLevel = 0;
