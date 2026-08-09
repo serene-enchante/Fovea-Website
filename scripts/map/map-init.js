@@ -1,3 +1,6 @@
+import { isPointInGeoJSONGeometry } from '../utils/geometry-math.js';
+import { displayZoneId } from '../utils/format-utils.js';
+import { showToast } from '../components/toast-view.js';
 import { state } from '../state.js';
 import { MAP_STYLES } from '../config/map-styles.js';
 import { updateAllFeatureStyles } from './map-layers.js';
@@ -60,5 +63,100 @@ export function switchBaseMap(baseMapId) {
 
     if (typeof updateAllFeatureStyles === "function") {
         updateAllFeatureStyles();
+    }
+}
+
+let watchId = null;
+
+// Stub for missing function from original code
+function updateUserLocationOnMap(lng, lat, accuracy) {
+    console.warn("updateUserLocationOnMap called but not fully implemented.", lng, lat, accuracy);
+}
+
+export function checkUserLocationZone(latlng) {
+    const badge = document.getElementById("user-location-badge");
+    if (!badge) return;
+
+    if (!state.isLocating || !latlng) {
+        badge.classList.remove("is-visible");
+        badge.innerHTML = "";
+        return;
+    }
+
+    const lng = latlng.lng;
+    const lat = latlng.lat;
+
+    let foundFeature = null;
+    for (let f of state.allFeatures) {
+        if (isPointInGeoJSONGeometry(lng, lat, f.geometry)) {
+            foundFeature = f;
+            break;
+        }
+    }
+
+    if (foundFeature) {
+        const props = foundFeature.properties || {};
+        let zoneName = "";
+        if (state.isCirclesFeature) {
+            zoneName = props.cid || "Circle";
+        } else {
+            const zid = displayZoneId(props.zid);
+            zoneName = `Zone ${zid}`;
+        }
+        badge.innerHTML = `<span class="map-location-badge__dot"></span><span>You are in ${zoneName}</span>`;
+        badge.classList.add("is-visible");
+    } else {
+        badge.classList.remove("is-visible");
+        badge.innerHTML = "";
+    }
+}
+
+export function toggleLocationTracking() {
+    if (!state.map) return;
+    const locateControlEl = document.querySelector(".map-ctrl-locate");
+
+    if (state.isLocating) {
+        state.isLocating = false;
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+        }
+        if (state.userLocationMarker) {
+            state.userLocationMarker.remove();
+            state.userLocationMarker = null;
+        }
+        if (state.map.getSource('user-accuracy-source')) {
+            if (state.map.getLayer('user-accuracy-layer')) state.map.removeLayer('user-accuracy-layer');
+            state.map.removeSource('user-accuracy-source');
+        }
+        if (locateControlEl) locateControlEl.classList.remove("is-active");
+        checkUserLocationZone(null);
+    } else {
+        state.isLocating = true;
+        if (locateControlEl) locateControlEl.classList.add("is-active");
+        
+        if (!navigator.geolocation) {
+            showToast("Geolocation is not supported by your browser");
+            state.isLocating = false;
+            if (locateControlEl) locateControlEl.classList.remove("is-active");
+            return;
+        }
+
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const lng = position.coords.longitude;
+                const lat = position.coords.latitude;
+                const accuracy = position.coords.accuracy;
+                updateUserLocationOnMap(lng, lat, accuracy);
+            },
+            (error) => {
+                console.error("Location error:", error);
+                state.isLocating = false;
+                if (locateControlEl) locateControlEl.classList.remove("is-active");
+                checkUserLocationZone(null);
+                showToast("Unable to access device location");
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
     }
 }
