@@ -1,18 +1,12 @@
 import { state } from '../state.js';
-import { CIRCLE_ID } from '../config/app-config.js';
-import { getBbox } from '../utils/geometry-math.js';
-import { displayZoneId } from '../utils/format-utils.js';
 import { canvasToTiffBlob } from '../services/format-converters.js';
 import { handleSpatialFileShare } from '../services/file-download-service.js';
+import { FALLBACK_IMAGE, displayZoneId } from '../utils/format-utils.js';
+import { CIRCLE_ID } from '../config/app-config.js';
+import { showToast } from '../components/toast-view.js';
 import { switchBaseMap } from './map-init.js';
-import { selectSubject } from './map-selection.js';
-import { adjustHeaderFontSize } from '../components/header-view.js';
-import { updateControlPositions, updateLabelZoomVisibility, getActiveDownloadFilename } from '../maps-tile.js';
 
-// We need a toast fallback if it's not imported. It's usually global or we can define a stub.
-const showToast = window.showToast || ((msg) => console.log(msg));
-
-export getLayoutScaleBar(map, layoutMapWidth) {
+export function getLayoutScaleBar(map, layoutMapWidth) {
     if (!map) return { miles: 1, pxWidth: 150 };
     const canvas = map.getCanvas();
     const cX = canvas.width / 2;
@@ -54,20 +48,7 @@ export getLayoutScaleBar(map, layoutMapWidth) {
     return { miles: chosenMiles, pxWidth: scaleBarPx };
 }
 
-
-export loadQrCodeImage(dataUrl) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&format=png&data=${encodeURIComponent(dataUrl)}`;
-        setTimeout(() => resolve(null), 1500);
-    });
-}
-
-
-export renderMapLayoutCanvas() {
+export async function renderMapLayoutCanvas() {
     showToast("Rendering Esri Topo Print Layout...");
     
     // Remember current active basemap to restore later
@@ -380,52 +361,7 @@ export renderMapLayoutCanvas() {
     }
 }
 
-
-
-export downloadGeoPdf(triggerButton = null) {
-    const canvas = await renderMapLayoutCanvas();
-    const filename = getActiveDownloadFilename("pdf");
-    
-    if (window.jspdf && window.jspdf.jsPDF) {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-            orientation: "landscape",
-            unit: "mm",
-            format: "a4"
-        });
-        
-        const imgData = canvas.toDataURL("image/jpeg", 0.92);
-        pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
-        
-        pdf.setProperties({
-            title: filename.replace(/\.pdf$/, ""),
-            subject: "GeoPDF Map Layout Export - Esri Topo Basemap",
-            keywords: "GeoPDF, GIS, Map, Esri Topo, Fovea",
-            creator: "Fovea Web Map Layout Engine"
-        });
-
-        const pdfBlob = pdf.output("blob");
-        await handleSpatialFileShare(null, pdfBlob, filename, triggerButton);
-        showToast(`Exported ${filename}`);
-    } else {
-        canvas.toBlob(async (blob) => {
-            await handleSpatialFileShare(null, blob, filename.replace(/\.pdf$/, "-layout.png"), triggerButton);
-            showToast(`Exported ${filename.replace(/\.pdf$/, "-layout.png")}`);
-        }, "image/png");
-    }
-}
-
-
-export downloadGeoTiff(triggerButton = null) {
-    const canvas = await renderMapLayoutCanvas();
-    const filename = getActiveDownloadFilename("tif");
-    const tiffBlob = canvasToTiffBlob(canvas);
-    await handleSpatialFileShare(null, tiffBlob, filename, triggerButton);
-    showToast(`Exported ${filename}`);
-}
-
-
-export setupMapEffectsAndFullscreen(mapWrapper) {
+export function setupMapEffectsAndFullscreen(mapWrapper) {
     if (!mapWrapper) return;
 
     mapWrapper.onmousemove = e => {
@@ -479,3 +415,83 @@ export setupMapEffectsAndFullscreen(mapWrapper) {
     window.addEventListener("orientationchange", handleResize);
 }
 
+export async function downloadGeoPdf(filename, triggerButton = null) {
+    try {
+        if (triggerButton) {
+            triggerButton.disabled = true;
+            triggerButton.classList.add("is-preparing");
+        }
+        const canvas = await renderMapLayoutCanvas();
+        
+        if (window.jspdf && window.jspdf.jsPDF) {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: "landscape",
+                unit: "mm",
+                format: "a4"
+            });
+            
+            const imgData = canvas.toDataURL("image/jpeg", 0.92);
+            pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
+            
+            pdf.setProperties({
+                title: filename.replace(/\.pdf$/, ""),
+                subject: "GeoPDF Map Layout Export - Esri Topo Basemap",
+                keywords: "GeoPDF, GIS, Map, Esri Topo, Fovea",
+                creator: "Fovea Web Map Layout Engine"
+            });
+
+            const pdfBlob = pdf.output("blob");
+            triggerDirectDownload(pdfBlob, filename);
+            showToast(`Exported ${filename}`);
+        } else {
+            canvas.toBlob((blob) => {
+                triggerDirectDownload(blob, filename.replace(/\.pdf$/, "-layout.png"));
+                showToast(`Exported ${filename.replace(/\.pdf$/, "-layout.png")}`);
+            }, "image/png");
+        }
+    } catch (e) {
+        console.error("PDF generation failed:", e);
+        showToast("Error generating PDF layout.");
+    } finally {
+        if (triggerButton) {
+            triggerButton.disabled = false;
+            triggerButton.classList.remove("is-preparing");
+        }
+    }
+}
+
+export async function downloadGeoTiff(filename, triggerButton = null) {
+    try {
+        if (triggerButton) {
+            triggerButton.disabled = true;
+            triggerButton.classList.add("is-preparing");
+        }
+        const canvas = await renderMapLayoutCanvas();
+        const tiffBlob = canvasToTiffBlob(canvas);
+        triggerDirectDownload(tiffBlob, filename);
+        showToast(`Exported ${filename}`);
+    } catch (e) {
+        console.error("TIFF generation failed:", e);
+        showToast("Error generating TIFF layout.");
+    } finally {
+        if (triggerButton) {
+            triggerButton.disabled = false;
+            triggerButton.classList.remove("is-preparing");
+        }
+    }
+}
+
+function triggerDirectDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 100);
+}
