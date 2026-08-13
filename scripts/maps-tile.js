@@ -35,6 +35,7 @@ import { switchToFeature, switchToCirclesFeature, selectSubject } from './map/ma
 import { state } from "./state.js";
 import { getLayoutScaleBar, renderMapLayoutCanvas, setupMapEffectsAndFullscreen, downloadGeoPdf, downloadGeoTiff } from './map/map-rendering.js';
 import { switchBaseMap, checkUserLocationZone, toggleLocationTracking, preloadGlobalLowResTiles } from "./map/map-init.js";
+import { setupSearch } from './map/map-search.js';
 
 
 
@@ -2838,90 +2839,7 @@ async function performDirectCopyLink() {
     }
 }
 
-function setupSearch() {
-    const header = document.getElementById("sidebar-header");
-    const toggleBtn = document.getElementById("btn-search-toggle");
-    const closeBtn = document.getElementById("btn-search-close");
-    const searchInput = document.getElementById("sidebar-search-input");
-    const listContainer = document.getElementById("sidebar-zone-list");
 
-    if (!header || !toggleBtn || !closeBtn || !searchInput || !listContainer) return;
-
-    let savedSnapState = null;
-
-    const openSearch = (e) => {
-        if (e) e.preventDefault();
-
-        if (window.innerWidth <= 768) {
-            savedSnapState = state.snapState || "default";
-            setMobileSnapState("selection-full", true);
-        }
-
-        header.classList.add("is-searching");
-        header.classList.add("is-search-active");
-        searchInput.value = "";
-        filterList("");
-        searchInput.focus();
-        setTimeout(() => searchInput.focus(), 100);
-    };
-
-    const closeSearch = () => {
-        header.classList.remove("is-searching");
-        header.classList.remove("is-search-active");
-        searchInput.value = "";
-        filterList("");
-
-        if (window.innerWidth <= 768 && savedSnapState) {
-            setMobileSnapState(savedSnapState, true);
-            savedSnapState = null;
-        }
-    };
-
-    const filterList = (query) => {
-        const q = query.trim().toLowerCase();
-        const items = listContainer.querySelectorAll(".tile-zone-item");
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            const id = (item.getAttribute("data-id") || "").toLowerCase();
-            if (!q || text.includes(q) || id.includes(q)) {
-                item.style.display = "";
-            } else {
-                item.style.display = "none";
-            }
-        });
-    };
-
-    toggleBtn.addEventListener("click", openSearch);
-    toggleBtn.addEventListener("touchend", (e) => {
-        e.preventDefault();
-        openSearch(e);
-    });
-    closeBtn.addEventListener("click", closeSearch);
-
-    searchInput.addEventListener("input", (e) => {
-        filterList(e.target.value);
-    });
-
-    searchInput.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-            closeSearch();
-        }
-    });
-
-    searchInput.addEventListener("focus", () => {
-        if (window.innerWidth <= 768) {
-            window.scrollTo(0, 0);
-            document.body.scrollTop = 0;
-        }
-    });
-
-    searchInput.addEventListener("blur", () => {
-        if (window.innerWidth <= 768) {
-            window.scrollTo(0, 0);
-            document.body.scrollTop = 0;
-        }
-    });
-}
 
 function setupCapsules() {
     const capsules = document.querySelectorAll(".sidebar-capsule");
@@ -2959,7 +2877,7 @@ function updateBottomNavVisibilityForSnapState(snapState) {
     }
 }
 
-function setMobileSnapState(snapState, animate = true) {
+export function setMobileSnapState(snapState, animate = true) {
     const mapArea = document.querySelector(".maps-tile-map-area");
     const sidebar = document.querySelector(".maps-tile-sidebar");
     const resizeBar = document.getElementById("mobile-resize-bar");
