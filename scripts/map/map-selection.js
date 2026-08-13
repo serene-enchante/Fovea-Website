@@ -23,7 +23,7 @@ export function switchToFeature(featureName) {
         state.currentId = CIRCLE_ID;
 
         rebuildGeoJsonLayer();
-        selectSubject(CIRCLE_ID, false, false);
+        selectSubject(CIRCLE_ID, false, true);
     };
 
     if (circleLayer) {
@@ -212,6 +212,9 @@ export function selectSubject(id, triggerMapZoom = true, animate = true) {
         // 2. Mid-flyout (130ms): Update DOM content & trigger map zoom, then fly in new content
         setTimeout(() => {
             performSelection();
+
+            // Force micro-reflow so the browser acknowledges new DOM state before animating in
+            animElements.forEach(el => void el.offsetWidth);
 
             animElements.forEach(el => {
                 el.classList.remove(outClass);
