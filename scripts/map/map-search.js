@@ -85,3 +85,46 @@ export function setupSearch() {
         }
     });
 }
+
+export function setupAllAppsLiveSearch() {
+    const searchInput = document.getElementById("all-apps-search-input");
+    const clearBtn = document.getElementById("all-apps-search-clear");
+    const grid = document.getElementById("all-apps-grid");
+    const noResults = document.getElementById("all-apps-no-results");
+
+    if (!searchInput || !grid) return;
+
+    const filterApps = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        if (clearBtn) clearBtn.style.display = query ? "flex" : "none";
+
+        const cards = grid.querySelectorAll(".suggested-app-card");
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const appName = (card.getAttribute("data-app-name") || "").toLowerCase();
+            const label = card.querySelector(".suggested-app-label")?.textContent.toLowerCase() || "";
+
+            if (!query || appName.includes(query) || label.includes(query)) {
+                card.style.display = "";
+                visibleCount++;
+            } else {
+                card.style.display = "none";
+            }
+        });
+
+        if (noResults) {
+            noResults.style.display = visibleCount === 0 ? "block" : "none";
+        }
+    };
+
+    searchInput.addEventListener("input", filterApps);
+    if (clearBtn) {
+        clearBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            searchInput.value = "";
+            filterApps();
+            searchInput.focus();
+        });
+    }
+}
