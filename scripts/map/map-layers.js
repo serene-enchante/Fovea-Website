@@ -625,3 +625,9 @@ export function selectMapStyleByIndex(index) {
     showToast(`Map Style: ${targetItem.name}`);
 }
 
+
+
+// HTML label overlay — repositions div labels on every map render
+export function updateLabelZoomVisibility() {
+    rebuildHtmlLabels();
+}

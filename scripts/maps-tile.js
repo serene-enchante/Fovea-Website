@@ -18,7 +18,7 @@ import { geojsonToKml, geojsonToGpx, canvasToTiffBlob } from './services/format-
 import { handleSpatialFileShare } from './services/file-download-service.js';
 
 // --- Map Layers ---
-import { updateAllFeatureStyles, rebuildHtmlLabels, setupMapLayers, selectMapStyleByIndex } from './map/map-layers.js';
+import { updateAllFeatureStyles, rebuildHtmlLabels, setupMapLayers, selectMapStyleByIndex , updateLabelZoomVisibility } from './map/map-layers.js';
 
 // --- Components ---
 import { showToast } from './components/toast-view.js';
@@ -792,10 +792,6 @@ function setupProximityGlowCanvas() {
     state.map.on('render', () => { if (cx >= 0) scheduleRedraw(); });
 }
 
-// HTML label overlay — repositions div labels on every map render
-export function updateLabelZoomVisibility() {
-    rebuildHtmlLabels();
-}
 
 
 export function rebuildGeoJsonLayer() {
