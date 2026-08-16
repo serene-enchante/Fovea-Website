@@ -205,8 +205,6 @@ export function updateUrl(id) {
 
 
 
-}
-}
 
 
 function toggleFullscreen() {
@@ -1955,8 +1953,6 @@ async function init() {
         triggerEntrance();
     }
 }
-}
-
 
 
 function setupViewToggleMenu() {
