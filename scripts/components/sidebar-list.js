@@ -1,3 +1,4 @@
+import { getBbox } from '../utils/geometry-math.js';
 import { state } from '../state.js';
 import { displayZoneId, zoneImagePath, normalizeZoneId, FALLBACK_IMAGE } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
