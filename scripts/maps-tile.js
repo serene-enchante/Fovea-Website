@@ -38,7 +38,7 @@ import { switchBaseMap, checkUserLocationZone, toggleLocationTracking, preloadGl
 import { setupSearch, setupAllAppsLiveSearch } from './map/map-search.js';
 import { setupImageLightbox, setupHelpModeSystem } from './components/map-modals.js';
 import { setupSuggestFormAndDrawing } from './components/feedback-form.js';
-import { updateControlPositions, updateBottomNavVisibilityForSnapState, setMobileSnapState, setupSwipeNavigation, setupListSwipeBack, setupMobileResizeBar } from './components/mobile-view.js';
+export { updateControlPositions, updateBottomNavVisibilityForSnapState, setMobileSnapState, setupSwipeNavigation, setupListSwipeBack, setupMobileResizeBar } from './components/mobile-view.js';
 import { setupMapHoverEvents } from './map/map-events.js';
 import { setupProximityTracking, setupProximityGlowCanvas } from './map/map-proximity.js';
 import { loadBirdData, getSelectedGeoJSONData } from './services/bird-data-service.js';

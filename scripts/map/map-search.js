@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { setMobileSnapState } from '../maps-tile.js';
+import { setMobileSnapState } from '../components/mobile-view.js';
 
 export function setupSearch() {
     const header = document.getElementById("sidebar-header");

@@ -5,6 +5,7 @@ import { FALLBACK_IMAGE, displayZoneId } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { showToast } from '../components/toast-view.js';
 import { switchBaseMap } from './map-init.js';
+import { updateControlPositions } from '../components/mobile-view.js';
 
 export function getLayoutScaleBar(map, layoutMapWidth) {
     if (!map) return { miles: 1, pxWidth: 150 };
