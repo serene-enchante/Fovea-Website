@@ -1,3 +1,4 @@
+import { updateKeyboardTileFocus } from './sidebar-list.js';
 import { showToast } from './toast-view.js';
 import { state } from '../state.js';
 
