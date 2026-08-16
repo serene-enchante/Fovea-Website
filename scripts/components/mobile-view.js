@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 
-export export function updateControlPositions() {
+export function updateControlPositions() {
     if (!state.map) return;
     const isMobile = window.innerWidth <= 768;
     const topLeft = document.querySelector(".map-ctrl-container .map-ctrl-panel.map-ctrl-panel--left");
@@ -43,7 +43,7 @@ export function updateBottomNavVisibilityForSnapState(snapState) {
     }
 }
 
-export export function setMobileSnapState(snapState, animate = true) {
+export function setMobileSnapState(snapState, animate = true) {
     const mapArea = document.querySelector(".maps-tile-map-area");
     const sidebar = document.querySelector(".maps-tile-sidebar");
     const resizeBar = document.getElementById("mobile-resize-bar");
