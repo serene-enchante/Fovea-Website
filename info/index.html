@@ -237,28 +237,6 @@
             line-height: 1.1;
         }
 
-        /* Upper-Right Background Eye Element */
-        .bg-eye-wrapper {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: clamp(340px, 48vw, 700px);
-            height: clamp(340px, 48vw, 700px);
-            pointer-events: none;
-            z-index: 2;
-            overflow: hidden;
-            opacity: 0.65;
-            -webkit-mask-image: radial-gradient(circle at 85% 15%, black 60%, transparent 98%);
-            mask-image: radial-gradient(circle at 85% 15%, black 60%, transparent 98%);
-        }
-
-        .bg-eye-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: contrast(1.05) brightness(0.95);
-        }
-
         .info-body-text {
             font-size: clamp(1.05rem, 1.8vw, 1.22rem);
             line-height: 1.75;
@@ -394,9 +372,6 @@
 <body>
     <div class="fade-overlay"></div>
     <div class="ambient-glow"></div>
-    <div class="bg-eye-wrapper">
-        <img src="../images/eye.jpg" alt="" class="bg-eye-img" />
-    </div>
 
     <!-- Corner Navigation Button (Back to Home) -->
     <a href="../" class="corner-nav-btn corner-nav-left" aria-label="Back to home page" title="Back to home">
