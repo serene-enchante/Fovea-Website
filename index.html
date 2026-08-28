@@ -395,7 +395,8 @@
             animation: fadeInSearch 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.4s;
         }
 
-        .settings-btn {
+        .settings-btn,
+        .info-btn {
             background: none;
             border: none;
             padding: 4px;
@@ -407,11 +408,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            text-decoration: none;
         }
 
         .settings-btn:hover {
             color: #ffffff;
             transform: rotate(45deg);
+        }
+
+        .info-btn:hover {
+            color: #ffffff;
+            transform: scale(1.1);
         }
 
         .user-profile-status {
@@ -773,6 +780,7 @@
         body[class*="is-transitioning-"] .home-container,
         body[class*="is-transitioning-"] .intro-header,
         body[class*="is-transitioning-"] .settings-btn,
+        body[class*="is-transitioning-"] .info-btn,
         body[class*="is-transitioning-"] .profile-pic-container,
         body[class*="is-transitioning-"] .corner-nav-btn span,
         body[class*="is-transitioning-"] .corner-arrow-circle {
@@ -856,21 +864,22 @@
     <div class="ambient-glow"></div>
     <div id="toast-notification" class="toast-notification"></div>
 
-    <!-- Top Right Controls (Settings & User Profile status) -->
+    <!-- Top Right Controls (About Info & User Profile status) -->
     <div class="top-right-controls">
-        <button class="settings-btn" aria-label="Settings">
+        <a href="info/" class="info-btn" aria-label="About fovea" title="About">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
-        </button>
+        </a>
         <div class="user-profile-status" id="user-profile-status">
             <span class="status-text">Log in / Sign up</span>
         </div>
     </div>
 
-    <!-- Corner Navigation Buttons (About & Tools) -->
-    <a href="tools/" class="corner-nav-btn corner-nav-left">
+    <!-- Corner Navigation Buttons (Tools & Settings) -->
+    <a href="tools/" class="corner-nav-btn corner-nav-left" aria-label="Tools">
         <span>Tools</span>
         <div class="corner-arrow-circle">
             <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -879,8 +888,8 @@
             </svg>
         </div>
     </a>
-    <a href="info/" class="corner-nav-btn corner-nav-right">
-        <span>About</span>
+    <a href="settings/" class="corner-nav-btn corner-nav-right" aria-label="Settings">
+        <span>Settings</span>
         <div class="corner-arrow-circle">
             <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -1497,11 +1506,11 @@
                 });
 
                 // Corner Nav Page Transitions
-                const aboutNavBtn = document.querySelector(".corner-nav-right");
+                const settingsNavBtn = document.querySelector(".corner-nav-right");
                 const toolsNavBtn = document.querySelector(".corner-nav-left");
 
-                if (aboutNavBtn) {
-                    aboutNavBtn.addEventListener("click", (e) => {
+                if (settingsNavBtn) {
+                    settingsNavBtn.addEventListener("click", (e) => {
                         e.preventDefault();
                         if (document.body.className.includes("is-transitioning-")) return;
 
@@ -1510,7 +1519,7 @@
                         if (rotationId) cancelAnimationFrame(rotationId);
 
                         // Save origin for back transitions
-                        sessionStorage.setItem("fovea_nav_origin", "about");
+                        sessionStorage.setItem("fovea_nav_origin", "settings");
 
                         // Trigger transition
                         document.body.classList.add("is-transitioning-right");
@@ -1520,7 +1529,7 @@
 
                         // Redirect after transition completes
                         setTimeout(() => {
-                            window.location.href = aboutNavBtn.getAttribute("href");
+                            window.location.href = settingsNavBtn.getAttribute("href") || "settings/";
                         }, 800);
                     });
                 }
