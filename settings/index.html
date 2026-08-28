@@ -50,24 +50,18 @@
                         <div class="setting-item__desc">Toggle between light and dark mode</div>
                     </div>
                     <div class="setting-item__control">
-                        <button type="button" id="theme-toggle-switch" class="toggle-switch is-active" role="switch" aria-checked="true" aria-label="Toggle dark mode">
-                            <span class="toggle-switch__thumb">
-                                <svg class="toggle-switch__icon toggle-switch__icon--dark" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        <div class="theme-select-wrapper">
+                            <select id="theme-select" class="theme-select" aria-label="Select theme">
+                                <option value="dark">Dark</option>
+                                <option value="light">Light</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                            <div class="theme-select-arrow" aria-hidden="true">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
-                                <svg class="toggle-switch__icon toggle-switch__icon--light" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" style="display:none;">
-                                    <circle cx="12" cy="12" r="5"></circle>
-                                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                                </svg>
-                            </span>
-                        </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

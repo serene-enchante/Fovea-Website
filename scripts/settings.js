@@ -4,39 +4,25 @@
  */
 
 export function initSettingsPage() {
-    const themeSwitch = document.getElementById("theme-toggle-switch");
-    const darkIcon = themeSwitch?.querySelector(".toggle-switch__icon--dark");
-    const lightIcon = themeSwitch?.querySelector(".toggle-switch__icon--light");
+    const themeSelect = document.getElementById("theme-select");
 
-    if (themeSwitch) {
+    if (themeSelect) {
         // Read stored theme preference (default to dark)
-        const isLightMode = localStorage.getItem("fovea-theme") === "light";
-        updateSwitchUI(isLightMode);
+        const storedTheme = localStorage.getItem("fovea-theme") || "dark";
+        themeSelect.value = storedTheme;
 
-        themeSwitch.addEventListener("click", () => {
-            const currentlyActive = themeSwitch.classList.contains("is-active"); // is-active means Dark Mode active
-            const nextIsLight = currentlyActive; // if currently dark, toggle to light
+        themeSelect.addEventListener("change", () => {
+            const selectedTheme = themeSelect.value;
+            localStorage.setItem("fovea-theme", selectedTheme);
 
-            localStorage.setItem("fovea-theme", nextIsLight ? "light" : "dark");
-            updateSwitchUI(nextIsLight);
+            const labels = {
+                dark: "Dark theme active",
+                light: "Light theme selected (active theme is dark)",
+                auto: "Auto system theme selected (active theme is dark)"
+            };
 
-            showToast(nextIsLight ? "Light mode selected (active theme is dark)" : "Dark mode active");
+            showToast(labels[selectedTheme] || `${selectedTheme} theme selected`);
         });
-    }
-
-    function updateSwitchUI(isLight) {
-        if (!themeSwitch) return;
-        if (isLight) {
-            themeSwitch.classList.remove("is-active");
-            themeSwitch.setAttribute("aria-checked", "false");
-            if (darkIcon) darkIcon.style.display = "none";
-            if (lightIcon) lightIcon.style.display = "block";
-        } else {
-            themeSwitch.classList.add("is-active");
-            themeSwitch.setAttribute("aria-checked", "true");
-            if (darkIcon) darkIcon.style.display = "block";
-            if (lightIcon) lightIcon.style.display = "none";
-        }
     }
 
     // Corner navigation fill-screen transition

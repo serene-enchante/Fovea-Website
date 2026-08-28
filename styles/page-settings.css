@@ -147,57 +147,59 @@ html, body {
     line-height: 1.45;
 }
 
-/* Custom Interactive Toggle Switch */
-.toggle-switch {
+/* Custom Theme Select Dropdown Menu */
+.theme-select-wrapper {
     position: relative;
-    width: 52px;
-    height: 30px;
-    background: rgba(255, 255, 255, 0.16);
-    border-radius: 9999px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: inline-flex;
+    align-items: center;
+}
+
+.theme-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 10px;
+    padding: 0.5rem 2.2rem 0.5rem 0.95rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    font-family: inherit;
     cursor: pointer;
     outline: none;
-    padding: 2px;
-    flex-shrink: 0;
-    transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.3s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.toggle-switch:focus-visible {
-    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.4);
+.theme-select:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.28);
 }
 
-.toggle-switch.is-active {
-    background: var(--accent-primary);
-    border-color: var(--accent-light);
+.theme-select:focus-visible {
+    border-color: var(--accent-light, #64b5f6);
+    box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.35);
 }
 
-.toggle-switch__thumb {
+.theme-select option {
+    background: #18191c;
+    color: #ffffff;
+    padding: 0.5rem;
+}
+
+.theme-select-arrow {
     position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 22px;
-    height: 22px;
-    background: #ffffff;
-    border-radius: 50%;
+    right: 0.75rem;
+    pointer-events: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #000000;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-                background-color 0.3s ease;
+    color: rgba(255, 255, 255, 0.5);
+    transition: transform 0.2s ease, color 0.2s ease;
 }
 
-.toggle-switch.is-active .toggle-switch__thumb {
-    transform: translateX(22px);
-    background: #000000;
-    color: var(--accent-light);
-}
-
-.toggle-switch__icon {
-    display: block;
+.theme-select-wrapper:hover .theme-select-arrow {
+    color: #ffffff;
 }
 
 /* Corner Navigation Text Buttons (Home) */
