@@ -55,19 +55,6 @@ html, body {
     z-index: 10;
 }
 
-/* Ambient Glow Background */
-.ambient-glow {
-    position: absolute;
-    top: 30%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: clamp(340px, 60vw, 750px);
-    height: clamp(340px, 60vw, 750px);
-    background: radial-gradient(circle, rgba(100, 181, 246, 0.04) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(0, 0, 0, 0) 70%);
-    pointer-events: none;
-    z-index: 1;
-}
-
 /* Tools Card */
 .tools-card {
     max-width: 760px;
@@ -329,13 +316,6 @@ body.is-transitioning-right .corner-nav-right {
 .tools-empty-state__icon {
     color: rgba(255, 255, 255, 0.35);
     display: block;
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
-    transition: transform 0.3s ease, color 0.3s ease;
-}
-
-.tools-empty-state:hover .tools-empty-state__icon {
-    color: rgba(255, 255, 255, 0.55);
-    transform: scale(1.05);
 }
 
 .tools-empty-state__text {
