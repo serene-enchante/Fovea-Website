@@ -136,6 +136,25 @@ export function initToolsPage() {
     // Check if tools JSON provided on window or script tag
     const toolsData = window.FOVEA_TOOLS || DEFAULT_TOOLS;
     renderToolsList(toolsData);
+
+    // Corner navigation fill-screen transition
+    const cornerNavBtn = document.querySelector(".corner-nav-btn");
+    if (cornerNavBtn) {
+        cornerNavBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (document.body.className.includes("is-transitioning-")) return;
+
+            document.body.classList.add("is-transitioning-left");
+
+            setTimeout(() => {
+                window.location.href = cornerNavBtn.getAttribute("href") || "../";
+            }, 800);
+        });
+    }
+
+    window.addEventListener("pageshow", () => {
+        document.body.classList.remove("is-transitioning-left", "is-transitioning-right");
+    });
 }
 
 // Auto-initialize when DOM ready

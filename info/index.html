@@ -194,6 +194,40 @@
             }
         }
 
+        /* Page Transition Animations */
+        body.is-transitioning-left,
+        body.is-transitioning-right {
+            background-color: #000000 !important;
+            overflow: hidden !important;
+        }
+
+        body[class*="is-transitioning-"] {
+            pointer-events: none !important;
+        }
+
+        /* Left side panel zoom and center to fill screen */
+        body.is-transitioning-left .corner-nav-left::before {
+            transform: translateY(-50%) translateX(calc(50vw - 50px)) scale(30) !important;
+            border-radius: 0 !important;
+            opacity: 1 !important;
+            z-index: 99999 !important;
+            transition: transform 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                        border-radius 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                        opacity 0.8s ease !important;
+        }
+
+        /* Fade out main elements during transition */
+        body[class*="is-transitioning-"] .info-page-container,
+        body[class*="is-transitioning-"] .corner-nav-btn span,
+        body[class*="is-transitioning-"] .corner-arrow-circle {
+            opacity: 0 !important;
+            transition: opacity 0.4s ease !important;
+        }
+
+        body.is-transitioning-left .corner-nav-left {
+            z-index: 99999 !important;
+        }
+
         .info-header {
             font-family: var(--font-serif);
             font-size: clamp(2.75rem, 6vw, 4.25rem);
@@ -409,24 +443,24 @@
                 }, 100);
             }
 
-            let toastTimer = null;
-            function showComingSoonToast(featureName) {
-                const toast = document.getElementById("toast-notification");
-                if (!toast) return;
-                toast.innerHTML = `
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #00d5a4; flex-shrink: 0;">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    <span><strong>${featureName}</strong> will be available soon</span>
-                `;
-                toast.classList.add("is-visible");
-                if (toastTimer) clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => {
-                    toast.classList.remove("is-visible");
-                }, 2800);
+            // Corner navigation fill-screen transition
+            const cornerNavBtn = document.querySelector(".corner-nav-btn");
+            if (cornerNavBtn) {
+                cornerNavBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    if (document.body.className.includes("is-transitioning-")) return;
+
+                    document.body.classList.add("is-transitioning-left");
+
+                    setTimeout(() => {
+                        window.location.href = cornerNavBtn.getAttribute("href") || "../";
+                    }, 800);
+                });
             }
+
+            window.addEventListener("pageshow", (event) => {
+                document.body.classList.remove("is-transitioning-left", "is-transitioning-right");
+            });
 
         });
         </script>
