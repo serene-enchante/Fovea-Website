@@ -147,59 +147,167 @@ html, body {
     line-height: 1.45;
 }
 
-/* Custom Theme Select Dropdown Menu */
-.theme-select-wrapper {
+/* Custom Dropdown Menu (Matching Map Page View Selector) */
+.settings-view-toggle-wrapper {
     position: relative;
     display: inline-flex;
     align-items: center;
+    flex-shrink: 0;
 }
 
-.theme-select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 10px;
-    padding: 0.5rem 2.2rem 0.5rem 0.95rem;
-    font-size: 0.92rem;
+.settings-view-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.42rem 0.85rem;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    outline: none !important;
+    border-radius: 8px;
+    color: #e4e4e7;
+    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+    font-size: 0.88rem;
     font-weight: 500;
-    font-family: inherit;
+    letter-spacing: 0.02em;
     cursor: pointer;
-    outline: none;
-    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    line-height: 1;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
-.theme-select:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.28);
-}
-
-.theme-select:focus-visible {
-    border-color: var(--accent-light, #64b5f6);
-    box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.35);
-}
-
-.theme-select option {
-    background: #18191c;
-    color: #ffffff;
-    padding: 0.5rem;
-}
-
-.theme-select-arrow {
-    position: absolute;
-    right: 0.75rem;
-    pointer-events: none;
-    display: flex;
+.settings-view-toggle__icon-wrap {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.5);
-    transition: transform 0.2s ease, color 0.2s ease;
+    flex-shrink: 0;
+    color: #a1a1aa;
+    transition: color 0.2s ease;
 }
 
-.theme-select-wrapper:hover .theme-select-arrow {
+.settings-view-toggle:hover .settings-view-toggle__icon-wrap {
     color: #ffffff;
+}
+
+.settings-view-toggle__icon-wrap svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 2.2;
+}
+
+.settings-view-toggle:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.24) !important;
+    color: #ffffff;
+}
+
+.settings-view-toggle[aria-expanded="true"] .settings-view-toggle__chevron {
+    transform: rotate(180deg);
+}
+
+.settings-view-toggle__chevron {
+    width: 12px;
+    height: 12px;
+    stroke: #a1a1aa;
+    stroke-width: 2.5;
+    transition: transform 0.2s ease, stroke 0.2s ease;
+}
+
+.settings-view-toggle:hover .settings-view-toggle__chevron {
+    stroke: #ffffff;
+}
+
+/* Floating Options Dropdown Popup Menu (Matching Map Page) */
+.settings-view-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0 !important;
+    left: auto !important;
+    z-index: 99999 !important;
+    min-width: 155px;
+    background: #000000 !important;
+    border: 1px solid #333333 !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.9) !important;
+    border-radius: 12px !important;
+    padding: 0.35rem !important;
+    display: none;
+    flex-direction: column;
+    gap: 0.15rem;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.settings-view-menu[aria-hidden="false"] {
+    display: flex !important;
+    animation: menuFadeIn 0.15s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+@keyframes menuFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.settings-view-menu__left {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.settings-view-menu__icon {
+    width: 14px;
+    height: 14px;
+    stroke: #e4e4e7;
+    stroke-width: 2.2;
+    flex-shrink: 0;
+    transition: stroke 0.2s ease;
+}
+
+.settings-view-menu__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    color: #e4e4e7 !important;
+    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+    font-size: 0.86rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    gap: 1.25rem;
+}
+
+.settings-view-menu__item:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff !important;
+}
+
+.settings-view-menu__item:hover .settings-view-menu__icon {
+    stroke: #ffffff;
+}
+
+.settings-view-menu__item.is-active {
+    color: var(--accent-primary, #64b5f6) !important;
+    font-weight: 600;
+}
+
+.settings-view-menu__item.is-active .settings-view-menu__icon {
+    stroke: var(--accent-primary, #64b5f6);
+}
+
+.settings-view-menu__check {
+    stroke: var(--accent-primary, #64b5f6);
+    stroke-width: 2.5;
+    flex-shrink: 0;
 }
 
 /* Corner Navigation Text Buttons (Home) */
