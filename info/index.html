@@ -87,23 +87,111 @@
             }
         }
 
-        .info-nav {
-            margin-bottom: 0.5rem;
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.86rem;
+        /* Corner Navigation Text Buttons (Home) */
+        .corner-nav-btn {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 100px;
+            font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+            font-size: 1.15rem;
+            font-weight: 600;
             color: var(--subtext-color);
             text-decoration: none;
-            transition: color 0.2s ease, transform 0.2s ease;
+            z-index: 100;
+            user-select: none;
+            pointer-events: auto;
+            display: flex;
+            align-items: flex-end;
+            padding-bottom: 2.2rem;
+            transition: color 0.25s ease;
         }
 
-        .back-link:hover {
+        /* Side frame panel that slides in/out from the viewport edge */
+        .corner-nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            height: 70vh;
+            width: 100px;
+            pointer-events: none;
+            opacity: 0;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                        opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            background: #0f0f0f;
+            z-index: -1;
+        }
+
+        .corner-nav-btn span {
+            display: inline-block;
+            transition: transform 0.25s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .corner-nav-left {
+            left: 0;
+            padding-left: 1.5rem;
+            justify-content: flex-start;
+        }
+
+        .corner-nav-left::before {
+            left: 0;
+            transform: translateY(-50%) translateX(-100%);
+            border-radius: 0 36px 36px 0;
+        }
+
+        .corner-nav-left:hover {
             color: #ffffff;
-            transform: translateX(-3px);
+        }
+
+        .corner-nav-left:hover::before {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
+        }
+
+        .corner-nav-left:hover span {
+            transform: translateX(-4px);
+        }
+
+        /* Centered Hover Arrow Button */
+        .corner-arrow-circle {
+            position: absolute;
+            top: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #72767d;
+            transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        color 0.25s ease,
+                        left 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        right 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .corner-nav-left .corner-arrow-circle {
+            left: 0;
+            transform: translateY(-50%) translateX(-120%);
+        }
+
+        .corner-nav-left:hover .corner-arrow-circle {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
+            left: 1.5rem;
+        }
+
+        .corner-nav-btn:hover .corner-arrow-circle {
+            color: #bfc1c5;
+        }
+
+        @media (max-width: 768px) {
+            .corner-nav-btn {
+                display: none !important;
+            }
         }
 
         .info-header {
@@ -276,17 +364,19 @@
         <img src="../images/eye.jpg" alt="" class="bg-eye-img" />
     </div>
 
+    <!-- Corner Navigation Button (Back to Home) -->
+    <a href="../" class="corner-nav-btn corner-nav-left" aria-label="Back to home page" title="Back to home">
+        <span>Home</span>
+        <div class="corner-arrow-circle">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </div>
+    </a>
+
     <main class="info-page-container">
         <article class="info-card">
-            <nav class="info-nav">
-                <a href="../" class="back-link">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="19" y1="12" x2="5" y2="12"></line>
-                        <polyline points="12 19 5 12 12 5"></polyline>
-                    </svg>
-                    <span>Home</span>
-                </a>
-            </nav>
 
             <h1 class="info-header">About fovea</h1>
 
