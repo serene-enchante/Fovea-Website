@@ -688,7 +688,7 @@ export function setupActionButtons() {
         e.preventDefault();
         e.stopPropagation();
         if (e.currentTarget) e.currentTarget.blur();
-        showToast("Tools view is not available (coming soon)");
+        window.location.href = "../tools/";
     };
 
     const handleSettingsClick = (e) => {

@@ -18,11 +18,12 @@
 
     const isHome = activePage === "home";
     const isMaps = activePage === "maps";
+    const isTools = activePage === "tools";
 
     // ─── 1. Build and inject HTML ──────────────────────────────────────────────
 
     const exploreHref  = isMaps ? "#explore"  : `${root}maps/`;
-    const toolsHref    = isMaps ? "#tools"    : `${root}maps/#tools`;
+    const toolsHref    = isTools ? "#"        : `${root}tools/`;
     const settingsHref = isMaps ? "#settings" : `${root}maps/#settings`;
     const homeHref     = isHome ? "#"         : `${root}`;
 
@@ -31,7 +32,7 @@
 
     const tabs = [
         { id: "mobile-nav-tab-explore",  label: "Explore",  icon: "binoculars-1-svgrepo-com.svg",  href: exploreHref,  active: isMaps },
-        { id: "mobile-nav-tab-tools",    label: "Tools",    icon: "hammer-tool-svgrepo-com.svg",   href: toolsHref,    active: false  },
+        { id: "mobile-nav-tab-tools",    label: "Tools",    icon: "hammer-tool-svgrepo-com.svg",   href: toolsHref,    active: isTools },
         { id: "mobile-nav-tab-settings", label: "Settings", icon: "settings-svgrepo-com.svg",      href: settingsHref, active: false  },
     ];
 
@@ -93,10 +94,15 @@
         }
 
         const toolsTab = document.getElementById("mobile-nav-tab-tools");
-        if (toolsTab && !isMaps) {
+        if (toolsTab) {
             toolsTab.addEventListener("click", (e) => {
-                e.preventDefault();
-                showToast("Tools");
+                if (isTools) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                } else if (!isMaps) {
+                    e.preventDefault();
+                    window.location.href = `${root}tools/`;
+                }
             });
         }
 

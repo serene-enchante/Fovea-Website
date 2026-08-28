@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Tools - fovea</title>
+    <meta name="description" content="Fovea Spatial Tools - Citizen science spatial analytics, boundary builders, and data processing tools.">
+
+    <link rel="icon" type="image/png" href="images/logo-fav.png">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/mobile-bottom-nav.css?v=16">
+    <link rel="stylesheet" href="styles/page-tools.css">
+</head>
+
+<body class="page-tools">
+    <!-- Ambient Background Glow -->
+    <div class="ambient-glow" aria-hidden="true"></div>
+
+    <!-- Upper-Right Eye Silhouette Backdrop Element -->
+    <div class="bg-eye-wrapper" aria-hidden="true">
+        <img src="images/eye.png" alt="" class="bg-eye-img">
+    </div>
+
+    <!-- Tools Page Container -->
+    <div class="tools-page-container">
+        <main class="tools-card">
+            <!-- Navigation Row -->
+            <nav class="tools-nav" aria-label="Breadcrumb">
+                <a href="./" class="back-link" aria-label="Back to home page">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Back</span>
+                </a>
+                <a href="./" class="logo-badge" title="Fovea Home">
+                    <span>fovea</span>
+                </a>
+            </nav>
+
+            <!-- Title & Description Header -->
+            <header class="tools-header-group">
+                <h1 class="tools-header">Tools</h1>
+                <p class="tools-subheader">Explore dedicated spatial mapping, boundary editing, and export utilities.</p>
+            </header>
+
+            <!-- Tools Tile List Container (rendered by scripts/tools.js) -->
+            <section id="tools-tile-list" class="tools-tile-list" aria-label="Available tools list" aria-live="polite">
+                <!-- Dynamically populated or binoculars empty state rendered by scripts/tools.js -->
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="toast-notification" role="status" aria-live="polite"></div>
+
+    <!-- Scripts -->
+    <script type="module" src="scripts/tools.js"></script>
+    <script src="scripts/mobile-bottom-nav.js?v=1" data-active-page="tools" data-root="./"></script>
+</body>
+
+</html>

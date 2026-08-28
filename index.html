@@ -870,7 +870,7 @@
     </div>
 
     <!-- Corner Navigation Buttons (About & Tools) -->
-    <a href="#" class="corner-nav-btn corner-nav-left" data-coming-soon="Tools Page">
+    <a href="tools/" class="corner-nav-btn corner-nav-left">
         <span>Tools</span>
         <div class="corner-arrow-circle">
             <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1538,13 +1538,10 @@
                             fadeOverlay.classList.add("is-active");
                         }
 
-                        // Wait for card to fill screen, then show coming soon panel
+                        // Redirect after transition completes
                         setTimeout(() => {
-                            const csScreen = document.getElementById("tools-coming-soon-screen");
-                            if (csScreen) {
-                                csScreen.classList.add("is-active");
-                            }
-                        }, 700);
+                            window.location.href = toolsNavBtn.getAttribute("href") || "tools/";
+                        }, 800);
                     });
                 }
 
