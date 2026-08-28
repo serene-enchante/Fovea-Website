@@ -1,0 +1,428 @@
+/* PAGE-SETTINGS.CSS - Settings Page Layout & Control Styling */
+
+@font-face {
+    font-family: 'Aliceregular';
+    src: url('../fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff2') format('woff2'),
+         url('../fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+:root {
+    --bg-color: #000000;
+    --text-color: #ffffff;
+    --body-text-color: rgba(255, 255, 255, 0.72);
+    --subtext-color: rgba(255, 255, 255, 0.45);
+    --border-color: rgba(255, 255, 255, 0.12);
+    --card-bg: rgba(18, 18, 20, 0.6);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --item-bg: rgba(255, 255, 255, 0.03);
+    --item-hover-bg: rgba(255, 255, 255, 0.06);
+    --accent-color: #64b5f6;
+    --accent-light: #91cfff;
+    --accent-hover: #79c1f8;
+    --accent-rgb: 100, 181, 246;
+    --font-serif: 'Aliceregular', 'Alice', Georgia, serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Settings Page Container */
+.settings-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding: clamp(3rem, 6vh, 5rem) 1.5rem 6rem 1.5rem;
+    position: relative;
+    z-index: 10;
+}
+
+/* Settings Card */
+.settings-card {
+    max-width: 760px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fadeInContent 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.1s;
+    position: relative;
+    z-index: 10;
+}
+
+@keyframes fadeInContent {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Settings Header */
+.settings-header-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.settings-header {
+    font-family: var(--font-serif);
+    font-size: clamp(2.4rem, 5vw, 3.75rem);
+    font-weight: 400;
+    color: var(--text-color);
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+}
+
+/* Settings Group List */
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.settings-group__title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--subtext-color);
+    margin-left: 0.25rem;
+}
+
+/* Setting Item Row */
+.setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.15rem 1.35rem;
+    background: var(--item-bg);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    color: #ffffff;
+    gap: 1.5rem;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.setting-item:hover {
+    background: var(--item-hover-bg);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.setting-item__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.setting-item__title {
+    font-size: 1.02rem;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+}
+
+.setting-item__desc {
+    font-size: 0.86rem;
+    color: var(--body-text-color);
+    line-height: 1.45;
+}
+
+/* Custom Interactive Toggle Switch */
+.toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    outline: none;
+    padding: 2px;
+    flex-shrink: 0;
+    transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.3s ease;
+}
+
+.toggle-switch:focus-visible {
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.4);
+}
+
+.toggle-switch.is-active {
+    background: var(--accent-primary);
+    border-color: var(--accent-light);
+}
+
+.toggle-switch__thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000000;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                background-color 0.3s ease;
+}
+
+.toggle-switch.is-active .toggle-switch__thumb {
+    transform: translateX(22px);
+    background: #000000;
+    color: var(--accent-light);
+}
+
+.toggle-switch__icon {
+    display: block;
+}
+
+/* Corner Navigation Text Buttons (Home) */
+.corner-nav-btn {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 100px;
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--subtext-color);
+    text-decoration: none;
+    z-index: 100;
+    user-select: none;
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 2.2rem;
+    transition: color 0.25s ease;
+}
+
+/* Side frame panel that slides in/out from the viewport edge */
+.corner-nav-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    height: 70vh;
+    width: 100px;
+    pointer-events: none;
+    opacity: 0;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    background: #0f0f0f;
+    z-index: -1;
+}
+
+.corner-nav-btn span {
+    display: inline-block;
+    transition: transform 0.25s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.corner-nav-left {
+    left: 0;
+    padding-left: 1.5rem;
+    justify-content: flex-start;
+}
+
+.corner-nav-left::before {
+    left: 0;
+    transform: translateY(-50%) translateX(-100%);
+    border-radius: 0 36px 36px 0;
+}
+
+.corner-nav-left:hover {
+    color: #ffffff;
+}
+
+.corner-nav-left:hover::before {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1;
+}
+
+.corner-nav-left:hover span {
+    transform: translateX(-4px);
+}
+
+.corner-nav-right {
+    right: 0;
+    padding-right: 1.5rem;
+    justify-content: flex-end;
+}
+
+.corner-nav-right::before {
+    right: 0;
+    transform: translateY(-50%) translateX(100%);
+    border-radius: 36px 0 0 36px;
+}
+
+.corner-nav-right:hover {
+    color: #ffffff;
+}
+
+.corner-nav-right:hover::before {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1;
+}
+
+.corner-nav-right:hover span {
+    transform: translateX(4px);
+}
+
+/* Centered Hover Arrow Button */
+.corner-arrow-circle {
+    position: absolute;
+    top: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #72767d;
+    transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.25s ease,
+                left 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                right 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0;
+    z-index: 10;
+}
+
+.corner-nav-left .corner-arrow-circle {
+    left: 0;
+    transform: translateY(-50%) translateX(-120%);
+}
+
+.corner-nav-left:hover .corner-arrow-circle {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1;
+    left: 1.5rem;
+}
+
+.corner-nav-right .corner-arrow-circle {
+    right: 0;
+    transform: translateY(-50%) translateX(120%);
+}
+
+.corner-nav-right:hover .corner-arrow-circle {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1;
+    right: 1.5rem;
+}
+
+.corner-nav-btn:hover .corner-arrow-circle {
+    color: #bfc1c5;
+}
+
+@media (max-width: 768px) {
+    .corner-nav-btn {
+        display: none !important;
+    }
+}
+
+/* Page Transition Animations */
+body.is-transitioning-left,
+body.is-transitioning-right {
+    background-color: #000000 !important;
+    overflow: hidden !important;
+}
+
+body[class*="is-transitioning-"] {
+    pointer-events: none !important;
+}
+
+/* Left side panel zoom and center to fill screen */
+body.is-transitioning-left .corner-nav-left::before {
+    transform: translateY(-50%) translateX(calc(50vw - 50px)) scale(30) !important;
+    border-radius: 0 !important;
+    opacity: 1 !important;
+    z-index: 99999 !important;
+    transition: transform 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                border-radius 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                opacity 0.8s ease !important;
+}
+
+/* Right side panel zoom and center to fill screen */
+body.is-transitioning-right .corner-nav-right::before {
+    transform: translateY(-50%) translateX(calc(-50vw + 50px)) scale(30) !important;
+    border-radius: 0 !important;
+    opacity: 1 !important;
+    z-index: 99999 !important;
+    transition: transform 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                border-radius 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                opacity 0.8s ease !important;
+}
+
+/* Fade out main elements during transition */
+body[class*="is-transitioning-"] .settings-page-container,
+body[class*="is-transitioning-"] .corner-nav-btn span,
+body[class*="is-transitioning-"] .corner-arrow-circle {
+    opacity: 0 !important;
+    transition: opacity 0.4s ease !important;
+}
+
+body.is-transitioning-left .corner-nav-left,
+body.is-transitioning-right .corner-nav-right {
+    z-index: 99999 !important;
+}
+
+/* Toast Notification */
+.toast-notification {
+    position: fixed;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(30, 33, 40, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    padding: 0.75rem 1.4rem;
+    border-radius: 9999px;
+    font-size: 0.86rem;
+    font-weight: 500;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    white-space: nowrap;
+}
+
+.toast-notification.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 768px) {
+    .settings-page-container {
+        padding: 2.5rem 1.25rem 6rem 1.25rem;
+    }
+}

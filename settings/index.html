@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Settings - fovea</title>
+    <meta name="description" content="Fovea Settings - Personalize display preferences, themes, and application options.">
+
+    <link rel="icon" type="image/png" href="../images/logo-fav.png">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../styles/base.css">
+    <link rel="stylesheet" href="../styles/mobile-bottom-nav.css?v=16">
+    <link rel="stylesheet" href="../styles/page-settings.css">
+</head>
+
+<body class="page-settings">
+    <!-- Corner Navigation Button (Back to Home) -->
+    <a href="../" class="corner-nav-btn corner-nav-right" aria-label="Back to home page" title="Back to home">
+        <span>Home</span>
+        <div class="corner-arrow-circle">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+        </div>
+    </a>
+
+    <!-- Settings Page Container -->
+    <div class="settings-page-container">
+        <main class="settings-card">
+            <!-- Title Header -->
+            <header class="settings-header-group">
+                <h1 class="settings-header">Settings</h1>
+            </header>
+
+            <!-- Settings Group -->
+            <section class="settings-group" aria-label="Appearance settings">
+                <div class="settings-group__title">Appearance</div>
+
+                <div class="setting-item">
+                    <div class="setting-item__info">
+                        <div class="setting-item__title">Theme</div>
+                        <div class="setting-item__desc">Toggle between light and dark mode</div>
+                    </div>
+                    <div class="setting-item__control">
+                        <button type="button" id="theme-toggle-switch" class="toggle-switch is-active" role="switch" aria-checked="true" aria-label="Toggle dark mode">
+                            <span class="toggle-switch__thumb">
+                                <svg class="toggle-switch__icon toggle-switch__icon--dark" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                </svg>
+                                <svg class="toggle-switch__icon toggle-switch__icon--light" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" style="display:none;">
+                                    <circle cx="12" cy="12" r="5"></circle>
+                                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="toast-notification" role="status" aria-live="polite"></div>
+
+    <!-- Scripts -->
+    <script type="module" src="../scripts/settings.js"></script>
+    <script src="../scripts/mobile-bottom-nav.js?v=1" data-active-page="settings" data-root="../"></script>
+</body>
+
+</html>

@@ -19,12 +19,13 @@
     const isHome = activePage === "home";
     const isMaps = activePage === "maps";
     const isTools = activePage === "tools";
+    const isSettings = activePage === "settings";
 
     // ─── 1. Build and inject HTML ──────────────────────────────────────────────
 
     const exploreHref  = isMaps ? "#explore"  : `${root}maps/`;
     const toolsHref    = isTools ? "#"        : `${root}tools/`;
-    const settingsHref = isMaps ? "#settings" : `${root}maps/#settings`;
+    const settingsHref = isSettings ? "#"     : `${root}settings/`;
     const homeHref     = isHome ? "#"         : `${root}`;
 
     const iconStyle = (name) =>
@@ -33,7 +34,7 @@
     const tabs = [
         { id: "mobile-nav-tab-explore",  label: "Explore",  icon: "binoculars-1-svgrepo-com.svg",  href: exploreHref,  active: isMaps },
         { id: "mobile-nav-tab-tools",    label: "Tools",    icon: "hammer-tool-svgrepo-com.svg",   href: toolsHref,    active: isTools },
-        { id: "mobile-nav-tab-settings", label: "Settings", icon: "settings-svgrepo-com.svg",      href: settingsHref, active: false  },
+        { id: "mobile-nav-tab-settings", label: "Settings", icon: "settings-svgrepo-com.svg",      href: settingsHref, active: isSettings },
     ];
 
     const baseItems = tabs.map(t =>
@@ -107,10 +108,15 @@
         }
 
         const settingsTab = document.getElementById("mobile-nav-tab-settings");
-        if (settingsTab && !isMaps) {
+        if (settingsTab) {
             settingsTab.addEventListener("click", (e) => {
-                e.preventDefault();
-                showToast("Settings");
+                if (isSettings) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                } else if (!isMaps) {
+                    e.preventDefault();
+                    window.location.href = `${root}settings/`;
+                }
             });
         }
 

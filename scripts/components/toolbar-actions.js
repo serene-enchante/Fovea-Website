@@ -695,7 +695,7 @@ export function setupActionButtons() {
         e.preventDefault();
         e.stopPropagation();
         if (e.currentTarget) e.currentTarget.blur();
-        showToast("Settings view is not available (coming soon)");
+        window.location.href = "../settings/";
     };
 
     ["desktop-nav-tab-tools", "mobile-nav-tab-tools"].forEach((id) => {
