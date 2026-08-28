@@ -159,9 +159,9 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    padding: 0.42rem 0.85rem;
-    background: rgba(255, 255, 255, 0.06) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    padding: 0.35rem 0.6rem;
+    background: transparent !important;
+    border: none !important;
     outline: none !important;
     border-radius: 8px;
     color: #e4e4e7;
@@ -197,8 +197,7 @@ html, body {
 }
 
 .settings-view-toggle:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-    border-color: rgba(255, 255, 255, 0.24) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff;
 }
 
