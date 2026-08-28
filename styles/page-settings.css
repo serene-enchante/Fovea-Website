@@ -114,18 +114,17 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.15rem 1.35rem;
-    background: var(--item-bg);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
+    padding: 1.25rem 0.25rem;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     color: #ffffff;
     gap: 1.5rem;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: color 0.2s ease;
 }
 
 .setting-item:hover {
-    background: var(--item-hover-bg);
-    border-color: rgba(255, 255, 255, 0.14);
+    background: transparent;
 }
 
 .setting-item__info {
