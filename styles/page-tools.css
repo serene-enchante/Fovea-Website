@@ -254,6 +254,17 @@ body.is-transitioning-left .corner-nav-left::before {
                 opacity 0.8s ease !important;
 }
 
+/* Right side panel zoom and center to fill screen */
+body.is-transitioning-right .corner-nav-right::before {
+    transform: translateY(-50%) translateX(calc(-50vw + 50px)) scale(30) !important;
+    border-radius: 0 !important;
+    opacity: 1 !important;
+    z-index: 99999 !important;
+    transition: transform 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                border-radius 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                opacity 0.8s ease !important;
+}
+
 /* Fade out main elements during transition */
 body[class*="is-transitioning-"] .tools-page-container,
 body[class*="is-transitioning-"] .corner-nav-btn span,
@@ -262,7 +273,8 @@ body[class*="is-transitioning-"] .corner-arrow-circle {
     transition: opacity 0.4s ease !important;
 }
 
-body.is-transitioning-left .corner-nav-left {
+body.is-transitioning-left .corner-nav-left,
+body.is-transitioning-right .corner-nav-right {
     z-index: 99999 !important;
 }
 

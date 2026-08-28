@@ -144,7 +144,11 @@ export function initToolsPage() {
             e.preventDefault();
             if (document.body.className.includes("is-transitioning-")) return;
 
-            document.body.classList.add("is-transitioning-left");
+            const transitionClass = cornerNavBtn.classList.contains("corner-nav-right")
+                ? "is-transitioning-right"
+                : "is-transitioning-left";
+
+            document.body.classList.add(transitionClass);
 
             setTimeout(() => {
                 window.location.href = cornerNavBtn.getAttribute("href") || "../";
