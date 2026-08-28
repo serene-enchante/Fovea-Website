@@ -179,15 +179,8 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    min-height: 220px;
-    background: var(--card-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--card-border);
-    border-radius: 18px;
-    padding: 1.25rem;
     position: relative;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    width: 100%;
 }
 
 /* Binoculars Empty State (Strict Specification Match) */
