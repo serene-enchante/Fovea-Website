@@ -4194,3 +4194,235 @@ body.has-avenza-modal .mobile-bottom-nav-container,
     pointer-events: none !important;
     transform: translateY(120px) !important;
 }
+
+/* ==========================================================================
+   LIGHT THEME (LIGHT MODE) OVERRIDES FOR MAPS PAGE
+   ========================================================================== */
+
+:root[data-theme="light"],
+html.theme-light,
+body.theme-light {
+    --color-bg: #ffffff;
+    --color-text: #111827;
+    --overlay-bg: rgba(255, 255, 255, 0.7);
+    --color-surface: #f9fafb;
+    --color-heading: #111827;
+    --color-body: #374151;
+    --color-border: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] body.page-maps-tile,
+html.theme-light body.page-maps-tile,
+body.page-maps-tile.theme-light {
+    background-color: #ffffff !important;
+}
+
+[data-theme="light"] .page-maps-tile .intro-header,
+html.theme-light .page-maps-tile .intro-header,
+body.theme-light .page-maps-tile .intro-header {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+[data-theme="light"] .header-view-toggle,
+html.theme-light .header-view-toggle,
+body.theme-light .header-view-toggle {
+    color: #111827 !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="light"] .header-view-toggle:hover,
+html.theme-light .header-view-toggle:hover,
+body.theme-light .header-view-toggle:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="light"] .header-view-menu,
+html.theme-light .header-view-menu,
+body.theme-light .header-view-menu {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .header-view-menu__item,
+html.theme-light .header-view-menu__item,
+body.theme-light .header-view-menu__item {
+    color: #374151 !important;
+}
+
+[data-theme="light"] .header-view-menu__item:hover,
+html.theme-light .header-view-menu__item:hover,
+body.theme-light .header-view-menu__item:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: #111827 !important;
+}
+
+[data-theme="light"] .maps-tile-sidebar,
+html.theme-light .maps-tile-sidebar,
+body.theme-light .maps-tile-sidebar {
+    background: #ffffff !important;
+    border-right: 1px solid #e5e7eb !important;
+}
+
+[data-theme="light"] .maps-tile-header,
+html.theme-light .maps-tile-header,
+body.theme-light .maps-tile-header {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+[data-theme="light"] .maps-tile-header__title,
+html.theme-light .maps-tile-header__title,
+body.theme-light .maps-tile-header__title {
+    color: #111827 !important;
+}
+
+[data-theme="light"] .sidebar-capsule,
+html.theme-light .sidebar-capsule,
+body.theme-light .sidebar-capsule {
+    background: #f3f4f6 !important;
+    color: #4b5563 !important;
+    border-color: #e5e7eb !important;
+}
+
+[data-theme="light"] .sidebar-capsule:hover,
+html.theme-light .sidebar-capsule:hover,
+body.theme-light .sidebar-capsule:hover {
+    background: #e5e7eb !important;
+    color: #111827 !important;
+}
+
+[data-theme="light"] .sidebar-capsule.is-active,
+html.theme-light .sidebar-capsule.is-active,
+body.theme-light .sidebar-capsule.is-active {
+    background: #111827 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="light"] .tile-zone-item,
+html.theme-light .tile-zone-item,
+body.theme-light .tile-zone-item {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+}
+
+[data-theme="light"] .tile-zone-item:hover,
+[data-theme="light"] .tile-zone-item.is-hovered,
+html.theme-light .tile-zone-item:hover,
+html.theme-light .tile-zone-item.is-hovered,
+body.theme-light .tile-zone-item:hover,
+body.theme-light .tile-zone-item.is-hovered {
+    background: #f3f4f6 !important;
+    border-color: #d1d5db !important;
+}
+
+[data-theme="light"] .tile-zone-item__title,
+html.theme-light .tile-zone-item__title,
+body.theme-light .tile-zone-item__title {
+    color: #111827 !important;
+}
+
+[data-theme="light"] .sidebar-about-text,
+html.theme-light .sidebar-about-text,
+body.theme-light .sidebar-about-text {
+    color: #374151 !important;
+}
+
+[data-theme="light"] .maps-tile-header__actions,
+html.theme-light .maps-tile-header__actions,
+body.theme-light .maps-tile-header__actions {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] .action-btn,
+html.theme-light .action-btn,
+body.theme-light .action-btn {
+    color: #374151 !important;
+}
+
+[data-theme="light"] .action-btn:hover,
+html.theme-light .action-btn:hover,
+body.theme-light .action-btn:hover {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: #111827 !important;
+}
+
+[data-theme="light"] .desktop-nav-tab,
+html.theme-light .desktop-nav-tab,
+body.theme-light .desktop-nav-tab {
+    background: #f3f4f6 !important;
+    border: 1px solid #e5e7eb !important;
+    color: #111827 !important;
+}
+
+[data-theme="light"] .desktop-nav-tab:hover,
+html.theme-light .desktop-nav-tab:hover,
+body.theme-light .desktop-nav-tab:hover {
+    background: #e5e7eb !important;
+}
+
+[data-theme="light"] .desktop-nav-tab__icon,
+html.theme-light .desktop-nav-tab__icon,
+body.theme-light .desktop-nav-tab__icon {
+    filter: invert(0.85);
+}
+
+[data-theme="light"] .map-ctrl-btn,
+html.theme-light .map-ctrl-btn,
+body.theme-light .map-ctrl-btn {
+    background: rgba(255, 255, 255, 0.94) !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    color: #111827 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .map-ctrl-btn:hover,
+html.theme-light .map-ctrl-btn:hover,
+body.theme-light .map-ctrl-btn:hover {
+    background: #f3f4f6 !important;
+    color: #000000 !important;
+}
+
+[data-theme="light"] #map-loading-placeholder,
+html.theme-light #map-loading-placeholder,
+body.theme-light #map-loading-placeholder {
+    background: #f3f4f6 !important;
+}
+
+[data-theme="light"] .maps-tile-modal,
+html.theme-light .maps-tile-modal,
+body.theme-light .maps-tile-modal {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    color: #111827 !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="light"] .maps-tile-modal__title,
+html.theme-light .maps-tile-modal__title,
+body.theme-light .maps-tile-modal__title {
+    color: #111827 !important;
+}
+
+[data-theme="light"] .maps-tile-modal__description,
+html.theme-light .maps-tile-modal__description,
+body.theme-light .maps-tile-modal__description {
+    color: #4b5563 !important;
+}
+
+[data-theme="light"] .sidebar-search-container,
+html.theme-light .sidebar-search-container,
+body.theme-light .sidebar-search-container {
+    background: #f3f4f6 !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+[data-theme="light"] .sidebar-search-input,
+html.theme-light .sidebar-search-input,
+body.theme-light .sidebar-search-input {
+    color: #111827 !important;
+}

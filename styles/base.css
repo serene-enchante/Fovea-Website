@@ -24,6 +24,20 @@
     --hero-bg-image: url('../images/wetlands.jpg');
 }
 
+:root[data-theme="light"],
+html.theme-light,
+body.theme-light {
+    --color-bg: #ffffff;
+    --color-text: #1f2937;
+    --overlay-bg: rgba(255, 255, 255, 0.85);
+    --color-surface: #f8f9fa;
+    --color-heading: #111827;
+    --color-body: #374151;
+    --color-border: rgba(0, 0, 0, 0.12);
+    --color-focus: #2563eb;
+    --shadow-card: 0 14px 40px rgba(0, 0, 0, 0.08);
+}
+
 * {
     box-sizing: border-box;
 }

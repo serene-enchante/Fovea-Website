@@ -19,6 +19,18 @@
     <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="../images/logo-fav.png">
+    <script>
+        (function() {
+            try {
+                const storedTheme = localStorage.getItem("fovea-theme") || "dark";
+                const isSystemLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+                if (storedTheme === "light" || (storedTheme === "auto" && isSystemLight)) {
+                    document.documentElement.setAttribute("data-theme", "light");
+                    document.documentElement.classList.add("theme-light");
+                }
+            } catch(e) {}
+        })();
+    </script>
 </head>
 
 <body class="page-maps-tile is-transitioning">

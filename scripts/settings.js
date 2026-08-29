@@ -62,6 +62,20 @@ function setupThemeDropdownMenu() {
 
     const items = menuEl.querySelectorAll(".settings-view-menu__item");
 
+    function applyThemeToDOM(val) {
+        const isSystemLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+        const isLight = val === "light" || (val === "auto" && isSystemLight);
+        if (isLight) {
+            document.documentElement.setAttribute("data-theme", "light");
+            document.documentElement.classList.add("theme-light");
+            document.body.classList.add("theme-light");
+        } else {
+            document.documentElement.setAttribute("data-theme", "dark");
+            document.documentElement.classList.remove("theme-light");
+            document.body.classList.remove("theme-light");
+        }
+    }
+
     function applySelection(val, announce = true) {
         items.forEach(i => {
             const isActive = i.dataset.value === val;
@@ -86,14 +100,15 @@ function setupThemeDropdownMenu() {
         });
 
         localStorage.setItem("fovea-theme", val);
+        applyThemeToDOM(val);
 
         if (announce) {
             const labels = {
                 dark: "Dark theme active",
-                light: "Light theme selected (active theme is dark)",
-                auto: "Auto system theme selected (active theme is dark)"
+                light: "Light theme active",
+                auto: "Auto system theme active"
             };
-            showToast(labels[val] || `${val} theme selected`);
+            showToast(labels[val] || `${val} theme active`);
         }
     }
 

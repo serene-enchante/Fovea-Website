@@ -3637,10 +3637,12 @@ function initializeMap() {
     });
 
     // Set initial background color to match black
+    const isLightMode = document.body.classList.contains("theme-light") || state.currentBaseLayer === "esri-street";
     const initialTileMapEl = document.getElementById("tile-map");
     if (initialTileMapEl) {
-        initialTileMapEl.style.setProperty("background-color", "#000000", "important");
-        initialTileMapEl.style.setProperty("background", "#000000", "important");
+        const bg = isLightMode ? "#f8f9fa" : "#000000";
+        initialTileMapEl.style.setProperty("background-color", bg, "important");
+        initialTileMapEl.style.setProperty("background", bg, "important");
     }
 
     // Configure smooth inertial scroll zoom rates for trackpad and mouse wheel (Google Earth style)
@@ -6738,6 +6740,22 @@ async function init() {
     };
 
     try {
+        const storedTheme = localStorage.getItem("fovea-theme") || "dark";
+        const isSystemLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+        const isLight = storedTheme === "light" || (storedTheme === "auto" && isSystemLight);
+
+        if (isLight) {
+            document.documentElement.setAttribute("data-theme", "light");
+            document.documentElement.classList.add("theme-light");
+            document.body.classList.add("theme-light");
+            state.currentBaseLayer = "esri-street";
+        } else {
+            document.documentElement.setAttribute("data-theme", "dark");
+            document.documentElement.classList.remove("theme-light");
+            document.body.classList.remove("theme-light");
+            state.currentBaseLayer = "dark";
+        }
+
         const [circlesRes, eugeneRes, florenceRes] = await Promise.all([
             fetch(CIRCLES_GEOJSON_PATH),
             fetch(EUGENE_GEOJSON_PATH),
