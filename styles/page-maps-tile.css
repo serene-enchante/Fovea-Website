@@ -2554,14 +2554,14 @@ body.has-active-modal .maps-tile-header__actions {
     justify-content: center;
     background: transparent;
     border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
     transform-style: preserve-3d;
     will-change: transform, box-shadow;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 
 .suggested-app-card.is-active .suggested-app-icon-wrap {
-    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.4), 0 8px 24px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .suggested-app-icon {
@@ -4547,6 +4547,12 @@ body.theme-light .maps-tile-download-item:hover {
 html.theme-light .suggested-app-label,
 body.theme-light .suggested-app-label {
     color: #4b5563 !important;
+}
+
+[data-theme="light"] .suggested-app-icon-wrap,
+html.theme-light .suggested-app-icon-wrap,
+body.theme-light .suggested-app-icon-wrap {
+    box-shadow: 0 1.5px 5px rgba(0, 0, 0, 0.08) !important;
 }
 
 [data-theme="light"] .suggested-app-card:hover .suggested-app-label,
