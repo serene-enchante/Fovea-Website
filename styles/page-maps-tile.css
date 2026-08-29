@@ -2031,7 +2031,7 @@ body.theme-light .maps-tile-map-container .default-map-thumbnail {
         justify-content: center !important;
         height: 18px !important;
         min-height: 18px !important;
-        background: #000000 !important;
+        background: var(--color-bg, #000000);
         cursor: ns-resize !important;
         touch-action: none !important;
         user-select: none !important;
@@ -3638,7 +3638,7 @@ body.is-annotation-mode .annotation-exit-btn {
     /* Mobile-only sidebar zone list swiping transition animation classes */
     #sidebar-zone-list {
         will-change: transform, opacity;
-        background: #000000 !important; /* solid background to cover indicator */
+        background: var(--color-bg, #000000); /* solid background to cover indicator */
         position: relative !important;
         z-index: 5 !important; /* render strictly above the indicator which has z-index: 1 */
     }
@@ -4326,9 +4326,22 @@ body.theme-light .page-maps-tile .logo--header {
 }
 
 [data-theme="light"] .maps-tile-sidebar,
+[data-theme="light"] #sidebar-zone-list,
+[data-theme="light"] .maps-tile-sidebar__scroll,
+[data-theme="light"] .maps-tile-main,
+[data-theme="light"] .maps-tile-content,
 html.theme-light .maps-tile-sidebar,
-body.theme-light .maps-tile-sidebar {
+html.theme-light #sidebar-zone-list,
+html.theme-light .maps-tile-sidebar__scroll,
+html.theme-light .maps-tile-main,
+html.theme-light .maps-tile-content,
+body.theme-light .maps-tile-sidebar,
+body.theme-light #sidebar-zone-list,
+body.theme-light .maps-tile-sidebar__scroll,
+body.theme-light .maps-tile-main,
+body.theme-light .maps-tile-content {
     background: #ffffff !important;
+    background-color: #ffffff !important;
     border: none !important;
     border-right: none !important;
 }
