@@ -4720,6 +4720,25 @@ body.theme-light .help-toggle-subtitle {
     color: #6b7280 !important;
 }
 
+[data-theme="light"] .help-slider,
+html.theme-light .help-slider,
+body.theme-light .help-slider {
+    background-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .help-slider:before,
+html.theme-light .help-slider:before,
+body.theme-light .help-slider:before {
+    background-color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="light"] .help-switch input:checked + .help-slider,
+html.theme-light .help-switch input:checked + .help-slider,
+body.theme-light .help-switch input:checked + .help-slider {
+    background-color: var(--accent-primary) !important;
+}
+
 [data-theme="light"] .help-shortcut-badge,
 html.theme-light .help-shortcut-badge,
 body.theme-light .help-shortcut-badge {
