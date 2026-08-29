@@ -476,8 +476,9 @@ function updateAllFeatureStyles() {
         );
     });
 
-    // Determine geometry styling based on active basemap (thick black outline & transparent deep blue fill for Esri Street/Topo, white for Dark/Satellite)
-    const isLightBasemap = state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo";
+    // Determine geometry styling based on active basemap (thick black outline & transparent deep blue fill for Light Mode/Esri Street/Topo, white for Dark/Satellite)
+    const isLightModeTheme = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
+    const isLightBasemap = state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo" || (state.currentBaseLayer === "default" && isLightModeTheme);
     const isSatelliteBasemap = state.currentBaseLayer === "satellite";
     const mapWrapper = document.getElementById("map-wrapper");
     const mapArea = document.querySelector(".maps-tile-map-area");
@@ -3796,101 +3797,156 @@ function initializeMap() {
                 }
             });
 
-            // Brighten land covers (originally very dark #0e0e0e) to slate-charcoal (#1a1b1e) to separate from black map boundaries
-            const landColor = '#1a1b1e';
-            const landLayers = ['background', 'landcover', 'park_national_park', 'park_nature_reserve', 'landuse'];
-            landLayers.forEach(lId => {
-                if (state.map.getLayer(lId)) {
-                    if (lId === 'background') {
-                        state.map.setPaintProperty(lId, 'background-color', landColor);
-                    } else {
-                        state.map.setPaintProperty(lId, 'fill-color', landColor);
+            const isLightMapMode = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
+
+            if (isLightMapMode) {
+                // Refined Light Mode styling with soft modern neutral-gray land
+                const lightLandColor = '#d9dce1'; // refined Apple Maps/Carto neutral grey
+                const lightLandLayers = ['background', 'landcover', 'landuse'];
+                lightLandLayers.forEach(lId => {
+                    if (state.map.getLayer(lId)) {
+                        if (lId === 'background') {
+                            state.map.setPaintProperty(lId, 'background-color', lightLandColor);
+                        } else {
+                            state.map.setPaintProperty(lId, 'fill-color', lightLandColor);
+                        }
                     }
+                });
+
+                // Soft sage green for parks
+                const parkLayers = ['park_national_park', 'park_nature_reserve'];
+                parkLayers.forEach(lId => {
+                    if (state.map.getLayer(lId)) {
+                        state.map.setPaintProperty(lId, 'fill-color', '#c8decb');
+                    }
+                });
+
+                // Water and waterways in soft sky-blue
+                if (state.map.getLayer('water')) {
+                    state.map.setPaintProperty('water', 'fill-color', '#a8cbdf');
                 }
-            });
-
-            // Tweak parks to have a very subtle forest-green tint (#161c18)
-            const parkLayers = ['park_national_park', 'park_nature_reserve'];
-            parkLayers.forEach(lId => {
-                if (state.map.getLayer(lId)) {
-                    state.map.setPaintProperty(lId, 'fill-color', '#161c18');
+                if (state.map.getLayer('waterway')) {
+                    state.map.setPaintProperty('waterway', 'line-color', '#8eb6cd');
                 }
-            });
 
-            // Tweak waterway color for compatibility
-            if (state.map.getLayer('waterway')) {
-                state.map.setPaintProperty('waterway', 'line-color', '#242a30');
-            }
-
-            // 4. Substantially enlarge road names and brighten them
-            if (state.map.getLayer('roadname_minor')) {
-                state.map.setLayoutProperty('roadname_minor', 'text-size', 11.5);
-                state.map.setPaintProperty('roadname_minor', 'text-color', 'rgba(165, 165, 165, 0.85)');
-            }
-            if (state.map.getLayer('roadname_sec')) {
-                state.map.setLayoutProperty('roadname_sec', 'text-size', {
-                    stops: [[14, 11], [16, 13.5], [18, 15.5]]
-                });
-                state.map.setPaintProperty('roadname_sec', 'text-color', 'rgba(185, 185, 185, 0.9)');
-            }
-            if (state.map.getLayer('roadname_pri')) {
-                state.map.setLayoutProperty('roadname_pri', 'text-size', {
-                    stops: [[13, 11], [15, 13], [16, 14.5], [18, 16.5]]
-                });
-                state.map.setPaintProperty('roadname_pri', 'text-color', 'rgba(215, 215, 215, 0.95)');
-            }
-            if (state.map.getLayer('roadname_major')) {
-                // Major roads text was `#383838` (practically invisible black). Set to readable `#ebebeb`.
-                state.map.setLayoutProperty('roadname_major', 'text-size', {
-                    stops: [[13, 11.5], [15, 13.5], [16, 15], [18, 17.5]]
-                });
-                state.map.setPaintProperty('roadname_major', 'text-color', 'rgba(235, 235, 235, 1)');
-            }
-
-            // 5. Style place, town, and city labels in elegant slate-blue and restore standard casing (Mixed Case)
-            const placeLayers = [
-                'place_city_r5',
-                'place_city_r6',
-                'place_town',
-                'place_village',
-                'place_suburb',
-                'place_neighbourhood',
-                'place_hamlet'
-            ];
-
-            const placeColors = {
-                'place_city_r5': '#b6d3e6', // Brightest warm sky-blue
-                'place_city_r6': '#a2c2d6', // Muted ice-blue
-                'place_town': '#8eb1c7',     // Muted slate-blue
-                'place_village': '#7d9eb3',  // Muted slate-blue
-                'place_suburb': '#6e8c9f',   // Muted gray-blue
-                'place_neighbourhood': '#607a8b', // Muted dark gray-blue
-                'place_hamlet': '#526877'     // Muted dark gray-blue
-            };
-
-            if (state.map.getLayer('place_town')) {
-                state.map.setLayoutProperty('place_town', 'text-size', {
-                    stops: [[8, 11.5], [10, 13], [13, 15.5], [14, 17]]
-                });
-            }
-            if (state.map.getLayer('place_city_r6')) {
-                state.map.setLayoutProperty('place_city_r6', 'text-size', {
-                    stops: [[8, 13], [10, 15.5], [13, 19], [14, 21.5]]
-                });
-            }
-            if (state.map.getLayer('place_city_r5')) {
-                state.map.setLayoutProperty('place_city_r5', 'text-size', {
-                    stops: [[8, 15], [10, 17.5], [13, 21], [14, 23.5]]
-                });
-            }
-
-            placeLayers.forEach(lId => {
-                if (state.map.getLayer(lId)) {
-                    const color = placeColors[lId] || '#e2bd7e';
-                    state.map.setPaintProperty(lId, 'text-color', color);
-                    state.map.setLayoutProperty(lId, 'text-transform', 'none');
+                // Road names in dark charcoal with white halos
+                if (state.map.getLayer('roadname_minor')) {
+                    state.map.setLayoutProperty('roadname_minor', 'text-size', 11.5);
+                    state.map.setPaintProperty('roadname_minor', 'text-color', '#334155');
+                    state.map.setPaintProperty('roadname_minor', 'text-halo-color', '#ffffff');
+                    state.map.setPaintProperty('roadname_minor', 'text-halo-width', 1.5);
                 }
-            });
+                if (state.map.getLayer('roadname_sec')) {
+                    state.map.setLayoutProperty('roadname_sec', 'text-size', {
+                        stops: [[14, 11], [16, 13.5], [18, 15.5]]
+                    });
+                    state.map.setPaintProperty('roadname_sec', 'text-color', '#1e293b');
+                    state.map.setPaintProperty('roadname_sec', 'text-halo-color', '#ffffff');
+                    state.map.setPaintProperty('roadname_sec', 'text-halo-width', 1.5);
+                }
+                if (state.map.getLayer('roadname_pri')) {
+                    state.map.setLayoutProperty('roadname_pri', 'text-size', {
+                        stops: [[13, 11], [15, 13], [16, 14.5], [18, 16.5]]
+                    });
+                    state.map.setPaintProperty('roadname_pri', 'text-color', '#0f172a');
+                    state.map.setPaintProperty('roadname_pri', 'text-halo-color', '#ffffff');
+                    state.map.setPaintProperty('roadname_pri', 'text-halo-width', 1.8);
+                }
+                if (state.map.getLayer('roadname_major')) {
+                    state.map.setLayoutProperty('roadname_major', 'text-size', {
+                        stops: [[13, 11.5], [15, 13.5], [16, 15], [18, 17.5]]
+                    });
+                    state.map.setPaintProperty('roadname_major', 'text-color', '#0f172a');
+                    state.map.setPaintProperty('roadname_major', 'text-halo-color', '#ffffff');
+                    state.map.setPaintProperty('roadname_major', 'text-halo-width', 2.0);
+                }
+
+                // Place names in high-contrast dark slate
+                const placeLayers = [
+                    'place_city_r5', 'place_city_r6', 'place_town',
+                    'place_village', 'place_suburb', 'place_neighbourhood', 'place_hamlet'
+                ];
+                placeLayers.forEach(lId => {
+                    if (state.map.getLayer(lId)) {
+                        state.map.setPaintProperty(lId, 'text-color', '#0f172a');
+                        state.map.setPaintProperty(lId, 'text-halo-color', '#ffffff');
+                        state.map.setPaintProperty(lId, 'text-halo-width', 2.0);
+                        state.map.setLayoutProperty(lId, 'text-transform', 'none');
+                    }
+                });
+            } else {
+                // Dark Mode styling (original)
+                const landColor = '#1a1b1e';
+                const landLayers = ['background', 'landcover', 'park_national_park', 'park_nature_reserve', 'landuse'];
+                landLayers.forEach(lId => {
+                    if (state.map.getLayer(lId)) {
+                        if (lId === 'background') {
+                            state.map.setPaintProperty(lId, 'background-color', landColor);
+                        } else {
+                            state.map.setPaintProperty(lId, 'fill-color', landColor);
+                        }
+                    }
+                });
+
+                // Tweak parks to have a very subtle forest-green tint (#161c18)
+                const parkLayers = ['park_national_park', 'park_nature_reserve'];
+                parkLayers.forEach(lId => {
+                    if (state.map.getLayer(lId)) {
+                        state.map.setPaintProperty(lId, 'fill-color', '#161c18');
+                    }
+                });
+
+                // Tweak waterway color for compatibility
+                if (state.map.getLayer('waterway')) {
+                    state.map.setPaintProperty('waterway', 'line-color', '#242a30');
+                }
+
+                // Substantially enlarge road names and brighten them
+                if (state.map.getLayer('roadname_minor')) {
+                    state.map.setLayoutProperty('roadname_minor', 'text-size', 11.5);
+                    state.map.setPaintProperty('roadname_minor', 'text-color', 'rgba(165, 165, 165, 0.85)');
+                }
+                if (state.map.getLayer('roadname_sec')) {
+                    state.map.setLayoutProperty('roadname_sec', 'text-size', {
+                        stops: [[14, 11], [16, 13.5], [18, 15.5]]
+                    });
+                    state.map.setPaintProperty('roadname_sec', 'text-color', 'rgba(185, 185, 185, 0.9)');
+                }
+                if (state.map.getLayer('roadname_pri')) {
+                    state.map.setLayoutProperty('roadname_pri', 'text-size', {
+                        stops: [[13, 11], [15, 13], [16, 14.5], [18, 16.5]]
+                    });
+                    state.map.setPaintProperty('roadname_pri', 'text-color', 'rgba(215, 215, 215, 0.95)');
+                }
+                if (state.map.getLayer('roadname_major')) {
+                    state.map.setLayoutProperty('roadname_major', 'text-size', {
+                        stops: [[13, 11.5], [15, 13.5], [16, 15], [18, 17.5]]
+                    });
+                    state.map.setPaintProperty('roadname_major', 'text-color', 'rgba(235, 235, 235, 1)');
+                }
+
+                // Place, town, and city labels in elegant slate-blue
+                const placeLayers = [
+                    'place_city_r5', 'place_city_r6', 'place_town',
+                    'place_village', 'place_suburb', 'place_neighbourhood', 'place_hamlet'
+                ];
+                const placeColors = {
+                    'place_city_r5': '#b6d3e6',
+                    'place_city_r6': '#a2c2d6',
+                    'place_town': '#8eb1c7',
+                    'place_village': '#7d9eb3',
+                    'place_suburb': '#6e8c9f',
+                    'place_neighbourhood': '#607a8b',
+                    'place_hamlet': '#526877'
+                };
+                placeLayers.forEach(lId => {
+                    if (state.map.getLayer(lId)) {
+                        const color = placeColors[lId] || '#e2bd7e';
+                        state.map.setPaintProperty(lId, 'text-color', color);
+                        state.map.setLayoutProperty(lId, 'text-transform', 'none');
+                    }
+                });
+            }
 
             // Set initial road network line opacity dynamically: semi-transparent white on satellite, solid default on dark
             const isSatelliteInitial = (state.currentBaseLayer || 'dark') === 'satellite';
