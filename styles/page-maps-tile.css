@@ -2183,7 +2183,7 @@ body.theme-light .maps-tile-map-container .default-map-thumbnail {
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
-    transition: width 0.15s cubic-bezier(0.16, 1, 0.3, 1), padding 0.15s cubic-bezier(0.16, 1, 0.3, 1), gap 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
     --mouse-x: 50%;
     --mouse-y: 50%;
     --glow-opacity: 0;
@@ -2279,7 +2279,7 @@ body.has-active-modal .maps-tile-header__actions {
 
 .maps-tile-header__actions .maps-tile-modal[aria-hidden="false"] {
     display: block !important;
-    animation: desktopModalFadeIn 0.12s cubic-bezier(0, 0, 0.2, 1) forwards;
+    animation: desktopModalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .maps-tile-header__actions .maps-tile-modal .modal__backdrop {
@@ -4460,6 +4460,34 @@ html.theme-light .tile-zone-item:hover .tile-zone-item__meta,
 body.theme-light .tile-zone-item__meta,
 body.theme-light .tile-zone-item:hover .tile-zone-item__meta {
     color: #4b5563 !important;
+}
+
+[data-theme="light"] .tile-zone-item__thumb,
+html.theme-light .tile-zone-item__thumb,
+body.theme-light .tile-zone-item__thumb {
+    background: #f3f4f6 !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .tile-zone-item__thumb svg,
+html.theme-light .tile-zone-item__thumb svg,
+body.theme-light .tile-zone-item__thumb svg {
+    background: #f3f4f6 !important;
+}
+
+[data-theme="light"] .tile-zone-item__thumb svg path,
+html.theme-light .tile-zone-item__thumb svg path,
+body.theme-light .tile-zone-item__thumb svg path {
+    fill: #e5e7eb !important;
+    stroke: #6b7280 !important;
+}
+
+[data-theme="light"] .tile-zone-item__thumb-placeholder,
+html.theme-light .tile-zone-item__thumb-placeholder,
+body.theme-light .tile-zone-item__thumb-placeholder {
+    background: #f3f4f6 !important;
+    color: #9ca3af !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 [data-theme="light"] .sidebar-about-text,
