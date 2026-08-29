@@ -111,8 +111,29 @@ function getBbox(features) {
     return [[minLng, minLat], [maxLng, maxLat]];
 }
 
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const existing = document.querySelector(`script[src="${src}"]`);
+        if (existing) {
+            if (existing.dataset.loaded === "true" || window.jspdf || window.JSZip || window.QRCode) return resolve();
+            existing.addEventListener("load", () => resolve());
+            existing.addEventListener("error", reject);
+            return;
+        }
+        const s = document.createElement("script");
+        s.src = src;
+        s.async = true;
+        s.onload = () => { s.dataset.loaded = "true"; resolve(); };
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+
+const _insidePtCache = new WeakMap();
+
 function findPointInsidePolygon(geom) {
     if (!geom) return null;
+    if (_insidePtCache.has(geom)) return _insidePtCache.get(geom);
     
     function getSegDistSq(px, py, a, b) {
         let x = a[0];
@@ -252,7 +273,9 @@ function findPointInsidePolygon(geom) {
 
     searchGrid(minX, minY, maxX, maxY, 0);
 
-    return [bestCell[0], bestCell[1]];
+    const result = [bestCell[0], bestCell[1]];
+    _insidePtCache.set(geom, result);
+    return result;
 }
 
 function generateZoneGeometrySVG(feature) {
@@ -914,6 +937,9 @@ async function generateAppSpatialBlob(formatKey) {
   const filename = getActiveDownloadFilename(formatKey === "geopdf" ? "pdf" : formatKey);
 
   if (formatKey === "geopdf") {
+    try {
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+    } catch (e) {}
     const canvas = await renderMapLayoutCanvas();
     if (window.jspdf && window.jspdf.jsPDF) {
       const { jsPDF } = window.jspdf;
@@ -943,6 +969,9 @@ async function generateAppSpatialBlob(formatKey) {
     return { blob, filename: filename.endsWith(".gpx") ? filename : `${filename}.gpx` };
   } else if (formatKey === "kmz") {
     const kmlStr = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
+    try {
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");
+    } catch (e) {}
     if (typeof JSZip !== "undefined") {
       const zip = new JSZip();
       zip.file("doc.kml", kmlStr);
@@ -1831,76 +1860,141 @@ async function renderMapLayoutCanvas() {
             }
         }
         
-        // Restore original viewport zoom and bounds for screen
-        selectSubject(state.currentId, true, false);
+        // Title Block (Top Left inside map)
+        const tbPadding = 16;
+        const tbX = mapX + 24;
+        const tbY = mapY + 24;
+        const tbW = Math.min(340, mapW - 48);
+        const tbH = 92;
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+        ctx.fillRect(tbX, tbY, tbW, tbH);
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(tbX, tbY, tbW, tbH);
+
+        ctx.fillStyle = "#111827";
+        ctx.textAlign = "left";
+        ctx.font = "bold 20px 'Roboto', sans-serif";
+        ctx.fillText(circleName, tbX + tbPadding, tbY + 32);
+
+        ctx.font = "14px 'Roboto', sans-serif";
+        ctx.fillStyle = "#374151";
+        ctx.fillText(zoneSubtitle, tbX + tbPadding, tbY + 54);
+
+        ctx.font = "11px 'Roboto', sans-serif";
+        ctx.fillStyle = "#6b7280";
+        ctx.fillText(`Coordinates: ${centerLat.toFixed(4)}° N, ${centerLng.toFixed(4)}° W`, tbX + tbPadding, tbY + 76);
+
+        // North Arrow Indicator
+        const naX = mapX + mapW - 48;
+        const naY = mapY + 48;
+        ctx.save();
+        ctx.translate(naX, naY);
+        
+        ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+        ctx.beginPath();
+        ctx.arc(0, 0, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = "#ef4444";
+        ctx.beginPath();
+        ctx.moveTo(0, -14);
+        ctx.lineTo(5, 0);
+        ctx.lineTo(0, -3);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#111827";
+        ctx.beginPath();
+        ctx.moveTo(0, 14);
+        ctx.lineTo(5, 0);
+        ctx.lineTo(0, -3);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.font = "bold 9px 'Roboto', sans-serif";
+        ctx.fillStyle = "#111827";
+        ctx.textAlign = "center";
+        ctx.fillText("N", 0, -18);
+        ctx.restore();
+
+        return canvas;
+    } catch (err) {
+        console.error("Error generating map layout canvas:", err);
+        throw err;
     }
 }
 
-function canvasToTiffBlob(canvas) {
+function writeString(view, offset, str) {
+    for (let i = 0; i < str.length; i++) {
+        view.setUint8(offset + i, str.charCodeAt(i));
+    }
+}
+
+function encodeGeoTiff(canvas, bbox) {
     const width = canvas.width;
     const height = canvas.height;
     const ctx = canvas.getContext("2d");
     const imgData = ctx.getImageData(0, 0, width, height);
-    const rgba = imgData.data;
+    const rawRgb = new Uint8Array(width * height * 3);
 
-    const numPixels = width * height;
-    const rgb = new Uint8Array(numPixels * 3);
-    for (let i = 0, j = 0; i < rgba.length; i += 4, j += 3) {
-        rgb[j] = rgba[i];       // R
-        rgb[j + 1] = rgba[i + 1]; // G
-        rgb[j + 2] = rgba[i + 2]; // B
+    for (let i = 0, j = 0; i < imgData.data.length; i += 4, j += 3) {
+        rawRgb[j] = imgData.data[i];
+        rawRgb[j + 1] = imgData.data[i + 1];
+        rawRgb[j + 2] = imgData.data[i + 2];
     }
 
-    const imageByteCount = rgb.length;
-    const headerSize = 8;
-    const ifdOffset = headerSize + imageByteCount;
-    const numEntries = 12;
+    const minLng = bbox[0][0];
+    const minLat = bbox[0][1];
+    const maxLng = bbox[1][0];
+    const maxLat = bbox[1][1];
+
+    const pixelScaleX = (maxLng - minLng) / width;
+    const pixelScaleY = (maxLat - minLat) / height;
+
+    const numEntries = 14;
+    const ifdOffset = 8;
     const ifdSize = 2 + (numEntries * 12) + 4;
     const valueDataOffset = ifdOffset + ifdSize;
 
-    const totalSize = valueDataOffset + 6;
-    const buffer = new ArrayBuffer(totalSize);
+    const buffer = new ArrayBuffer(valueDataOffset + 2048 + rawRgb.length);
     const view = new DataView(buffer);
-    const u8 = new Uint8Array(buffer);
 
-    // TIFF Header ("II" Little Endian)
-    u8[0] = 0x49; u8[1] = 0x49;
+    view.setUint16(0, 0x4949, true);
     view.setUint16(2, 42, true);
     view.setUint32(4, ifdOffset, true);
 
-    // Write RGB Pixels
-    u8.set(rgb, headerSize);
-
-    // BitsPerSample values (8, 8, 8)
-    const bitsOffset = valueDataOffset;
-    view.setUint16(bitsOffset, 8, true);
-    view.setUint16(bitsOffset + 2, 8, true);
-    view.setUint16(bitsOffset + 4, 8, true);
-
-    // IFD Tags
     let p = ifdOffset;
-    view.setUint16(p, numEntries, true); p += 2;
+    view.setUint16(p, numEntries, true);
+    p += 2;
 
-    function writeTag(tag, type, count, value) {
+    const writeTag = (tag, type, count, valueOrOffset) => {
         view.setUint16(p, tag, true);
         view.setUint16(p + 2, type, true);
         view.setUint32(p + 4, count, true);
-        view.setUint32(p + 8, value, true);
+        view.setUint32(p + 8, valueOrOffset, true);
         p += 12;
-    }
+    };
 
-    writeTag(256, 4, 1, width);               // ImageWidth
-    writeTag(257, 4, 1, height);              // ImageLength
-    writeTag(258, 3, 3, bitsOffset);          // BitsPerSample
-    writeTag(259, 3, 1, 1);                   // Compression = 1 (Uncompressed)
-    writeTag(262, 3, 1, 2);                   // PhotometricInterpretation = 2 (RGB)
-    writeTag(273, 4, 1, headerSize);          // StripOffsets
-    writeTag(277, 3, 1, 3);                   // SamplesPerPixel = 3
-    writeTag(278, 4, 1, height);              // RowsPerStrip
-    writeTag(279, 4, 1, imageByteCount);      // StripByteCounts
-    writeTag(282, 5, 1, valueDataOffset);     // XResolution
-    writeTag(283, 5, 1, valueDataOffset);     // YResolution
-    writeTag(296, 3, 1, 2);                   // ResolutionUnit = 2 (Inch)
+    const imageDataOffset = valueDataOffset + 512;
+    new Uint8Array(buffer, imageDataOffset, rawRgb.length).set(rawRgb);
+
+    writeTag(256, 4, 1, width);
+    writeTag(257, 4, 1, height);
+    writeTag(258, 3, 3, valueDataOffset + 64);
+    writeTag(259, 3, 1, 1);
+    writeTag(262, 3, 1, 2);
+    writeTag(273, 4, 1, imageDataOffset);
+    writeTag(277, 3, 1, 3);
+    writeTag(278, 4, 1, height);
+    writeTag(279, 4, 1, rawRgb.length);
+    writeTag(282, 5, 1, valueDataOffset);
+    writeTag(283, 5, 1, valueDataOffset);
+    writeTag(296, 3, 1, 2);
 
     view.setUint32(p, 0, true);
 
@@ -1908,6 +2002,9 @@ function canvasToTiffBlob(canvas) {
 }
 
 async function downloadGeoPdf(triggerButton = null) {
+    try {
+        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+    } catch (e) {}
     const canvas = await renderMapLayoutCanvas();
     const filename = getActiveDownloadFilename("pdf");
     
@@ -4971,47 +5068,29 @@ function setupActionButtons() {
     const toolbar = document.querySelector(".maps-tile-header__actions");
     if (toolbar) {
         const threshold = 140; // px — proximity threshold distance
-        let rect = null;
-        let isDirty = true;
-        let ticking = false;
-
-        const updateRect = () => {
-            rect = toolbar.getBoundingClientRect();
-            isDirty = false;
-        };
-
-        window.addEventListener("resize", () => { isDirty = true; }, { passive: true });
-        window.addEventListener("scroll", () => { isDirty = true; }, { passive: true });
-
         window.addEventListener("mousemove", (e) => {
-            if (!ticking) {
-                requestAnimationFrame(() => {
-                    if (isDirty || !rect) updateRect();
-                    
-                    // Calculate relative mouse coordinates inside toolbar coordinate space
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    
-                    // Calculate shortest distance from cursor to toolbar bounding box
-                    const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
-                    const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
-                    const dist = Math.sqrt(dx * dx + dy * dy);
+            const rect = toolbar.getBoundingClientRect();
+            
+            // Calculate relative mouse coordinates inside toolbar coordinate space
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Calculate shortest distance from cursor to toolbar bounding box
+            const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
+            const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
+            const dist = Math.sqrt(dx * dx + dy * dy);
 
-                    toolbar.style.setProperty("--mouse-x", `${x}px`);
-                    toolbar.style.setProperty("--mouse-y", `${y}px`);
+            toolbar.style.setProperty("--mouse-x", `${x}px`);
+            toolbar.style.setProperty("--mouse-y", `${y}px`);
 
-                    // Compute proximity opacity
-                    let opacity = 0;
-                    if (dist <= threshold) {
-                        opacity = Math.pow(1 - dist / threshold, 1.2);
-                    }
-
-                    toolbar.style.setProperty("--glow-opacity", opacity.toFixed(3));
-                    ticking = false;
-                });
-                ticking = true;
+            // Compute proximity opacity (1.0 inside toolbar, tapering down to 0.0 at threshold distance)
+            let opacity = 0;
+            if (dist <= threshold) {
+                opacity = Math.pow(1 - dist / threshold, 1.2);
             }
-        }, { passive: true });
+
+            toolbar.style.setProperty("--glow-opacity", opacity.toFixed(3));
+        });
     }
 
     window.updateActionButtonsState = () => {
@@ -5228,6 +5307,9 @@ function setupActionButtons() {
                 const geojson = getSelectedGeoJSONData();
                 const filename = getActiveDownloadFilename("kmz");
                 const kmlStr = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
+                try {
+                    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");
+                } catch (err) {}
                 let blob;
                 if (typeof JSZip !== "undefined") {
                     const zip = new JSZip();
@@ -6802,29 +6884,26 @@ function setupHelpModeSystem() {
 }
 
 async function init() {
+    let hasEntered = false;
     const triggerEntrance = () => {
+        if (hasEntered) return;
+        hasEntered = true;
         document.body.classList.remove("is-transitioning");
         const overlay = document.getElementById("page-transition-overlay");
         if (overlay) overlay.classList.remove("is-active");
 
-        // Wait 500ms for nav tabs to finish sliding up (map frame reaches full height),
-        // then fade out the map placeholder.
-        setTimeout(() => {
-            const placeholder = document.getElementById("map-loading-placeholder");
-            if (placeholder) {
-                placeholder.classList.add("is-faded");
-                setTimeout(() => {
-                    placeholder.style.display = "none";
-                }, 500);
-            }
+        const placeholder = document.getElementById("map-loading-placeholder");
+        if (placeholder) {
+            placeholder.classList.add("is-faded");
+            setTimeout(() => {
+                placeholder.style.display = "none";
+            }, 180);
+        }
 
-            // Once the map container reaches full height, resize the map and refit bounds
-            // without any animation so the zoom level matches exactly.
-            if (state.map) {
-                state.map.resize();
-                selectSubject(state.currentId, true, false);
-            }
-        }, 500);
+        if (state.map) {
+            state.map.resize();
+            selectSubject(state.currentId, true, false);
+        }
     };
 
     try {
@@ -6893,11 +6972,12 @@ async function init() {
         }
 
         if (state.map) {
-            state.map.once("load", () => {
-                setTimeout(triggerEntrance, 150);
-            });
-            // Safety timeout fallback
-            setTimeout(triggerEntrance, 1000);
+            if (state.map.loaded()) {
+                triggerEntrance();
+            } else {
+                state.map.once("load", triggerEntrance);
+                setTimeout(triggerEntrance, 350);
+            }
         } else {
             triggerEntrance();
         }
