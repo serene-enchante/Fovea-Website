@@ -496,24 +496,24 @@ function updateAllFeatureStyles() {
     let defaultFillOpacity = 0.07;
 
     if (isLightBasemap) {
-        defaultFillColor = '#0d47a1';
-        defaultFillOpacity = 0.22;
+        defaultFillColor = '#000000';
+        defaultFillOpacity = 0.0;
     } else if (isSatelliteBasemap) {
         defaultFillColor = '#000000'; // black fill for satellite only
         defaultFillOpacity = 0.75; // unselected black fill opacity increased significantly for satellite
     }
 
     const defaultLineColor = isLightBasemap ? '#000000' : '#ffffff';
-    const dimLineColor = isLightBasemap ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.25)';
-    const defaultLineWidth = isLightBasemap ? 2.8 : 1.0;
+    const dimLineColor = isLightBasemap ? 'rgba(0, 0, 0, 0.40)' : 'rgba(255, 255, 255, 0.25)';
+    const defaultLineWidth = isLightBasemap ? 2.4 : 1.0;
 
-    const noDataFillColor = isLightBasemap ? '#8e8e93' : defaultFillColor;
-    const noDataFillOpacity = isLightBasemap ? 0.30 : (isSatelliteBasemap ? 0.60 : 0.02);
-    const noDataLineColor = isLightBasemap ? 'rgba(80, 80, 80, 0.60)' : dimLineColor;
+    const noDataFillColor = isLightBasemap ? '#9ca3af' : defaultFillColor;
+    const noDataFillOpacity = isLightBasemap ? 0.12 : (isSatelliteBasemap ? 0.60 : 0.02);
+    const noDataLineColor = isLightBasemap ? 'rgba(60, 60, 60, 0.50)' : dimLineColor;
 
-    const hoverFillColor = isLightBasemap ? '#1e293b' : '#3f3f46';
-    const hoverFillOpacity = isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.88 : 0.05);
-    const noDataHoverFillOpacity = isLightBasemap ? 0.06 : (isSatelliteBasemap ? 0.75 : 0.02);
+    const hoverFillColor = isLightBasemap ? '#000000' : '#3f3f46';
+    const hoverFillOpacity = isLightBasemap ? 0.06 : (isSatelliteBasemap ? 0.88 : 0.05);
+    const noDataHoverFillOpacity = isLightBasemap ? 0.16 : (isSatelliteBasemap ? 0.75 : 0.02);
 
     const selectedFillColor = getThemeAccent();
     const selectedFillOpacity = 0.0;
