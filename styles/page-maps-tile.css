@@ -1738,11 +1738,20 @@ body.is-transitioning .desktop-nav-tab__icon {
     background-repeat: no-repeat !important;
 }
 
-/* Dark Map Preview thumbnail */
-.maps-tile-map-container .map-ctrl-styles__list .dark-map-thumbnail {
+/* Default Map Preview thumbnail */
+.maps-tile-map-container .map-ctrl-styles__list .default-map-thumbnail,
+.maps-tile-map-container .default-map-thumbnail,
+.maps-tile-map-container .map-ctrl-styles__list .dark-map-thumbnail,
+.maps-tile-map-container .dark-map-thumbnail {
     background-image: url("../images/dark_map-02.png") !important;
 }
 
+[data-theme="light"] .maps-tile-map-container .map-ctrl-styles__list .default-map-thumbnail,
+[data-theme="light"] .maps-tile-map-container .default-map-thumbnail,
+html.theme-light .maps-tile-map-container .default-map-thumbnail,
+body.theme-light .maps-tile-map-container .default-map-thumbnail {
+    background-image: url("../images/street2.jpg") !important;
+}
 
 /* Satellite Preview thumbnail */
 .maps-tile-map-container .map-ctrl-styles__list .satellite-thumbnail,

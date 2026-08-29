@@ -609,7 +609,7 @@ const state = {
     focusedTileIndex: -1,
     lastNavSource: "click",
     baseMapsList: [],
-    currentBaseLayer: "dark",
+    currentBaseLayer: "default",
     snapState: "default"
 };
 
@@ -1398,22 +1398,32 @@ function geojsonToGpx(geojson, docName = "Map Data") {
 
 function switchBaseMap(baseMapId) {
     if (!state.map || !state.baseMapsList) return;
-    const targetMap = state.baseMapsList.find(b => b.id === baseMapId);
+    const targetId = (baseMapId === "dark" || baseMapId === "default") ? "default" : baseMapId;
+    const targetMap = state.baseMapsList.find(b => b.id === targetId) || state.baseMapsList[0];
     if (!targetMap) return;
     
     state.baseMapsList.forEach(bm => {
         if (state.map.getLayer(bm.layerId)) {
-            state.map.setLayoutProperty(bm.layerId, 'visibility', bm.layerId === targetMap.layerId ? 'visible' : 'none');
+            state.map.setLayoutProperty(bm.layerId, 'visibility', bm.id === targetId ? 'visible' : 'none');
         }
         const lowResLayerId = `${bm.layerId}-low`;
         if (state.map.getLayer(lowResLayerId)) {
-            state.map.setLayoutProperty(lowResLayerId, 'visibility', bm.layerId === targetMap.layerId ? 'visible' : 'none');
+            state.map.setLayoutProperty(lowResLayerId, 'visibility', bm.id === targetId ? 'visible' : 'none');
         }
     });
-    state.currentBaseLayer = baseMapId;
+    state.currentBaseLayer = targetId;
 
-    // Apply road network line opacity dynamically: semi-transparent on satellite, solid on dark
-    const isSatellite = baseMapId === 'satellite';
+    // If switching to default vector map, hide all raster overlays so vector base shows cleanly
+    if (targetId === "default") {
+        ['base-satellite', 'base-esri-street', 'base-esri-topo', 'base-dark-raster'].forEach(lId => {
+            if (state.map.getLayer(lId)) {
+                state.map.setLayoutProperty(lId, 'visibility', 'none');
+            }
+        });
+    }
+
+    // Apply road network line opacity dynamically: semi-transparent on satellite, solid on default/dark
+    const isSatellite = targetId === 'satellite';
     const roadLayers = [
         'road_service_case', 'road_minor_case', 'road_pri_case_ramp', 'road_trunk_case_ramp', 'road_mot_case_ramp',
         'road_sec_case_noramp', 'road_pri_case_noramp', 'road_trunk_case_noramp', 'road_mot_case_noramp', 'road_path',
@@ -1437,15 +1447,17 @@ function switchBaseMap(baseMapId) {
         }
     });
 
+    const isLightMode = document.body.classList.contains("theme-light") || targetId === "esri-street" || targetId === "esri-topo";
     const tileMapEl = document.getElementById("tile-map");
     if (tileMapEl) {
-        tileMapEl.style.setProperty("background-color", "#000000", "important");
-        tileMapEl.style.setProperty("background", "#000000", "important");
+        const bg = isLightMode ? "#f8f9fa" : "#000000";
+        tileMapEl.style.setProperty("background-color", bg, "important");
+        tileMapEl.style.setProperty("background", bg, "important");
     }
 
     const mapWrapper = document.getElementById("map-wrapper");
     if (mapWrapper) {
-        if (baseMapId === "esri-street" || baseMapId === "esri-topo") {
+        if (targetId === "esri-street" || targetId === "esri-topo" || (targetId === "default" && isLightMode)) {
             mapWrapper.classList.add("is-light-basemap");
         } else {
             mapWrapper.classList.remove("is-light-basemap");
@@ -3618,6 +3630,11 @@ function initializeMap() {
     const mapWrapper = document.getElementById("map-wrapper");
     if (!mapContainer) return;
 
+    const isLightMode = document.body.classList.contains("theme-light") || state.currentBaseLayer === "esri-street" || (document.documentElement.getAttribute("data-theme") === "light");
+    const defaultVectorStyle = isLightMode
+        ? "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+        : "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+
     state.map = new maplibregl.Map({
         container: 'tile-map',
         preserveDrawingBuffer: true,
@@ -3630,14 +3647,13 @@ function initializeMap() {
             linearity: 0.15,
             deceleration: 1000
         },
-        style: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+        style: defaultVectorStyle,
         center: [-123.11, 44.05],
         zoom: 11,
         attributionControl: false
     });
 
-    // Set initial background color to match black
-    const isLightMode = document.body.classList.contains("theme-light") || state.currentBaseLayer === "esri-street";
+    // Set initial background color
     const initialTileMapEl = document.getElementById("tile-map");
     if (initialTileMapEl) {
         const bg = isLightMode ? "#f8f9fa" : "#000000";
@@ -3920,7 +3936,7 @@ function initializeMap() {
     }
 
     state.baseMapsList = [
-        { id: "dark", name: "Dark Map", layerId: "base-dark-vector" },
+        { id: "default", name: "Default", layerId: "base-dark-vector" },
         { id: "dark-raster", name: "Dark Map (Raster)", layerId: "base-dark-raster" },
         { id: "satellite", name: "Satellite Map", layerId: "base-satellite" },
         { id: "esri-street", name: "Street Map", layerId: "base-esri-street" },
@@ -4190,7 +4206,7 @@ function initializeMap() {
             }
         } else {
             const basemaps = [
-                { id: "dark", name: "Dark Map", thumbnailClass: "dark-map-thumbnail", layerId: "base-dark-vector" },
+                { id: "default", name: "Default", thumbnailClass: "default-map-thumbnail", layerId: "base-dark-vector" },
                 { id: "dark-raster", name: "Dark Map (Raster)", thumbnailClass: "dark-map-thumbnail", layerId: "base-dark-raster" },
                 { id: "satellite", name: "Satellite Map", thumbnailClass: "satellite-thumbnail", layerId: "base-satellite" },
                 { id: "esri-street", name: "Street Map", thumbnailClass: "esri-street-thumbnail", layerId: "base-esri-street" },
@@ -4202,7 +4218,7 @@ function initializeMap() {
                 bodyEl.innerHTML = `<div class="modal-no-results">No basemaps found</div>`;
             } else {
                 filtered.forEach(b => {
-                    const isSelected = state.currentBaseLayer === b.id;
+                    const isSelected = state.currentBaseLayer === b.id || (b.id === 'default' && (!state.currentBaseLayer || state.currentBaseLayer === 'dark'));
                     const row = document.createElement("div");
                     row.className = `tile-zone-item ${isSelected ? 'is-active' : ''}`;
                     row.innerHTML = `
@@ -6748,12 +6764,12 @@ async function init() {
             document.documentElement.setAttribute("data-theme", "light");
             document.documentElement.classList.add("theme-light");
             document.body.classList.add("theme-light");
-            state.currentBaseLayer = "esri-street";
+            state.currentBaseLayer = "default";
         } else {
             document.documentElement.setAttribute("data-theme", "dark");
             document.documentElement.classList.remove("theme-light");
             document.body.classList.remove("theme-light");
-            state.currentBaseLayer = "dark";
+            state.currentBaseLayer = "default";
         }
 
         const [circlesRes, eugeneRes, florenceRes] = await Promise.all([
