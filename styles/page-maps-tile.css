@@ -4237,7 +4237,7 @@ body.theme-light .page-maps-tile .intro-header {
 [data-theme="light"] .header-view-toggle,
 html.theme-light .header-view-toggle,
 body.theme-light .header-view-toggle {
-    color: rgba(255, 255, 255, 0.75) !important;
+    color: #111827 !important;
     background: transparent !important;
     border: none !important;
 }
@@ -4245,65 +4245,83 @@ body.theme-light .header-view-toggle {
 [data-theme="light"] .header-view-toggle:hover,
 html.theme-light .header-view-toggle:hover,
 body.theme-light .header-view-toggle:hover {
-    color: #ffffff !important;
-    background: rgba(255, 255, 255, 0.12) !important;
+    color: #000000 !important;
+    background: rgba(0, 0, 0, 0.05) !important;
 }
 
 [data-theme="light"] .header-view-toggle__icon-wrap,
 html.theme-light .header-view-toggle__icon-wrap,
 body.theme-light .header-view-toggle__icon-wrap {
-    color: rgba(255, 255, 255, 0.75) !important;
+    color: #111827 !important;
 }
 
 [data-theme="light"] .header-view-toggle:hover .header-view-toggle__icon-wrap,
 html.theme-light .header-view-toggle:hover .header-view-toggle__icon-wrap,
 body.theme-light .header-view-toggle:hover .header-view-toggle__icon-wrap {
-    color: #ffffff !important;
+    color: #000000 !important;
 }
 
 [data-theme="light"] .header-view-toggle__chevron,
 html.theme-light .header-view-toggle__chevron,
 body.theme-light .header-view-toggle__chevron {
-    stroke: rgba(255, 255, 255, 0.75) !important;
+    stroke: #111827 !important;
 }
 
 [data-theme="light"] .header-view-toggle:hover .header-view-toggle__chevron,
 html.theme-light .header-view-toggle:hover .header-view-toggle__chevron,
 body.theme-light .header-view-toggle:hover .header-view-toggle__chevron {
-    stroke: #ffffff !important;
+    stroke: #000000 !important;
 }
 
 [data-theme="light"] .header-view-menu,
 html.theme-light .header-view-menu,
 body.theme-light .header-view-menu {
-    background: #000000 !important;
-    border: 1px solid #333333 !important;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35) !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12) !important;
 }
 
 [data-theme="light"] .header-view-menu__item,
 html.theme-light .header-view-menu__item,
 body.theme-light .header-view-menu__item {
-    color: #e4e4e7 !important;
+    color: #374151 !important;
 }
 
 [data-theme="light"] .header-view-menu__item:hover,
 html.theme-light .header-view-menu__item:hover,
 body.theme-light .header-view-menu__item:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: #111827 !important;
 }
 
 [data-theme="light"] .header-view-menu__icon,
 html.theme-light .header-view-menu__icon,
 body.theme-light .header-view-menu__icon {
-    stroke: #e4e4e7 !important;
+    stroke: #374151 !important;
 }
 
 [data-theme="light"] .header-view-menu__item:hover .header-view-menu__icon,
 html.theme-light .header-view-menu__item:hover .header-view-menu__icon,
 body.theme-light .header-view-menu__item:hover .header-view-menu__icon {
-    stroke: #ffffff !important;
+    stroke: #111827 !important;
+}
+
+[data-theme="light"] .header-logo-container,
+html.theme-light .header-logo-container,
+body.theme-light .header-logo-container {
+    background: #000000 !important;
+    border-radius: 10px !important;
+    padding: 4px 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+[data-theme="light"] .page-maps-tile .logo--header,
+html.theme-light .page-maps-tile .logo--header,
+body.theme-light .page-maps-tile .logo--header {
+    height: 44px !important;
+    border-radius: 6px !important;
 }
 
 [data-theme="light"] .maps-tile-sidebar,
@@ -4349,25 +4367,25 @@ body.theme-light .mobile-resize-bar::after {
 [data-theme="light"] .maps-tile-header,
 html.theme-light .maps-tile-header,
 body.theme-light .maps-tile-header {
-    background: #000000 !important;
-    border-radius: 14px !important;
-    margin: 0.6rem 0.65rem 0.35rem 0.65rem !important;
-    padding: 0.75rem 0.85rem !important;
-    width: auto !important;
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: calc(0.75rem + env(safe-area-inset-top, 0px)) 1rem 0.4rem 1rem !important;
+    width: 100% !important;
     border: none !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
 }
 
 [data-theme="light"] .maps-tile-header__title,
 html.theme-light .maps-tile-header__title,
 body.theme-light .maps-tile-header__title {
-    color: #ffffff !important;
+    color: #111827 !important;
 }
 
 [data-theme="light"] .header-logo-text,
 html.theme-light .header-logo-text,
 body.theme-light .header-logo-text {
-    color: #ffffff !important;
+    color: #111827 !important;
 }
 
 [data-theme="light"] .sidebar-capsule,
