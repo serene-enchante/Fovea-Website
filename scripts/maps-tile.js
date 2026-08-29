@@ -5134,7 +5134,9 @@ function setupActionButtons() {
                         if (qrWrapper) qrWrapper.classList.remove("loading");
                         qrImg.style.opacity = "0.3";
                     };
-                    qrImg.src = `https://quickchart.io/qr?text=${encodeURIComponent(currentUrl)}&light=00000000&dark=b8b8b8&size=500&margin=0`;
+                    const isLightMode = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
+                    const qrColor = isLightMode ? "000000" : "b8b8b8";
+                    qrImg.src = `https://quickchart.io/qr?text=${encodeURIComponent(currentUrl)}&light=00000000&dark=${qrColor}&size=500&margin=0`;
                 }
                 copyModal.setAttribute("aria-hidden", "false");
                 copyModal.classList.add("is-open");

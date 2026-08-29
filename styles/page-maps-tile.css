@@ -4627,8 +4627,14 @@ body.theme-light .maps-tile-copy-input {
 [data-theme="light"] .maps-tile-qr-wrapper,
 html.theme-light .maps-tile-qr-wrapper,
 body.theme-light .maps-tile-qr-wrapper {
-    background: rgba(0, 0, 0, 0.03) !important;
+    background: transparent !important;
     border: none !important;
+}
+
+[data-theme="light"] .maps-tile-qr-img,
+html.theme-light .maps-tile-qr-img,
+body.theme-light .maps-tile-qr-img {
+    filter: none !important;
 }
 
 [data-theme="light"] .suggest-form-label,
