@@ -4410,8 +4410,8 @@ html.theme-light .sidebar-capsule.is-active,
 html.theme-light .sidebar-capsule.is-active:hover,
 body.theme-light .sidebar-capsule.is-active,
 body.theme-light .sidebar-capsule.is-active:hover {
-    background: var(--accent-primary) !important;
-    color: #ffffff !important;
+    background: rgba(var(--accent-rgb), 0.28) !important;
+    color: var(--accent-primary) !important;
     font-weight: 700 !important;
 }
 
