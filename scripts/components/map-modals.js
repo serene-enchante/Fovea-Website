@@ -1,6 +1,8 @@
 import { updateKeyboardTileFocus } from './sidebar-list.js';
 import { showToast } from './toast-view.js';
 import { state } from '../state.js';
+import { toggleFullscreen, performDirectCopyLink } from './toolbar-actions.js';
+import { selectMapStyleByIndex } from '../map/map-layers.js';
 
 export function setupImageLightbox() {
     const modal = document.getElementById("image-lightbox-modal");

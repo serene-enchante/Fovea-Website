@@ -1,6 +1,7 @@
 import { state } from '../state.js';
 import { CIRCLE_ID } from '../config/app-config.js';
-import { updateUrl, renderSidebarList, rebuildGeoJsonLayer } from '../maps-tile.js';
+import { updateUrl, rebuildGeoJsonLayer } from '../maps-tile.js';
+import { renderSidebarList } from '../components/sidebar-list.js';
 import { updateHeader, getFitPadding } from '../components/header-view.js';
 import { updateAllFeatureStyles } from './map-layers.js';
 import { normalizeZoneId, displayZoneId } from '../utils/format-utils.js';

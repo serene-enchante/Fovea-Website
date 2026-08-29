@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { unhighlightTileItem, highlightTileItem } from '../maps-tile.js';
+import { unhighlightTileItem, highlightTileItem } from '../components/sidebar-list.js';
 import { switchToFeature, selectSubject } from './map-selection.js';
 import { showToast } from '../components/toast-view.js';
 import { CIRCLE_ID } from '../config/app-config.js';

@@ -3,6 +3,7 @@ import { state } from '../state.js';
 import { displayZoneId, zoneImagePath, normalizeZoneId, FALLBACK_IMAGE } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { switchToFeature, selectSubject } from '../map/map-selection.js';
+import { openImageLightbox } from './image-lightbox.js';
 
 export function renderSidebarList() {
     const itemsCapsule = document.querySelector('.sidebar-capsule[data-tab="items"]');

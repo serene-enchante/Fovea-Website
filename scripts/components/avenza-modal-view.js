@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { generateAppSpatialBlob } from '../maps-tile.js';
+import { generateAppSpatialBlob } from './toolbar-actions.js';
 import { normalizeZoneId, displayZoneId } from '../utils/format-utils.js';
 import { APP_INSTRUCTION_CONFIGS, CIRCLE_ID } from '../config/app-config.js';
 

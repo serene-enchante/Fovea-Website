@@ -5,9 +5,11 @@ import { closeAllModals } from './modal-view.js';
 import { launchAppWithStoreFallback } from './avenza-modal-view.js';
 import { getSelectedGeoJSONData } from '../services/bird-data-service.js';
 import { geojsonToKml, geojsonToGpx } from '../services/format-converters.js';
-import { downloadGeoPdf, downloadGeoTiff } from '../map/map-rendering.js';
+import { renderMapLayoutCanvas, downloadGeoPdf, downloadGeoTiff } from '../map/map-rendering.js';
 import { setupSuggestFormAndDrawing } from './feedback-form.js';
 import { renderSidebarList } from './sidebar-list.js';
+import { CIRCLE_ID } from '../config/app-config.js';
+import { handleSpatialFileShare } from '../services/file-download-service.js';
 
 export function getActiveDownloadFilename(ext) {
     let base = "map-data";
@@ -848,14 +850,16 @@ export function setupActionButtons() {
         const geopdfBtn = document.getElementById("download-geopdf");
         if (geopdfBtn) {
             geopdfBtn.addEventListener("click", async () => {
-                await downloadGeoPdf(geopdfBtn);
+                const filename = getActiveDownloadFilename("pdf");
+                await downloadGeoPdf(filename, geopdfBtn);
             });
         }
 
         const geotiffBtn = document.getElementById("download-geotiff");
         if (geotiffBtn) {
             geotiffBtn.addEventListener("click", async () => {
-                await downloadGeoTiff(geotiffBtn);
+                const filename = getActiveDownloadFilename("tif");
+                await downloadGeoTiff(filename, geotiffBtn);
             });
         }
     }
