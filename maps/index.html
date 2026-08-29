@@ -561,8 +561,8 @@
 
                 <div class="maps-tile-sidebar__header" id="sidebar-header">
                     <div id="sidebar-capsules-wrapper" class="sidebar-capsules-wrapper">
-                        <button id="btn-capsule-back" class="sidebar-back-btn" aria-label="Back to full circle"
-                            title="Back to overview">
+                        <button id="btn-capsule-back" class="sidebar-back-btn is-disabled" disabled aria-label="Back to full circle"
+                            title="Back to full circle">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -570,9 +570,11 @@
                             </svg>
                         </button>
                         <div class="sidebar-capsules-scroll">
-                            <button class="sidebar-capsule" data-tab="overview"
-                                aria-label="Overview" title="Overview">Overview</button>
-                            <button class="sidebar-capsule is-active" data-tab="items">Circle Zones</button>
+                            <button class="sidebar-capsule" data-tab="items">Circle Zones</button>
+                            <button class="sidebar-capsule" data-tab="birds">Birds</button>
+                            <button class="sidebar-capsule" data-tab="observations" style="display: none;">Observations</button>
+                            <button class="sidebar-capsule" data-tab="organizers">Organizers</button>
+                            <button class="sidebar-capsule" data-tab="resources">Resources</button>
                         </div>
                         <button id="btn-search-toggle" class="sidebar-search-toggle-btn" aria-label="Search items">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -662,6 +664,7 @@
             </button>
             <img id="lightbox-img" src="" alt="Enlarged view" />
             <p id="lightbox-text" class="image-lightbox-text"></p>
+            <p id="lightbox-credit" class="image-lightbox-credit"></p>
         </div>
     </div>
 

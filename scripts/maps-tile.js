@@ -468,7 +468,8 @@ function updateAllFeatureStyles() {
     // Dynamically filter circle place names from basemap on circles overview view
     try {
         updatePlaceLabelsFilter();
-    } catch(e) { console.warn("Error updating place labels filter:", e); }
+        updateBirdObservationsLayerStyles();
+    } catch(e) { console.warn("Error updating map layer styles:", e); }
     
     // We update all features state based on currentId
     state.allFeatures.forEach(feature => {
@@ -600,7 +601,7 @@ const state = {
     currentFeature: "circles", // "circles", "eugene", "florence"
     isCirclesFeature: true,
     currentId: CIRCLE_ID,
-    activeTab: "items",
+    activeTab: "overview",
     isSwipeTransitionActive: false,
     map: null,
     geoJsonLayer: null,
@@ -629,6 +630,68 @@ function normalizeZoneId(value) {
 
 function displayZoneId(zid) {
     return String(zid || "").toUpperCase().trim();
+}
+
+const EUGENE_ZONE_DESCRIPTIONS = {
+    "01": "Comprises northern agricultural plains and foothill margins, featuring open grass fields, hedgerows, and oak savanna that host wintering raptors and sparrows.",
+    "02": "Features low-elevation floodplain terrain, combining riparian hardwood woodlands, seasonal sloughs, and agricultural pastures favored by foraging winter songbirds and waterfowl.",
+    "03A": "Encompasses urban wetland basins and river backwaters, featuring willow thickets, emergent marshes, and open water channels attractive to dabbling ducks and grebes.",
+    "03B": "Covers a major river confluence area, characterized by gravel bars, riparian cottonwood gallery, and mixed woodlands that support wintering mergansers and eagles.",
+    "04": "Features riverfront riparian greenways and suburban edges, blending mature black cottonwoods, shrub buffers, and open parks that shelter diverse winter passerines.",
+    "05A": "Centering urban river corridors and wooded park slopes, this zone combines city parklands, mixed canopy, and waterways hosting wintering woodland species.",
+    "05B": "Comprises urban stream corridors, canalways, and suburban residential gardens, providing canopy cover and foraging habitat for wintering thrushes, finches, and sparrows.",
+    "06A": "Features eastern foothill slopes and tributary creek ravines, dominated by mixed conifer-hardwood forests that shelter wintering kinglets, creepers, and woodpeckers.",
+    "06B": "Follows a broad river corridor, offering mature alder and cedar floodplains, gravel islands, and side channels for wintering river birds and waterfowl.",
+    "07": "Encompasses river valley bottomlands and agricultural groves, blending riparian woodlands, oxbows, and open pastures attractive to wintering passerines.",
+    "08": "Features rolling oak savanna, open prairie meadows, and upland conifer ridges, offering prime foraging terrain for wintering bluebirds and hunting raptors.",
+    "09": "Dominates southern upland ridge slopes, featuring dense Douglas fir forest, fern-covered ravines, and foothill woods hosting wintering forest birds.",
+    "10A": "Covers high-elevation rocky crests and conifer-covered slopes, featuring mixed fir-madrone woods and open ridgelines that attract wintering finches and nuthatches.",
+    "10B": "Spans southern foothill ravines and residential woods, combining mixed evergreen canopy, brushy ravines, and garden edges favored by wintering towhees and jays.",
+    "11A": "Features southwestern agricultural foothills, with rolling pastures, seasonal ponds, and oak-pine savanna supporting wintering sparrows and meadow birds.",
+    "11B": "Spans wooded southwestern hillside ravines and suburban margins, offering mixed conifer groves and brushy thickets that shelter wintering songbirds.",
+    "12A": "Follows a rural stream drainage, characterized by low-elevation wet pastures, willow margins, and open agricultural fields favored by wintering harriers.",
+    "12B": "Encompasses native wet prairie basins and vernal swales, featuring open grasslands and scattered oak groves where wintering snipe and shrikes forage.",
+    "13A": "Features extensive freshwater marshlands and vernal ponds, offering emergent reedbeds, willow corridors, and shallow waters that attract diverse winter waterfowl.",
+    "13B": "Spans restored wetland drainage channels and low-lying wet meadows, providing rich foraging habitat for wintering shorebirds, dabblers, and marsh birds.",
+    "14": "Covers open reservoir shoreline and marshy embayments, featuring shallow mudflats, emergent vegetation, and open waters hosting wintering grebes and loons.",
+    "15": "Encompasses vast wetland basins and open water impoundments, with emergent marshes and flooded fields supporting large concentrations of wintering waterfowl.",
+    "16": "Features extensive restored wet prairie and seasonal swales, providing open foraging expanses and hunting perches for wintering northern harriers and owls.",
+    "17": "Dominates open agricultural flatlands and grass seed fields, featuring drainage ditches and fencerows where wintering raptors and open-country flocks gather.",
+    "18": "Covers rural-urban transition flats, blending agricultural fields, brushy roadside hedgerows, and drainage ditches favored by wintering sparrow flocks.",
+    "19": "Spans urban residential neighborhoods and community parklands, featuring neighborhood tree canopy, drainage swales, and garden habitats for wintering suburban birds.",
+    "20A": "Features river tailraces, open water spillways, and dense riparian gallery, providing sheltered foraging and roosting waters for wintering diving ducks.",
+    "20B": "Encompasses braided river channels and floodplain gravel bars, flanked by mature riparian forest that provides winter roosts for bald eagles.",
+    "21": "Covers eastern reservoir embayments and agricultural fringes, combining sheltered marshy coves and oak woodlands that host wintering ducks and raptors."
+};
+
+const FLORENCE_ZONE_DESCRIPTIONS = {
+    "01": "Covers rugged coastal ocean headlands and rocky sea cliffs, featuring marine waters, coastal spruce forests, and offshore habitats for pelagic seabirds.",
+    "02": "Features coastal freshwater wetland basins and shore pine groves, providing sheltered waters and emergent reedbeds for wintering grebes and diving ducks.",
+    "03": "Dominates upper coastal rainforest watersheds, featuring steep mossy hemlock ravines, cedar stands, and clear tributary streams for wintering forest birds.",
+    "04": "Covers tidal riverfront waterfronts and harbor channels, featuring intertidal mudflats, dock pilings, and open estuarine waters frequented by wintering gulls.",
+    "05": "Features ocean beach surf zones and coastal sand spits, offering exposed wave-swept beaches and sandy dunes for wintering shorebirds and sea ducks.",
+    "06": "Encompasses freshwater lake shores and coastal residential woodlands, combining sheltered shorelines and native coastal scrub for wintering passerines.",
+    "07": "Follows coastal river canyon bends, featuring tidal riverbanks, steep conifer slopes, and quiet backwater channels hosting wintering mergansers and eagles.",
+    "08": "Covers large freshwater coastal lake expanses and marshy borders, with emergent vegetation and spruce margins rich in wintering waterfowl.",
+    "09": "Encompasses open coastal sand dunes, deflation plain wetlands, and beach surf zones, hosting wintering plovers, sanderlings, and coastal raptors.",
+    "10": "Features freshwater dune-fringed water bodies and evergreen coastal woods, combining coastal scrub and shore pine forests for winter water and forest birds.",
+    "11": "Covers deep coastal freshwater embayments and cedar swamp margins, flanked by mature conifer forest hosting wintering divers and woodland birds.",
+    "12": "Spans ocean beachfronts, sandy coastal foredunes, and ocean surf lines, providing expansive foraging habitat for wintering gulls, scoters, and shorebirds.",
+    "13": "Features tidal river sloughs and brackish marsh islands, offering intertidal mudflats and shallow waters attractive to wintering herons and waders."
+};
+
+function getZoneDescription(targetFeature, isFlorence) {
+    if (!targetFeature) return "";
+    const props = targetFeature.properties || {};
+    const zid = displayZoneId(props.zid);
+    const normalizedZid = zid.replace(/^0+/, "");
+    
+    const descriptions = isFlorence ? FLORENCE_ZONE_DESCRIPTIONS : EUGENE_ZONE_DESCRIPTIONS;
+    if (descriptions[zid]) return descriptions[zid];
+    if (descriptions[normalizedZid]) return descriptions[normalizedZid];
+    if (descriptions["0" + normalizedZid]) return descriptions["0" + normalizedZid];
+
+    return props.description || `Survey Zone ${zid} Christmas Bird Count designated boundary and field observation area.`;
 }
 
 function zoneImagePath(zoneId) {
@@ -2253,12 +2316,18 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
     const isLevelChanged = oldLevel !== newLevel;
 
     const performSelection = () => {
+        clearBirdObservations();
         state.currentId = id;
         const backBtn = document.getElementById("btn-capsule-back");
 
         if (state.isCirclesFeature) {
             updateHeader("Coast to Cascades Bird Alliance");
-            if (backBtn) backBtn.classList.remove("is-visible");
+            if (backBtn) {
+                backBtn.disabled = true;
+                backBtn.classList.add("is-disabled");
+                backBtn.removeAttribute("title");
+                backBtn.removeAttribute("aria-label");
+            }
             renderSidebarList();
             updateUrl(id);
             if (triggerMapZoom && state.map) {
@@ -2286,7 +2355,8 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
             const titleName = state.currentFeature === "florence" ? "Florence Christmas Bird Count Circle" : "Eugene Christmas Bird Count Circle";
             updateHeader(titleName);
             if (backBtn) {
-                backBtn.classList.add("is-visible");
+                backBtn.disabled = false;
+                backBtn.classList.remove("is-disabled");
                 backBtn.setAttribute("aria-label", "Back to all circles");
                 backBtn.setAttribute("title", "Back to all circles");
             }
@@ -2294,7 +2364,8 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
             const zid = displayZoneId(targetFeature.properties.zid);
             updateHeader(`Zone ${zid}`);
             if (backBtn) {
-                backBtn.classList.add("is-visible");
+                backBtn.disabled = false;
+                backBtn.classList.remove("is-disabled");
                 backBtn.setAttribute("aria-label", "Back to full circle");
                 backBtn.setAttribute("title", "Back to full circle");
             }
@@ -2383,6 +2454,856 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
     }
 }
 
+const EBIRD_SPECIES_CODES = {
+    "Black Oystercatcher": "blkoys",
+    "American Dipper": "amedip",
+    "Peregrine Falcon": "perfal",
+    "Northern Pygmy-Owl": "nopowl",
+    "Surfbird": "surfbi",
+    "Black Turnstone": "blkturn",
+    "Alcids (Murres, Guillemots, Murrelets)": "comorc",
+    "Alcids (Murres, Guillemots, Auklets)": "comorc",
+    "Canada Jay": "gryjay",
+    "Hutton's Vireo": "hutvir",
+    "Townsend's Warbler": "towwar",
+    "Swamp Sparrow": "swaspa",
+    "Lincoln's Sparrow": "linspa",
+    "Greater / Lesser Scaup": "scaup1",
+    "Greater & Lesser Scaup": "scaup1",
+    "Greater Scaup": "gresca",
+    "Lesser Scaup": "lessca",
+    "Snowy Plover": "snoplo5",
+    "Lapland Longspur": "laplon",
+    "Snow Bunting": "snobun",
+    "Virginia Rail": "virrai",
+    "Sora": "sora",
+    "Virginia Rail & Sora": "virrai",
+    "Mountain Quail": "mouqua",
+    "Ruffed Grouse": "rufgro",
+    "Northern Shrike": "norshr4",
+    "Red-shouldered Hawk": "reshaw",
+    "Merlin": "merlin",
+    "American Pipit": "amepip",
+    "Western Bluebird": "wesblu",
+    "Townsend's Solitaire": "towsol",
+    "Evening Grosbeak": "evegro",
+    "Red Crossbill": "redcro",
+    "Brown Creeper": "brocre",
+    "Marsh Wren": "marwre",
+    "Geese": "cangoo",
+    "Canvasback": "canvas",
+    "Redhead": "redhea",
+    "Ruddy Duck": "rudduc",
+    "Eurasian Wigeon": "eurwig",
+    "Greater Yellowlegs": "greyel",
+    "Long-billed Dowitcher": "lobdow",
+    "American Kestrel": "amekes",
+    "Black Scoter": "blksco2",
+    "Surf Scoter": "sursco",
+    "White-winged Scoter": "whwsco2",
+    "Harlequin Duck": "harduc",
+    "Long-tailed Duck": "lotduc",
+    "Sanderling": "sander",
+    "Red Phalarope": "redpha1",
+    "Black-legged Kittiwake": "bklkit",
+    "Northern Fulmar": "norful",
+    "Bonaparte's Gull": "bongul",
+    "Shearwaters": "shtshe",
+    "Horned Grebe": "horgre",
+    "Red-breasted Merganser": "rebmer",
+    "Herring Gull": "hergul",
+    "Iceland (Thayer's) Gull": "thagul",
+    "California Gull": "calgul",
+    "Mourning Dove": "moudov",
+    "Eurasian Collared-Dove": "eucdov",
+    "Palm Warbler": "palwar",
+    "Killdeer": "killde",
+    "California Scrub-Jay": "casjay",
+    "Western Meadowlark": "wesmea",
+    "Red-breasted Sapsucker": "rebsap",
+    "Accipiters (Sharp-shinned / Cooper's)": "coohaw",
+    "White-throated Sparrow": "whtspa",
+    "Purple Finch": "purfin",
+    "Pine Siskin": "pinsis",
+    "Common Merganser": "commer",
+    "Wood Duck": "wooduc",
+    "Wilson's Snipe": "wilsni1",
+    "White-tailed Kite": "whtkit",
+    "Bald Eagle": "baleag",
+    "Barn Owl": "brnowl",
+    "Black Phoebe": "blkpho",
+    "American Wigeon": "amewig",
+    "Anna's Hummingbird": "annhum",
+    "Orange-crowned Warbler": "orcwar",
+    "Cedar Waxwing": "cedwax",
+    "Lesser Goldfinch": "lesgol",
+    "American Bittern": "amebit",
+    "Savannah Sparrow": "savspa",
+    "Pileated Woodpecker": "pilwoo",
+    "Least Sandpiper": "leasan",
+    "Spotted Sandpiper": "sposan",
+    "Western Sandpiper": "wessan",
+    "Great Egret": "greegr",
+    "Tundra Swan": "tunswa",
+    "Small Songbird Flocks": "pinsis",
+    "Short-eared Owl": "sheowl",
+    "Cackling Goose": "cacgoo1",
+    "Ring-billed Gull": "ribgul"
+};
+
+function getEbirdUrl(birdName) {
+    if (!birdName) return "https://ebird.org/explore";
+    const code = EBIRD_SPECIES_CODES[birdName] || EBIRD_SPECIES_CODES[birdName.trim()];
+    if (code) {
+        return `https://ebird.org/species/${code}`;
+    }
+    return `https://ebird.org/species/${encodeURIComponent(birdName.toLowerCase().replace(/[^a-z0-9]/g, ""))}`;
+}
+
+const FLORENCE_ZONE_BIRDS = {
+    "01": {
+        title: "Area 1 - Heceta Head, Cape Creek, East Lily Lake",
+        desc: "Covers Cape Creek Road above the lighthouse, coastal bluffs, and east Lily Lake. Note: Team 2 also checks Lily Lake (compare numbers for high counts). Includes Bones Nursery on Hwy 101.",
+        birds: [
+            { name: "Black Oystercatcher", note: "Rocky coastline - only area in circle that has it" },
+            { name: "American Dipper", note: "Cape Creek - probably only area in circle that has it" },
+            { name: "Peregrine Falcon", note: "Heceta Head cliffs" },
+            { name: "Northern Pygmy-Owl", note: "Forest edges" },
+            { name: "Surfbird", note: "Rocky shoreline" },
+            { name: "Black Turnstone", note: "Rocky intertidal" },
+            { name: "Alcids (Murres, Guillemots, Murrelets)", note: "Ocean seawatch" },
+            { name: "Canada Jay", note: "Conifer forest" },
+            { name: "Hutton's Vireo", note: "Mixed woodland" },
+            { name: "Townsend's Warbler", note: "Conifer canopy" },
+            { name: "Swamp Sparrow", note: "Lily Lake marshes" },
+            { name: "Lincoln's Sparrow", note: "Lily Lake edges" },
+            { name: "Greater / Lesser Scaup", note: "Lily Lake open water" }
+        ]
+    },
+    "02": {
+        title: "Area 2 - Baker Beach, Baker Swamp, Cape Mtn. Loop",
+        desc: "Outer beach, Baker Swamp, and Cape Mountain loop trail. Check China Creek sand flats and footprints for Snowy Plover. Baker Swamp has rail habitat (best results by playing recordings at ground level).",
+        birds: [
+            { name: "Snowy Plover", note: "Outer beach footprints & sand flats - likely only area that has it" },
+            { name: "Lapland Longspur", note: "China Creek sand flats" },
+            { name: "Snow Bunting", note: "China Creek sand flats" },
+            { name: "Virginia Rail", note: "Baker Swamp" },
+            { name: "Sora", note: "Baker Swamp" },
+            { name: "Mountain Quail", note: "Cape Mountain loop" },
+            { name: "Ruffed Grouse", note: "Cape Mountain loop" },
+            { name: "Northern Shrike", note: "Open dunes & scrub" },
+            { name: "Red-shouldered Hawk", note: "Swamp & forest edge" },
+            { name: "Merlin", note: "Open beach & dunes" },
+            { name: "American Pipit", note: "Outer beach & dunes" },
+            { name: "Western Bluebird", note: "Around C&M stables / pastures" },
+            { name: "Townsend's Solitaire", note: "Cape Mountain ridge" },
+            { name: "Evening Grosbeak", note: "Cape Mountain conifer woods" },
+            { name: "Red Crossbill", note: "Cape Mountain loop" },
+            { name: "Brown Creeper", note: "Mature forest" },
+            { name: "Canada Jay", note: "Cape Mountain forest" },
+            { name: "Hutton's Vireo", note: "Cape Mountain woods" },
+            { name: "Marsh Wren", note: "Baker Swamp reeds" },
+            { name: "Swamp Sparrow", note: "Baker Swamp" },
+            { name: "Geese", note: "Pasture west of Hwy 101 by stables" }
+        ]
+    },
+    "03": {
+        title: "Area 3 - Upper North Fork & Houghton Landing",
+        desc: "Upper North Fork valley and Houghton Landing (former county park, now ODFW). Rain brings in great waterfowl variety and shorebirds. Accessible via Minerva junction.",
+        birds: [
+            { name: "Greater Scaup", note: "North Fork open water" },
+            { name: "Lesser Scaup", note: "North Fork open water" },
+            { name: "Canvasback", note: "Flooded pastures & sloughs" },
+            { name: "Redhead", note: "Flooded fields & river" },
+            { name: "Ruddy Duck", note: "River & marsh pools" },
+            { name: "Eurasian Wigeon", note: "Waterfowl flocks" },
+            { name: "Greater Yellowlegs", note: "Wet pastures & mudflats" },
+            { name: "Long-billed Dowitcher", note: "Flooded fields" },
+            { name: "American Kestrel", note: "Open valley pastures" },
+            { name: "American Pipit", note: "Agricultural fields" },
+            { name: "Swamp Sparrow", note: "River sloughs & brush" }
+        ]
+    },
+    "04": {
+        title: "Area 4 - Lower North Fork, Bender Landing, Block Rd",
+        desc: "North Fork starting at Munsel Lake junction, Bender Landing, and Block Rd. Excellent waterfowl and raptor habitat after rain. Check marsh south of Bender Landing.",
+        birds: [
+            { name: "Greater Scaup", note: "River & sloughs" },
+            { name: "Lesser Scaup", note: "River & sloughs" },
+            { name: "Canvasback", note: "Flooded pastures & river" },
+            { name: "Redhead", note: "Flooded fields & sloughs" },
+            { name: "Ruddy Duck", note: "River & marsh pools" },
+            { name: "Eurasian Wigeon", note: "Flooded fields with wigeon flocks" },
+            { name: "Greater Yellowlegs", note: "Wet valley pastures" },
+            { name: "Long-billed Dowitcher", note: "Flooded fields" },
+            { name: "American Kestrel", note: "Fence lines & open fields" },
+            { name: "American Pipit", note: "Open fields" },
+            { name: "Swamp Sparrow", note: "Marsh south of Bender Landing" }
+        ]
+    },
+    "05": {
+        title: "Area 5 - North Jetty & West Florence",
+        desc: "North Jetty seawatch and West Florence neighborhoods. Check jetty rocks for rocky shorebirds and sea ducks, and telephone wires along Rhododendron Dr. for doves.",
+        birds: [
+            { name: "Black Scoter", note: "Jetty waters (female often present)" },
+            { name: "Surf Scoter", note: "Jetty waters & ocean" },
+            { name: "White-winged Scoter", note: "Jetty waters & ocean" },
+            { name: "Harlequin Duck", note: "Rough surf at jetty tips" },
+            { name: "Long-tailed Duck", note: "Jetty channel & ocean" },
+            { name: "Black Turnstone", note: "Jetty rocks" },
+            { name: "Surfbird", note: "Jetty rocks" },
+            { name: "Sanderling", note: "Ocean beaches & flats" },
+            { name: "Red Phalarope", note: "Ocean seawatch" },
+            { name: "Black-legged Kittiwake", note: "Ocean seawatch" },
+            { name: "Northern Fulmar", note: "Ocean seawatch" },
+            { name: "Bonaparte's Gull", note: "Seawatch & river mouth" },
+            { name: "Shearwaters", note: "Ocean seawatch" },
+            { name: "Alcids (Murres, Guillemots, Auklets)", note: "Ocean seawatch" },
+            { name: "Horned Grebe", note: "Jetty channel" },
+            { name: "Red-breasted Merganser", note: "River mouth & bay" },
+            { name: "Herring Gull", note: "Beach & jetty" },
+            { name: "Iceland (Thayer's) Gull", note: "Beach & jetty" },
+            { name: "California Gull", note: "Beach & jetty" },
+            { name: "Mourning Dove", note: "Wires along north Rhododendron Dr." },
+            { name: "Eurasian Collared-Dove", note: "Wires along north Rhododendron Dr." },
+            { name: "Townsend's Warbler", note: "West Florence neighborhood trees" },
+            { name: "Palm Warbler", note: "Coastal brush & neighborhood edges" },
+            { name: "Killdeer", note: "Florence Airport open tarmac" }
+        ]
+    },
+    "06": {
+        title: "Area 6 - East Florence, Munsel Lake, Lower North Fork",
+        desc: "Munsel Lake, Clear Lake, Munsel Creek, Florence Golf Links, and neighborhood feeder routes. Check brushy patches behind LDS Church and school grounds for songbirds.",
+        birds: [
+            { name: "California Scrub-Jay", note: "Neighborhoods - often found only in Area 6" },
+            { name: "Greater Scaup", note: "Munsel Lake" },
+            { name: "Lesser Scaup", note: "Munsel Lake" },
+            { name: "Ruddy Duck", note: "Munsel Lake" },
+            { name: "Townsend's Warbler", note: "Munsel boat ramp & school edges" },
+            { name: "Western Meadowlark", note: "Golf course edge & clubhouse pond" },
+            { name: "Red-breasted Sapsucker", note: "Munsel Creek woods" },
+            { name: "Accipiters (Sharp-shinned / Cooper's)", note: "Neighborhoods & feeders" },
+            { name: "Hutton's Vireo", note: "Mixed woodland" },
+            { name: "White-throated Sparrow", note: "Behind LDS Church & feeders" },
+            { name: "Purple Finch", note: "Neighborhood trees & feeders" },
+            { name: "Pine Siskin", note: "Conifers & feeders" },
+            { name: "Killdeer", note: "High School & LCC open fields" }
+        ]
+    },
+    "07": {
+        title: "Area 7 - Duncan Island & Upper Siuslaw Valley",
+        desc: "Duncan Island and Hwy 126 corridor to Tiernan Landing. Note: Do not drive on Duncan Island Rd; park on bridge and walk. Check river flocks along Bernhardt Rd.",
+        birds: [
+            { name: "Virginia Rail & Sora", note: "Duncan Island marsh (play recordings at first light / high tide)" },
+            { name: "White-tailed Kite", note: "Upper valley pastures" },
+            { name: "Common Merganser", note: "Siuslaw River flocks" },
+            { name: "Greater & Lesser Scaup", note: "Siuslaw River along Bernhardt Rd." },
+            { name: "Wood Duck", note: "Sloughs between Tiernan Landing & Phey Rd." },
+            { name: "Western Bluebird", note: "C&D Dock area & Tiernan Landing" },
+            { name: "Wilson's Snipe", note: "Wet riverfront pastures" },
+            { name: "Northern Shrike", note: "Pasture fence lines & scrub" },
+            { name: "Red-shouldered Hawk", note: "River valley forest edge" },
+            { name: "Bald Eagle", note: "Siuslaw River" },
+            { name: "Barn Owl", note: "Local barns & outbuildings" },
+            { name: "American Kestrel", note: "Open fields & wires" },
+            { name: "Black Phoebe", note: "River banks & docks" },
+            { name: "Hutton's Vireo", note: "Riparian woodland" },
+            { name: "Townsend's Warbler", note: "Conifer trees" },
+            { name: "Swamp Sparrow", note: "Sloughs near Tiernan Landing" },
+            { name: "Lincoln's Sparrow", note: "Duncan Island brush" },
+            { name: "Red Crossbill", note: "Conifers up Bernhardt Rd." }
+        ]
+    },
+    "08": {
+        title: "Area 8 - Glenada, Canary Rd., South Inlet",
+        desc: "Woahink Lake park peninsula, pastures along east Canary Rd., South Inlet mudflats, and Glenada waterfront. Check lower tides off Glenada park.",
+        birds: [
+            { name: "Mountain Quail", note: "Woahink Lake park forest" },
+            { name: "American Wigeon", note: "South Inlet & Glenada waterfront" },
+            { name: "Eurasian Wigeon", note: "South Inlet wigeon flocks" },
+            { name: "Wilson's Snipe", note: "Canary Rd. pastures & South Inlet" },
+            { name: "Greater Yellowlegs", note: "South Inlet mudflats" },
+            { name: "Long-billed Dowitcher", note: "South Inlet mudflats" },
+            { name: "Western Bluebird", note: "Pastures along east Canary Rd." },
+            { name: "American Pipit", note: "Canary Rd. pastures" },
+            { name: "Black Phoebe", note: "South Inlet & waterfront" },
+            { name: "Anna's Hummingbird", note: "Glenada residential gardens" },
+            { name: "Orange-crowned Warbler", note: "Glenada shrubs" },
+            { name: "Townsend's Warbler", note: "Glenada park parking area" },
+            { name: "White-throated Sparrow", note: "Neighborhood brush & feeders" },
+            { name: "Cedar Waxwing", note: "Fruiting shrubs" },
+            { name: "Lesser Goldfinch", note: "Glenada weed patches & feeders" }
+        ]
+    },
+    "09": {
+        title: "Area 9 - South Jetty Rd",
+        desc: "South Jetty road corridor, open dunes, and jetty mouth. Best area in circle for Northern Shrike, Savannah Sparrow, and American Bittern (dogpond / Lot 3 main dike).",
+        birds: [
+            { name: "American Bittern", note: "Dogpond & Lot 3 main dike at first light" },
+            { name: "Northern Shrike", note: "South Jetty Rd dunes & scrub" },
+            { name: "Savannah Sparrow", note: "Dune grasses along South Jetty Rd" },
+            { name: "Marsh Wren", note: "Dune swale marshes" },
+            { name: "Black Scoter", note: "Jetty mouth & surf (female often present)" },
+            { name: "Surf Scoter", note: "Jetty mouth & ocean" },
+            { name: "White-winged Scoter", note: "Jetty mouth & ocean" },
+            { name: "Long-tailed Duck", note: "Rough water at ends of jetties" },
+            { name: "Harlequin Duck", note: "Jetty tip surf" },
+            { name: "Black Turnstone", note: "Jetty rocks" },
+            { name: "Surfbird", note: "Jetty rocks" },
+            { name: "Sanderling", note: "Ocean beaches & flats" },
+            { name: "Black-legged Kittiwake", note: "Ocean seawatch" },
+            { name: "Northern Fulmar", note: "Ocean seawatch" },
+            { name: "Bonaparte's Gull", note: "Seawatch & river mouth" },
+            { name: "Shearwaters", note: "Ocean seawatch" },
+            { name: "Red Phalarope", note: "Ocean seawatch" },
+            { name: "Alcids (Murres, Guillemots, Auklets)", note: "Ocean seawatch" },
+            { name: "Herring Gull", note: "Beach & jetty" },
+            { name: "Iceland (Thayer's) Gull", note: "Beach & jetty" },
+            { name: "California Gull", note: "Beach & jetty" }
+        ]
+    },
+    "10": {
+        title: "Area 10 - Sutton Lake, Mercer Lake, Enchanted Valley",
+        desc: "Sutton Lake, Mercer Lake, and Enchanted Valley. Woody marshes at creek crossings host rails, warblers, and phoebes.",
+        birds: [
+            { name: "Ruddy Duck", note: "Sutton & Mercer Lakes" },
+            { name: "Lesser Scaup", note: "Sutton & Mercer Lakes" },
+            { name: "Greater Scaup", note: "Sutton & Mercer Lakes" },
+            { name: "Virginia Rail & Sora", note: "Woody creek crossings" },
+            { name: "Pileated Woodpecker", note: "Enchanted Valley mature forest" },
+            { name: "Red Crossbill", note: "Enchanted Valley conifers" },
+            { name: "Orange-crowned Warbler", note: "Marsh brush & creek crossings" },
+            { name: "Townsend's Warbler", note: "Conifer canopy" },
+            { name: "Hutton's Vireo", note: "Mixed woodland" },
+            { name: "Swamp Sparrow", note: "Creek crossing marshes" },
+            { name: "Black Phoebe", note: "Lake shores & creek mouths" }
+        ]
+    },
+    "11": {
+        title: "Area 11 - Old Town to Cushman",
+        desc: "Historic Old Town, Port of Florence docks, new nature trail, and Hwy 126 to Cushman. Check below Saxon's stilt house at lower tides for shorebirds and egrets.",
+        birds: [
+            { name: "Townsend's Warbler", note: "Old Town mini-park & Port swale trees" },
+            { name: "Least Sandpiper", note: "Port docks at high tide & Saxon's flats" },
+            { name: "Spotted Sandpiper", note: "Port docks & river log booms" },
+            { name: "Western Sandpiper", note: "Port of Florence docks" },
+            { name: "Common Merganser", note: "Siuslaw River" },
+            { name: "Great Egret", note: "Saxon's stilt house mudflats" }
+        ]
+    },
+    "12": {
+        title: "Area 12 - Sutton Creek, Heceta Beach, Alder Dune",
+        desc: "Sutton Creek campground & overlook platform, Heceta Beach town and sands, and Alder Dune big-tree forest. Best chance in circle for Brown Creeper.",
+        birds: [
+            { name: "Brown Creeper", note: "Alder Dune Campground mature forest" },
+            { name: "Tundra Swan", note: "Sutton Creek overlook" },
+            { name: "Hutton's Vireo", note: "Sutton Creek campground woods" },
+            { name: "Sanderling", note: "Heceta Beach northbound in morning" },
+            { name: "Snow Bunting", note: "Heceta Beach open sands" },
+            { name: "Snowy Plover", note: "Heceta Beach sands" },
+            { name: "Small Songbird Flocks", note: "Sutton overlook platform creekside" }
+        ]
+    },
+    "13": {
+        title: "Area 13 - Haich Iktattuu / Waite Ranch",
+        desc: "McKenzie River Trust restored tidal wetland property (Haich Iktattuu, formerly Waite Ranch). Requires prior permit & parking pass. Superb raptor and waterfowl habitat.",
+        birds: [
+            { name: "Short-eared Owl", note: "Restored tidal marsh & grasslands" },
+            { name: "White-tailed Kite", note: "Marsh & pasture perches" },
+            { name: "Northern Shrike", note: "Marsh edge shrubs" },
+            { name: "Cackling Goose", note: "Restored wetland pools" },
+            { name: "Common Merganser", note: "Tidal channels" },
+            { name: "Greater & Lesser Scaup", note: "Tidal sloughs" },
+            { name: "Ring-billed Gull", note: "Tidal mudflats" },
+            { name: "Savannah Sparrow", note: "Marsh grasses" },
+            { name: "Lincoln's Sparrow", note: "Wetland brush" },
+            { name: "Swamp Sparrow", note: "Marsh reeds & cattails" }
+        ]
+    }
+};
+
+
+let currentBirdPopup = null;
+
+function clearBirdObservations() {
+    state.selectedBird = null;
+    state.selectedBirdObservations = [];
+    state.selectedBirdPhotoUrl = "";
+    state.selectedBirdPhotoCredit = "";
+    if (currentBirdPopup) {
+        currentBirdPopup.remove();
+        currentBirdPopup = null;
+    }
+    if (state.map && state.map.getSource('bird-observations')) {
+        state.map.getSource('bird-observations').setData({
+            type: 'FeatureCollection',
+            features: []
+        });
+    }
+}
+
+function updateBirdObservationsLayerStyles() {
+    if (!state.map) return;
+    const isLightMode = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
+    const color = isLightMode ? "#000000" : "#ffffff";
+
+    if (state.map.getLayer('bird-observations-points')) {
+        state.map.setPaintProperty('bird-observations-points', 'circle-color', color);
+        state.map.setPaintProperty('bird-observations-points', 'circle-stroke-width', 0);
+        state.map.setPaintProperty('bird-observations-points', 'circle-stroke-color', 'transparent');
+        state.map.setPaintProperty('bird-observations-points', 'circle-radius', 5);
+        state.map.setPaintProperty('bird-observations-points', 'circle-opacity', 0.95);
+    }
+    if (state.map.getLayer('bird-observations-glow')) {
+        state.map.setPaintProperty('bird-observations-glow', 'circle-color', color);
+        state.map.setPaintProperty('bird-observations-glow', 'circle-opacity', isLightMode ? 0.15 : 0.25);
+    }
+}
+
+function setupBirdObservationsLayer() {
+    if (!state.map) return;
+
+    if (!state.map.getSource('bird-observations')) {
+        state.map.addSource('bird-observations', {
+            type: 'geojson',
+            data: {
+                type: 'FeatureCollection',
+                features: []
+            }
+        });
+    }
+
+    const isLightMode = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
+    const color = isLightMode ? "#000000" : "#ffffff";
+
+    if (!state.map.getLayer('bird-observations-glow')) {
+        state.map.addLayer({
+            id: 'bird-observations-glow',
+            type: 'circle',
+            source: 'bird-observations',
+            paint: {
+                'circle-radius': 11,
+                'circle-color': color,
+                'circle-opacity': isLightMode ? 0.15 : 0.25,
+                'circle-blur': 0.6
+            }
+        });
+    }
+
+    if (!state.map.getLayer('bird-observations-points')) {
+        state.map.addLayer({
+            id: 'bird-observations-points',
+            type: 'circle',
+            source: 'bird-observations',
+            paint: {
+                'circle-radius': 5,
+                'circle-color': color,
+                'circle-stroke-width': 0,
+                'circle-stroke-color': 'transparent',
+                'circle-opacity': 0.95
+            }
+        });
+
+        // Hover cursor
+        state.map.on('mouseenter', 'bird-observations-points', () => {
+            state.map.getCanvas().style.cursor = 'pointer';
+        });
+        state.map.on('mouseleave', 'bird-observations-points', () => {
+            state.map.getCanvas().style.cursor = '';
+        });
+
+        // Click popup
+        state.map.on('click', 'bird-observations-points', (e) => {
+            if (!e.features || !e.features[0]) return;
+            const feat = e.features[0];
+            const props = feat.properties;
+            const coords = feat.geometry.coordinates.slice();
+
+            if (currentBirdPopup) currentBirdPopup.remove();
+
+            currentBirdPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: true, className: 'bird-observation-popup' })
+                .setLngLat(coords)
+                .setHTML(`
+                    <div>
+                        ${props.photoUrl ? `<img src="${props.photoUrl}" alt="${props.species}" class="bird-obs-popup__img" />` : ""}
+                        <div class="bird-obs-popup__title">${props.species}</div>
+                        <div class="bird-obs-popup__meta">
+                            <div>Observed by <strong>${props.user}</strong></div>
+                            <div>Date: ${props.date}</div>
+                            ${props.place ? `<div>${props.place}</div>` : ""}
+                        </div>
+                        <a href="${props.uri}" target="_blank" rel="noopener noreferrer" class="bird-obs-popup__link">
+                            View on iNaturalist &rarr;
+                        </a>
+                    </div>
+                `)
+                .addTo(state.map);
+        });
+    }
+}
+
+function getCleanTaxonName(birdName) {
+    if (!birdName) return "";
+    let clean = birdName.trim();
+    if (clean.includes("(")) clean = clean.split("(")[0].trim();
+    if (clean.includes("&")) clean = clean.split("&")[0].trim();
+    if (clean.includes("/")) clean = clean.split("/")[0].trim();
+    return clean || birdName;
+}
+
+async function selectBird(birdName) {
+    state.selectedBird = birdName;
+    updateHeader(birdName);
+
+    const backBtn = document.getElementById("btn-capsule-back");
+    if (backBtn) {
+        backBtn.disabled = false;
+        backBtn.classList.remove("is-disabled");
+        backBtn.setAttribute("aria-label", "Back to Zone");
+        backBtn.setAttribute("title", "Back to Zone");
+    }
+
+    renderSidebarList();
+
+    if (!state.map) return;
+
+    const targetFeature = state.allFeatures.find(f => {
+        const zid = f.properties?.zid;
+        return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
+    });
+
+    if (!targetFeature) return;
+
+    setupBirdObservationsLayer();
+
+    try {
+        const bbox = getBbox(targetFeature);
+        const [[swlng, swlat], [nelng, nelat]] = bbox;
+        const cleanName = getCleanTaxonName(birdName);
+        const encodedName = encodeURIComponent(cleanName);
+        let url = `https://api.inaturalist.org/v1/observations?taxon_name=${encodedName}&nelat=${nelat}&nelng=${nelng}&swlat=${swlat}&swlng=${swlng}&per_page=100&order=desc&order_by=observed_on`;
+
+        let resp = await fetch(url);
+        let data = resp.ok ? await resp.json() : null;
+
+        if (!data || !data.results || data.results.length === 0) {
+            url = `https://api.inaturalist.org/v1/observations?q=${encodedName}&nelat=${nelat}&nelng=${nelng}&swlat=${swlat}&swlng=${swlng}&per_page=100&order=desc&order_by=observed_on`;
+            const fallbackResp = await fetch(url);
+            if (fallbackResp.ok) {
+                const fallbackData = await fallbackResp.json();
+                if (fallbackData && fallbackData.results && fallbackData.results.length > 0) {
+                    data = fallbackData;
+                }
+            }
+        }
+
+        if (!data) throw new Error("Failed to fetch observations");
+
+        if (state.selectedBird !== birdName) return;
+
+        const results = data.results || [];
+        const features = [];
+
+        results.forEach(obs => {
+            if (!obs.location) return;
+            const [lat, lng] = obs.location.split(',').map(Number);
+            if (isNaN(lat) || isNaN(lng)) return;
+
+            let isInside = true;
+            try {
+                if (typeof turf !== "undefined" && turf.booleanPointInPolygon && turf.point) {
+                    const pt = turf.point([lng, lat]);
+                    isInside = turf.booleanPointInPolygon(pt, targetFeature);
+                }
+            } catch (e) {
+                isInside = true;
+            }
+
+            if (isInside) {
+                const photo = (obs.photos && obs.photos.length > 0) ? (obs.photos[0].url || "").replace("square", "medium") : "";
+                features.push({
+                    type: "Feature",
+                    geometry: {
+                        type: "Point",
+                        coordinates: [lng, lat]
+                    },
+                    properties: {
+                        id: obs.id,
+                        user: obs.user?.login || "Observer",
+                        date: obs.observed_on || obs.created_at_details?.date || "Recent",
+                        place: obs.place_guess || "",
+                        photoUrl: photo,
+                        uri: obs.uri || `https://www.inaturalist.org/observations/${obs.id}`,
+                        species: birdName
+                    }
+                });
+            }
+        });
+
+        const geojson = {
+            type: "FeatureCollection",
+            features: features
+        };
+
+        state.selectedBirdObservations = features;
+
+        if (state.map.getSource('bird-observations')) {
+            state.map.getSource('bird-observations').setData(geojson);
+        }
+
+        let featuredPhotoUrl = "";
+        let photoCredit = "";
+
+        // First check if any zone observation has a photo
+        for (const feat of features) {
+            if (feat.properties.photoUrl) {
+                featuredPhotoUrl = feat.properties.photoUrl.replace("square", "large").replace("medium", "large");
+                photoCredit = `Photo by ${feat.properties.user} via iNaturalist`;
+                break;
+            }
+        }
+
+        // If no observation in zone has a photo, check if any returned observation in wider query had a photo or fetch default taxon photo
+        if (!featuredPhotoUrl) {
+            for (const r of results) {
+                if (r.photos && r.photos.length > 0) {
+                    featuredPhotoUrl = (r.photos[0].url || "").replace("square", "large").replace("medium", "large");
+                    photoCredit = `Photo by ${r.user?.login || "iNaturalist user"} via iNaturalist`;
+                    break;
+                }
+            }
+        }
+
+        if (!featuredPhotoUrl) {
+            try {
+                const taxonResp = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodedName}`);
+                if (taxonResp.ok) {
+                    const taxonData = await taxonResp.json();
+                    if (taxonData && taxonData.results && taxonData.results.length > 0) {
+                        const defaultPhoto = taxonData.results[0].default_photo;
+                        if (defaultPhoto) {
+                            featuredPhotoUrl = (defaultPhoto.medium_url || defaultPhoto.url || "").replace("square", "large").replace("medium", "large");
+                            photoCredit = defaultPhoto.attribution || "Photo via iNaturalist";
+                        }
+                    }
+                }
+            } catch (e) {}
+        }
+
+        state.selectedBirdPhotoUrl = featuredPhotoUrl;
+        state.selectedBirdPhotoCredit = photoCredit;
+
+        if (state.activeTab === "observations") {
+            renderSidebarList();
+        } else {
+            updateSidebarBirdPanel(birdName, features, featuredPhotoUrl, photoCredit);
+        }
+
+    } catch (err) {
+        console.error("iNaturalist error:", err);
+        const listContainer = document.getElementById("sidebar-zone-list");
+        const statusEl = listContainer ? listContainer.querySelector(".sidebar-bird-panel__status") : null;
+        if (statusEl) {
+            statusEl.textContent = "Could not load observations from iNaturalist.";
+        }
+    }
+}
+
+function renderObservationsList(listContainer) {
+    const observations = state.selectedBirdObservations || [];
+    if (observations.length === 0) {
+        const emptyEl = document.createElement("div");
+        emptyEl.className = "sidebar-empty-state";
+        emptyEl.innerHTML = `
+            <svg class="sidebar-empty-state__icon" width="34" height="34" viewBox="0 0 512 512" fill="currentColor">
+                <path d="M128 32h32c17.7 0 32 14.3 32 32V96H96V64c0-17.7 14.3-32 32-32zm64 96V448c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32V388.9c0-34.6 9.4-68.6 27.2-98.3C40.9 267.8 49.7 242.4 53 216L60.5 156c2-16 15.6-28 31.8-28H192zm227.8 0c16.1 0 29.8 12 31.8 28L459 216c3.3 26.4 12.1 51.8 25.8 74.6c17.8 29.7 27.2 63.7 27.2 98.3V448c0 17.7-14.3 32-32 32H352c-17.7 0-32-14.3-32-32V128h99.8zM320 64c0-17.7 14.3-32 32-32h32c17.7 0 32 14.3 32 32V96H320V64zm-32 64V288H224V128h64z"/>
+            </svg>
+            <div class="sidebar-empty-state__text">no items found</div>
+        `;
+        listContainer.appendChild(emptyEl);
+        return;
+    }
+
+    const introEl = document.createElement("div");
+    introEl.className = "sidebar-birds-intro";
+    introEl.textContent = `All recorded iNaturalist observations of ${state.selectedBird} in this zone area.`;
+    listContainer.appendChild(introEl);
+
+    observations.forEach(f => {
+        const props = f.properties;
+        const coords = f.geometry.coordinates;
+        const item = document.createElement("div");
+        item.className = "sidebar-bird-obs-item";
+        item.innerHTML = `
+            ${props.photoUrl ? `<img src="${props.photoUrl}" alt="${props.species}" class="sidebar-bird-obs-item__thumb" />` : `
+                <div class="sidebar-bird-obs-item__thumb" style="display:flex;align-items:center;justify-content:center;color:#64748b;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                </div>
+            `}
+            <div class="sidebar-bird-obs-item__info">
+                <div class="sidebar-bird-obs-item__user">${props.user}</div>
+                <div class="sidebar-bird-obs-item__date">${props.date}</div>
+            </div>
+        `;
+        item.addEventListener("click", () => {
+            if (state.map) {
+                state.map.flyTo({ center: coords, zoom: Math.max(state.map.getZoom(), 13.5), speed: 1.2 });
+                if (currentBirdPopup) currentBirdPopup.remove();
+                currentBirdPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: true, className: 'bird-observation-popup' })
+                    .setLngLat(coords)
+                    .setHTML(`
+                        <div>
+                            ${props.photoUrl ? `<img src="${props.photoUrl}" alt="${props.species}" class="bird-obs-popup__img" />` : ""}
+                            <div class="bird-obs-popup__title">${props.species}</div>
+                            <div class="bird-obs-popup__meta">
+                                <div>Observed by <strong>${props.user}</strong></div>
+                                <div>Date: ${props.date}</div>
+                                ${props.place ? `<div>${props.place}</div>` : ""}
+                            </div>
+                            <a href="${props.uri}" target="_blank" rel="noopener noreferrer" class="bird-obs-popup__link">
+                                View on iNaturalist &rarr;
+                            </a>
+                        </div>
+                    `)
+                    .addTo(state.map);
+            }
+        });
+        listContainer.appendChild(item);
+    });
+}
+
+function renderSidebarBirdPanel(listContainer, birdName) {
+    const targetFeature = state.allFeatures.find(f => {
+        const zid = f.properties?.zid;
+        return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
+    });
+    const zid = targetFeature ? displayZoneId(targetFeature.properties?.zid) : "";
+    const ebirdUrl = getEbirdUrl(birdName);
+    const observations = state.selectedBirdObservations || [];
+    const featuredPhotoUrl = state.selectedBirdPhotoUrl || "";
+    const photoCredit = state.selectedBirdPhotoCredit || "";
+
+    const panel = document.createElement("div");
+    panel.className = "sidebar-bird-panel";
+    panel.innerHTML = `
+        <!-- Big Media Image Container (populated from observation or species photo) -->
+        <div class="sidebar-about-media sidebar-bird-media" style="${featuredPhotoUrl ? 'display: block;' : 'display: none;'} cursor: pointer;">
+            <img src="${featuredPhotoUrl}" alt="${birdName}" loading="eager" decoding="async" />
+        </div>
+
+        <a href="${ebirdUrl}" target="_blank" rel="noopener noreferrer" class="sidebar-bird-panel__ebird-btn" title="View species on eBird">
+            <span>View species on eBird</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+        </a>
+
+        <div class="sidebar-overview-preview sidebar-overview-preview--birds" style="margin-top: 0.25rem;">
+            <div class="sidebar-overview-preview__header sidebar-overview-preview__header--birds">
+                <span class="sidebar-overview-preview__title">Observations</span>
+                <span class="sidebar-bird-panel__count-badge">${observations.length > 0 ? `${observations.length} found` : ''}</span>
+            </div>
+
+            <div class="sidebar-bird-panel__status" style="${observations.length > 0 ? 'display: none;' : 'display: block;'} font-size: 0.85rem; color: var(--subtext-color, #94a3b8); padding: 0.25rem 0.5rem;">
+                ${observations.length === 0 ? 'No recent observations recorded in this zone area.' : ''}
+            </div>
+
+            <div class="sidebar-bird-panel__list"></div>
+
+            <button type="button" class="sidebar-overview-preview__footer sidebar-overview-preview__footer--obs" style="${observations.length > 0 ? 'display: flex;' : 'display: none;'}" title="View all observations">
+                <span class="sidebar-overview-preview__action">View all (${observations.length}) &rarr;</span>
+            </button>
+        </div>
+    `;
+
+    const mediaDiv = panel.querySelector(".sidebar-bird-media");
+    if (mediaDiv && featuredPhotoUrl) {
+        mediaDiv.onclick = () => {
+            openImageLightbox(featuredPhotoUrl, birdName, `${birdName} (observed in Area)`, photoCredit || "Photo via iNaturalist");
+        };
+    }
+
+    const obsListEl = panel.querySelector(".sidebar-bird-panel__list");
+    if (obsListEl && observations.length > 0) {
+        const previewObs = observations.slice(0, 5);
+        previewObs.forEach(f => {
+            const props = f.properties;
+            const coords = f.geometry.coordinates;
+            const item = document.createElement("div");
+            item.className = "sidebar-bird-obs-item";
+            item.innerHTML = `
+                ${props.photoUrl ? `<img src="${props.photoUrl}" alt="${props.species}" class="sidebar-bird-obs-item__thumb" />` : `
+                    <div class="sidebar-bird-obs-item__thumb" style="display:flex;align-items:center;justify-content:center;color:#64748b;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                    </div>
+                `}
+                <div class="sidebar-bird-obs-item__info">
+                    <div class="sidebar-bird-obs-item__user">${props.user}</div>
+                    <div class="sidebar-bird-obs-item__date">${props.date}</div>
+                </div>
+            `;
+            item.addEventListener("click", () => {
+                if (state.map) {
+                    state.map.flyTo({ center: coords, zoom: Math.max(state.map.getZoom(), 13.5), speed: 1.2 });
+                    if (currentBirdPopup) currentBirdPopup.remove();
+                    currentBirdPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: true, className: 'bird-observation-popup' })
+                        .setLngLat(coords)
+                        .setHTML(`
+                            <div>
+                                ${props.photoUrl ? `<img src="${props.photoUrl}" alt="${props.species}" class="bird-obs-popup__img" />` : ""}
+                                <div class="bird-obs-popup__title">${props.species}</div>
+                                <div class="bird-obs-popup__meta">
+                                    <div>Observed by <strong>${props.user}</strong></div>
+                                    <div>Date: ${props.date}</div>
+                                    ${props.place ? `<div>${props.place}</div>` : ""}
+                                </div>
+                                <a href="${props.uri}" target="_blank" rel="noopener noreferrer" class="bird-obs-popup__link">
+                                    View on iNaturalist &rarr;
+                                </a>
+                            </div>
+                        `)
+                        .addTo(state.map);
+                }
+            });
+            obsListEl.appendChild(item);
+        });
+    }
+
+    const viewAllBtn = panel.querySelector(".sidebar-overview-preview__footer--obs");
+    if (viewAllBtn) {
+        viewAllBtn.onclick = () => {
+            state.activeTab = "observations";
+            renderSidebarList();
+        };
+    }
+
+    const headerTitle = panel.querySelector(".sidebar-overview-preview__title");
+    if (headerTitle) {
+        headerTitle.onclick = () => {
+            state.activeTab = "observations";
+            renderSidebarList();
+        };
+    }
+
+    listContainer.appendChild(panel);
+}
+
+function updateSidebarBirdPanel(birdName, features, featuredPhotoUrl, photoCredit) {
+    const listContainer = document.getElementById("sidebar-zone-list");
+    if (!listContainer) return;
+    if (state.selectedBird !== birdName) return;
+
+    if (state.activeTab === "observations") {
+        renderObservationsList(listContainer);
+        return;
+    }
+
+    listContainer.innerHTML = "";
+    renderSidebarBirdPanel(listContainer, birdName);
+}
+
 function renderOverviewTab(listContainer, isCirclesFeature, isCircle, targetFeature) {
     const overviewEl = document.createElement("div");
     overviewEl.className = "sidebar-about-wrapper";
@@ -2393,6 +3314,35 @@ function renderOverviewTab(listContainer, isCirclesFeature, isCircle, targetFeat
     let descText = "";
     let imgSrc = "";
     let imgAlt = "";
+
+    let birdsPreviewHtml = "";
+    let zoneBirdsData = null;
+
+    if (state.currentFeature === "florence") {
+        if (!isCirclesFeature && !isCircle && targetFeature) {
+            const zid = displayZoneId(targetFeature.properties?.zid);
+            zoneBirdsData = FLORENCE_ZONE_BIRDS[zid] || FLORENCE_ZONE_BIRDS[String(parseInt(zid, 10))];
+        }
+    }
+
+    if (zoneBirdsData && zoneBirdsData.birds && zoneBirdsData.birds.length > 0) {
+        const previewBirds = zoneBirdsData.birds.slice(0, 5);
+        previewBirds.forEach(bird => {
+            const ebirdUrl = getEbirdUrl(bird.name);
+            birdsPreviewHtml += `
+                <div class="overview-preview-item overview-preview-item--bird" data-bird-name="${bird.name}" title="Select ${bird.name} to view observations on map">
+                    <span class="overview-preview-item__name">${bird.name}</span>
+                    <a href="${ebirdUrl}" target="_blank" rel="noopener noreferrer" class="overview-preview-item__ext-link" title="Open on eBird" onclick="event.stopPropagation();">
+                        <svg class="overview-preview-item__ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                    </a>
+                </div>
+            `;
+        });
+    }
 
     if (isCirclesFeature) {
         // --- 1. ALL CIRCLES OVERVIEW ---
@@ -2412,50 +3362,17 @@ function renderOverviewTab(listContainer, isCirclesFeature, isCircle, targetFeat
         sortedCircles.forEach(feature => {
             const props = feature.properties || {};
             const cid = props.cid || "Circle";
-            let thumbImg = "";
-            let isLogo = false;
-            let isNotAvailable = false;
-            if (cid === "Eugene") {
-                thumbImg = "../images/logo-small.png";
-                isLogo = true;
-            } else if (cid === "Florence") {
-                thumbImg = "../images/florence.png";
-                isLogo = true;
-            } else if (cid === "Oakridge" || cid === "Cottage Grove") {
-                isNotAvailable = true;
-            } else {
-                thumbImg = "../images/wetlands.jpg";
-            }
-
-            let thumbHtml = "";
-            if (isNotAvailable) {
-                thumbHtml = `
-                    <div class="overview-preview-tile__thumb-placeholder" title="No data available">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-                        </svg>
-                    </div>
-                `;
-            } else {
-                thumbHtml = `
-                    <div class="overview-preview-tile__thumb ${isLogo ? "overview-preview-tile__thumb--logo" : ""}">
-                        <img src="${thumbImg}" alt="${cid}" loading="lazy">
-                    </div>
-                `;
-            }
 
             previewTilesHtml += `
-                <div class="overview-preview-tile" data-cid="${cid}" title="${cid}">
-                    ${thumbHtml}
-                    <span class="overview-preview-tile__label">${cid}</span>
+                <div class="overview-preview-item" data-cid="${cid}">
+                    <span class="overview-preview-item__name">${cid}</span>
                 </div>
             `;
         });
 
-        imgSrc = "../images/wetlands.jpg";
+        imgSrc = "../images/ccba.jpg";
         imgAlt = "Audubon Christmas Bird Count Circles";
-        descText = "Audubon Christmas Bird Count regional count circles. Click a circle to explore its subdivided survey zones, spatial boundaries, and mapping data.";
+        descText = "Coordinated by the Coast to Cascades Bird Alliance, our regional counts span from coastal estuaries in Florence to Willamette Valley wetlands in Eugene, tracking winter bird populations through community science.";
 
     } else if (isCircle || !targetFeature) {
         // --- 2. SINGLE COUNT CIRCLE OVERVIEW (Eugene / Florence CBC) ---
@@ -2472,91 +3389,208 @@ function renderOverviewTab(listContainer, isCirclesFeature, isCircle, targetFeat
         sortedFeatures.forEach(feature => {
             const props = feature.properties || {};
             const zid = displayZoneId(props.zid);
-            const imgPath = zoneImagePath(props.zid);
 
             previewTilesHtml += `
-                <div class="overview-preview-tile" data-zid="${String(props.zid)}" title="Zone ${zid}">
-                    <div class="overview-preview-tile__thumb">
-                        <img src="${imgPath}" alt="Zone ${zid}" loading="lazy" onerror="this.src='${FALLBACK_IMAGE}'">
-                    </div>
-                    <span class="overview-preview-tile__label">Zone ${zid}</span>
+                <div class="overview-preview-item" data-zid="${String(props.zid)}">
+                    <span class="overview-preview-item__name">Zone ${zid}</span>
                 </div>
             `;
         });
 
-        imgSrc = "../images/wetlands.jpg";
         imgAlt = `${circleTitle} Overview`;
-        descText = `The ${circleTitle} circle is a 15-mile diameter count circle in Oregon. Explore the survey zones to view spatial boundaries, detailed historical summaries, and field maps.`;
+        if (state.currentFeature === "florence") {
+            imgSrc = "../images/fcbc.jpg";
+            descText = "Sponsored by the Coast to Cascades Bird Alliance since 1980, the Florence count explores the Siuslaw estuary, ocean beaches, and coastal dunes, documenting thousands of wintering shorebirds, seabirds, and waterfowl each December.";
+        } else {
+            imgSrc = "../images/ecbc.jpg";
+            descText = "Founded in 1942, the Eugene Christmas Bird Count spans 27 zones across the southern Willamette Valley—from Fern Ridge to Spencer Butte—where field and backyard counters tally over 130 winter species annually.";
+        }
 
     } else {
         // --- 3. SPECIFIC ZONE OVERVIEW (Zone 04, etc.) ---
-        const sortedFeatures = [...state.allFeatures].sort((a, b) => {
-            const zidA = String(a.properties?.zid || "");
-            const zidB = String(b.properties?.zid || "");
-            return zidA.localeCompare(zidB, undefined, { numeric: true, sensitivity: "base" });
-        });
-
         const props = targetFeature.properties || {};
         const zid = displayZoneId(props.zid);
-
-        previewHeaderTitle = "All Survey Zones";
-        previewActionText = `View all (${sortedFeatures.length}) &rarr;`;
-
-        sortedFeatures.forEach(feature => {
-            const fProps = feature.properties || {};
-            const fZid = displayZoneId(fProps.zid);
-            const imgPath = zoneImagePath(fProps.zid);
-
-            previewTilesHtml += `
-                <div class="overview-preview-tile" data-zid="${String(fProps.zid)}" title="Zone ${fZid}">
-                    <div class="overview-preview-tile__thumb">
-                        <img src="${imgPath}" alt="Zone ${fZid}" loading="lazy" onerror="this.src='${FALLBACK_IMAGE}'">
-                    </div>
-                    <span class="overview-preview-tile__label">Zone ${fZid}</span>
-                </div>
-            `;
-        });
-
+        const isFlorence = state.currentFeature === "florence";
         imgSrc = zoneImagePath(props.zid);
         imgAlt = `Zone ${zid} Image`;
-        descText = props.description || "Zone description not available.";
+        descText = getZoneDescription(targetFeature, isFlorence);
     }
 
     overviewEl.innerHTML = `
         <div class="sidebar-about-content">
-            <!-- Feature Tiles Preview Section at Top -->
-            <div class="sidebar-overview-preview">
-                <div class="sidebar-overview-preview__header" title="Go to ${previewHeaderTitle} tab">
-                    <span class="sidebar-overview-preview__title">${previewHeaderTitle}</span>
-                    <span class="sidebar-overview-preview__action">${previewActionText}</span>
-                </div>
-                <div class="sidebar-overview-preview__tiles">
-                    ${previewTilesHtml}
-                </div>
-            </div>
+            <!-- Description at Top -->
+            <p class="sidebar-about-text">${descText}</p>
 
-            <!-- Image & Description Below -->
+            <!-- Image Right Below Description -->
             ${imgSrc ? `
                 <div class="sidebar-about-media">
-                    <img src="${imgSrc}" alt="${imgAlt}" loading="lazy" />
+                    <img src="${imgSrc}" alt="${imgAlt}" loading="eager" decoding="async" />
                 </div>
             ` : ""}
-            <p class="sidebar-about-text">${descText}</p>
+
+            <!-- Organizers Section Below Image -->
+            <div class="sidebar-overview-people">
+                <div class="sidebar-overview-people__header">
+                    <span class="sidebar-overview-people__title">Organizers</span>
+                </div>
+                <table class="sidebar-overview-people__table">
+                    <thead>
+                        <tr>
+                            <th class="sidebar-overview-people__th-role">Roles</th>
+                            <th class="sidebar-overview-people__th-name">Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="sidebar-overview-people__td-role">Job Title</td>
+                            <td class="sidebar-overview-people__td-name">
+                                <div class="sidebar-overview-people__person">
+                                    <span class="sidebar-overview-people__person-name">Name</span>
+                                    <div class="sidebar-overview-people__actions">
+                                        <button type="button" class="sidebar-overview-people__icon-btn" title="Email" aria-label="Email">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                                            </svg>
+                                        </button>
+                                        <button type="button" class="sidebar-overview-people__icon-btn" title="Phone" aria-label="Phone">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M6.62 10.79a15.053 15.053 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01l-2.2 2.2z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Birds Section in Zone Overview -->
+            ${zoneBirdsData && zoneBirdsData.birds && zoneBirdsData.birds.length > 0 ? `
+                <div class="sidebar-overview-preview sidebar-overview-preview--birds">
+                    <div class="sidebar-overview-preview__header sidebar-overview-preview__header--birds">
+                        <span class="sidebar-overview-preview__title">Birds</span>
+                    </div>
+                    <div class="sidebar-overview-preview__list">
+                        ${birdsPreviewHtml}
+                    </div>
+                    <button type="button" class="sidebar-overview-preview__footer sidebar-overview-preview__footer--birds" title="Go to Birds tab">
+                        <span class="sidebar-overview-preview__action">View all (${zoneBirdsData.birds.length}) &rarr;</span>
+                    </button>
+                </div>
+            ` : ""}
+
+            <!-- Feature Tiles Preview Section (Circle level only) -->
+            ${previewTilesHtml ? `
+                <div class="sidebar-overview-preview">
+                    <div class="sidebar-overview-preview__header">
+                        <span class="sidebar-overview-preview__title">${previewHeaderTitle}</span>
+                    </div>
+                    <div class="sidebar-overview-preview__list">
+                        ${previewTilesHtml}
+                    </div>
+                    <button type="button" class="sidebar-overview-preview__footer" title="Go to ${previewHeaderTitle} tab">
+                        <span class="sidebar-overview-preview__action">${previewActionText}</span>
+                    </button>
+                </div>
+            ` : ""}
+
+            <!-- Resources Section -->
+            <div class="sidebar-overview-resources">
+                <div class="sidebar-overview-resources__header">
+                    <span class="sidebar-overview-resources__title">Resources</span>
+                </div>
+                <div class="sidebar-overview-resources__empty">No resources available</div>
+            </div>
         </div>
     `;
 
-    // Click handler for preview header (switches to list tab)
-    const headerEl = overviewEl.querySelector(".sidebar-overview-preview__header");
-    if (headerEl) {
-        headerEl.addEventListener("click", () => {
+        const birdPreviewTiles = overviewEl.querySelectorAll(".overview-preview-item--bird");
+    birdPreviewTiles.forEach(tile => {
+        const bName = tile.getAttribute("data-bird-name");
+        tile.addEventListener("click", () => {
+            if (bName) selectBird(bName);
+        });
+    });
+
+    // Click handlers for Birds preview footer & header
+    const birdsFooterBtn = overviewEl.querySelector(".sidebar-overview-preview__footer--birds");
+    if (birdsFooterBtn) {
+        birdsFooterBtn.addEventListener("click", () => {
+            const birdsTab = document.querySelector('.sidebar-capsule[data-tab="birds"]');
+            state.activeTab = "birds";
+            if (birdsTab) {
+                const capsules = document.querySelectorAll(".sidebar-capsule");
+                capsules.forEach(c => c.classList.remove("is-active"));
+                birdsTab.classList.add("is-active");
+            }
+            renderSidebarList();
+        });
+    }
+
+    const birdsHeader = overviewEl.querySelector(".sidebar-overview-preview__header--birds");
+    if (birdsHeader) {
+        birdsHeader.style.cursor = "pointer";
+        birdsHeader.addEventListener("click", () => {
+            const birdsTab = document.querySelector('.sidebar-capsule[data-tab="birds"]');
+            state.activeTab = "birds";
+            if (birdsTab) {
+                const capsules = document.querySelectorAll(".sidebar-capsule");
+                capsules.forEach(c => c.classList.remove("is-active"));
+                birdsTab.classList.add("is-active");
+            }
+            renderSidebarList();
+        });
+    }
+
+    // Click handler for preview footer button (switches to list tab)
+    const footerBtn = overviewEl.querySelector(".sidebar-overview-preview:not(.sidebar-overview-preview--birds) .sidebar-overview-preview__footer");
+    if (footerBtn) {
+        footerBtn.addEventListener("click", () => {
             const itemsTab = document.querySelector('.sidebar-capsule[data-tab="items"]');
-            if (itemsTab) itemsTab.click();
+            state.activeTab = "items";
+            if (itemsTab) {
+                const capsules = document.querySelectorAll(".sidebar-capsule");
+                capsules.forEach(c => c.classList.remove("is-active"));
+                itemsTab.classList.add("is-active");
+            }
+            renderSidebarList();
+        });
+    }
+
+    const orgHeader = overviewEl.querySelector(".sidebar-overview-people__header");
+    if (orgHeader) {
+        orgHeader.style.cursor = "pointer";
+        orgHeader.addEventListener("click", () => {
+            const orgTab = document.querySelector('.sidebar-capsule[data-tab="organizers"]');
+            state.activeTab = "organizers";
+            if (orgTab) {
+                const capsules = document.querySelectorAll(".sidebar-capsule");
+                capsules.forEach(c => c.classList.remove("is-active"));
+                orgTab.classList.add("is-active");
+            }
+            renderSidebarList();
+        });
+    }
+
+    const resHeader = overviewEl.querySelector(".sidebar-overview-resources__header");
+    if (resHeader) {
+        resHeader.style.cursor = "pointer";
+        resHeader.addEventListener("click", () => {
+            const resTab = document.querySelector('.sidebar-capsule[data-tab="resources"]');
+            state.activeTab = "resources";
+            if (resTab) {
+                const capsules = document.querySelectorAll(".sidebar-capsule");
+                capsules.forEach(c => c.classList.remove("is-active"));
+                resTab.classList.add("is-active");
+            }
+            renderSidebarList();
         });
     }
 
     // Click & hover handlers for preview tiles
     if (isCirclesFeature) {
-        const tiles = overviewEl.querySelectorAll(".overview-preview-tile");
+        const tiles = overviewEl.querySelectorAll(".overview-preview-item");
         tiles.forEach(tile => {
             const cid = tile.getAttribute("data-cid");
             tile.addEventListener("mouseenter", () => {
@@ -2582,7 +3616,7 @@ function renderOverviewTab(listContainer, isCirclesFeature, isCircle, targetFeat
             });
         });
     } else {
-        const tiles = overviewEl.querySelectorAll(".overview-preview-tile");
+        const tiles = overviewEl.querySelectorAll(".overview-preview-item[data-zid]");
         tiles.forEach(tile => {
             const zid = tile.getAttribute("data-zid");
             tile.addEventListener("mouseenter", () => {
@@ -2616,26 +3650,207 @@ function renderOverviewTab(listContainer, isCirclesFeature, isCircle, targetFeat
         });
     }
 
+    const isZonePhoto = !isCirclesFeature && !isCircle && Boolean(targetFeature);
+    const photoCredit = isZonePhoto ? "Photo Contributed by Pete Baki" : "Photo Contributed by NA";
+
     if (mediaDiv && img) {
         mediaDiv.addEventListener("click", () => {
-            openImageLightbox(img.src, imgAlt, descText);
+            openImageLightbox(img.src, imgAlt, descText, photoCredit);
         });
     }
 
     listContainer.appendChild(overviewEl);
 }
 
+function renderOrganizersList(listContainer) {
+    const item = document.createElement("div");
+    item.className = "tile-zone-item tile-zone-item--organizer";
+    item.innerHTML = `
+        <div class="tile-zone-item__thumb tile-zone-item__thumb--organizer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+        </div>
+        <div class="tile-zone-item__info">
+            <div class="tile-zone-item__title">Name</div>
+            <div class="tile-zone-item__meta">
+                <span class="tile-zone-item__meta-item">Job Title</span>
+            </div>
+        </div>
+        <div class="tile-zone-item__actions">
+            <button type="button" class="sidebar-overview-people__icon-btn" title="Email" aria-label="Email">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+            </button>
+            <button type="button" class="sidebar-overview-people__icon-btn" title="Phone" aria-label="Phone">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6.62 10.79a15.053 15.053 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01l-2.2 2.2z"/>
+                </svg>
+            </button>
+        </div>
+    `;
+    listContainer.appendChild(item);
+}
+
+function renderResourcesList(listContainer) {
+    const emptyEl = document.createElement("div");
+    emptyEl.className = "sidebar-empty-state";
+    emptyEl.innerHTML = `
+        <svg class="sidebar-empty-state__icon" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <div class="sidebar-empty-state__text">no items found</div>
+    `;
+    listContainer.appendChild(emptyEl);
+}
+
+function renderBirdsList(listContainer) {
+    const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
+    let zoneBirdsData = null;
+
+    if (state.currentFeature === "florence" && !state.isCirclesFeature && !isCircle) {
+        const targetFeature = state.allFeatures.find(f => {
+            const zid = f.properties?.zid;
+            return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
+        });
+        if (targetFeature) {
+            const zid = displayZoneId(targetFeature.properties?.zid);
+            zoneBirdsData = FLORENCE_ZONE_BIRDS[zid] || FLORENCE_ZONE_BIRDS[String(parseInt(zid, 10))];
+        }
+    }
+
+    if (!zoneBirdsData || !zoneBirdsData.birds || zoneBirdsData.birds.length === 0) {
+        const emptyEl = document.createElement("div");
+        emptyEl.className = "sidebar-empty-state";
+        emptyEl.innerHTML = `
+            <svg class="sidebar-empty-state__icon" width="34" height="34" viewBox="0 0 512 512" fill="currentColor">
+                <path d="M128 32h32c17.7 0 32 14.3 32 32V96H96V64c0-17.7 14.3-32 32-32zm64 96V448c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32V388.9c0-34.6 9.4-68.6 27.2-98.3C40.9 267.8 49.7 242.4 53 216L60.5 156c2-16 15.6-28 31.8-28H192zm227.8 0c16.1 0 29.8 12 31.8 28L459 216c3.3 26.4 12.1 51.8 25.8 74.6c17.8 29.7 27.2 63.7 27.2 98.3V448c0 17.7-14.3 32-32 32H352c-17.7 0-32-14.3-32-32V128h99.8zM320 64c0-17.7 14.3-32 32-32h32c17.7 0 32 14.3 32 32V96H320V64zm-32 64V288H224V128h64z"/>
+            </svg>
+            <div class="sidebar-empty-state__text">no items found</div>
+        `;
+        listContainer.appendChild(emptyEl);
+        return;
+    }
+
+    if (zoneBirdsData.desc) {
+        const introEl = document.createElement("div");
+        introEl.className = "sidebar-birds-intro";
+        introEl.textContent = zoneBirdsData.desc;
+        listContainer.appendChild(introEl);
+    }
+
+    zoneBirdsData.birds.forEach(bird => {
+        const ebirdUrl = getEbirdUrl(bird.name);
+        const item = document.createElement("div");
+        item.className = "tile-zone-item tile-zone-item--no-thumb tile-zone-item--bird-link";
+        item.title = `Select ${bird.name} to view observations on map`;
+        item.innerHTML = `
+            <div class="tile-zone-item__info">
+                <div class="tile-zone-item__title">
+                    <span>${bird.name}</span>
+                    <a href="${ebirdUrl}" target="_blank" rel="noopener noreferrer" class="tile-zone-item__ext-btn" title="Open ${bird.name} on eBird" onclick="event.stopPropagation();">
+                        <svg class="tile-zone-item__ext-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        `;
+        item.addEventListener("click", () => {
+            selectBird(bird.name);
+        });
+        listContainer.appendChild(item);
+    });
+}
+
 function renderSidebarList() {
+    const isBirdSelected = Boolean(state.selectedBird);
+    const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
+    const isSpecificZone = !state.isCirclesFeature && !isCircle && !isBirdSelected;
+
+    const observationsCapsule = document.querySelector('.sidebar-capsule[data-tab="observations"]');
+    if (observationsCapsule) {
+        observationsCapsule.style.display = isBirdSelected ? "inline-flex" : "none";
+    }
+
+    const birdsCapsule = document.querySelector('.sidebar-capsule[data-tab="birds"]');
+    if (birdsCapsule) {
+        birdsCapsule.style.display = isSpecificZone ? "inline-flex" : "none";
+    }
+
+    const organizersCapsule = document.querySelector('.sidebar-capsule[data-tab="organizers"]');
+    if (organizersCapsule) {
+        organizersCapsule.style.display = isBirdSelected ? "none" : "inline-flex";
+    }
+
+    const resourcesCapsule = document.querySelector('.sidebar-capsule[data-tab="resources"]');
+    if (resourcesCapsule) {
+        resourcesCapsule.style.display = isBirdSelected ? "none" : "inline-flex";
+    }
+
+    if (!isSpecificZone && state.activeTab === "birds" && !isBirdSelected) {
+        state.activeTab = "overview";
+    }
+
     const itemsCapsule = document.querySelector('.sidebar-capsule[data-tab="items"]');
     if (itemsCapsule) {
+        itemsCapsule.style.display = (isSpecificZone || isBirdSelected) ? "none" : "inline-flex";
         itemsCapsule.textContent = state.isCirclesFeature ? "Circles" : "Circle Zones";
     }
+
+    if ((isSpecificZone || isBirdSelected) && state.activeTab === "items") {
+        state.activeTab = "overview";
+    }
+
+    if (!isBirdSelected && state.activeTab === "observations") {
+        state.activeTab = "overview";
+    }
+
+    const isOverview = state.activeTab === "overview" || state.activeTab === "about";
+
+    // Sync capsule active state with state.activeTab
+    const capsules = document.querySelectorAll(".sidebar-capsule");
+    capsules.forEach(cap => {
+        const tab = cap.getAttribute("data-tab");
+        if (!isOverview && tab === state.activeTab) {
+            cap.classList.add("is-active");
+        } else {
+            cap.classList.remove("is-active");
+        }
+    });
 
     const listContainer = document.getElementById("sidebar-zone-list");
     if (!listContainer) return;
     listContainer.innerHTML = "";
 
-    const isOverview = state.activeTab === "overview" || state.activeTab === "about";
+    if (state.selectedBird) {
+        if (state.activeTab === "observations") {
+            renderObservationsList(listContainer);
+        } else {
+            renderSidebarBirdPanel(listContainer, state.selectedBird);
+        }
+        return;
+    }
+
+    if (state.activeTab === "birds") {
+        renderBirdsList(listContainer);
+        return;
+    }
+
+    if (state.activeTab === "organizers") {
+        renderOrganizersList(listContainer);
+        return;
+    }
+
+    if (state.activeTab === "resources") {
+        renderResourcesList(listContainer);
+        return;
+    }
 
     if (state.isCirclesFeature) {
         if (isOverview) {
@@ -2727,7 +3942,6 @@ function renderSidebarList() {
         return;
     }
 
-    const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
     let targetFeature = null;
     if (!isCircle) {
         targetFeature = state.allFeatures.find(f => {
@@ -4713,10 +5927,6 @@ function closeAllModals() {
     if (typeof window.updateActionButtonsState === "function") {
         window.updateActionButtonsState();
     }
-
-    if (typeof renderSidebarList === "function") {
-        renderSidebarList();
-    }
 }
 
 function setupAllAppsLiveSearch() {
@@ -5829,6 +7039,12 @@ function setupSuggestFormAndDrawing(closeAllModals) {
     }
 
     function executeBackNavigation() {
+        if (state.selectedBird) {
+            clearBirdObservations();
+            selectSubject(state.currentId, true, true);
+            return;
+        }
+
         if (!state.isCirclesFeature && (state.currentId === CIRCLE_ID || !state.currentId)) {
             switchToCirclesFeature();
         } else {
@@ -5954,9 +7170,17 @@ function setupCapsules() {
                 showToast("Settings view is not available (coming soon)");
                 return;
             }
-            capsules.forEach(c => c.classList.remove("is-active"));
-            cap.classList.add("is-active");
-            state.activeTab = tab || "items";
+
+            const isAlreadyActive = cap.classList.contains("is-active");
+            if (isAlreadyActive) {
+                // Deselect active tab and return to overview default
+                capsules.forEach(c => c.classList.remove("is-active"));
+                state.activeTab = "overview";
+            } else {
+                capsules.forEach(c => c.classList.remove("is-active"));
+                cap.classList.add("is-active");
+                state.activeTab = tab || "items";
+            }
             renderSidebarList();
         });
     });
@@ -6198,7 +7422,7 @@ function setupListSwipeBack() {
         if (window.innerWidth > 768) return;
         
         const backBtn = document.getElementById("btn-capsule-back");
-        if (!backBtn || !backBtn.classList.contains("is-visible")) {
+        if (!backBtn || backBtn.disabled || backBtn.classList.contains("is-disabled")) {
             isTracking = false;
             return;
         }
@@ -6227,7 +7451,7 @@ function setupListSwipeBack() {
 
         if (!isTracking) {
             const backBtn = document.getElementById("btn-capsule-back");
-            const canGoBack = backBtn && backBtn.classList.contains("is-visible");
+            const canGoBack = backBtn && !backBtn.disabled && !backBtn.classList.contains("is-disabled");
             
             if (canGoBack && diffX > 10 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
                 isTracking = true;
@@ -6346,16 +7570,21 @@ function setupListSwipeBack() {
     }, { passive: true });
 }
 
-function openImageLightbox(src, alt = "Enlarged view", text = "") {
+function openImageLightbox(src, alt = "Enlarged view", text = "", credit = "") {
     const modal = document.getElementById("image-lightbox-modal");
     const img = document.getElementById("lightbox-img");
     const textEl = document.getElementById("lightbox-text");
+    const creditEl = document.getElementById("lightbox-credit");
     if (modal && img) {
         img.src = src;
         img.alt = alt;
         if (textEl) {
             textEl.textContent = text;
             textEl.style.display = text ? "block" : "none";
+        }
+        if (creditEl) {
+            creditEl.textContent = credit;
+            creditEl.style.display = credit ? "block" : "none";
         }
         modal.setAttribute("aria-hidden", "false");
         modal.classList.add("is-open");
@@ -6667,8 +7896,10 @@ function setupHelpModeSystem() {
         // Overview Information (` key)
         if (e.key === "`" || e.key === "~") {
             state.lastNavSource = "keyboard";
-            const overviewTab = document.querySelector('.sidebar-capsule[data-tab="overview"], .sidebar-capsule[data-tab="about"]');
-            if (overviewTab) overviewTab.click();
+            const capsules = document.querySelectorAll(".sidebar-capsule");
+            capsules.forEach(c => c.classList.remove("is-active"));
+            state.activeTab = "overview";
+            renderSidebarList();
             return;
         }
 
