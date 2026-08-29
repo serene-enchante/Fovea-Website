@@ -892,11 +892,12 @@ function initializeMap() {
 
 
 
+export function setupBackNavigationAndAuth() {
     function checkGitHubAuth() {
-        // Check GitHub auth session state (placeholder for future GitHub OAuth integration)
+        if (typeof localStorage === "undefined") return;
         const isGitHubLoggedIn = Boolean(
             localStorage.getItem("github_token") ||
-            sessionStorage.getItem("github_token") ||
+            (typeof sessionStorage !== "undefined" && sessionStorage.getItem("github_token")) ||
             localStorage.getItem("gh_user")
         );
         const editBtn = document.getElementById("btn-edit-item");
@@ -958,13 +959,7 @@ function initializeMap() {
             selectSubject(CIRCLE_ID);
         }
     }
-
-
-
-
-
-
-
+}
 
 async function init() {
     const triggerEntrance = () => {
@@ -995,21 +990,23 @@ async function init() {
     try {
         const initialId = await loadBirdData();
 
-        renderSidebarList();
-        initializeMap();
-        setupActionButtons();
-        setupSearch();
-        setupCapsules();
-        setupSwipeNavigation();
-        setupListSwipeBack();
-        setupImageLightbox();
-        setupMobileResizeBar();
-        setupHelpModeSystem();
-        setupSidebarScrollListener();
-        setupMobileBottomNav();
-        setupViewToggleMenu();
+        try { renderSidebarList(); } catch(e) { console.error("Error in renderSidebarList:", e); }
+        try { initializeMap(); } catch(e) { console.error("Error in initializeMap:", e); }
+        try { setupActionButtons(); } catch(e) { console.error("Error in setupActionButtons:", e); }
+        try { setupSearch(); } catch(e) { console.error("Error in setupSearch:", e); }
+        try { setupCapsules(); } catch(e) { console.error("Error in setupCapsules:", e); }
+        try { setupBackNavigationAndAuth(); } catch(e) { console.error("Error in setupBackNavigationAndAuth:", e); }
+        try { setupSwipeNavigation(); } catch(e) { console.error("Error in setupSwipeNavigation:", e); }
+        try { setupListSwipeBack(); } catch(e) { console.error("Error in setupListSwipeBack:", e); }
+        try { setupImageLightbox(); } catch(e) { console.error("Error in setupImageLightbox:", e); }
+        try { setupMobileResizeBar(); } catch(e) { console.error("Error in setupMobileResizeBar:", e); }
+        try { setupHelpModeSystem(); } catch(e) { console.error("Error in setupHelpModeSystem:", e); }
+        try { setupSidebarScrollListener(); } catch(e) { console.error("Error in setupSidebarScrollListener:", e); }
+        try { setupMobileBottomNav(); } catch(e) { console.error("Error in setupMobileBottomNav:", e); }
+        try { setupViewToggleMenu(); } catch(e) { console.error("Error in setupViewToggleMenu:", e); }
+        try { setupBackHomeTransition(); } catch(e) { console.error("Error in setupBackHomeTransition:", e); }
 
-        selectSubject(initialId, true, false);
+        try { selectSubject(initialId, true, false); } catch(e) { console.error("Error in selectSubject:", e); }
 
         if (initialId === "Oakridge" || initialId === "Cottage Grove") {
             setTimeout(() => {
