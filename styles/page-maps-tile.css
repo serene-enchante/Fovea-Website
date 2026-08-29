@@ -4584,6 +4584,47 @@ body.theme-light .sidebar-search-close-btn {
     color: #111827 !important;
 }
 
+/* Top Desktop Nav Bar (Tools, Home, Settings) in Light Mode */
+[data-theme="light"] .desktop-nav-tab,
+html.theme-light .desktop-nav-tab,
+body.theme-light .desktop-nav-tab {
+    background: #e5e7eb !important;
+    color: #000000 !important;
+}
+
+[data-theme="light"] .desktop-nav-tab:hover,
+html.theme-light .desktop-nav-tab:hover,
+body.theme-light .desktop-nav-tab:hover {
+    background: #d1d5db !important;
+    color: #000000 !important;
+}
+
+[data-theme="light"] .desktop-nav-tab__label,
+html.theme-light .desktop-nav-tab__label,
+body.theme-light .desktop-nav-tab__label {
+    color: #000000 !important;
+}
+
+[data-theme="light"] .desktop-nav-tab:hover .desktop-nav-tab__label,
+html.theme-light .desktop-nav-tab:hover .desktop-nav-tab__label,
+body.theme-light .desktop-nav-tab:hover .desktop-nav-tab__label {
+    color: #000000 !important;
+}
+
+[data-theme="light"] .desktop-nav-tab__icon,
+html.theme-light .desktop-nav-tab__icon,
+body.theme-light .desktop-nav-tab__icon {
+    filter: brightness(0) !important;
+    opacity: 0.85 !important;
+}
+
+[data-theme="light"] .desktop-nav-tab:hover .desktop-nav-tab__icon,
+html.theme-light .desktop-nav-tab:hover .desktop-nav-tab__icon,
+body.theme-light .desktop-nav-tab:hover .desktop-nav-tab__icon {
+    filter: brightness(0) !important;
+    opacity: 1 !important;
+}
+
 [data-theme="light"] .map-ctrl-btn,
 html.theme-light .map-ctrl-btn,
 body.theme-light .map-ctrl-btn {
