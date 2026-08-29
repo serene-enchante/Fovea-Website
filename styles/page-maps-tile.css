@@ -4384,17 +4384,49 @@ body.theme-light .maps-tile-header__actions {
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08) !important;
 }
 
-[data-theme="light"] .action-btn,
-html.theme-light .action-btn,
-body.theme-light .action-btn {
-    color: #374151 !important;
+[data-theme="light"] .action-icon-btn,
+html.theme-light .action-icon-btn,
+body.theme-light .action-icon-btn {
+    color: #111827 !important;
 }
 
-[data-theme="light"] .action-btn:hover,
-html.theme-light .action-btn:hover,
-body.theme-light .action-btn:hover {
-    background: rgba(0, 0, 0, 0.06) !important;
+[data-theme="light"] .action-icon-btn span,
+html.theme-light .action-icon-btn span,
+body.theme-light .action-icon-btn span {
     color: #111827 !important;
+}
+
+[data-theme="light"] .action-icon-btn svg,
+html.theme-light .action-icon-btn svg,
+body.theme-light .action-icon-btn svg {
+    stroke: #111827 !important;
+}
+
+[data-theme="light"] .action-icon-btn:hover,
+[data-theme="light"] .action-icon-btn.is-active,
+html.theme-light .action-icon-btn:hover,
+html.theme-light .action-icon-btn.is-active,
+body.theme-light .action-icon-btn:hover,
+body.theme-light .action-icon-btn.is-active {
+    color: var(--accent-primary) !important;
+}
+
+[data-theme="light"] .action-icon-btn:hover span,
+[data-theme="light"] .action-icon-btn.is-active span,
+html.theme-light .action-icon-btn:hover span,
+html.theme-light .action-icon-btn.is-active span,
+body.theme-light .action-icon-btn:hover span,
+body.theme-light .action-icon-btn.is-active span {
+    color: var(--accent-primary) !important;
+}
+
+[data-theme="light"] .action-icon-btn:hover svg,
+[data-theme="light"] .action-icon-btn.is-active svg,
+html.theme-light .action-icon-btn:hover svg,
+html.theme-light .action-icon-btn.is-active svg,
+body.theme-light .action-icon-btn:hover svg,
+body.theme-light .action-icon-btn.is-active svg {
+    stroke: var(--accent-primary) !important;
 }
 
 [data-theme="light"] .desktop-nav-tab,
