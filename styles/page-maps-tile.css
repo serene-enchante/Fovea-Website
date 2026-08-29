@@ -784,7 +784,7 @@ body.page-maps-tile {
     padding: 0.65rem 0.65rem !important;
     background: transparent !important;
     border: none !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: none !important;
     border-radius: 10px !important;
     color: #ffffff;
     text-decoration: none;
@@ -4230,7 +4230,8 @@ body.page-maps-tile.theme-light {
 html.theme-light .page-maps-tile .intro-header,
 body.theme-light .page-maps-tile .intro-header {
     background: #ffffff !important;
-    border-bottom: 1px solid #e5e7eb !important;
+    border: none !important;
+    border-bottom: none !important;
 }
 
 [data-theme="light"] .header-view-toggle,
@@ -4272,7 +4273,8 @@ body.theme-light .header-view-menu__item:hover {
 html.theme-light .maps-tile-sidebar,
 body.theme-light .maps-tile-sidebar {
     background: #ffffff !important;
-    border-right: 1px solid #e5e7eb !important;
+    border: none !important;
+    border-right: none !important;
 }
 
 [data-theme="light"] .maps-tile-sidebar::after,
@@ -4285,6 +4287,7 @@ body.theme-light .maps-tile-sidebar::after {
 html.theme-light .maps-tile-sidebar__header,
 body.theme-light .maps-tile-sidebar__header {
     background: #ffffff !important;
+    border: none !important;
 }
 
 [data-theme="light"] .maps-tile-sidebar__header::after,
@@ -4297,7 +4300,7 @@ body.theme-light .maps-tile-sidebar__header::after {
 html.theme-light .mobile-resize-bar,
 body.theme-light .mobile-resize-bar {
     background: #ffffff !important;
-    border-color: #e5e7eb !important;
+    border: none !important;
 }
 
 [data-theme="light"] .mobile-resize-bar::after,
@@ -4310,7 +4313,8 @@ body.theme-light .mobile-resize-bar::after {
 html.theme-light .maps-tile-header,
 body.theme-light .maps-tile-header {
     background: #ffffff !important;
-    border-bottom: 1px solid #e5e7eb !important;
+    border: none !important;
+    border-bottom: none !important;
 }
 
 [data-theme="light"] .maps-tile-header__title,
@@ -4344,8 +4348,9 @@ body.theme-light .sidebar-capsule.is-active {
 [data-theme="light"] .tile-zone-item,
 html.theme-light .tile-zone-item,
 body.theme-light .tile-zone-item {
-    background: #ffffff !important;
-    border-color: #e5e7eb !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: none !important;
 }
 
 [data-theme="light"] .tile-zone-item:hover,
@@ -4354,8 +4359,9 @@ html.theme-light .tile-zone-item:hover,
 html.theme-light .tile-zone-item.is-hovered,
 body.theme-light .tile-zone-item:hover,
 body.theme-light .tile-zone-item.is-hovered {
-    background: #f3f4f6 !important;
-    border-color: #d1d5db !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+    border: none !important;
+    border-bottom: none !important;
 }
 
 [data-theme="light"] .tile-zone-item__title,
@@ -4373,9 +4379,9 @@ body.theme-light .sidebar-about-text {
 [data-theme="light"] .maps-tile-header__actions,
 html.theme-light .maps-tile-header__actions,
 body.theme-light .maps-tile-header__actions {
-    background: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid rgba(0, 0, 0, 0.12) !important;
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1) !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 1px solid rgba(0, 0, 0, 0.10) !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08) !important;
 }
 
 [data-theme="light"] .action-btn,
@@ -4395,20 +4401,29 @@ body.theme-light .action-btn:hover {
 html.theme-light .desktop-nav-tab,
 body.theme-light .desktop-nav-tab {
     background: #f3f4f6 !important;
-    border: 1px solid #e5e7eb !important;
-    color: #111827 !important;
+    border: none !important;
+    color: #4b5563 !important;
 }
 
 [data-theme="light"] .desktop-nav-tab:hover,
 html.theme-light .desktop-nav-tab:hover,
 body.theme-light .desktop-nav-tab:hover {
     background: #e5e7eb !important;
+    color: #111827 !important;
 }
 
 [data-theme="light"] .desktop-nav-tab__icon,
 html.theme-light .desktop-nav-tab__icon,
 body.theme-light .desktop-nav-tab__icon {
-    filter: invert(0.85);
+    filter: none !important;
+    opacity: 0.5;
+}
+
+[data-theme="light"] .desktop-nav-tab:hover .desktop-nav-tab__icon,
+html.theme-light .desktop-nav-tab:hover .desktop-nav-tab__icon,
+body.theme-light .desktop-nav-tab:hover .desktop-nav-tab__icon {
+    filter: none !important;
+    opacity: 0.9;
 }
 
 [data-theme="light"] .map-ctrl-btn,
