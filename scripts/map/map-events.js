@@ -28,7 +28,9 @@ export function setupMapHoverEvents() {
                     activeHoverAlphas[id] = target;
                     if (target === 0) {
                         delete activeHoverAlphas[id];
-                        state.map.setFeatureState({ source: 'zones', id: id }, { hover: false, hoverAlpha: 0 });
+                        try {
+                            state.map.setFeatureState({ source: 'zones', id: id }, { hover: false, hoverAlpha: 0 });
+                        } catch (e) {}
                         return;
                     }
                 } else {
@@ -37,10 +39,12 @@ export function setupMapHoverEvents() {
                 }
 
                 const alphaToSet = activeHoverAlphas[id] || 0.0;
-                state.map.setFeatureState({ source: 'zones', id: id }, { 
-                    hover: alphaToSet > 0.01,
-                    hoverAlpha: alphaToSet
-                });
+                try {
+                    state.map.setFeatureState({ source: 'zones', id: id }, { 
+                        hover: alphaToSet > 0.01,
+                        hoverAlpha: alphaToSet
+                    });
+                } catch (e) {}
             });
 
             if (animNeeded) {
@@ -56,12 +60,16 @@ export function setupMapHoverEvents() {
             // Immediately clear feature-state on all previous features so zero ghosting remains
             Object.keys(activeHoverAlphas).forEach(prevId => {
                 if (prevId !== newId) {
-                    state.map.setFeatureState({ source: 'zones', id: prevId }, { hover: false, hoverAlpha: 0 });
+                    try {
+                        state.map.setFeatureState({ source: 'zones', id: prevId }, { hover: false, hoverAlpha: 0 });
+                    } catch (e) {}
                     delete activeHoverAlphas[prevId];
                 }
             });
             if (hoveredStateId && hoveredStateId !== newId) {
-                state.map.setFeatureState({ source: 'zones', id: hoveredStateId }, { hover: false, hoverAlpha: 0 });
+                try {
+                    state.map.setFeatureState({ source: 'zones', id: hoveredStateId }, { hover: false, hoverAlpha: 0 });
+                } catch (e) {}
                 unhighlightTileItem();
             }
 

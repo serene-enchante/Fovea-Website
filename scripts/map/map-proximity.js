@@ -31,12 +31,15 @@ export function setupProximityTracking() {
             rafPending = false;
             if (!state.labelData || !state.map) return;
             state.labelData.forEach(d => {
+                if (!d || !d.id) return;
                 const pt = state.map.project([d.lng, d.lat]);
                 const dist = Math.hypot(cx - pt.x, cy - pt.y);
                 // Smooth quadratic falloff for more natural gradient feel
                 const linear = Math.max(0, 1 - dist / RADIUS);
                 const proximity = linear * linear * (3 - 2 * linear); // smoothstep
-                state.map.setFeatureState({ source: 'zones', id: d.id }, { proximity });
+                try {
+                    state.map.setFeatureState({ source: 'zones', id: d.id }, { proximity });
+                } catch (e) {}
             });
         });
     });
@@ -45,7 +48,10 @@ export function setupProximityTracking() {
         lastCx = -9999; lastCy = -9999;
         if (!state.labelData || !state.map) return;
         state.labelData.forEach(d => {
-            state.map.setFeatureState({ source: 'zones', id: d.id }, { proximity: 0 });
+            if (!d || !d.id) return;
+            try {
+                state.map.setFeatureState({ source: 'zones', id: d.id }, { proximity: 0 });
+            } catch (e) {}
         });
     });
 }

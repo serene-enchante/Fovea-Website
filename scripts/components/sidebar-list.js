@@ -90,12 +90,16 @@ export function renderSidebarList() {
 
             item.addEventListener("mouseenter", () => {
                 if (state.map && state.map.getSource('zones')) {
-                    state.map.setFeatureState({ source: 'zones', id: cid }, { hover: true });
+                    try {
+                        state.map.setFeatureState({ source: 'zones', id: cid }, { hover: true });
+                    } catch (e) {}
                 }
             });
             item.addEventListener("mouseleave", () => {
                 if (state.map && state.map.getSource('zones')) {
-                    state.map.setFeatureState({ source: 'zones', id: cid }, { hover: false });
+                    try {
+                        state.map.setFeatureState({ source: 'zones', id: cid }, { hover: false });
+                    } catch (e) {}
                 }
             });
 
@@ -223,16 +227,20 @@ export function renderSidebarList() {
 
         item.addEventListener("mouseenter", () => {
             const featureId = String(props.zid || "");
-            const isSelected = state.currentId !== CIRCLE_ID && (featureId === state.currentId || normalizeZoneId(featureId) === normalizeZoneId(state.currentId));
+            const isSelected = state.currentId !== CIRCLE_ID && (featureId === state.currentId || (typeof normalizeZoneId === "function" && normalizeZoneId(featureId) === normalizeZoneId(state.currentId)));
             if (!isSelected && state.map && state.map.getSource('zones')) {
-                state.map.setFeatureState({ source: 'zones', id: featureId }, { hover: true });
+                try {
+                    state.map.setFeatureState({ source: 'zones', id: featureId }, { hover: true });
+                } catch (e) {}
             }
         });
         item.addEventListener("mouseleave", () => {
             const featureId = String(props.zid || "");
-            const isSelected = state.currentId !== CIRCLE_ID && (featureId === state.currentId || normalizeZoneId(featureId) === normalizeZoneId(state.currentId));
+            const isSelected = state.currentId !== CIRCLE_ID && (featureId === state.currentId || (typeof normalizeZoneId === "function" && normalizeZoneId(featureId) === normalizeZoneId(state.currentId)));
             if (!isSelected && state.map && state.map.getSource('zones')) {
-                state.map.setFeatureState({ source: 'zones', id: featureId }, { hover: false });
+                try {
+                    state.map.setFeatureState({ source: 'zones', id: featureId }, { hover: false });
+                } catch (e) {}
             }
         });
 
@@ -262,12 +270,16 @@ export function updateKeyboardTileFocus(newIndex) {
         if (newIndex >= 0 && idx === newIndex) {
             tile.classList.add("is-hovered");
             if (!isSelected && state.map && state.map.getSource('zones')) {
-                state.map.setFeatureState({ source: 'zones', id: cid }, { hover: true });
+                try {
+                    state.map.setFeatureState({ source: 'zones', id: cid }, { hover: true });
+                } catch (e) {}
             }
         } else {
             tile.classList.remove("is-hovered");
             if (!isSelected && state.map && state.map.getSource('zones')) {
-                state.map.setFeatureState({ source: 'zones', id: cid }, { hover: false });
+                try {
+                    state.map.setFeatureState({ source: 'zones', id: cid }, { hover: false });
+                } catch (e) {}
             }
         }
     });

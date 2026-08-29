@@ -124,14 +124,19 @@ export function updateAllFeatureStyles() {
     } catch(e) { console.warn("Error updating place labels filter:", e); }
     
     // We update all features state based on currentId
-    state.allFeatures.forEach(feature => {
+    (state.allFeatures || []).forEach(feature => {
         const props = feature.properties || {};
         const key = state.isCirclesFeature ? String(props.cid || "") : String(props.zid || "");
-        const isSelected = state.currentId !== CIRCLE_ID && (key === state.currentId || normalizeZoneId(key) === normalizeZoneId(state.currentId));
-        state.map.setFeatureState(
-            { source: 'zones', id: key },
-            { selected: isSelected }
-        );
+        if (!key) return;
+        const isSelected = state.currentId !== CIRCLE_ID && (key === state.currentId || (typeof normalizeZoneId === "function" && normalizeZoneId(key) === normalizeZoneId(state.currentId)));
+        try {
+            state.map.setFeatureState(
+                { source: 'zones', id: key },
+                { selected: isSelected }
+            );
+        } catch (e) {
+            // Silently ignore if source tiles are not indexed yet
+        }
     });
 
     // Determine geometry styling based on active basemap (thick black outline & transparent deep blue fill for Esri Street/Topo, white for Dark/Satellite)
