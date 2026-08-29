@@ -4392,23 +4392,27 @@ body.theme-light .header-logo-text {
 [data-theme="light"] .sidebar-capsule,
 html.theme-light .sidebar-capsule,
 body.theme-light .sidebar-capsule {
-    background: #f3f4f6 !important;
+    background: rgba(0, 0, 0, 0.05) !important;
     color: #4b5563 !important;
-    border-color: #e5e7eb !important;
+    border: none !important;
 }
 
 [data-theme="light"] .sidebar-capsule:hover,
 html.theme-light .sidebar-capsule:hover,
 body.theme-light .sidebar-capsule:hover {
-    background: #e5e7eb !important;
+    background: rgba(0, 0, 0, 0.09) !important;
     color: #111827 !important;
 }
 
 [data-theme="light"] .sidebar-capsule.is-active,
+[data-theme="light"] .sidebar-capsule.is-active:hover,
 html.theme-light .sidebar-capsule.is-active,
-body.theme-light .sidebar-capsule.is-active {
-    background: #111827 !important;
-    color: #ffffff !important;
+html.theme-light .sidebar-capsule.is-active:hover,
+body.theme-light .sidebar-capsule.is-active,
+body.theme-light .sidebar-capsule.is-active:hover {
+    background: rgba(var(--accent-rgb), 0.16) !important;
+    color: var(--accent-primary) !important;
+    font-weight: 700 !important;
 }
 
 [data-theme="light"] .tile-zone-item,
