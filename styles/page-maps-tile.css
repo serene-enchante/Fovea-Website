@@ -4310,8 +4310,9 @@ body.theme-light .header-view-menu__item:hover .header-view-menu__icon {
 html.theme-light .header-logo-container,
 body.theme-light .header-logo-container {
     background: #000000 !important;
-    border-radius: 10px !important;
-    padding: 4px 6px !important;
+    border-radius: 0 12px 12px 0 !important;
+    margin-left: -1rem !important;
+    padding: 6px 10px 6px 1rem !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -4321,7 +4322,7 @@ body.theme-light .header-logo-container {
 html.theme-light .page-maps-tile .logo--header,
 body.theme-light .page-maps-tile .logo--header {
     height: 44px !important;
-    border-radius: 6px !important;
+    border-radius: 0 !important;
 }
 
 [data-theme="light"] .maps-tile-sidebar,
