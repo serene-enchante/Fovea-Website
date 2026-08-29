@@ -4435,3 +4435,11 @@ html.theme-light .sidebar-search-input,
 body.theme-light .sidebar-search-input {
     color: #111827 !important;
 }
+
+[data-theme="light"] .map-zone-label,
+html.theme-light .map-zone-label,
+body.theme-light .map-zone-label,
+.is-light-basemap .map-zone-label {
+    color: #000000 !important;
+    text-shadow: none !important;
+}

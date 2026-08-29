@@ -3076,7 +3076,8 @@ function rebuildHtmlLabels() {
         circleCutoff = 7.5;
         zoneCutoff = 9.0;
     }
-    const isLightBasemap = state.currentBaseLayer === 'esri-street' || state.currentBaseLayer === 'esri-topo';
+    const isLightModeTheme = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
+    const isLightBasemap = state.currentBaseLayer === 'esri-street' || state.currentBaseLayer === 'esri-topo' || (state.currentBaseLayer === 'default' && isLightModeTheme);
 
     // Remove labels that no longer match current feature set
     const currentIds = new Set(state.labelData.map(d => d.id));
@@ -3140,9 +3141,9 @@ function rebuildHtmlLabels() {
         el.style.fontSize = `${fontSize}px`;
         el.style.opacity = fontSize > 0 ? '1' : '0';
         el.style.pointerEvents = 'none';
-        el.style.color = isLightBasemap ? '#111' : '#c8c8c8';
+        el.style.color = isLightBasemap ? '#000000' : '#c8c8c8';
         el.style.textShadow = isLightBasemap
-            ? '0 0 4px rgba(255,255,255,0.95), 0 0 6px rgba(255,255,255,0.9)'
+            ? 'none'
             : '0 0 4px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)';
     });
 }
@@ -3829,48 +3830,43 @@ function initializeMap() {
                     state.map.setPaintProperty('waterway', 'line-color', '#8eb6cd');
                 }
 
-                // Road names in dark charcoal with white halos
+                // Road names in pure black without dropshadows/halos
                 if (state.map.getLayer('roadname_minor')) {
                     state.map.setLayoutProperty('roadname_minor', 'text-size', 11.5);
-                    state.map.setPaintProperty('roadname_minor', 'text-color', '#334155');
-                    state.map.setPaintProperty('roadname_minor', 'text-halo-color', '#ffffff');
-                    state.map.setPaintProperty('roadname_minor', 'text-halo-width', 1.5);
+                    state.map.setPaintProperty('roadname_minor', 'text-color', '#000000');
+                    state.map.setPaintProperty('roadname_minor', 'text-halo-width', 0);
                 }
                 if (state.map.getLayer('roadname_sec')) {
                     state.map.setLayoutProperty('roadname_sec', 'text-size', {
                         stops: [[14, 11], [16, 13.5], [18, 15.5]]
                     });
-                    state.map.setPaintProperty('roadname_sec', 'text-color', '#1e293b');
-                    state.map.setPaintProperty('roadname_sec', 'text-halo-color', '#ffffff');
-                    state.map.setPaintProperty('roadname_sec', 'text-halo-width', 1.5);
+                    state.map.setPaintProperty('roadname_sec', 'text-color', '#000000');
+                    state.map.setPaintProperty('roadname_sec', 'text-halo-width', 0);
                 }
                 if (state.map.getLayer('roadname_pri')) {
                     state.map.setLayoutProperty('roadname_pri', 'text-size', {
                         stops: [[13, 11], [15, 13], [16, 14.5], [18, 16.5]]
                     });
-                    state.map.setPaintProperty('roadname_pri', 'text-color', '#0f172a');
-                    state.map.setPaintProperty('roadname_pri', 'text-halo-color', '#ffffff');
-                    state.map.setPaintProperty('roadname_pri', 'text-halo-width', 1.8);
+                    state.map.setPaintProperty('roadname_pri', 'text-color', '#000000');
+                    state.map.setPaintProperty('roadname_pri', 'text-halo-width', 0);
                 }
                 if (state.map.getLayer('roadname_major')) {
                     state.map.setLayoutProperty('roadname_major', 'text-size', {
                         stops: [[13, 11.5], [15, 13.5], [16, 15], [18, 17.5]]
                     });
-                    state.map.setPaintProperty('roadname_major', 'text-color', '#0f172a');
-                    state.map.setPaintProperty('roadname_major', 'text-halo-color', '#ffffff');
-                    state.map.setPaintProperty('roadname_major', 'text-halo-width', 2.0);
+                    state.map.setPaintProperty('roadname_major', 'text-color', '#000000');
+                    state.map.setPaintProperty('roadname_major', 'text-halo-width', 0);
                 }
 
-                // Place names in high-contrast dark slate
+                // Place names in pure black without dropshadows/halos
                 const placeLayers = [
                     'place_city_r5', 'place_city_r6', 'place_town',
                     'place_village', 'place_suburb', 'place_neighbourhood', 'place_hamlet'
                 ];
                 placeLayers.forEach(lId => {
                     if (state.map.getLayer(lId)) {
-                        state.map.setPaintProperty(lId, 'text-color', '#0f172a');
-                        state.map.setPaintProperty(lId, 'text-halo-color', '#ffffff');
-                        state.map.setPaintProperty(lId, 'text-halo-width', 2.0);
+                        state.map.setPaintProperty(lId, 'text-color', '#000000');
+                        state.map.setPaintProperty(lId, 'text-halo-width', 0);
                         state.map.setLayoutProperty(lId, 'text-transform', 'none');
                     }
                 });
