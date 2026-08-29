@@ -4497,6 +4497,58 @@ html.theme-light .action-icon-btn.is-active svg,
 body.theme-light .action-icon-btn:hover svg,
 body.theme-light .action-icon-btn.is-active svg {
     stroke: var(--accent-primary) !important;
+[data-theme="light"] .sidebar-back-btn,
+html.theme-light .sidebar-back-btn,
+body.theme-light .sidebar-back-btn {
+    color: #000000 !important;
+}
+
+[data-theme="light"] .sidebar-back-btn svg,
+html.theme-light .sidebar-back-btn svg,
+body.theme-light .sidebar-back-btn svg {
+    stroke: #000000 !important;
+}
+
+[data-theme="light"] .sidebar-search-toggle-btn,
+html.theme-light .sidebar-search-toggle-btn,
+body.theme-light .sidebar-search-toggle-btn {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: #000000 !important;
+}
+
+[data-theme="light"] .sidebar-search-toggle-btn:hover,
+html.theme-light .sidebar-search-toggle-btn:hover,
+body.theme-light .sidebar-search-toggle-btn:hover {
+    background: rgba(0, 0, 0, 0.10) !important;
+    color: #000000 !important;
+}
+
+[data-theme="light"] .sidebar-search-toggle-btn svg,
+html.theme-light .sidebar-search-toggle-btn svg,
+body.theme-light .sidebar-search-toggle-btn svg {
+    stroke: #000000 !important;
+}
+
+[data-theme="light"] .sidebar-search-expanded,
+html.theme-light .sidebar-search-expanded,
+body.theme-light .sidebar-search-expanded {
+    background: #ffffff !important;
+}
+
+[data-theme="light"] .sidebar-search-container .search-icon,
+[data-theme="light"] .sidebar-search-expanded .search-icon,
+html.theme-light .sidebar-search-container .search-icon,
+html.theme-light .sidebar-search-expanded .search-icon,
+body.theme-light .sidebar-search-container .search-icon,
+body.theme-light .sidebar-search-expanded .search-icon {
+    color: #000000 !important;
+    stroke: #000000 !important;
+}
+
+[data-theme="light"] .sidebar-search-close-btn,
+html.theme-light .sidebar-search-close-btn,
+body.theme-light .sidebar-search-close-btn {
+    color: #000000 !important;
 }
 
 [data-theme="light"] .desktop-nav-tab,
