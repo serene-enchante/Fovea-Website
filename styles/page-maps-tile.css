@@ -4275,6 +4275,37 @@ body.theme-light .maps-tile-sidebar {
     border-right: 1px solid #e5e7eb !important;
 }
 
+[data-theme="light"] .maps-tile-sidebar::after,
+html.theme-light .maps-tile-sidebar::after,
+body.theme-light .maps-tile-sidebar::after {
+    background: linear-gradient(to top, #ffffff 0%, rgba(255, 255, 255, 0) 100%) !important;
+}
+
+[data-theme="light"] .maps-tile-sidebar__header,
+html.theme-light .maps-tile-sidebar__header,
+body.theme-light .maps-tile-sidebar__header {
+    background: #ffffff !important;
+}
+
+[data-theme="light"] .maps-tile-sidebar__header::after,
+html.theme-light .maps-tile-sidebar__header::after,
+body.theme-light .maps-tile-sidebar__header::after {
+    background: linear-gradient(to bottom, #ffffff 0%, rgba(255, 255, 255, 0) 100%) !important;
+}
+
+[data-theme="light"] .mobile-resize-bar,
+html.theme-light .mobile-resize-bar,
+body.theme-light .mobile-resize-bar {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+}
+
+[data-theme="light"] .mobile-resize-bar::after,
+html.theme-light .mobile-resize-bar::after,
+body.theme-light .mobile-resize-bar::after {
+    background: linear-gradient(to bottom, #ffffff 0%, rgba(255, 255, 255, 0) 100%) !important;
+}
+
 [data-theme="light"] .maps-tile-header,
 html.theme-light .maps-tile-header,
 body.theme-light .maps-tile-header {
