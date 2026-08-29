@@ -131,8 +131,8 @@ html, body {
     padding: 1.25rem 0.25rem;
     background: transparent;
     border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
     gap: 1.5rem;
     transition: color 0.2s ease;
 }
@@ -151,7 +151,7 @@ html, body {
 .setting-item__title {
     font-size: 1.02rem;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-color);
     letter-spacing: -0.01em;
 }
 
@@ -539,7 +539,44 @@ body.is-transitioning-right .corner-nav-right {
     opacity: 1;
 }
 
-/* Light Theme Settings Overrides */
+[data-theme="light"] .settings-view-toggle,
+html.theme-light .settings-view-toggle,
+body.theme-light .settings-view-toggle {
+    color: #374151 !important;
+    background: transparent !important;
+}
+
+[data-theme="light"] .settings-view-toggle:hover,
+html.theme-light .settings-view-toggle:hover,
+body.theme-light .settings-view-toggle:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: #111827 !important;
+}
+
+[data-theme="light"] .settings-view-toggle__icon-wrap,
+html.theme-light .settings-view-toggle__icon-wrap,
+body.theme-light .settings-view-toggle__icon-wrap {
+    color: #6b7280 !important;
+}
+
+[data-theme="light"] .settings-view-toggle:hover .settings-view-toggle__icon-wrap,
+html.theme-light .settings-view-toggle:hover .settings-view-toggle__icon-wrap,
+body.theme-light .settings-view-toggle:hover .settings-view-toggle__icon-wrap {
+    color: #111827 !important;
+}
+
+[data-theme="light"] .settings-view-toggle__chevron,
+html.theme-light .settings-view-toggle__chevron,
+body.theme-light .settings-view-toggle__chevron {
+    stroke: #6b7280 !important;
+}
+
+[data-theme="light"] .settings-view-toggle:hover .settings-view-toggle__chevron,
+html.theme-light .settings-view-toggle:hover .settings-view-toggle__chevron,
+body.theme-light .settings-view-toggle:hover .settings-view-toggle__chevron {
+    stroke: #111827 !important;
+}
+
 [data-theme="light"] .settings-view-menu,
 html.theme-light .settings-view-menu,
 body.theme-light .settings-view-menu {
@@ -561,31 +598,64 @@ body.theme-light .settings-view-menu__item:hover {
     color: #111827 !important;
 }
 
+[data-theme="light"] .settings-view-menu__icon,
+html.theme-light .settings-view-menu__icon,
+body.theme-light .settings-view-menu__icon {
+    stroke: #6b7280 !important;
+}
+
+[data-theme="light"] .settings-view-menu__item:hover .settings-view-menu__icon,
+html.theme-light .settings-view-menu__item:hover .settings-view-menu__icon,
+body.theme-light .settings-view-menu__item:hover .settings-view-menu__icon {
+    stroke: #111827 !important;
+}
+
 [data-theme="light"] .settings-view-menu__item.is-active,
 html.theme-light .settings-view-menu__item.is-active,
 body.theme-light .settings-view-menu__item.is-active {
-    color: #111827 !important;
-    font-weight: 500;
+    color: var(--accent-primary, #64b5f6) !important;
+    font-weight: 600;
+}
+
+[data-theme="light"] .settings-view-menu__item.is-active .settings-view-menu__icon,
+html.theme-light .settings-view-menu__item.is-active .settings-view-menu__icon,
+body.theme-light .settings-view-menu__item.is-active .settings-view-menu__icon {
+    stroke: var(--accent-primary, #64b5f6) !important;
+}
+
+[data-theme="light"] .corner-nav-btn::before,
+html.theme-light .corner-nav-btn::before,
+body.theme-light .corner-nav-btn::before {
+    background: #f3f4f6 !important;
 }
 
 [data-theme="light"] .corner-nav-btn,
 html.theme-light .corner-nav-btn,
 body.theme-light .corner-nav-btn {
-    color: #4b5563 !important;
+    color: #6b7280 !important;
 }
 
-[data-theme="light"] .corner-nav-btn:hover,
-html.theme-light .corner-nav-btn:hover,
-body.theme-light .corner-nav-btn:hover {
+[data-theme="light"] .corner-nav-left:hover,
+[data-theme="light"] .corner-nav-right:hover,
+html.theme-light .corner-nav-left:hover,
+html.theme-light .corner-nav-right:hover,
+body.theme-light .corner-nav-left:hover,
+body.theme-light .corner-nav-right:hover {
     color: #111827 !important;
 }
 
 [data-theme="light"] .corner-arrow-circle,
 html.theme-light .corner-arrow-circle,
 body.theme-light .corner-arrow-circle {
-    background: #f3f4f6 !important;
+    color: #4b5563 !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+[data-theme="light"] .corner-nav-btn:hover .corner-arrow-circle,
+html.theme-light .corner-nav-btn:hover .corner-arrow-circle,
+body.theme-light .corner-nav-btn:hover .corner-arrow-circle {
     color: #111827 !important;
-    border: 1px solid #e5e7eb !important;
 }
 
 [data-theme="light"] .toast-notification,

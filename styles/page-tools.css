@@ -26,6 +26,20 @@
     --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+[data-theme="light"],
+html.theme-light,
+body.theme-light {
+    --bg-color: #ffffff;
+    --text-color: #111827;
+    --body-text-color: #374151;
+    --subtext-color: #6b7280;
+    --border-color: rgba(0, 0, 0, 0.12);
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --card-border: rgba(0, 0, 0, 0.08);
+    --item-bg: #f9fafb;
+    --item-hover-bg: #f3f4f6;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -327,36 +341,46 @@ body.is-transitioning-right .corner-nav-right {
 /* Tool Tile Items (When JSON contains tools) */
 .tool-tile-item {
     display: grid;
-    grid-template-columns: 76px 1fr auto;
-    gap: 1.15rem;
+    grid-template-columns: 50px 1fr auto;
+    gap: 1.25rem;
     align-items: center;
-    padding: 0.9rem 1.1rem;
-    background: var(--item-bg);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 12px;
-    color: #ffffff;
+    padding: 1.15rem 0.25rem;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    color: var(--text-color);
     text-decoration: none;
     cursor: pointer;
-    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background-color 0.2s ease, padding 0.2s ease;
+}
+
+.tool-tile-item:last-child {
+    border-bottom: none;
 }
 
 .tool-tile-item:hover,
 .tool-tile-item:focus-visible {
-    background: var(--item-hover-bg);
-    border-color: rgba(255, 255, 255, 0.18);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.04);
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+    border-radius: 8px;
+    transform: none;
+    box-shadow: none;
 }
 
 .tool-tile-item__thumb {
+    width: 44px;
+    height: 44px;
     aspect-ratio: 1 / 1;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
-    background: #000000;
+    background: var(--accent-color);
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: none;
+    flex-shrink: 0;
 }
 
 .tool-tile-item__thumb-placeholder {
@@ -365,8 +389,13 @@ body.is-transitioning-right .corner-nav-right {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--accent-light);
-    background: rgba(var(--accent-rgb), 0.08);
+    color: #000000;
+    background: var(--accent-color);
+}
+
+.tool-tile-item__thumb-placeholder svg {
+    color: #000000;
+    stroke: #000000;
 }
 
 .tool-tile-item__img {
@@ -485,4 +514,120 @@ body.is-transitioning-right .corner-nav-right {
         gap: 0.85rem;
         padding: 0.75rem 0.85rem;
     }
+}
+
+/* Light Theme Element Overrides */
+[data-theme="light"] .corner-nav-btn::before,
+html.theme-light .corner-nav-btn::before,
+body.theme-light .corner-nav-btn::before {
+    background: #f3f4f6;
+}
+
+[data-theme="light"] .corner-nav-btn,
+html.theme-light .corner-nav-btn,
+body.theme-light .corner-nav-btn {
+    color: #6b7280;
+}
+
+[data-theme="light"] .corner-nav-right:hover,
+html.theme-light .corner-nav-right:hover,
+body.theme-light .corner-nav-right:hover {
+    color: #111827;
+}
+
+[data-theme="light"] .corner-arrow-circle,
+html.theme-light .corner-arrow-circle,
+body.theme-light .corner-arrow-circle {
+    color: #4b5563;
+}
+
+[data-theme="light"] .corner-nav-btn:hover .corner-arrow-circle,
+html.theme-light .corner-nav-btn:hover .corner-arrow-circle,
+body.theme-light .corner-nav-btn:hover .corner-arrow-circle {
+    color: #111827;
+}
+
+[data-theme="light"] .tools-empty-state,
+[data-theme="light"] .tools-empty-state__text,
+html.theme-light .tools-empty-state,
+html.theme-light .tools-empty-state__text,
+body.theme-light .tools-empty-state,
+body.theme-light .tools-empty-state__text {
+    color: #6b7280;
+}
+
+[data-theme="light"] .tools-empty-state__icon,
+html.theme-light .tools-empty-state__icon,
+body.theme-light .tools-empty-state__icon {
+    color: #9ca3af;
+}
+
+[data-theme="light"] .tool-tile-item,
+html.theme-light .tool-tile-item,
+body.theme-light .tool-tile-item {
+    background: transparent;
+    border-bottom: 1px solid var(--border-color);
+    color: #111827;
+    box-shadow: none;
+}
+
+[data-theme="light"] .tool-tile-item:hover,
+[data-theme="light"] .tool-tile-item:focus-visible,
+html.theme-light .tool-tile-item:hover,
+html.theme-light .tool-tile-item:focus-visible,
+body.theme-light .tool-tile-item:hover,
+body.theme-light .tool-tile-item:focus-visible {
+    background: rgba(0, 0, 0, 0.035);
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: none;
+    transform: none;
+}
+
+[data-theme="light"] .tool-tile-item__thumb,
+html.theme-light .tool-tile-item__thumb,
+body.theme-light .tool-tile-item__thumb {
+    background: var(--accent-color);
+    border: none;
+}
+
+[data-theme="light"] .tool-tile-item__thumb-placeholder,
+html.theme-light .tool-tile-item__thumb-placeholder,
+body.theme-light .tool-tile-item__thumb-placeholder {
+    background: var(--accent-color);
+    color: #000000;
+}
+
+[data-theme="light"] .tool-tile-item__thumb-placeholder svg,
+html.theme-light .tool-tile-item__thumb-placeholder svg,
+body.theme-light .tool-tile-item__thumb-placeholder svg {
+    color: #000000;
+    stroke: #000000;
+}
+
+[data-theme="light"] .tool-tile-item__title,
+html.theme-light .tool-tile-item__title,
+body.theme-light .tool-tile-item__title {
+    color: #111827;
+}
+
+[data-theme="light"] .tool-tile-item__action,
+html.theme-light .tool-tile-item__action,
+body.theme-light .tool-tile-item__action {
+    color: #6b7280;
+}
+
+[data-theme="light"] .tool-tile-item:hover .tool-tile-item__action,
+html.theme-light .tool-tile-item:hover .tool-tile-item__action,
+body.theme-light .tool-tile-item:hover .tool-tile-item__action {
+    color: #111827;
+}
+
+[data-theme="light"] .toast-notification,
+html.theme-light .toast-notification,
+body.theme-light .toast-notification {
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: #111827;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10);
 }

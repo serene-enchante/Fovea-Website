@@ -15,11 +15,6 @@
     <link rel="stylesheet" href="../styles/page-maps-tile.css?v=118">
     <link rel="stylesheet" href="../styles/mobile-bottom-nav.css?v=16">
 
-    <!-- Preconnect & DNS-Prefetch -->
-    <link rel="preconnect" href="https://unpkg.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
     <!-- MapLibre & Fonts -->
     <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
@@ -36,9 +31,57 @@
             } catch(e) {}
         })();
     </script>
+    <style>
+        #page-transition-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            z-index: 999999;
+            opacity: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: all;
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        [data-theme="light"] #page-transition-overlay,
+        html.theme-light #page-transition-overlay,
+        body.theme-light #page-transition-overlay {
+            background: #ffffff;
+        }
+        #page-transition-overlay.is-loaded {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .page-loader-spinner {
+            width: 52px;
+            height: 52px;
+            border: 3.5px solid rgba(255, 255, 255, 0.15);
+            border-top-color: var(--accent-primary, #64b5f6);
+            border-radius: 50%;
+            animation: pageLoaderSpin 0.8s cubic-bezier(0.4, 0.1, 0.4, 0.9) infinite;
+            box-sizing: border-box;
+        }
+        [data-theme="light"] .page-loader-spinner,
+        html.theme-light .page-loader-spinner,
+        body.theme-light .page-loader-spinner {
+            border-color: rgba(0, 0, 0, 0.10);
+            border-top-color: var(--accent-primary, #64b5f6);
+        }
+        @keyframes pageLoaderSpin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 
-<body class="page-maps-tile is-transitioning">
+<body class="page-maps-tile">
+    <!-- Page transition overlay: full screen curtain with spinner that fades out once loaded -->
+    <div id="page-transition-overlay">
+        <div class="page-loader-spinner"></div>
+    </div>
+
     <!-- Main Tile View Interface -->
     <main class="maps-tile-main">
         <!-- Content Row (Specification section 2) -->
@@ -527,15 +570,8 @@
                             </svg>
                         </button>
                         <div class="sidebar-capsules-scroll">
-                            <button class="sidebar-capsule sidebar-capsule--icon" data-tab="about"
-                                aria-label="About Information" title="About Information">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                </svg>
-                            </button>
+                            <button class="sidebar-capsule" data-tab="overview"
+                                aria-label="Overview" title="Overview">Overview</button>
                             <button class="sidebar-capsule is-active" data-tab="items">Circle Zones</button>
                         </div>
                         <button id="btn-search-toggle" class="sidebar-search-toggle-btn" aria-label="Search items">
@@ -643,7 +679,7 @@
             </button>
             <div class="avenza-modal-header">
                 <div class="avenza-transfer-flow">
-                    <div class="avenza-modal-icon-badge avenza-selection-badge">
+                    <div class="avenza-selection-badge">
                         <img id="avenza-selection-thumb" src="../images/wetlands.jpg" alt="Selected Item" class="avenza-modal-app-icon" />
                     </div>
                     <div class="avenza-transfer-arrow">
@@ -770,8 +806,6 @@
         </div>
     </div>
 
-    <!-- Page transition overlay: black curtain that pulls down from top on nav -->
-    <div id="page-transition-overlay"></div>
 
     <!-- Interactive Help Mode Tooltip & Overlay Highlight -->
     <div id="help-mode-tooltip" class="help-mode-tooltip" aria-hidden="true"></div>
@@ -798,6 +832,9 @@
 
 
     <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
     <script src="../scripts/maps-tile.js?v=215"></script>

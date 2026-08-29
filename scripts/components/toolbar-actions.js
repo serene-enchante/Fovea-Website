@@ -690,14 +690,22 @@ export function setupActionButtons() {
         e.preventDefault();
         e.stopPropagation();
         if (e.currentTarget) e.currentTarget.blur();
-        window.location.href = "../tools/";
+        if (window.transitionToPage) {
+            window.transitionToPage("../tools/");
+        } else {
+            window.location.href = "../tools/";
+        }
     };
 
     const handleSettingsClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (e.currentTarget) e.currentTarget.blur();
-        window.location.href = "../settings/";
+        if (window.transitionToPage) {
+            window.transitionToPage("../settings/");
+        } else {
+            window.location.href = "../settings/";
+        }
     };
 
     ["desktop-nav-tab-tools", "mobile-nav-tab-tools"].forEach((id) => {

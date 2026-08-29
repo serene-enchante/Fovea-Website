@@ -18,6 +18,19 @@
     <link rel="stylesheet" href="../styles/base.css">
     <link rel="stylesheet" href="../styles/mobile-bottom-nav.css?v=16">
     <link rel="stylesheet" href="../styles/page-tools.css">
+
+    <script>
+        (function() {
+            try {
+                const storedTheme = localStorage.getItem("fovea-theme") || "dark";
+                const isSystemLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+                if (storedTheme === "light" || (storedTheme === "auto" && isSystemLight)) {
+                    document.documentElement.setAttribute("data-theme", "light");
+                    document.documentElement.classList.add("theme-light");
+                }
+            } catch(e) {}
+        })();
+    </script>
 </head>
 
 <body class="page-tools">

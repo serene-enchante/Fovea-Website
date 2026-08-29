@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Download Wizard - fovea</title>
+    <meta name="description" content="Download Wizard - Guided export tool to select count circles, zones, and spatial boundary formats for GPS & navigation apps.">
+
+    <link rel="icon" type="image/png" href="../../images/logo-fav.png">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../../styles/base.css">
+    <link rel="stylesheet" href="../../styles/mobile-bottom-nav.css?v=16">
+    <link rel="stylesheet" href="../../styles/page-download-wizard.css">
+
+    <script>
+        (function() {
+            try {
+                const storedTheme = localStorage.getItem("fovea-theme") || "dark";
+                const isSystemLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+                if (storedTheme === "light" || (storedTheme === "auto" && isSystemLight)) {
+                    document.documentElement.setAttribute("data-theme", "light");
+                    document.documentElement.classList.add("theme-light");
+                }
+            } catch(e) {}
+        })();
+    </script>
+</head>
+
+<body class="page-download-wizard">
+    <!-- Corner Navigation Button (Back to Tools) -->
+    <a href="../" class="corner-nav-btn corner-nav-right" aria-label="Back to tools page" title="Back to tools">
+        <span>Tools</span>
+        <div class="corner-arrow-circle">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+        </div>
+    </a>
+
+    <!-- Page Container -->
+    <div class="wizard-page-container">
+        <main class="wizard-card">
+
+            <!-- Title Header -->
+            <header class="wizard-header-group">
+                <div class="wizard-header-top">
+                    <h1 class="wizard-header">Download Wizard</h1>
+                </div>
+            </header>
+
+            <!-- Step Progress Bar -->
+            <nav class="wizard-stepper" id="wizard-stepper" aria-label="Wizard Steps">
+                <div class="stepper-track">
+                    <div class="stepper-track-line"></div>
+                    <div class="stepper-track-progress" id="stepper-track-progress"></div>
+                </div>
+
+                <div class="stepper-step is-active" data-step="1" role="button" tabindex="0">
+                    <div class="stepper-step__node">1</div>
+                    <span class="stepper-step__label">chose count circle</span>
+                </div>
+
+                <div class="stepper-step" data-step="2" role="button" tabindex="0">
+                    <div class="stepper-step__node">2</div>
+                    <span class="stepper-step__label">select zone</span>
+                </div>
+
+                <div class="stepper-step" data-step="3" role="button" tabindex="0">
+                    <div class="stepper-step__node">3</div>
+                    <span class="stepper-step__label">download files</span>
+                </div>
+            </nav>
+
+            <!-- ── STEP 1: SELECT COUNT CIRCLE ───────────────────────────── -->
+            <section id="step-1-view" class="wizard-step-view is-visible" aria-label="Step 1: Select Count Circle">
+                <div class="wizard-search-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="circle-search-input" class="wizard-search-input" placeholder="Search count circles (e.g. Eugene, Florence)..." autocomplete="off" />
+                    <button type="button" id="circle-search-clear" class="wizard-search-clear" aria-label="Clear search" style="display: none;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="circle-cards-grid" class="wizard-card-grid">
+                    <!-- Populated dynamically by scripts/download-wizard.js -->
+                </div>
+            </section>
+
+            <!-- ── STEP 2: SELECT ZONE ───────────────────────────────────── -->
+            <section id="step-2-view" class="wizard-step-view" aria-label="Step 2: Select Zone">
+                <div class="wizard-search-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="zone-search-input" class="wizard-search-input" placeholder="Search zone number (e.g. 04, 12)..." autocomplete="off" />
+                    <button type="button" id="zone-search-clear" class="wizard-search-clear" aria-label="Clear search" style="display: none;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Action to Download Full Circle -->
+                <div id="btn-download-full-circle" class="full-circle-banner-card" role="button" tabindex="0">
+                    <div class="full-circle-banner-card__left">
+                        <div class="wizard-item-card__info">
+                            <h3 class="wizard-item-card__title">Download the full count circle</h3>
+                        </div>
+                    </div>
+                    <div class="wizard-item-card__arrow">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Zone Grid -->
+                <div id="zone-cards-grid" class="wizard-card-grid">
+                    <!-- Populated dynamically by scripts/download-wizard.js -->
+                </div>
+            </section>
+
+            <!-- ── STEP 3: EXPORT & APP SELECTION ────────────────────────── -->
+            <section id="step-3-view" class="wizard-step-view" aria-label="Step 3: Export Formats & Compatible Apps">
+                <!-- Compatible Navigation Apps -->
+                <div class="wizard-options-section">
+                    <h3 class="wizard-options-subtitle">Open in Navigation App</h3>
+                    <div class="wizard-apps-grid">
+                        <button type="button" class="wizard-app-card" data-app="avenza" title="Open in Avenza Maps">
+                            <div class="wizard-app-icon-wrap">
+                                <img src="../../images/app_icons/avenza.webp" alt="Avenza Maps" class="wizard-app-icon" />
+                            </div>
+                            <span class="wizard-app-label">Avenza</span>
+                        </button>
+                        <button type="button" class="wizard-app-card" data-app="gaia" title="Open in Gaia GPS">
+                            <div class="wizard-app-icon-wrap">
+                                <img src="../../images/app_icons/gaia.webp" alt="Gaia GPS" class="wizard-app-icon" />
+                            </div>
+                            <span class="wizard-app-label">Gaia GPS</span>
+                        </button>
+                        <button type="button" class="wizard-app-card" data-app="caltopo" title="Open in CalTopo">
+                            <div class="wizard-app-icon-wrap">
+                                <img src="../../images/app_icons/caltopo.webp" alt="CalTopo" class="wizard-app-icon" />
+                            </div>
+                            <span class="wizard-app-label">CalTopo</span>
+                        </button>
+                        <button type="button" class="wizard-app-card" data-app="osmand" title="Open in OsmAnd Maps">
+                            <div class="wizard-app-icon-wrap">
+                                <img src="../../images/app_icons/osmandmaps.webp" alt="OsmAnd Maps" class="wizard-app-icon" />
+                            </div>
+                            <span class="wizard-app-label">OsmAnd</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Direct Spatial Formats -->
+                <div class="wizard-options-section">
+                    <h3 class="wizard-options-subtitle">Direct File Downloads</h3>
+                    <div class="wizard-formats-grid">
+                        <button type="button" id="download-format-geojson" class="wizard-format-btn">
+                            <span class="wizard-format-btn__title">GeoJSON</span>
+                            <span class="wizard-format-btn__ext">.geojson</span>
+                        </button>
+
+                        <button type="button" id="download-format-kmz" class="wizard-format-btn">
+                            <span class="wizard-format-btn__title">Google Earth</span>
+                            <span class="wizard-format-btn__ext">.kmz</span>
+                        </button>
+
+                        <button type="button" id="download-format-gpx" class="wizard-format-btn">
+                            <span class="wizard-format-btn__title">GPS Track</span>
+                            <span class="wizard-format-btn__ext">.gpx</span>
+                        </button>
+
+                        <button type="button" id="download-format-kml" class="wizard-format-btn">
+                            <span class="wizard-format-btn__title">Keyhole KML</span>
+                            <span class="wizard-format-btn__ext">.kml</span>
+                        </button>
+
+                        <button type="button" id="download-format-geotiff" class="wizard-format-btn">
+                            <span class="wizard-format-btn__title">GeoTIFF</span>
+                            <span class="wizard-format-btn__ext">.tif</span>
+                        </button>
+
+                        <button type="button" id="download-format-geopdf" class="wizard-format-btn">
+                            <span class="wizard-format-btn__title">GeoPDF</span>
+                            <span class="wizard-format-btn__ext">.pdf</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- App Download Instructions Modal (Identical to Map Page) -->
+    <div id="avenza-instruction-modal" class="modal avenza-blackout-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="avenza-modal-title">
+        <div class="modal__backdrop avenza-modal-backdrop" data-modal-close="avenza-instruction-modal"></div>
+        <div class="modal__panel avenza-modal-panel">
+            <button type="button" class="modal__close avenza-modal-close" aria-label="Close modal" data-modal-close="avenza-instruction-modal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="avenza-modal-header">
+                <div class="avenza-transfer-flow">
+                    <div class="avenza-selection-badge">
+                        <img id="avenza-selection-thumb" src="../../images/whiteLane-Audubon-favicon-152.png" alt="Selected Item" class="avenza-modal-app-icon" />
+                    </div>
+                    <div class="avenza-transfer-arrow">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </div>
+                    <div class="avenza-modal-icon-badge">
+                        <img id="avenza-modal-app-icon" src="../../images/app_icons/avenza.webp" alt="App" class="avenza-modal-app-icon" />
+                    </div>
+                </div>
+                <h2 id="avenza-modal-title" class="avenza-modal-title">Import <span id="avenza-target-name" class="avenza-target-name">Map</span></h2>
+            </div>
+            <div class="avenza-modal-body">
+                <div class="avenza-step-list">
+                    <div class="avenza-step-item">
+                        <span class="avenza-step-badge">1</span>
+                        <div class="avenza-step-content">
+                            <h4 id="avenza-step1-heading" class="avenza-step-heading">Download the Map File</h4>
+                            <p class="avenza-step-text">Save the spatial boundary file to your device.</p>
+                            <button type="button" id="avenza-modal-download-btn" class="avenza-modal-download-btn">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span>Download File</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="avenza-step-item">
+                        <span class="avenza-step-badge">2</span>
+                        <div class="avenza-step-content">
+                            <h4 id="avenza-step2-heading" class="avenza-step-heading">Open in App</h4>
+                            <p id="avenza-step2-text" class="avenza-step-text">Import the file into the navigation app.</p>
+                        </div>
+                    </div>
+
+                    <div class="avenza-step-item">
+                        <span class="avenza-step-badge">3</span>
+                        <div class="avenza-step-content">
+                            <h4 id="avenza-step3-heading" class="avenza-step-heading">Ready Offline</h4>
+                            <p id="avenza-step3-text" class="avenza-step-text">Your count boundaries are now ready for offline fieldwork.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <a id="avenza-modal-open-btn" class="avenza-modal-open-btn" href="#">Open in App</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="toast-notification" role="status" aria-live="polite"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script type="module" src="../../scripts/download-wizard.js"></script>
+    <script src="../../scripts/mobile-bottom-nav.js?v=1" data-active-page="tools" data-root="../../"></script>
+</body>
+
+</html>

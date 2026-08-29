@@ -12,22 +12,17 @@ const BINOCULARS_SVG = `
 `;
 
 /**
- * Default Tools state (empty for now)
- * Accepts any JSON array of tool objects:
- * [
- *   {
- *     id: "circle-builder",
- *     title: "CBC Circle Boundary Builder",
- *     description: "Design and export standard 15-mile Christmas Bird Count circle boundaries.",
- *     category: "Spatial",
- *     icon: "polygon",
- *     image: "images/tools/circle-builder.jpg",
- *     url: "#",
- *     badge: "Beta"
- *   }
- * ]
+ * Default Tools list
  */
-export const DEFAULT_TOOLS = [];
+export const DEFAULT_TOOLS = [
+    {
+        id: "download-wizard",
+        title: "Download Wizard",
+        description: "Quickly download and access files pertaining to the Audubon Christmas Bird Count Circles.",
+        icon: "download",
+        url: "./download-wizard/"
+    }
+];
 
 /**
  * Renders a list of tool objects into a target container element

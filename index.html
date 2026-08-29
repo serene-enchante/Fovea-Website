@@ -17,6 +17,19 @@
     <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
 
+    <script>
+        (function() {
+            try {
+                const storedTheme = localStorage.getItem("fovea-theme") || "dark";
+                const isSystemLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+                if (storedTheme === "light" || (storedTheme === "auto" && isSystemLight)) {
+                    document.documentElement.setAttribute("data-theme", "light");
+                    document.documentElement.classList.add("theme-light");
+                }
+            } catch(e) {}
+        })();
+    </script>
+
     <style>
         @font-face {
             font-family: 'Aliceregular';
@@ -44,6 +57,17 @@
 
             --font-serif: 'Aliceregular', 'Alice', Georgia, serif;
             --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        [data-theme="light"],
+        html.theme-light,
+        body.theme-light {
+            --bg-color: #ffffff;
+            --text-color: #111827;
+            --subtext-color: #6b7280;
+            --border-color: rgba(0, 0, 0, 0.12);
+            --box-bg: #f9fafb;
+            --box-hover-bg: #f3f4f6;
         }
 
         * {
@@ -229,6 +253,69 @@
             color: #ffffff;
         }
 
+        /* Home Shortcut Below Search */
+        .home-shortcuts {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+            z-index: 10;
+            position: relative;
+            animation: fadeInSearch 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.35s;
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .home-shortcut-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 9999px;
+            color: rgba(255, 255, 255, 0.75);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 0.82rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .home-shortcut-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+
+        .home-shortcut-btn svg {
+            color: var(--accent-color, #64b5f6);
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+
+        .home-shortcut-btn:hover svg {
+            transform: translateY(1px);
+        }
+
+        [data-theme="light"] .home-shortcut-btn,
+        html.theme-light .home-shortcut-btn,
+        body.theme-light .home-shortcut-btn {
+            background: rgba(0, 0, 0, 0.04);
+            border: none;
+            color: #374151;
+        }
+
+        [data-theme="light"] .home-shortcut-btn:hover,
+        html.theme-light .home-shortcut-btn:hover,
+        body.theme-light .home-shortcut-btn:hover {
+            background: rgba(0, 0, 0, 0.08);
+            color: #111827;
+        }
+
         /* Globe Interactive Markers */
         .marker-dot {
             width: 5px;
@@ -342,9 +429,14 @@
             justify-content: center;
             width: 32px;
             height: 32px;
+            background: #000000;
+            border-radius: 6px;
+            padding: 3px;
+            box-sizing: border-box;
             color: rgba(255, 255, 255, 0.7);
             flex-shrink: 0;
-            transition: color 0.2s ease;
+            transition: all 0.2s ease;
+            overflow: hidden;
         }
 
         .autocomplete-item:hover .autocomplete-item__icon {
@@ -855,6 +947,247 @@
             color: #ffffff;
             transform: scale(1.02);
         }
+
+        /* Light Theme Element Overrides */
+        [data-theme="light"] .fade-overlay,
+        html.theme-light .fade-overlay,
+        body.theme-light .fade-overlay {
+            background: #ffffff;
+        }
+
+        [data-theme="light"] .ambient-glow,
+        html.theme-light .ambient-glow,
+        body.theme-light .ambient-glow {
+            background: radial-gradient(circle, rgba(0, 0, 0, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+        }
+
+        [data-theme="light"] .search-box,
+        html.theme-light .search-box,
+        body.theme-light .search-box {
+            background: #ffffff !important;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        [data-theme="light"] .search-box::before,
+        html.theme-light .search-box::before,
+        body.theme-light .search-box::before {
+            background: radial-gradient(
+                var(--spotlight-size, 240px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(0, 0, 0, 0.15) 0%,
+                rgba(0, 0, 0, 0.04) 40%,
+                transparent 75%
+            );
+        }
+
+        [data-theme="light"] .search-box:focus-within,
+        html.theme-light .search-box:focus-within,
+        body.theme-light .search-box:focus-within {
+            background: #ffffff !important;
+            border-color: rgba(0, 0, 0, 0.28);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="light"] .search-input,
+        html.theme-light .search-input,
+        body.theme-light .search-input {
+            color: #111827;
+        }
+
+        [data-theme="light"] .search-input::placeholder,
+        html.theme-light .search-input::placeholder,
+        body.theme-light .search-input::placeholder {
+            color: #9ca3af;
+        }
+
+        [data-theme="light"] .search-icon,
+        html.theme-light .search-icon,
+        body.theme-light .search-icon {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .search-box:focus-within .search-icon,
+        html.theme-light .search-box:focus-within .search-icon,
+        body.theme-light .search-box:focus-within .search-icon {
+            color: #111827;
+        }
+
+        [data-theme="light"] .search-clear,
+        html.theme-light .search-clear,
+        body.theme-light .search-clear {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .search-clear:hover,
+        html.theme-light .search-clear:hover,
+        body.theme-light .search-clear:hover {
+            color: #111827;
+        }
+
+        [data-theme="light"] .autocomplete-dropdown,
+        html.theme-light .autocomplete-dropdown,
+        body.theme-light .autocomplete-dropdown {
+            background: #ffffff !important;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12);
+        }
+
+        [data-theme="light"] .autocomplete-dropdown::before,
+        html.theme-light .autocomplete-dropdown::before,
+        body.theme-light .autocomplete-dropdown::before {
+            background: radial-gradient(
+                var(--spotlight-size) circle at var(--mouse-x) var(--mouse-y),
+                rgba(0, 0, 0, 0.15) 0%,
+                rgba(0, 0, 0, 0.04) 40%,
+                transparent 75%
+            );
+        }
+
+        [data-theme="light"] .autocomplete-item,
+        html.theme-light .autocomplete-item,
+        body.theme-light .autocomplete-item {
+            color: #111827;
+        }
+
+        [data-theme="light"] .autocomplete-item:hover,
+        [data-theme="light"] .autocomplete-item.is-selected,
+        html.theme-light .autocomplete-item:hover,
+        html.theme-light .autocomplete-item.is-selected,
+        body.theme-light .autocomplete-item:hover,
+        body.theme-light .autocomplete-item.is-selected {
+            background: #f3f4f6;
+        }
+
+        [data-theme="light"] .autocomplete-item__title,
+        html.theme-light .autocomplete-item__title,
+        body.theme-light .autocomplete-item__title {
+            color: #111827;
+        }
+
+        [data-theme="light"] .autocomplete-item__subtitle,
+        html.theme-light .autocomplete-item__subtitle,
+        body.theme-light .autocomplete-item__subtitle {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .autocomplete-item__icon,
+        html.theme-light .autocomplete-item__icon,
+        body.theme-light .autocomplete-item__icon {
+            background: #000000 !important;
+            border-radius: 6px !important;
+            padding: 3px !important;
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        [data-theme="light"] .autocomplete-item:hover .autocomplete-item__icon,
+        html.theme-light .autocomplete-item:hover .autocomplete-item__icon,
+        body.theme-light .autocomplete-item:hover .autocomplete-item__icon {
+            background: #000000 !important;
+            color: var(--accent-primary) !important;
+        }
+
+        [data-theme="light"] .no-results,
+        html.theme-light .no-results,
+        body.theme-light .no-results {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .corner-nav-btn::before,
+        html.theme-light .corner-nav-btn::before,
+        body.theme-light .corner-nav-btn::before {
+            background: #f3f4f6;
+        }
+
+        [data-theme="light"] .corner-nav-btn,
+        html.theme-light .corner-nav-btn,
+        body.theme-light .corner-nav-btn {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .corner-nav-left:hover,
+        [data-theme="light"] .corner-nav-right:hover,
+        html.theme-light .corner-nav-left:hover,
+        html.theme-light .corner-nav-right:hover,
+        body.theme-light .corner-nav-left:hover,
+        body.theme-light .corner-nav-right:hover {
+            color: #111827;
+        }
+
+        [data-theme="light"] .corner-arrow-circle,
+        html.theme-light .corner-arrow-circle,
+        body.theme-light .corner-arrow-circle {
+            color: #4b5563;
+        }
+
+        [data-theme="light"] .corner-nav-btn:hover .corner-arrow-circle,
+        html.theme-light .corner-nav-btn:hover .corner-arrow-circle,
+        body.theme-light .corner-nav-btn:hover .corner-arrow-circle {
+            color: #111827;
+        }
+
+        [data-theme="light"] .globe-container,
+        html.theme-light .globe-container,
+        body.theme-light .globe-container {
+            background: #ffffff;
+            box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.15), inset 0 0 40px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="light"] .globe-container:hover,
+        html.theme-light .globe-container:hover,
+        body.theme-light .globe-container:hover {
+            box-shadow: 0 -8px 50px rgba(0, 0, 0, 0.20), 0 0 35px rgba(var(--accent-rgb), 0.22);
+        }
+
+        [data-theme="light"] .globe-overlay-shimmer,
+        html.theme-light .globe-overlay-shimmer,
+        body.theme-light .globe-overlay-shimmer {
+            background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.02) 0%, rgba(255, 255, 255, 0.2) 100%);
+        }
+
+        [data-theme="light"] .marker-dot,
+        html.theme-light .marker-dot,
+        body.theme-light .marker-dot {
+            background-color: #111827;
+        }
+
+        [data-theme="light"] .settings-btn,
+        [data-theme="light"] .info-btn,
+        [data-theme="light"] .user-profile-status,
+        html.theme-light .settings-btn,
+        html.theme-light .info-btn,
+        html.theme-light .user-profile-status,
+        body.theme-light .settings-btn,
+        body.theme-light .info-btn,
+        body.theme-light .user-profile-status {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .settings-btn:hover,
+        [data-theme="light"] .info-btn:hover,
+        [data-theme="light"] .user-profile-status:hover,
+        html.theme-light .settings-btn:hover,
+        html.theme-light .info-btn:hover,
+        html.theme-light .user-profile-status:hover,
+        body.theme-light .settings-btn:hover,
+        body.theme-light .info-btn:hover,
+        body.theme-light .user-profile-status:hover {
+            color: #111827;
+        }
+
+        [data-theme="light"] .profile-pic,
+        html.theme-light .profile-pic,
+        body.theme-light .profile-pic {
+            border-color: rgba(0, 0, 0, 0.15);
+        }
+
+        [data-theme="light"] .toast-notification,
+        html.theme-light .toast-notification,
+        body.theme-light .toast-notification {
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            color: #111827;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10);
+        }
     </style>
     <link rel="stylesheet" href="styles/mobile-bottom-nav.css?v=16">
 </head>
@@ -918,6 +1251,16 @@
             <div id="home-autocomplete" class="autocomplete-dropdown"></div>
         </div>
 
+        <div class="home-shortcuts">
+            <a href="tools/download-wizard/" class="home-shortcut-btn" title="Open Download Wizard">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Download Wizard</span>
+            </a>
+        </div>
 
     </main>
 
@@ -1292,9 +1635,10 @@
 
 
             if (globePortal && globeDiv) {
+                const isHomeLight = document.documentElement.getAttribute("data-theme") === "light" || document.body.classList.contains("theme-light");
                 homeMap = new maplibregl.Map({
                     container: 'home-globe',
-                    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+                    style: isHomeLight ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
                     projection: { type: 'globe' },
                     center: [-123.079, 0], // Centered at the equator to display a true, undistorted 3D sphere
                     zoom: 1.9, // Lower zoom level preserves highly pronounced 3D horizon curvature
@@ -1392,6 +1736,8 @@
                         
                         // Dynamically query global accent color from CSS variables
                         const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#00d5a4';
+                        const isLight = document.documentElement.getAttribute("data-theme") === "light" || document.body.classList.contains("theme-light");
+                        const defaultMarkerColor = isLight ? '#000000' : '#ffffff';
 
                         if (!homeMap.getLayer('search-markers-layer')) {
                             homeMap.addLayer({
@@ -1402,14 +1748,14 @@
                                     'circle-radius': [
                                         'case',
                                         ['boolean', ['get', 'active'], false],
-                                        3.25,
+                                        3.5,
                                         2.5
                                     ],
                                     'circle-color': [
                                         'case',
                                         ['boolean', ['get', 'active'], false],
                                         accentColor,
-                                        '#ffffff'
+                                        defaultMarkerColor
                                     ],
                                     'circle-stroke-width': 0
                                 }

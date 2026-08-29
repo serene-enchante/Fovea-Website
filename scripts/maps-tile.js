@@ -502,28 +502,28 @@ function updateAllFeatureStyles() {
 
     if (isLightBasemap) {
         defaultFillColor = '#000000';
-        defaultFillOpacity = 0.0;
+        defaultFillOpacity = 0.04;
     } else if (isSatelliteBasemap) {
         defaultFillColor = '#000000'; // black fill for satellite only
         defaultFillOpacity = 0.75; // unselected black fill opacity increased significantly for satellite
     }
 
     const defaultLineColor = isLightBasemap ? '#000000' : '#ffffff';
-    const dimLineColor = isLightBasemap ? 'rgba(0, 0, 0, 0.40)' : 'rgba(255, 255, 255, 0.25)';
-    const defaultLineWidth = isLightBasemap ? 2.4 : 1.0;
+    const dimLineColor = isLightBasemap ? '#000000' : 'rgba(255, 255, 255, 0.25)';
+    const defaultLineWidth = isLightBasemap ? 1.8 : 1.0;
 
-    const noDataFillColor = isLightBasemap ? '#9ca3af' : defaultFillColor;
-    const noDataFillOpacity = isLightBasemap ? 0.12 : (isSatelliteBasemap ? 0.60 : 0.02);
-    const noDataLineColor = isLightBasemap ? 'rgba(60, 60, 60, 0.50)' : dimLineColor;
+    const noDataFillColor = isLightBasemap ? '#000000' : defaultFillColor;
+    const noDataFillOpacity = isLightBasemap ? 0.04 : (isSatelliteBasemap ? 0.60 : 0.02);
+    const noDataLineColor = isLightBasemap ? '#000000' : dimLineColor;
 
     const hoverFillColor = isLightBasemap ? '#000000' : '#3f3f46';
-    const hoverFillOpacity = isLightBasemap ? 0.06 : (isSatelliteBasemap ? 0.88 : 0.05);
-    const noDataHoverFillOpacity = isLightBasemap ? 0.16 : (isSatelliteBasemap ? 0.75 : 0.02);
+    const hoverFillOpacity = isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.88 : 0.05);
+    const noDataHoverFillOpacity = isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.75 : 0.02);
 
     const selectedFillColor = getThemeAccent();
-    const selectedFillOpacity = 0.0;
-    const selectedLineColor = getThemeAccentLight();
-    const unselectedOutlineOpacity = isSatelliteBasemap ? 0.70 : 0.18; // significantly increased unselected outline opacity for satellite
+    const selectedFillOpacity = isLightBasemap ? 0.15 : 0.0;
+    const selectedLineColor = isLightBasemap ? getThemeAccent() : getThemeAccentLight();
+    const unselectedOutlineOpacity = isLightBasemap ? 1.0 : (isSatelliteBasemap ? 0.70 : 0.18);
 
     if (state.map.getLayer('zones-fill')) {
         state.map.setPaintProperty('zones-fill', 'fill-color', [
@@ -2383,6 +2383,248 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
     }
 }
 
+function renderOverviewTab(listContainer, isCirclesFeature, isCircle, targetFeature) {
+    const overviewEl = document.createElement("div");
+    overviewEl.className = "sidebar-about-wrapper";
+
+    let previewHeaderTitle = "";
+    let previewActionText = "";
+    let previewTilesHtml = "";
+    let descText = "";
+    let imgSrc = "";
+    let imgAlt = "";
+
+    if (isCirclesFeature) {
+        // --- 1. ALL CIRCLES OVERVIEW ---
+        const NO_DATA_CIRCLES = new Set(["Oakridge", "Cottage Grove"]);
+        const sortedCircles = [...state.circlesFeatures].sort((a, b) => {
+            const cidA = String(a.properties?.cid || "");
+            const cidB = String(b.properties?.cid || "");
+            const noDataA = NO_DATA_CIRCLES.has(cidA) ? 1 : 0;
+            const noDataB = NO_DATA_CIRCLES.has(cidB) ? 1 : 0;
+            if (noDataA !== noDataB) return noDataA - noDataB;
+            return cidA.localeCompare(cidB, undefined, { sensitivity: "base" });
+        });
+
+        previewHeaderTitle = "Count Circles";
+        previewActionText = `View all (${sortedCircles.length}) &rarr;`;
+
+        sortedCircles.forEach(feature => {
+            const props = feature.properties || {};
+            const cid = props.cid || "Circle";
+            let thumbImg = "";
+            let isLogo = false;
+            let isNotAvailable = false;
+            if (cid === "Eugene") {
+                thumbImg = "../images/logo-small.png";
+                isLogo = true;
+            } else if (cid === "Florence") {
+                thumbImg = "../images/florence.png";
+                isLogo = true;
+            } else if (cid === "Oakridge" || cid === "Cottage Grove") {
+                isNotAvailable = true;
+            } else {
+                thumbImg = "../images/wetlands.jpg";
+            }
+
+            let thumbHtml = "";
+            if (isNotAvailable) {
+                thumbHtml = `
+                    <div class="overview-preview-tile__thumb-placeholder" title="No data available">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                        </svg>
+                    </div>
+                `;
+            } else {
+                thumbHtml = `
+                    <div class="overview-preview-tile__thumb ${isLogo ? "overview-preview-tile__thumb--logo" : ""}">
+                        <img src="${thumbImg}" alt="${cid}" loading="lazy">
+                    </div>
+                `;
+            }
+
+            previewTilesHtml += `
+                <div class="overview-preview-tile" data-cid="${cid}" title="${cid}">
+                    ${thumbHtml}
+                    <span class="overview-preview-tile__label">${cid}</span>
+                </div>
+            `;
+        });
+
+        imgSrc = "../images/wetlands.jpg";
+        imgAlt = "Audubon Christmas Bird Count Circles";
+        descText = "Audubon Christmas Bird Count regional count circles. Click a circle to explore its subdivided survey zones, spatial boundaries, and mapping data.";
+
+    } else if (isCircle || !targetFeature) {
+        // --- 2. SINGLE COUNT CIRCLE OVERVIEW (Eugene / Florence CBC) ---
+        const sortedFeatures = [...state.allFeatures].sort((a, b) => {
+            const zidA = String(a.properties?.zid || "");
+            const zidB = String(b.properties?.zid || "");
+            return zidA.localeCompare(zidB, undefined, { numeric: true, sensitivity: "base" });
+        });
+
+        const circleTitle = state.currentFeature === "florence" ? "Florence Christmas Bird Count" : "Eugene Christmas Bird Count";
+        previewHeaderTitle = "Circle Zones";
+        previewActionText = `View all (${sortedFeatures.length}) &rarr;`;
+
+        sortedFeatures.forEach(feature => {
+            const props = feature.properties || {};
+            const zid = displayZoneId(props.zid);
+            const imgPath = zoneImagePath(props.zid);
+
+            previewTilesHtml += `
+                <div class="overview-preview-tile" data-zid="${String(props.zid)}" title="Zone ${zid}">
+                    <div class="overview-preview-tile__thumb">
+                        <img src="${imgPath}" alt="Zone ${zid}" loading="lazy" onerror="this.src='${FALLBACK_IMAGE}'">
+                    </div>
+                    <span class="overview-preview-tile__label">Zone ${zid}</span>
+                </div>
+            `;
+        });
+
+        imgSrc = "../images/wetlands.jpg";
+        imgAlt = `${circleTitle} Overview`;
+        descText = `The ${circleTitle} circle is a 15-mile diameter count circle in Oregon. Explore the survey zones to view spatial boundaries, detailed historical summaries, and field maps.`;
+
+    } else {
+        // --- 3. SPECIFIC ZONE OVERVIEW (Zone 04, etc.) ---
+        const sortedFeatures = [...state.allFeatures].sort((a, b) => {
+            const zidA = String(a.properties?.zid || "");
+            const zidB = String(b.properties?.zid || "");
+            return zidA.localeCompare(zidB, undefined, { numeric: true, sensitivity: "base" });
+        });
+
+        const props = targetFeature.properties || {};
+        const zid = displayZoneId(props.zid);
+
+        previewHeaderTitle = "All Survey Zones";
+        previewActionText = `View all (${sortedFeatures.length}) &rarr;`;
+
+        sortedFeatures.forEach(feature => {
+            const fProps = feature.properties || {};
+            const fZid = displayZoneId(fProps.zid);
+            const imgPath = zoneImagePath(fProps.zid);
+
+            previewTilesHtml += `
+                <div class="overview-preview-tile" data-zid="${String(fProps.zid)}" title="Zone ${fZid}">
+                    <div class="overview-preview-tile__thumb">
+                        <img src="${imgPath}" alt="Zone ${fZid}" loading="lazy" onerror="this.src='${FALLBACK_IMAGE}'">
+                    </div>
+                    <span class="overview-preview-tile__label">Zone ${fZid}</span>
+                </div>
+            `;
+        });
+
+        imgSrc = zoneImagePath(props.zid);
+        imgAlt = `Zone ${zid} Image`;
+        descText = props.description || "Zone description not available.";
+    }
+
+    overviewEl.innerHTML = `
+        <div class="sidebar-about-content">
+            <!-- Feature Tiles Preview Section at Top -->
+            <div class="sidebar-overview-preview">
+                <div class="sidebar-overview-preview__header" title="Go to ${previewHeaderTitle} tab">
+                    <span class="sidebar-overview-preview__title">${previewHeaderTitle}</span>
+                    <span class="sidebar-overview-preview__action">${previewActionText}</span>
+                </div>
+                <div class="sidebar-overview-preview__tiles">
+                    ${previewTilesHtml}
+                </div>
+            </div>
+
+            <!-- Image & Description Below -->
+            ${imgSrc ? `
+                <div class="sidebar-about-media">
+                    <img src="${imgSrc}" alt="${imgAlt}" loading="lazy" />
+                </div>
+            ` : ""}
+            <p class="sidebar-about-text">${descText}</p>
+        </div>
+    `;
+
+    // Click handler for preview header (switches to list tab)
+    const headerEl = overviewEl.querySelector(".sidebar-overview-preview__header");
+    if (headerEl) {
+        headerEl.addEventListener("click", () => {
+            const itemsTab = document.querySelector('.sidebar-capsule[data-tab="items"]');
+            if (itemsTab) itemsTab.click();
+        });
+    }
+
+    // Click & hover handlers for preview tiles
+    if (isCirclesFeature) {
+        const tiles = overviewEl.querySelectorAll(".overview-preview-tile");
+        tiles.forEach(tile => {
+            const cid = tile.getAttribute("data-cid");
+            tile.addEventListener("mouseenter", () => {
+                if (state.map && state.map.getSource('zones')) {
+                    state.map.setFeatureState({ source: 'zones', id: cid }, { hover: true });
+                }
+            });
+            tile.addEventListener("mouseleave", () => {
+                if (state.map && state.map.getSource('zones')) {
+                    state.map.setFeatureState({ source: 'zones', id: cid }, { hover: false });
+                }
+            });
+            tile.addEventListener("click", () => {
+                const feature = state.circlesFeatures.find(f => f.properties?.cid === cid);
+                const bbox = feature ? getBbox(feature) : null;
+                if (cid === "Eugene") {
+                    switchToFeature("eugene", bbox);
+                } else if (cid === "Florence") {
+                    switchToFeature("florence", bbox);
+                } else if (cid === "Oakridge" || cid === "Cottage Grove") {
+                    showToast("There is no data for this count circle");
+                }
+            });
+        });
+    } else {
+        const tiles = overviewEl.querySelectorAll(".overview-preview-tile");
+        tiles.forEach(tile => {
+            const zid = tile.getAttribute("data-zid");
+            tile.addEventListener("mouseenter", () => {
+                const isSelected = state.currentId !== CIRCLE_ID && (zid === state.currentId || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
+                if (!isSelected && state.map && state.map.getSource('zones')) {
+                    state.map.setFeatureState({ source: 'zones', id: zid }, { hover: true });
+                }
+            });
+            tile.addEventListener("mouseleave", () => {
+                const isSelected = state.currentId !== CIRCLE_ID && (zid === state.currentId || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
+                if (!isSelected && state.map && state.map.getSource('zones')) {
+                    state.map.setFeatureState({ source: 'zones', id: zid }, { hover: false });
+                }
+            });
+            tile.addEventListener("click", () => {
+                selectSubject(zid);
+            });
+        });
+    }
+
+    // Lightbox for media image
+    const img = overviewEl.querySelector(".sidebar-about-media img");
+    const mediaDiv = overviewEl.querySelector(".sidebar-about-media");
+    if (img) {
+        img.addEventListener("error", () => {
+            if (imgSrc !== FALLBACK_IMAGE && !isCircle) {
+                img.src = FALLBACK_IMAGE;
+            } else {
+                if (mediaDiv) mediaDiv.style.display = "none";
+            }
+        });
+    }
+
+    if (mediaDiv && img) {
+        mediaDiv.addEventListener("click", () => {
+            openImageLightbox(img.src, imgAlt, descText);
+        });
+    }
+
+    listContainer.appendChild(overviewEl);
+}
+
 function renderSidebarList() {
     const itemsCapsule = document.querySelector('.sidebar-capsule[data-tab="items"]');
     if (itemsCapsule) {
@@ -2393,19 +2635,11 @@ function renderSidebarList() {
     if (!listContainer) return;
     listContainer.innerHTML = "";
 
+    const isOverview = state.activeTab === "overview" || state.activeTab === "about";
+
     if (state.isCirclesFeature) {
-        if (state.activeTab === "about") {
-            const aboutEl = document.createElement("div");
-            aboutEl.className = "sidebar-about-wrapper";
-            aboutEl.innerHTML = `
-                <div class="sidebar-about-content">
-                    <div class="sidebar-about-media">
-                        <img src="../images/wetlands.jpg" alt="Audubon Circles" loading="eager" />
-                    </div>
-                    <p class="sidebar-about-text">Audubon Christmas Bird Count regional count circles. Click a circle to explore its subdivided survey zones.</p>
-                </div>
-            `;
-            listContainer.appendChild(aboutEl);
+        if (isOverview) {
+            renderOverviewTab(listContainer, true, false, null);
             return;
         }
 
@@ -2502,57 +2736,8 @@ function renderSidebarList() {
         });
     }
 
-    if (state.activeTab === "about") {
-        const aboutEl = document.createElement("div");
-        aboutEl.className = "sidebar-about-wrapper";
-
-        let descText = "";
-        let imgSrc = "";
-        let imgAlt = "";
-
-        if (isCircle || !targetFeature) {
-            const circleTitle = state.currentFeature === "florence" ? "Florence Christmas Bird Count" : "Eugene Christmas Bird Count";
-            descText = `The ${circleTitle} circle is a 15-mile diameter count circle in Oregon. Explore the survey zones to view spatial boundaries, detailed historical summaries, and field maps.`;
-            imgSrc = "../images/wetlands.jpg";
-            imgAlt = `${circleTitle} Overview`;
-        } else {
-            const props = targetFeature.properties || {};
-            const zid = displayZoneId(props.zid);
-            descText = props.description || "Zone description not available.";
-            imgSrc = zoneImagePath(props.zid);
-            imgAlt = `Zone ${zid} Image`;
-        }
-
-        aboutEl.innerHTML = `
-            <div class="sidebar-about-content">
-                ${imgSrc ? `
-                    <div class="sidebar-about-media">
-                        <img src="${imgSrc}" alt="${imgAlt}" loading="lazy" />
-                    </div>
-                ` : ""}
-                <p class="sidebar-about-text">${descText}</p>
-            </div>
-        `;
-
-        const img = aboutEl.querySelector("img");
-        const mediaDiv = aboutEl.querySelector(".sidebar-about-media");
-        if (img) {
-            img.addEventListener("error", () => {
-                if (imgSrc !== FALLBACK_IMAGE && !isCircle) {
-                    img.src = FALLBACK_IMAGE;
-                } else {
-                    if (mediaDiv) mediaDiv.style.display = "none";
-                }
-            });
-        }
-
-        if (mediaDiv && img) {
-            mediaDiv.addEventListener("click", () => {
-                openImageLightbox(img.src, imgAlt, descText);
-            });
-        }
-
-        listContainer.appendChild(aboutEl);
+    if (isOverview) {
+        renderOverviewTab(listContainer, false, isCircle, targetFeature);
         return;
     }
 
@@ -3994,7 +4179,6 @@ function initializeMap() {
 
     state.baseMapsList = [
         { id: "default", name: "Default", layerId: "base-dark-vector" },
-        { id: "dark-raster", name: "Dark Map (Raster)", layerId: "base-dark-raster" },
         { id: "satellite", name: "Satellite Map", layerId: "base-satellite" },
         { id: "esri-street", name: "Street Map", layerId: "base-esri-street" },
         { id: "esri-topo", name: "Topo Map", layerId: "base-esri-topo" }
@@ -4127,9 +4311,9 @@ function initializeMap() {
     listContainer.className = "map-ctrl-styles__list";
     listContainer.innerHTML = `
         <div class="map-ctrl-styles__header">
-            <div class="modal-title-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-left: 2px;">
-                <span class="modal-title" style="font-size: 0.95rem; font-weight: 700; color: #ffffff; text-transform: none; letter-spacing: normal;">Map Elements</span>
-                <button type="button" class="modal-close-btn" aria-label="Close Map Elements" style="background: transparent; border: none; padding: 4px; cursor: pointer; color: rgba(255, 255, 255, 0.45); display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; border-radius: 50%;">
+            <div class="modal-title-wrapper">
+                <span class="modal-title">Map Elements</span>
+                <button type="button" class="modal-close-btn" aria-label="Close Map Elements">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -4264,7 +4448,6 @@ function initializeMap() {
         } else {
             const basemaps = [
                 { id: "default", name: "Default", thumbnailClass: "default-map-thumbnail", layerId: "base-dark-vector" },
-                { id: "dark-raster", name: "Dark Map (Raster)", thumbnailClass: "dark-map-thumbnail", layerId: "base-dark-raster" },
                 { id: "satellite", name: "Satellite Map", thumbnailClass: "satellite-thumbnail", layerId: "base-satellite" },
                 { id: "esri-street", name: "Street Map", thumbnailClass: "esri-street-thumbnail", layerId: "base-esri-street" },
                 { id: "esri-topo", name: "Topo Map", thumbnailClass: "esri-topo-thumbnail", layerId: "base-esri-topo" }
@@ -5077,18 +5260,31 @@ function setupActionButtons() {
         });
     });
 
+    window.transitionToPage = function(dest) {
+        const overlay = document.getElementById("page-transition-overlay");
+        if (overlay) {
+            overlay.classList.remove("is-loaded");
+            overlay.classList.add("is-active");
+            setTimeout(() => {
+                window.location.href = dest;
+            }, 500);
+        } else {
+            window.location.href = dest;
+        }
+    };
+
     const handleToolsClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (e.currentTarget) e.currentTarget.blur();
-        window.location.href = "../tools/";
+        window.transitionToPage("../tools/");
     };
 
     const handleSettingsClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (e.currentTarget) e.currentTarget.blur();
-        window.location.href = "../settings/";
+        window.transitionToPage("../settings/");
     };
 
     ["desktop-nav-tab-tools", "mobile-nav-tab-tools"].forEach((id) => {
@@ -6468,11 +6664,11 @@ function setupHelpModeSystem() {
             return;
         }
 
-        // About Information (` key)
+        // Overview Information (` key)
         if (e.key === "`" || e.key === "~") {
             state.lastNavSource = "keyboard";
-            const aboutTab = document.querySelector('.sidebar-capsule[data-tab="about"]');
-            if (aboutTab) aboutTab.click();
+            const overviewTab = document.querySelector('.sidebar-capsule[data-tab="overview"], .sidebar-capsule[data-tab="about"]');
+            if (overviewTab) overviewTab.click();
             return;
         }
 
@@ -6587,8 +6783,8 @@ function setupHelpModeSystem() {
         { selector: "#btn-edit-item", title: "Edit Item", desc: "Opens the spatial data editor interface for updating boundaries.", shortcut: "Shift + X" },
         { selector: "#btn-suggest", title: "Suggest Edit", desc: "Submit suggestions, feedback, or pin map annotations.", shortcut: "Shift + Z" },
         { selector: "#btn-help", title: "Help & Guide", desc: "Opens user documentation and toggles Interactive Tooltip Mode.", shortcut: "Shift + H" },
-        { selector: "#btn-capsule-back", title: "Back Navigation", desc: "Return to the previous higher-level overview (circle or list).", shortcut: "Esc or A / Left Arrow" },
-        { selector: '[data-tab="about"]', title: "About Tab", desc: "View detailed descriptions, spatial summaries, and photographs.", shortcut: "` (Backtick)" },
+        { selector: '#btn-capsule-back', title: "Back Navigation", desc: "Return to the previous higher-level overview (circle or list).", shortcut: "Esc or A / Left Arrow" },
+        { selector: '[data-tab="overview"], [data-tab="about"]', title: "Overview Tab", desc: "View feature list preview, detailed descriptions, spatial summaries, and photographs.", shortcut: "` (Backtick)" },
         { selector: '.sidebar-capsule:not(.sidebar-capsule--icon)', title: "Class Tab", desc: "Class tabs filter the subfeatures of the current selection by type, which is reflected in the feature tiles column.", shortcut: "1 - 9" },
         { selector: "#btn-search-toggle", title: "Search Tool", desc: "Expand full-row search bar to filter count circles and survey zones.", shortcut: "F" },
         { selector: "#mobile-resize-bar", title: "Resize Handle", desc: "Drag vertically to adjust split screen map and list proportions." },
@@ -6791,27 +6987,18 @@ function setupHelpModeSystem() {
 async function init() {
     const triggerEntrance = () => {
         document.body.classList.remove("is-transitioning");
+
+        if (state.map) {
+            state.map.resize();
+            selectSubject(state.currentId, true, false);
+        }
+
+        // Fade from white screen overlay once elements are loaded behind the scenes
         const overlay = document.getElementById("page-transition-overlay");
-        if (overlay) overlay.classList.remove("is-active");
-
-        // Wait 500ms for nav tabs to finish sliding up (map frame reaches full height),
-        // then fade out the map placeholder.
-        setTimeout(() => {
-            const placeholder = document.getElementById("map-loading-placeholder");
-            if (placeholder) {
-                placeholder.classList.add("is-faded");
-                setTimeout(() => {
-                    placeholder.style.display = "none";
-                }, 500);
-            }
-
-            // Once the map container reaches full height, resize the map and refit bounds
-            // without any animation so the zoom level matches exactly.
-            if (state.map) {
-                state.map.resize();
-                selectSubject(state.currentId, true, false);
-            }
-        }, 500);
+        if (overlay) {
+            overlay.classList.add("is-loaded");
+            overlay.classList.remove("is-active");
+        }
     };
 
     try {
@@ -6880,11 +7067,18 @@ async function init() {
         }
 
         if (state.map) {
-            state.map.once("load", () => {
-                setTimeout(triggerEntrance, 150);
-            });
-            // Safety timeout fallback
-            setTimeout(triggerEntrance, 1000);
+            if (state.map.loaded && state.map.loaded()) {
+                setTimeout(triggerEntrance, 80);
+            } else {
+                state.map.once("load", () => {
+                    setTimeout(triggerEntrance, 80);
+                });
+                state.map.once("idle", () => {
+                    setTimeout(triggerEntrance, 80);
+                });
+                // Reliable safety timeout fallback
+                setTimeout(triggerEntrance, 400);
+            }
         } else {
             triggerEntrance();
         }
@@ -7027,30 +7221,38 @@ function setupViewToggleMenu() {
     });
 }
 
-document.addEventListener("DOMContentLoaded", init);
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+} else {
+    init();
+}
 
 // Desktop & mobile back home transition listener
 (function () {
     const bars = [
         document.getElementById("desktop-nav-tab-home"),
-        document.getElementById("mobile-nav-tab-home")
+        document.getElementById("mobile-nav-tab-home"),
+        document.querySelector(".header-logo-container a")
     ].filter(Boolean);
     const overlay = document.getElementById("page-transition-overlay");
-    if (bars.length === 0 || !overlay) return;
+    if (bars.length === 0) return;
 
     bars.forEach(bar => {
         bar.addEventListener("click", function (e) {
             e.preventDefault();
+            e.stopPropagation();
             const dest = bar.getAttribute("href") || "../";
-
-            // Step 1: Simultaneously trigger grey bar pull down and whole screen fade to black
-            document.body.classList.add("is-transitioning");
-            overlay.classList.add("is-active");
-
-            // Step 2: Navigate after the combined 500ms transitions finish
-            setTimeout(function () {
+            if (window.transitionToPage) {
+                window.transitionToPage(dest);
+            } else if (overlay) {
+                overlay.classList.remove("is-loaded");
+                overlay.classList.add("is-active");
+                setTimeout(function () {
+                    window.location.href = dest;
+                }, 500);
+            } else {
                 window.location.href = dest;
-            }, 500);
+            }
         });
     });
 
@@ -7058,7 +7260,10 @@ document.addEventListener("DOMContentLoaded", init);
     window.addEventListener("pageshow", function (event) {
         if (event.persisted) {
             document.body.classList.remove("is-transitioning");
-            overlay.classList.remove("is-active");
+            if (overlay) {
+                overlay.classList.add("is-loaded");
+                overlay.classList.remove("is-active");
+            }
         }
     });
 })();
