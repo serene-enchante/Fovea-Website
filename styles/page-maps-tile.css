@@ -4309,7 +4309,7 @@ body.theme-light .header-view-menu__item:hover .header-view-menu__icon {
 [data-theme="light"] .header-logo-container,
 html.theme-light .header-logo-container,
 body.theme-light .header-logo-container {
-    background: #000000 !important;
+    background: var(--accent-primary) !important;
     border-radius: 0 12px 12px 0 !important;
     margin-left: -1rem !important;
     padding: 6px 10px 6px 1rem !important;
