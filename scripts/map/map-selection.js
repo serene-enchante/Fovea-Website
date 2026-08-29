@@ -99,6 +99,7 @@ export function selectSubject(id, triggerMapZoom = true, animate = true) {
         if (state.isCirclesFeature) {
             updateHeader("Coast to Cascades Bird Alliance");
             if (backBtn) backBtn.classList.remove("is-visible");
+            rebuildGeoJsonLayer();
             renderSidebarList();
             updateUrl(id);
             if (triggerMapZoom && state.map) {

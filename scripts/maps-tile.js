@@ -438,6 +438,9 @@ function initializeMap() {
         state.map.scrollZoom.setZoomRate(1 / 150);
     }
     setupMapLayers(state);
+    state.map.on('style.load', () => {
+        rebuildGeoJsonLayer();
+    });
     
 
     try {
