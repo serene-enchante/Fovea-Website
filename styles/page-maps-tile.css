@@ -4497,17 +4497,19 @@ body.theme-light .map-zone-label,
 [data-theme="light"] .maps-tile-header__actions,
 html.theme-light .maps-tile-header__actions,
 body.theme-light .maps-tile-header__actions {
-    background: #ffffff !important;
-    border: 1px solid #e5e7eb !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
     color: #111827 !important;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08) !important;
 }
 
 [data-theme="light"] .maps-tile-download-col,
 html.theme-light .maps-tile-download-col,
 body.theme-light .maps-tile-download-col {
-    background: #f3f4f6 !important;
-    border: 1px solid #e5e7eb !important;
+    background: rgba(0, 0, 0, 0.03) !important;
+    border: none !important;
 }
 
 [data-theme="light"] .maps-tile-download-col__title,
@@ -4519,15 +4521,15 @@ body.theme-light .maps-tile-download-col__title {
 [data-theme="light"] .maps-tile-download-item,
 html.theme-light .maps-tile-download-item,
 body.theme-light .maps-tile-download-item {
-    background: #ffffff !important;
+    background: rgba(0, 0, 0, 0.06) !important;
     color: #111827 !important;
-    border: 1px solid #e5e7eb !important;
+    border: none !important;
 }
 
 [data-theme="light"] .maps-tile-download-item:hover,
 html.theme-light .maps-tile-download-item:hover,
 body.theme-light .maps-tile-download-item:hover {
-    background: #e5e7eb !important;
+    background: rgba(0, 0, 0, 0.12) !important;
     color: #000000 !important;
 }
 
@@ -4547,16 +4549,16 @@ body.theme-light .suggested-app-card:hover .suggested-app-label {
 [data-theme="light"] .suggested-app-icon-wrap--view-all,
 html.theme-light .suggested-app-icon-wrap--view-all,
 body.theme-light .suggested-app-icon-wrap--view-all {
-    background: #f3f4f6 !important;
+    background: rgba(0, 0, 0, 0.05) !important;
     color: #111827 !important;
-    border: 1px solid #e5e7eb !important;
+    border: none !important;
 }
 
 [data-theme="light"] .maps-tile-download-search-box,
 html.theme-light .maps-tile-download-search-box,
 body.theme-light .maps-tile-download-search-box {
-    background: #f3f4f6 !important;
-    border: 1px solid #e5e7eb !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+    border: none !important;
 }
 
 [data-theme="light"] .maps-tile-download-search-input,
@@ -4574,9 +4576,11 @@ body.theme-light .maps-tile-download-search-input::placeholder {
 [data-theme="light"] .maps-tile-download-autocomplete,
 html.theme-light .maps-tile-download-autocomplete,
 body.theme-light .maps-tile-download-autocomplete {
-    background: #ffffff !important;
-    border: 1px solid #e5e7eb !important;
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.10) !important;
 }
 
 [data-theme="light"] .maps-tile-download-autocomplete .autocomplete-item,
@@ -4594,8 +4598,8 @@ body.theme-light .maps-tile-copy-desc {
 [data-theme="light"] .maps-tile-copy-input-row,
 html.theme-light .maps-tile-copy-input-row,
 body.theme-light .maps-tile-copy-input-row {
-    background: #f3f4f6 !important;
-    border: 1px solid #e5e7eb !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+    border: none !important;
 }
 
 [data-theme="light"] .maps-tile-copy-input,
@@ -4607,8 +4611,8 @@ body.theme-light .maps-tile-copy-input {
 [data-theme="light"] .maps-tile-qr-wrapper,
 html.theme-light .maps-tile-qr-wrapper,
 body.theme-light .maps-tile-qr-wrapper {
-    background: #f9fafb !important;
-    border: 1px solid #e5e7eb !important;
+    background: rgba(0, 0, 0, 0.03) !important;
+    border: none !important;
 }
 
 [data-theme="light"] .suggest-form-label,
@@ -4623,8 +4627,8 @@ html.theme-light .suggest-form-input,
 html.theme-light .suggest-form-textarea,
 body.theme-light .suggest-form-input,
 body.theme-light .suggest-form-textarea {
-    background: #f9fafb !important;
-    border: 1px solid #e5e7eb !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+    border: none !important;
     color: #111827 !important;
 }
 
@@ -4634,22 +4638,23 @@ html.theme-light .suggest-form-input:focus,
 html.theme-light .suggest-form-textarea:focus,
 body.theme-light .suggest-form-input:focus,
 body.theme-light .suggest-form-textarea:focus {
-    background: #ffffff !important;
-    border-color: #2563eb !important;
+    background: rgba(0, 0, 0, 0.07) !important;
+    border: none !important;
+    outline: none !important;
 }
 
 [data-theme="light"] .suggest-draw-btn,
 html.theme-light .suggest-draw-btn,
 body.theme-light .suggest-draw-btn {
-    background: #f3f4f6 !important;
+    background: rgba(0, 0, 0, 0.05) !important;
     color: #374151 !important;
-    border: 1px solid #e5e7eb !important;
+    border: none !important;
 }
 
 [data-theme="light"] .suggest-draw-btn:hover,
 html.theme-light .suggest-draw-btn:hover,
 body.theme-light .suggest-draw-btn:hover {
-    background: #e5e7eb !important;
+    background: rgba(0, 0, 0, 0.10) !important;
     color: #111827 !important;
 }
 
@@ -4665,6 +4670,7 @@ html.theme-light .suggest-submit-btn,
 body.theme-light .suggest-submit-btn {
     background: #111827 !important;
     color: #ffffff !important;
+    border: none !important;
 }
 
 [data-theme="light"] .maps-tile-help-desc,
@@ -4676,8 +4682,8 @@ body.theme-light .maps-tile-help-desc {
 [data-theme="light"] .help-toggle-card,
 html.theme-light .help-toggle-card,
 body.theme-light .help-toggle-card {
-    background: #f3f4f6 !important;
-    border: 1px solid #e5e7eb !important;
+    background: rgba(0, 0, 0, 0.03) !important;
+    border: none !important;
 }
 
 [data-theme="light"] .help-toggle-title,
@@ -4695,34 +4701,36 @@ body.theme-light .help-toggle-subtitle {
 [data-theme="light"] .help-shortcut-badge,
 html.theme-light .help-shortcut-badge,
 body.theme-light .help-shortcut-badge {
-    background: #ffffff !important;
+    background: rgba(0, 0, 0, 0.07) !important;
     color: #111827 !important;
-    border: 1px solid #e5e7eb !important;
+    border: none !important;
 }
 
 [data-theme="light"] .help-doc-link,
 html.theme-light .help-doc-link,
 body.theme-light .help-doc-link {
-    background: #f3f4f6 !important;
+    background: rgba(0, 0, 0, 0.04) !important;
     color: #111827 !important;
-    border: 1px solid #e5e7eb !important;
+    border: none !important;
 }
 
 [data-theme="light"] .all-apps-view-modal,
 html.theme-light .all-apps-view-modal,
 body.theme-light .all-apps-view-modal {
-    background: #ffffff !important;
-    border: 1px solid #e5e7eb !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
     color: #111827 !important;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12) !important;
 }
 
 [data-theme="light"] .all-apps-search-input,
 html.theme-light .all-apps-search-input,
 body.theme-light .all-apps-search-input {
-    background: #f3f4f6 !important;
+    background: rgba(0, 0, 0, 0.04) !important;
     color: #111827 !important;
-    border: 1px solid #e5e7eb !important;
+    border: none !important;
 }
 
 [data-theme="light"] .all-apps-search-input::placeholder,
