@@ -4433,6 +4433,13 @@ html.theme-light .tile-zone-item,
 body.theme-light .tile-zone-item {
     background: transparent !important;
     border: none !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 0 !important;
+}
+
+[data-theme="light"] .tile-zone-item:last-child,
+html.theme-light .tile-zone-item:last-child,
+body.theme-light .tile-zone-item:last-child {
     border-bottom: none !important;
 }
 
@@ -4442,9 +4449,8 @@ html.theme-light .tile-zone-item:hover,
 html.theme-light .tile-zone-item.is-hovered,
 body.theme-light .tile-zone-item:hover,
 body.theme-light .tile-zone-item.is-hovered {
-    background: rgba(0, 0, 0, 0.05) !important;
-    border: none !important;
-    border-bottom: none !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-radius: 8px !important;
 }
 
 [data-theme="light"] .tile-zone-item__title,
