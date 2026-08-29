@@ -2183,7 +2183,7 @@ body.theme-light .maps-tile-map-container .default-map-thumbnail {
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
-    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transition: width 0.15s cubic-bezier(0.16, 1, 0.3, 1), padding 0.15s cubic-bezier(0.16, 1, 0.3, 1), gap 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
     --mouse-x: 50%;
     --mouse-y: 50%;
     --glow-opacity: 0;
@@ -2279,7 +2279,7 @@ body.has-active-modal .maps-tile-header__actions {
 
 .maps-tile-header__actions .maps-tile-modal[aria-hidden="false"] {
     display: block !important;
-    animation: desktopModalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: desktopModalFadeIn 0.12s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
 
 .maps-tile-header__actions .maps-tile-modal .modal__backdrop {
