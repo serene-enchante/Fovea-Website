@@ -2607,6 +2607,7 @@ body.theme-light .maps-tile-map-container .default-map-thumbnail {
         font-size: 0.86rem !important;
         line-height: 1.6 !important;
         margin: 0 !important;
+        order: 10 !important;
     }
 
     .sidebar-about-media {
@@ -2619,6 +2620,7 @@ body.theme-light .maps-tile-map-container .default-map-thumbnail {
         margin: 0.25rem 0 0 0 !important;
         flex-shrink: 0 !important;
         border-radius: 8px !important;
+        order: 11 !important;
     }
 
     .sidebar-about-wrapper,
