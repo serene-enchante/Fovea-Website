@@ -680,30 +680,114 @@ export function setupSuggestFormAndDrawing(closeAllModals) {
         });
     }
 
-    suggestForm.addEventListener("submit", (e) => {
+    suggestForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const titleInput = document.getElementById("suggest-input-title");
         const msgInput = document.getElementById("suggest-input-message");
+        const submitBtn = document.getElementById("btn-submit-suggestion");
 
         const title = titleInput ? titleInput.value.trim() : "";
-        const message = msgInput ? msgInput.value.trim() : "";
+        const description = msgInput ? msgInput.value.trim() : "";
 
-        if (!title || !message) {
+        if (!title || !description) {
             showToast("Please fill in all required fields.");
             return;
         }
 
-        // Placeholder submit action
-        showToast("Suggestion submitted! Thank you for your feedback.");
+        const geojsonFeatures = [];
 
-        // Reset form & clear annotation
-        if (titleInput) titleInput.value = "";
-        if (msgInput) msgInput.value = "";
+        // Markers
+        markers.forEach((coord) => {
+            geojsonFeatures.push({
+                type: "Feature",
+                properties: { kind: "marker" },
+                geometry: {
+                    type: "Point",
+                    coordinates: coord
+                }
+            });
+        });
 
-        clearAllAnnotations(true); // silent — submit toast already shown
-        updateSuggestLockState();
+        // Lines
+        lines.forEach((line) => {
+            if (line && line.length >= 2) {
+                geojsonFeatures.push({
+                    type: "Feature",
+                    properties: { kind: "line" },
+                    geometry: {
+                        type: "LineString",
+                        coordinates: line
+                    }
+                });
+            }
+        });
 
-        // Close modal
-        if (closeAllModals) closeAllModals();
+        // Polygons
+        polygons.forEach((poly) => {
+            if (poly && poly.length >= 3) {
+                const ring = [...poly, poly[0]];
+                geojsonFeatures.push({
+                    type: "Feature",
+                    properties: { kind: "polygon" },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [ring]
+                    }
+                });
+            }
+        });
+
+        const selectionLabel = getSuggestSelectionLabel();
+        let submittedTitle = title;
+        if (selectionLabel) {
+            if (!title.toLowerCase().startsWith(selectionLabel.toLowerCase())) {
+                submittedTitle = `${selectionLabel} - ${title}`;
+            }
+        }
+
+        const payload = {
+            title: submittedTitle,
+            description: description,
+            geojson: {
+                type: "FeatureCollection",
+                features: geojsonFeatures
+            }
+        };
+
+        const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbz7MxHqTniRl88_VFM7FOdbOwD0jt7AfSZ4v3fMB6sJLIeNseFdFJFoWQnA3RysLFiY_w/exec";
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span>Submitting...</span>`;
+        }
+
+        try {
+            await fetch(ENDPOINT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            showToast("Suggestion submitted! Thank you for your feedback.");
+
+            if (titleInput) titleInput.value = "";
+            if (msgInput) msgInput.value = "";
+
+            clearAllAnnotations(true);
+            updateSuggestLockState();
+
+            if (closeAllModals) closeAllModals();
+        } catch (error) {
+            console.error("Failed to submit suggestion:", error);
+            showToast("Failed to submit suggestion. Please try again.");
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<span>Submit</span>`;
+            }
+        }
     });
 }
