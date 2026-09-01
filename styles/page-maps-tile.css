@@ -2602,6 +2602,18 @@ body.theme-light .maps-tile-map-container .default-map-thumbnail {
         width: 100% !important;
     }
 
+    .sidebar-overview-preview {
+        order: 1 !important;
+    }
+
+    .sidebar-overview-people {
+        order: 2 !important;
+    }
+
+    .sidebar-overview-resources {
+        order: 3 !important;
+    }
+
     .sidebar-about-text {
         width: 100% !important;
         font-size: 0.86rem !important;
