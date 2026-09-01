@@ -105,8 +105,10 @@ export async function handleSpatialFileShare(event, fileOrBlob, fileName, trigge
   if (fileOrBlob instanceof Blob) {
     const url = URL.createObjectURL(fileOrBlob);
     const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = url;
     a.download = fileName;
+    a.addEventListener('click', (e) => e.stopPropagation());
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
@@ -115,11 +117,15 @@ export async function handleSpatialFileShare(event, fileOrBlob, fileName, trigge
     }, 100);
   } else if (typeof fileOrBlob === 'string') {
     const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = fileOrBlob;
     a.download = fileName;
+    a.addEventListener('click', (e) => e.stopPropagation());
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+    setTimeout(() => {
+      document.body.removeChild(a);
+    }, 100);
   }
 }
 

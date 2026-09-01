@@ -729,6 +729,20 @@ html, body {
     text-transform: uppercase;
 }
 
+.wizard-format-btn.is-preparing,
+.wizard-app-card.is-preparing {
+    opacity: 0.55;
+    pointer-events: none;
+    cursor: wait;
+}
+
+.wizard-format-btn.is-preparing .wizard-format-btn__ext::after {
+    content: " (rendering...)";
+    text-transform: none;
+    font-size: 0.72rem;
+    color: var(--accent-color);
+}
+
 /* No Results Notice */
 .wizard-no-results {
     text-align: center;

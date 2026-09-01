@@ -8,19 +8,18 @@ import { updateControlPositions } from '../components/mobile-view.js';
 import { adjustHeaderFontSize } from '../components/header-view.js';
 
 // ──────────────────────────────────────────────────────────────
-// Headless offscreen MapLibre renderer for PDF / TIFF exports
-// No dependency on the on-screen map DOM or state.map
+// Headless offscreen MapLibre renderer for PDF / TIFF export
 // ──────────────────────────────────────────────────────────────
 
 const ESRI_TOPO_TILE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}";
 
-// Offscreen map viewport dimensions (used by the hidden MapLibre canvas)
-const OFFSCREEN_MAP_WIDTH = 2280;
-const OFFSCREEN_MAP_HEIGHT = 1500;
+// Offscreen map viewport dimensions (used by the hidden MapLibre canvas) — 3800px width with safe WebGL headroom
+const OFFSCREEN_MAP_WIDTH = 3800;
+const OFFSCREEN_MAP_HEIGHT = 2500;
 
-// Final layout canvas dimensions (4:3 ratio, print-optimized)
-const LAYOUT_WIDTH = 2400;
-const LAYOUT_HEIGHT = 1800;
+// Final layout canvas dimensions (4:3 ratio, 4000×3000 high-res print layout)
+const LAYOUT_WIDTH = 4000;
+const LAYOUT_HEIGHT = 3000;
 
 /**
  * Compute bounding box from GeoJSON features.
@@ -69,7 +68,7 @@ function normalizeZoneIdLocal(value) {
  * Pure math — no dependency on any map instance.
  */
 export function getLayoutScaleBar(bounds, layoutMapWidth) {
-    if (!bounds || !bounds[0] || !bounds[1]) return { miles: 1, pxWidth: 150 };
+    if (!bounds || !bounds[0] || !bounds[1]) return { miles: 1, pxWidth: 250 };
 
     const [[minLng, minLat], [maxLng, maxLat]] = bounds;
     const centerLat = (minLat + maxLat) / 2;
@@ -82,7 +81,7 @@ export function getLayoutScaleBar(bounds, layoutMapWidth) {
     const totalMiles = 3958.8 * c; // Earth radius in miles
 
     const milesPerPx = totalMiles / layoutMapWidth;
-    const targetPx = 200;
+    const targetPx = 330;
     const approxMiles = targetPx * milesPerPx;
 
     const niceIncrements = [0.1, 0.25, 0.5, 1, 2, 3, 5, 10, 15, 20, 25, 50, 100];
@@ -96,7 +95,7 @@ export function getLayoutScaleBar(bounds, layoutMapWidth) {
         }
     }
 
-    const scaleBarPx = Math.max(100, Math.min(450, chosenMiles / milesPerPx));
+    const scaleBarPx = Math.max(160, Math.min(750, chosenMiles / milesPerPx));
     return { miles: chosenMiles, pxWidth: scaleBarPx };
 }
 
@@ -109,22 +108,197 @@ function loadQrCodeImage(url) {
         img.crossOrigin = "anonymous";
         img.onload = () => resolve(img);
         img.onerror = () => resolve(null);
-        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&format=png&data=${encodeURIComponent(url)}`;
+        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&format=png&data=${encodeURIComponent(url)}`;
         setTimeout(() => resolve(null), 3000);
     });
 }
 
 /**
+ * Fast & exact Pole of Inaccessibility (Polylabel) algorithm.
+ * Finds the most distant internal point from the polygon outline (maximum clearance from all borders).
+ * Guaranteed to place labels in the widest, most spacious part of any polygon (even concave/complex).
+ */
+function polylabel(polygon, precision = 0.0005) {
+    const outerRing = polygon[0];
+    if (!outerRing || outerRing.length < 3) return null;
+
+    // Bounding box
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (let i = 0; i < outerRing.length; i++) {
+        const p = outerRing[i];
+        if (p[0] < minX) minX = p[0];
+        if (p[1] < minY) minY = p[1];
+        if (p[0] > maxX) maxX = p[0];
+        if (p[1] > maxY) maxY = p[1];
+    }
+
+    const width = maxX - minX;
+    const height = maxY - minY;
+    const cellSize = Math.min(width, height);
+    const h = cellSize / 2;
+
+    if (cellSize === 0) return [minX, minY];
+
+    // Signed distance from point to polygon (positive if inside, negative if outside)
+    function pointToPolygonDist(px, py) {
+        let inside = false;
+        let minDistSq = Infinity;
+
+        for (let k = 0; k < polygon.length; k++) {
+            const ring = polygon[k];
+            for (let i = 0, len = ring.length, j = len - 1; i < len; j = i++) {
+                const a = ring[i];
+                const b = ring[j];
+
+                if ((a[1] > py !== b[1] > py) &&
+                    (px < (b[0] - a[0]) * (py - a[1]) / (b[1] - a[1]) + a[0])) {
+                    inside = !inside;
+                }
+
+                // Distance to segment [a, b]
+                let dx = b[0] - a[0];
+                let dy = b[1] - a[1];
+                let distSq;
+                if (dx === 0 && dy === 0) {
+                    distSq = (px - a[0]) ** 2 + (py - a[1]) ** 2;
+                } else {
+                    const t = Math.max(0, Math.min(1, ((px - a[0]) * dx + (py - a[1]) * dy) / (dx * dx + dy * dy)));
+                    const projX = a[0] + t * dx;
+                    const projY = a[1] + t * dy;
+                    distSq = (px - projX) ** 2 + (py - projY) ** 2;
+                }
+
+                if (distSq < minDistSq) minDistSq = distSq;
+            }
+        }
+
+        const dist = Math.sqrt(minDistSq);
+        return inside ? dist : -dist;
+    }
+
+    // Cell object constructor
+    function createCell(x, y, h) {
+        const d = pointToPolygonDist(x, y);
+        return {
+            x: x,
+            y: y,
+            h: h,
+            d: d,
+            max: d + h * Math.SQRT2
+        };
+    }
+
+    // Priority queue of cells
+    const cellQueue = [];
+    
+    // Initial best cell at centroid
+    let sumX = 0, sumY = 0, totalPts = outerRing.length;
+    for (let i = 0; i < totalPts; i++) {
+        sumX += outerRing[i][0];
+        sumY += outerRing[i][1];
+    }
+    let bestCell = createCell(sumX / totalPts, sumY / totalPts, 0);
+
+    // Initial grid of cells covering the bbox
+    for (let x = minX; x < maxX; x += cellSize) {
+        for (let y = minY; y < maxY; y += cellSize) {
+            const cell = createCell(x + h, y + h, h);
+            cellQueue.push(cell);
+            if (cell.d > bestCell.d) bestCell = cell;
+        }
+    }
+
+    // Sort descending by max potential
+    cellQueue.sort((a, b) => b.max - a.max);
+
+    // Subdivide and search
+    let iter = 0;
+    while (cellQueue.length > 0 && iter < 1000) {
+        iter++;
+        const cell = cellQueue.shift();
+
+        if (cell.d > bestCell.d) {
+            bestCell = cell;
+        }
+
+        // Stop if cell's max potential cannot beat bestCell
+        if (cell.max - bestCell.d <= precision) continue;
+
+        // Subdivide cell into 4 smaller cells
+        const subH = cell.h / 2;
+        const sub1 = createCell(cell.x - subH, cell.y - subH, subH);
+        const sub2 = createCell(cell.x + subH, cell.y - subH, subH);
+        const sub3 = createCell(cell.x - subH, cell.y + subH, subH);
+        const sub4 = createCell(cell.x + subH, cell.y + subH, subH);
+
+        [sub1, sub2, sub3, sub4].forEach(sub => {
+            if (sub.max > bestCell.d) {
+                // Insert into sorted queue
+                let inserted = false;
+                for (let i = 0; i < cellQueue.length; i++) {
+                    if (sub.max > cellQueue[i].max) {
+                        cellQueue.splice(i, 0, sub);
+                        inserted = true;
+                        break;
+                    }
+                }
+                if (!inserted) cellQueue.push(sub);
+            }
+        });
+    }
+
+    return [bestCell.x, bestCell.y];
+}
+
+/**
+ * Helper to compute the most spacious interior point for a GeoJSON feature (maximum border clearance).
+ */
+function getFeatureCenter(feature) {
+    if (!feature || !feature.geometry) return null;
+    const geom = feature.geometry;
+    if (geom.type === "Point") return geom.coordinates;
+
+    const polygons = geom.type === "Polygon" ? [geom.coordinates] : 
+                     (geom.type === "MultiPolygon" ? geom.coordinates : []);
+    
+    if (polygons.length === 0) return null;
+
+    // Pick the polygon with largest bbox area if MultiPolygon
+    let mainPoly = polygons[0];
+    if (polygons.length > 1) {
+        let maxBboxArea = 0;
+        polygons.forEach(p => {
+            if (p[0] && p[0].length >= 3) {
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                p[0].forEach(c => {
+                    if (c[0] < minX) minX = c[0];
+                    if (c[1] < minY) minY = c[1];
+                    if (c[0] > maxX) maxX = c[0];
+                    if (c[1] > maxY) maxY = c[1];
+                });
+                const area = (maxX - minX) * (maxY - minY);
+                if (area > maxBboxArea) {
+                    maxBboxArea = area;
+                    mainPoly = p;
+                }
+            }
+        });
+    }
+
+    return polylabel(mainPoly);
+}
+
+/**
  * Create a headless offscreen MapLibre GL instance, render Esri Topo tiles
- * with optional zone polygon overlays, and return the WebGL canvas.
+ * with optional zone polygon overlays, and return the WebGL canvas + zone label positions.
  *
  * @param {Array} bounds - [[minLng, minLat], [maxLng, maxLat]]
  * @param {Object|null} geojsonOverlay - Full GeoJSON FeatureCollection for polygon overlays
  * @param {number} maxZoom - Maximum zoom level for fitBounds
- * @returns {Promise<HTMLCanvasElement>} The rendered map canvas
+ * @returns {Promise<{canvas: HTMLCanvasElement, zoneLabels: Array}>} The rendered map canvas and projected zone label points
  */
-async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom = 14) {
-    // 1. Create a hidden offscreen container
+async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom = 18) {
+    // 1. Create a hidden offscreen container (3800×2500 px with safe WebGL headroom)
     const container = document.createElement("div");
     container.style.cssText = `
         position: fixed; left: -9999px; top: 0;
@@ -171,7 +345,7 @@ async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom = 14) {
             setTimeout(resolve, 5000); // Failsafe
         });
 
-        // 5. Add zone polygon overlay if provided
+        // 5. Add zone polygon overlay if provided (red outlines, no fill)
         if (geojsonOverlay) {
             try {
                 offscreenMap.addSource("zone-polygons", {
@@ -179,22 +353,13 @@ async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom = 14) {
                     data: geojsonOverlay
                 });
                 offscreenMap.addLayer({
-                    id: "zone-polygons-fill",
-                    type: "fill",
-                    source: "zone-polygons",
-                    paint: {
-                        "fill-color": "#059669",
-                        "fill-opacity": 0.15
-                    }
-                });
-                offscreenMap.addLayer({
                     id: "zone-polygons-outline",
                     type: "line",
                     source: "zone-polygons",
                     paint: {
-                        "line-color": "#059669",
-                        "line-width": 2.5,
-                        "line-opacity": 0.8
+                        "line-color": "#dc2626",
+                        "line-width": 4.5,
+                        "line-opacity": 0.9
                     }
                 });
             } catch (e) {
@@ -203,7 +368,7 @@ async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom = 14) {
         }
 
         // 6. Fit to the target bounds with padding
-        offscreenMap.fitBounds(bounds, { padding: 120, maxZoom: maxZoom, animate: false });
+        offscreenMap.fitBounds(bounds, { padding: 180, maxZoom: maxZoom, animate: false });
 
         // 7. Wait for tiles to fully load and render
         await new Promise((resolve) => {
@@ -220,20 +385,55 @@ async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom = 14) {
             setTimeout(resolve, 4000); // Failsafe for slow network tiles
         });
 
-        // 8. Grab the WebGL canvas
+        // 8. Project zone / circle centers to pixel coordinates before destroying map
+        const zoneLabels = [];
+        if (geojsonOverlay && Array.isArray(geojsonOverlay.features)) {
+            geojsonOverlay.features.forEach(f => {
+                const props = f.properties || {};
+                let label = "";
+                let isCircle = false;
+                if (props.cid) {
+                    label = String(props.cid);
+                    isCircle = true;
+                } else if (props.zid) {
+                    label = typeof displayZoneId === "function" ? displayZoneId(props.zid) : String(props.zid);
+                } else if (props.name) {
+                    label = String(props.name);
+                }
+
+                if (!label) return;
+
+                const center = getFeatureCenter(f);
+                if (center) {
+                    try {
+                        const pt = offscreenMap.project(center);
+                        if (pt && typeof pt.x === "number" && typeof pt.y === "number") {
+                            zoneLabels.push({
+                                label: label,
+                                x: pt.x,
+                                y: pt.y,
+                                isCircle: isCircle
+                            });
+                        }
+                    } catch (e) {}
+                }
+            });
+        }
+
+        // 9. Grab the WebGL canvas
         const mapCanvas = offscreenMap.getCanvas();
 
-        // 9. Copy the canvas pixels to a new standalone canvas before destroying the map
+        // 10. Copy the canvas pixels to a new standalone canvas before destroying the map
         const resultCanvas = document.createElement("canvas");
         resultCanvas.width = mapCanvas.width;
         resultCanvas.height = mapCanvas.height;
         const resultCtx = resultCanvas.getContext("2d");
         resultCtx.drawImage(mapCanvas, 0, 0);
 
-        // 10. Destroy the headless map instance
+        // 11. Destroy the headless map instance
         offscreenMap.remove();
 
-        return resultCanvas;
+        return { canvas: resultCanvas, zoneLabels: zoneLabels };
     } finally {
         // Always clean up the offscreen container
         if (container.parentNode) {
@@ -252,7 +452,7 @@ async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom = 14) {
  * @param {string} options.currentFeature - "eugene" | "florence" | "circles"
  * @param {boolean} options.isCirclesFeature - Whether showing all circles overview
  * @param {string} [options.pageUrl] - URL for QR code (defaults to window.location.href)
- * @returns {Promise<HTMLCanvasElement>} The final 2400×1800 layout canvas
+ * @returns {Promise<HTMLCanvasElement>} The final 4000×3000 layout canvas
  */
 export async function renderMapLayoutCanvas({
     features,
@@ -261,8 +461,6 @@ export async function renderMapLayoutCanvas({
     isCirclesFeature,
     pageUrl
 } = {}) {
-    showToast("Rendering Esri Topo Print Layout...");
-
     // Resolve defaults from state if not provided (backward compatibility)
     const allFeatures = features || state.allFeatures || [];
     const featureId = targetFeatureId !== undefined ? targetFeatureId : state.currentId;
@@ -290,13 +488,13 @@ export async function renderMapLayoutCanvas({
         features: allFeatures.filter(f => f.geometry)
     };
 
-    // Maximum zoom: use 14 for specific zones, uncapped for full circles
-    const maxZoom = (isCircle || !targetFeature) ? 20 : 14;
+    // Maximum zoom: use 18 for specific zones, 20 for full circle
+    const maxZoom = (isCircle || !targetFeature) ? 20 : 18;
 
-    // Render the headless map
-    const mapCanvas = await renderHeadlessMap(targetBounds, overlayGeojson, maxZoom);
+    // Render the headless map at 3800×2500
+    const { canvas: mapCanvas, zoneLabels } = await renderHeadlessMap(targetBounds, overlayGeojson, maxZoom);
 
-    // Build the final layout canvas (2400 × 1800)
+    // Build the final layout canvas (4000 × 3000)
     const layoutCanvas = document.createElement("canvas");
     const width = LAYOUT_WIDTH;
     const height = LAYOUT_HEIGHT;
@@ -308,10 +506,10 @@ export async function renderMapLayoutCanvas({
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
 
-    // 2. Define inner map frame layout box
-    const mapMargin = 60;
-    const headerHeight = 110;
-    const footerHeight = 70;
+    // 2. Define inner map frame layout box (4000×3000 scaled)
+    const mapMargin = 100;
+    const headerHeight = 180;
+    const footerHeight = 120;
 
     const mapX = mapMargin;
     const mapY = mapMargin + headerHeight;
@@ -328,12 +526,62 @@ export async function renderMapLayoutCanvas({
             ctx.drawImage(mapCanvas, mapX, mapY, mapW, mapH);
         } catch (err) {
             console.warn("Could not draw map canvas:", err);
+        } finally {
+            // Reclaim intermediate offscreen map canvas buffer immediately
+            try {
+                mapCanvas.width = 0;
+                mapCanvas.height = 0;
+            } catch (e) {}
         }
+    }
+
+    // Draw red zone / circle labels directly (no circle background)
+    if (zoneLabels && zoneLabels.length > 0) {
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        zoneLabels.forEach(({ label, x, y, isCircle }) => {
+            const canvasX = mapX + x;
+            const canvasY = mapY + y;
+
+            // Only render label if inside the map boundary with margin
+            if (canvasX >= mapX + 35 && canvasX <= mapX + mapW - 35 &&
+                canvasY >= mapY + 35 && canvasY <= mapY + mapH - 35) {
+
+                if (isCircle) {
+                    // Count circle regional labels (e.g. Eugene, Florence, Oakridge, Cottage Grove)
+                    const text = label;
+                    ctx.font = "bold 52px system-ui, -apple-system, sans-serif";
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 10;
+                    ctx.lineJoin = "round";
+                    ctx.strokeText(text, canvasX, canvasY);
+                    ctx.fillStyle = "#dc2626";
+                    ctx.fillText(text, canvasX, canvasY);
+                } else {
+                    // Survey zone number labels (e.g. 1, 06, 14A)
+                    const fontSize = label.length > 2 ? 40 : 48;
+                    ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
+
+                    // White text halo outline for contrast over terrain contours
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 8;
+                    ctx.lineJoin = "round";
+                    ctx.strokeText(label, canvasX, canvasY);
+
+                    // Bold red zone number text
+                    ctx.fillStyle = "#dc2626";
+                    ctx.fillText(label, canvasX, canvasY);
+                }
+            }
+        });
+        ctx.restore();
     }
 
     // Inner map frame border - Crisp minimal dark border
     ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 5;
     ctx.strokeRect(mapX, mapY, mapW, mapH);
 
     // 3. Header Text
@@ -341,117 +589,117 @@ export async function renderMapLayoutCanvas({
 
     // Header Title Text (Crisp Dark Typography for Paper Printing)
     ctx.fillStyle = "#111827";
-    ctx.font = "bold 46px system-ui, -apple-system, sans-serif";
+    ctx.font = "bold 76px system-ui, -apple-system, sans-serif";
     const headerTitleText = isCircles
         ? "COAST TO CASCADES BIRD ALLIANCE"
         : (featureName === "florence" ? "FLORENCE CHRISTMAS BIRD COUNT" : "EUGENE CHRISTMAS BIRD COUNT");
-    ctx.fillText(headerTitleText, mapMargin, mapMargin + 45);
+    ctx.fillText(headerTitleText, mapMargin, mapMargin + 75);
 
     // Subtitle / Selection Name (ONLY if specific zone)
     if (hasSpecificZone) {
-        ctx.fillStyle = "#059669";
-        ctx.font = "bold 30px system-ui, -apple-system, sans-serif";
+        ctx.fillStyle = "#dc2626";
+        ctx.font = "bold 50px system-ui, -apple-system, sans-serif";
         const subTitleText = `SURVEY ZONE ${displayZoneId(featureId)}`;
-        ctx.fillText(subTitleText, mapMargin, mapMargin + 90);
+        ctx.fillText(subTitleText, mapMargin, mapMargin + 150);
     }
 
     // Date & Basemap Metadata (Right-aligned, no box)
     ctx.fillStyle = "#374151";
-    ctx.font = "26px system-ui, -apple-system, sans-serif";
+    ctx.font = "44px system-ui, -apple-system, sans-serif";
     ctx.textAlign = "right";
     const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-    ctx.fillText(dateStr, mapMargin + mapW, mapMargin + 45);
-    ctx.font = "20px system-ui, -apple-system, sans-serif";
+    ctx.fillText(dateStr, mapMargin + mapW, mapMargin + 75);
+    ctx.font = "34px system-ui, -apple-system, sans-serif";
     ctx.fillStyle = "#6b7280";
-    ctx.fillText("Base Map: Esri World Topography", mapMargin + mapW, mapMargin + 85);
+    ctx.fillText("Base Map: Esri World Topography", mapMargin + mapW, mapMargin + 140);
     ctx.textAlign = "left";
 
-    // 4. Minimal Cartographic Map Overlays
-    // North Arrow Emblem (Minimalist Print Style)
-    const naX = mapX + mapW - 75;
-    const naY = mapY + 85;
+    // 4. Minimal Cartographic Map Overlays (4000×3000 Scaled)
+    // North Arrow Emblem
+    const naX = mapX + mapW - 125;
+    const naY = mapY + 140;
     ctx.save();
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
     ctx.beginPath();
-    ctx.arc(naX, naY, 40, 0, Math.PI * 2);
+    ctx.arc(naX, naY, 66, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 4;
     ctx.stroke();
 
     // North Pointer Needle
     ctx.fillStyle = "#111827";
     ctx.beginPath();
-    ctx.moveTo(naX, naY - 28);
-    ctx.lineTo(naX + 12, naY + 8);
-    ctx.lineTo(naX, naY + 2);
+    ctx.moveTo(naX, naY - 46);
+    ctx.lineTo(naX + 20, naY + 13);
+    ctx.lineTo(naX, naY + 3);
     ctx.fill();
 
     ctx.fillStyle = "#9ca3af";
     ctx.beginPath();
-    ctx.moveTo(naX, naY - 28);
-    ctx.lineTo(naX - 12, naY + 8);
-    ctx.lineTo(naX, naY + 2);
+    ctx.moveTo(naX, naY - 46);
+    ctx.lineTo(naX - 20, naY + 13);
+    ctx.lineTo(naX, naY + 3);
     ctx.fill();
 
     ctx.fillStyle = "#111827";
-    ctx.font = "bold 20px sans-serif";
+    ctx.font = "bold 33px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("N", naX, naY - 32);
+    ctx.fillText("N", naX, naY - 53);
     ctx.restore();
 
-    // Actual Calculated Scale Bar in Miles (computed from bounds, no map instance needed)
+    // Actual Calculated Scale Bar in Miles
     const scaleInfo = getLayoutScaleBar(targetBounds, mapW);
 
-    const barX = mapX + 30;
-    const barY = mapY + mapH - 100;
-    const barW = Math.max(260, scaleInfo.pxWidth + 60);
-    const barH = 70;
+    const barX = mapX + 50;
+    const barY = mapY + mapH - 165;
+    const barW = Math.max(430, scaleInfo.pxWidth + 100);
+    const barH = 115;
 
     // Scale Box
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
     ctx.fillRect(barX, barY, barW, barH);
     ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3.5;
     ctx.strokeRect(barX, barY, barW, barH);
 
     // Scale Bar Line & Ticks
-    const lineStartX = barX + 30;
+    const lineStartX = barX + 50;
     const lineEndX = lineStartX + scaleInfo.pxWidth;
-    const lineY = barY + 45;
+    const lineY = barY + 75;
 
     ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 5;
     ctx.beginPath();
     ctx.moveTo(lineStartX, lineY);
     ctx.lineTo(lineEndX, lineY);
-    ctx.moveTo(lineStartX, lineY - 8);
-    ctx.lineTo(lineStartX, lineY + 8);
-    ctx.moveTo(lineEndX, lineY - 8);
-    ctx.lineTo(lineEndX, lineY + 8);
+    ctx.moveTo(lineStartX, lineY - 13);
+    ctx.lineTo(lineStartX, lineY + 13);
+    ctx.moveTo(lineEndX, lineY - 13);
+    ctx.lineTo(lineEndX, lineY + 13);
     const midX = (lineStartX + lineEndX) / 2;
-    ctx.moveTo(midX, lineY - 5);
-    ctx.lineTo(midX, lineY + 5);
+    ctx.moveTo(midX, lineY - 8);
+    ctx.lineTo(midX, lineY + 8);
     ctx.stroke();
 
     // Scale Bar Numerical Labels
     ctx.fillStyle = "#111827";
-    ctx.font = "bold 16px system-ui, sans-serif";
+    ctx.font = "bold 26px system-ui, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("0", lineStartX, lineY - 12);
-    ctx.fillText(`${scaleInfo.miles} mi`, lineEndX, lineY - 12);
+    ctx.fillText("0", lineStartX, lineY - 20);
+    ctx.fillText(`${scaleInfo.miles} mi`, lineEndX, lineY - 20);
     ctx.textAlign = "left";
 
     // QR Code Box Overlay (Bottom Right of Map Area)
-    const qrX = mapX + mapW - 175;
-    const qrY = mapY + mapH - 190;
-    const qrBoxW = 150;
-    const qrBoxH = 165;
+    const qrX = mapX + mapW - 290;
+    const qrY = mapY + mapH - 315;
+    const qrBoxW = 250;
+    const qrBoxH = 275;
 
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
     ctx.fillRect(qrX, qrY, qrBoxW, qrBoxH);
     ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3.5;
     ctx.strokeRect(qrX, qrY, qrBoxW, qrBoxH);
 
     let qrDrawn = false;
@@ -460,17 +708,17 @@ export async function renderMapLayoutCanvas({
             const qrContainer = document.createElement("div");
             new QRCode(qrContainer, {
                 text: qrUrl,
-                width: 120,
-                height: 120,
+                width: 200,
+                height: 200,
                 correctLevel: QRCode.CorrectLevel.M
             });
             const qrCanvas = qrContainer.querySelector("canvas");
             const qrImg = qrContainer.querySelector("img");
             if (qrCanvas) {
-                ctx.drawImage(qrCanvas, qrX + 15, qrY + 12, 120, 120);
+                ctx.drawImage(qrCanvas, qrX + 25, qrY + 20, 200, 200);
                 qrDrawn = true;
             } else if (qrImg && qrImg.complete) {
-                ctx.drawImage(qrImg, qrX + 15, qrY + 12, 120, 120);
+                ctx.drawImage(qrImg, qrX + 25, qrY + 20, 200, 200);
                 qrDrawn = true;
             }
         } catch (e) {
@@ -481,28 +729,27 @@ export async function renderMapLayoutCanvas({
     if (!qrDrawn) {
         const qrImage = await loadQrCodeImage(qrUrl);
         if (qrImage) {
-            ctx.drawImage(qrImage, qrX + 15, qrY + 12, 120, 120);
+            ctx.drawImage(qrImage, qrX + 25, qrY + 20, 200, 200);
         }
     }
 
     ctx.fillStyle = "#111827";
-    ctx.font = "bold 12px system-ui, sans-serif";
+    ctx.font = "bold 20px system-ui, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("SCAN FOR ONLINE MAP", qrX + (qrBoxW / 2), qrY + 152);
+    ctx.fillText("SCAN FOR ONLINE MAP", qrX + (qrBoxW / 2), qrY + 252);
     ctx.textAlign = "left";
 
     // 5. Clean Footer Text
-    const footY = height - footerHeight - mapMargin + 18;
-
+    const footY = height - footerHeight - mapMargin + 30;
     ctx.fillStyle = "#374151";
-    ctx.font = "19px system-ui, sans-serif";
+    ctx.font = "31px system-ui, sans-serif";
     const bbox = computeBbox(allFeatures);
     const boundsText = `Spatial Extent (WGS84): [${bbox[0][0].toFixed(4)}°W, ${bbox[0][1].toFixed(4)}°N] to [${bbox[1][0].toFixed(4)}°W, ${bbox[1][1].toFixed(4)}°N]`;
-    ctx.fillText(boundsText, mapMargin, footY + 24);
+    ctx.fillText(boundsText, mapMargin, footY + 40);
 
     ctx.fillStyle = "#6b7280";
-    ctx.font = "16px system-ui, sans-serif";
-    ctx.fillText("Printed with Fovea | Esri World Topographic Basemap © Esri, DeLorme, NAVTEQ", mapMargin, footY + 52);
+    ctx.font = "26px system-ui, sans-serif";
+    ctx.fillText("Printed with Fovea | Esri World Topographic Basemap © Esri, DeLorme, NAVTEQ", mapMargin, footY + 86);
 
     return layoutCanvas;
 }
@@ -561,18 +808,176 @@ export function setupMapEffectsAndFullscreen(mapWrapper) {
     window.addEventListener("orientationchange", handleResize);
 }
 
+// ──────────────────────────────────────────────────────────────
+// Pre-render Cache & Garbage Management Engine
+// ──────────────────────────────────────────────────────────────
+
+const RASTER_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL
+const DOWNLOAD_VIEW_PRELOAD_DELAY_MS = 500; // 0.5s wait after opening downloads view
+
+let activeRasterCache = {
+    key: null,
+    promise: null,
+    canvas: null,
+    createdAt: 0,
+    timerId: null
+};
+
+let downloadViewPreloadTimer = null;
+
+/**
+ * Schedules background raster rendering 0.5s after user opens downloads view (both desktop & mobile)
+ */
+export function scheduleDownloadViewPreload() {
+    cancelDownloadViewPreload();
+    downloadViewPreloadTimer = setTimeout(() => {
+        downloadViewPreloadTimer = null;
+        preloadMapLayout({
+            features: state.allFeatures,
+            targetFeatureId: state.currentId,
+            currentFeature: state.currentFeature,
+            isCirclesFeature: state.isCirclesFeature
+        });
+    }, DOWNLOAD_VIEW_PRELOAD_DELAY_MS);
+}
+
+/**
+ * Cancels pending download view preload timer
+ */
+export function cancelDownloadViewPreload() {
+    if (downloadViewPreloadTimer) {
+        clearTimeout(downloadViewPreloadTimer);
+        downloadViewPreloadTimer = null;
+    }
+}
+
+// Backwards compatibility alias
+export const scheduleSelectionPreload = scheduleDownloadViewPreload;
+export const cancelSelectionPreload = cancelDownloadViewPreload;
+
+/**
+ * Generates a deterministic cache key from layout rendering options
+ */
+export function getRasterCacheKey({
+    targetFeatureId,
+    currentFeature,
+    isCirclesFeature
+} = {}) {
+    const cid = currentFeature || state.currentFeature || "eugene";
+    const zid = targetFeatureId !== undefined ? targetFeatureId : state.currentId;
+    const isCirc = isCirclesFeature !== undefined ? isCirclesFeature : state.isCirclesFeature;
+    return `${cid}:${zid || "full"}:${isCirc ? "circles" : "zone"}`;
+}
+
+/**
+ * Reclaims memory by zeroing out canvas dimensions and clearing all references.
+ */
+export function disposeRasterCache() {
+    cancelSelectionPreload();
+    if (activeRasterCache.timerId) {
+        clearTimeout(activeRasterCache.timerId);
+        activeRasterCache.timerId = null;
+    }
+    if (activeRasterCache.canvas) {
+        try {
+            activeRasterCache.canvas.width = 0;
+            activeRasterCache.canvas.height = 0;
+        } catch (e) {}
+    }
+    activeRasterCache.key = null;
+    activeRasterCache.promise = null;
+    activeRasterCache.canvas = null;
+    activeRasterCache.createdAt = 0;
+}
+
+/**
+ * Pre-renders the map layout in the background as soon as subject is identified.
+ * Disposes previous stale renders to prevent memory leaks.
+ */
+export function preloadMapLayout(options = {}) {
+    cancelSelectionPreload();
+    const key = getRasterCacheKey(options);
+    const now = Date.now();
+
+    // Check if we already have an active/pending render for this exact subject within TTL
+    if (activeRasterCache.key === key && (now - activeRasterCache.createdAt < RASTER_CACHE_TTL_MS)) {
+        if (activeRasterCache.promise) return activeRasterCache.promise;
+        if (activeRasterCache.canvas) return Promise.resolve(activeRasterCache.canvas);
+    }
+
+    // Different subject or expired — dispose previous render first
+    disposeRasterCache();
+
+    activeRasterCache.key = key;
+    activeRasterCache.createdAt = now;
+
+    // Start rendering in background
+    const renderPromise = renderMapLayoutCanvas(options)
+        .then(canvas => {
+            if (activeRasterCache.key === key) {
+                activeRasterCache.canvas = canvas;
+                activeRasterCache.promise = null;
+                // Schedule TTL garbage collection
+                activeRasterCache.timerId = setTimeout(disposeRasterCache, RASTER_CACHE_TTL_MS);
+            } else {
+                // User moved on to a different selection while rendering — immediately reclaim canvas buffer
+                try {
+                    canvas.width = 0;
+                    canvas.height = 0;
+                } catch (e) {}
+            }
+            return canvas;
+        })
+        .catch(err => {
+            if (activeRasterCache.key === key) {
+                disposeRasterCache();
+            }
+            throw err;
+        });
+
+    activeRasterCache.promise = renderPromise;
+    return renderPromise;
+}
+
+/**
+ * Retrieves the layout canvas — using pre-rendered canvas if available,
+ * awaiting pending preload promise if running, or initiating a new render if missing.
+ */
+export async function getOrRenderLayoutCanvas(options = {}) {
+    const key = getRasterCacheKey(options);
+    const now = Date.now();
+
+    if (activeRasterCache.key === key && (now - activeRasterCache.createdAt < RASTER_CACHE_TTL_MS)) {
+        if (activeRasterCache.canvas) {
+            return activeRasterCache.canvas;
+        }
+        if (activeRasterCache.promise) {
+            return await activeRasterCache.promise;
+        }
+    }
+
+    return await preloadMapLayout(options);
+}
+
 export async function downloadGeoPdf(filename, triggerButton = null) {
     try {
         if (triggerButton) {
             triggerButton.disabled = true;
             triggerButton.classList.add("is-preparing");
         }
-        const canvas = await renderMapLayoutCanvas({
+        const options = {
             features: state.allFeatures,
             targetFeatureId: state.currentId,
             currentFeature: state.currentFeature,
             isCirclesFeature: state.isCirclesFeature
-        });
+        };
+
+        const isReady = activeRasterCache.key === getRasterCacheKey(options) && !!activeRasterCache.canvas;
+        if (!isReady) {
+            showToast("Rendering map layout...");
+        }
+
+        const canvas = await getOrRenderLayoutCanvas(options);
         
         if (window.jspdf && window.jspdf.jsPDF) {
             const { jsPDF } = window.jspdf;
@@ -618,12 +1023,19 @@ export async function downloadGeoTiff(filename, triggerButton = null) {
             triggerButton.disabled = true;
             triggerButton.classList.add("is-preparing");
         }
-        const canvas = await renderMapLayoutCanvas({
+        const options = {
             features: state.allFeatures,
             targetFeatureId: state.currentId,
             currentFeature: state.currentFeature,
             isCirclesFeature: state.isCirclesFeature
-        });
+        };
+
+        const isReady = activeRasterCache.key === getRasterCacheKey(options) && !!activeRasterCache.canvas;
+        if (!isReady) {
+            showToast("Rendering map layout...");
+        }
+
+        const canvas = await getOrRenderLayoutCanvas(options);
         const tiffBlob = canvasToTiffBlob(canvas);
         triggerDirectDownload(tiffBlob, filename);
         showToast(`Exported ${filename}`);
@@ -644,6 +1056,7 @@ function triggerDirectDownload(blob, filename) {
     a.style.display = 'none';
     a.href = url;
     a.download = filename;
+    a.addEventListener('click', (e) => e.stopPropagation());
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
@@ -653,492 +1066,3 @@ function triggerDirectDownload(blob, filename) {
 }
 
 
-export function getLayoutScaleBar(map, layoutMapWidth) {
-    if (!map) return { miles: 1, pxWidth: 150 };
-    const canvas = map.getCanvas();
-    const cX = canvas.width / 2;
-    const cY = canvas.height / 2;
-    
-    const samplePx = 200;
-    const p1 = map.unproject([cX - (samplePx / 2), cY]);
-    const p2 = map.unproject([cX + (samplePx / 2), cY]);
-    
-    let distMiles = 1;
-    if (typeof turf !== "undefined" && turf.distance) {
-        distMiles = turf.distance([p1.lng, p1.lat], [p2.lng, p2.lat], { units: "miles" });
-    } else {
-        const lat1 = p1.lat * Math.PI / 180;
-        const lat2 = p2.lat * Math.PI / 180;
-        const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-        const dLon = (p2.lng - p1.lng) * Math.PI / 180;
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        distMiles = 3958.8 * c;
-    }
-
-    const milesPerLayoutPx = distMiles / (samplePx * (layoutMapWidth / canvas.width));
-    const targetPx = 200;
-    const approxMiles = targetPx * milesPerLayoutPx;
-    
-    const niceIncrements = [0.1, 0.25, 0.5, 1, 2, 3, 5, 10, 15, 20, 25, 50, 100];
-    let chosenMiles = niceIncrements[0];
-    let minDiff = Math.abs(approxMiles - chosenMiles);
-    for (let i = 1; i < niceIncrements.length; i++) {
-        const diff = Math.abs(approxMiles - niceIncrements[i]);
-        if (diff < minDiff) {
-            minDiff = diff;
-            chosenMiles = niceIncrements[i];
-        }
-    }
-
-    const scaleBarPx = Math.max(100, Math.min(450, chosenMiles / milesPerLayoutPx));
-    return { miles: chosenMiles, pxWidth: scaleBarPx };
-}
-
-export async function renderMapLayoutCanvas() {
-    showToast("Rendering Esri Topo Print Layout...");
-    
-    // Remember current active basemap to restore later
-    const previousBaseLayer = state.currentBaseLayer || "dark";
-    
-    // Get map wrapper and tile-map elements to temporarily resize to high resolution print canvas size
-    const mapWrapper = document.getElementById("map-wrapper");
-    const tileMap = document.getElementById("tile-map");
-    let origStyle = "";
-    let origTileStyle = "";
-    if (mapWrapper && tileMap) {
-        origStyle = mapWrapper.getAttribute("style") || "";
-        origTileStyle = tileMap.getAttribute("style") || "";
-        
-        // Temporarily size mapWrapper to 2280x1500 (landscape printing canvas size) and push offscreen
-        mapWrapper.style.setProperty("position", "fixed", "important");
-        mapWrapper.style.setProperty("left", "-9999px", "important");
-        mapWrapper.style.setProperty("top", "0px", "important");
-        mapWrapper.style.setProperty("width", "2280px", "important");
-        mapWrapper.style.setProperty("height", "1500px", "important");
-        mapWrapper.style.setProperty("z-index", "-99999", "important");
-        
-        // Also force tile-map to override mobile's 100vh rule to match wrapper dimensions
-        tileMap.style.setProperty("width", "2280px", "important");
-        tileMap.style.setProperty("height", "1500px", "important");
-        
-        if (state.map) {
-            state.map.resize();
-        }
-    }
-
-    try {
-        // Switch basemap to Esri Topo if not already active
-        if (state.currentBaseLayer !== "esri-topo") {
-            switchBaseMap("esri-topo");
-        }
-
-        // Fit map bounds to the current selected feature on the print viewport layout with generous margins (padding)
-        if (state.map) {
-            const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
-            let targetFeature = null;
-            if (!isCircle) {
-                targetFeature = state.allFeatures.find(f => {
-                    const zid = f.properties?.zid;
-                    return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
-                });
-            }
-            
-            // padding: 120 adds a clean margin of 120 pixels around the feature so it doesn't touch the map frame borders
-            if (isCircle || !targetFeature) {
-                state.map.fitBounds(getBbox(state.allFeatures), { padding: 120, animate: false });
-            } else {
-                state.map.fitBounds(getBbox([targetFeature]), { padding: 120, maxZoom: 14, animate: false });
-            }
-        }
-
-        // Wait for MapLibre to load and render Esri Topo tiles
-        await new Promise((resolve) => {
-            let checkCount = 0;
-            const checkIdle = () => {
-                checkCount++;
-                if ((state.map && state.map.areTilesLoaded()) || checkCount > 35) {
-                    if (state.map) state.map.off('idle', checkIdle);
-                    resolve();
-                }
-            };
-            if (state.map) {
-                state.map.on('idle', checkIdle);
-                state.map.triggerRepaint();
-            }
-            setTimeout(resolve, 1500); // Failsafe timeout for network tiles
-        });
-
-        const mapCanvas = state.map ? state.map.getCanvas() : null;
-
-        // High resolution layout canvas (2400 x 1800 px - 4:3 ratio, print-optimized quality)
-        const layoutCanvas = document.createElement("canvas");
-        const width = 2400;
-        const height = 1800;
-        layoutCanvas.width = width;
-        layoutCanvas.height = height;
-        const ctx = layoutCanvas.getContext("2d");
-
-        // 1. Pure White outer canvas background (Paper Print-Friendly)
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, width, height);
-
-        // 2. Define inner map frame layout box
-        const mapMargin = 60;
-        const headerHeight = 110;
-        const footerHeight = 70;
-
-        const mapX = mapMargin;
-        const mapY = mapMargin + headerHeight;
-        const mapW = width - (mapMargin * 2);
-        const mapH = height - mapY - footerHeight - mapMargin;
-
-        // Background for map box (clean off-white for topo rendering)
-        ctx.fillStyle = "#f9fafb";
-        ctx.fillRect(mapX, mapY, mapW, mapH);
-
-        // Draw MapLibre WebGL canvas image into map box (no stretching needed as viewport is exactly 2280x1500)
-        if (mapCanvas) {
-            try {
-                ctx.drawImage(mapCanvas, mapX, mapY, mapW, mapH);
-            } catch (err) {
-                console.warn("Could not draw map canvas directly:", err);
-            }
-        }
-
-        // Inner map frame border - Crisp minimal dark border
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(mapX, mapY, mapW, mapH);
-
-        // 3. Header Text (No border box around header text!)
-        const hasSpecificZone = state.currentId && state.currentId !== CIRCLE_ID;
-
-        // Header Title Text (Crisp Dark Typography for Paper Printing)
-        ctx.fillStyle = "#111827";
-        ctx.font = "bold 46px system-ui, -apple-system, sans-serif";
-        const headerTitleText = state.isCirclesFeature 
-            ? "COAST TO CASCADES BIRD ALLIANCE" 
-            : (state.currentFeature === "florence" ? "FLORENCE CHRISTMAS BIRD COUNT" : "EUGENE CHRISTMAS BIRD COUNT");
-        ctx.fillText(headerTitleText, mapMargin, mapMargin + 45);
-
-        // Subtitle / Selection Name (ONLY if specific zone, remove "COUNT CIRCLE MAP")
-        if (hasSpecificZone) {
-            ctx.fillStyle = "#059669";
-            ctx.font = "bold 30px system-ui, -apple-system, sans-serif";
-            const subTitleText = `SURVEY ZONE ${displayZoneId(state.currentId)}`;
-            ctx.fillText(subTitleText, mapMargin, mapMargin + 90);
-        }
-
-        // Date & Basemap Metadata (Right-aligned, no box)
-        ctx.fillStyle = "#374151";
-        ctx.font = "26px system-ui, -apple-system, sans-serif";
-        ctx.textAlign = "right";
-        const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-        ctx.fillText(dateStr, mapMargin + mapW, mapMargin + 45);
-        ctx.font = "20px system-ui, -apple-system, sans-serif";
-        ctx.fillStyle = "#6b7280";
-        ctx.fillText("Base Map: Esri World Topography", mapMargin + mapW, mapMargin + 85);
-        ctx.textAlign = "left";
-
-        // 4. Minimal Cartographic Map Overlays
-        // North Arrow Emblem (Minimalist Print Style)
-        const naX = mapX + mapW - 75;
-        const naY = mapY + 85;
-        ctx.save();
-        ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-        ctx.beginPath();
-        ctx.arc(naX, naY, 40, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-
-        // North Pointer Needle
-        ctx.fillStyle = "#111827";
-        ctx.beginPath();
-        ctx.moveTo(naX, naY - 28);
-        ctx.lineTo(naX + 12, naY + 8);
-        ctx.lineTo(naX, naY + 2);
-        ctx.fill();
-
-        ctx.fillStyle = "#9ca3af";
-        ctx.beginPath();
-        ctx.moveTo(naX, naY - 28);
-        ctx.lineTo(naX - 12, naY + 8);
-        ctx.lineTo(naX, naY + 2);
-        ctx.fill();
-
-        ctx.fillStyle = "#111827";
-        ctx.font = "bold 20px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("N", naX, naY - 32);
-        ctx.restore();
-
-        // Actual Calculated Scale Bar in Miles (Bottom Left of Map Area)
-        const scaleInfo = getLayoutScaleBar(state.map, mapW);
-
-        const barX = mapX + 30;
-        const barY = mapY + mapH - 100;
-        const barW = Math.max(260, scaleInfo.pxWidth + 60);
-        const barH = 70;
-
-        // Scale Box
-        ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-        ctx.fillRect(barX, barY, barW, barH);
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(barX, barY, barW, barH);
-
-        // Scale Bar Line & Ticks
-        const lineStartX = barX + 30;
-        const lineEndX = lineStartX + scaleInfo.pxWidth;
-        const lineY = barY + 45;
-
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(lineStartX, lineY);
-        ctx.lineTo(lineEndX, lineY);
-        ctx.moveTo(lineStartX, lineY - 8);
-        ctx.lineTo(lineStartX, lineY + 8);
-        ctx.moveTo(lineEndX, lineY - 8);
-        ctx.lineTo(lineEndX, lineY + 8);
-        const midX = (lineStartX + lineEndX) / 2;
-        ctx.moveTo(midX, lineY - 5);
-        ctx.lineTo(midX, lineY + 5);
-        ctx.stroke();
-
-        // Scale Bar Numerical Labels
-        ctx.fillStyle = "#111827";
-        ctx.font = "bold 16px system-ui, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("0", lineStartX, lineY - 12);
-        ctx.fillText(`${scaleInfo.miles} mi`, lineEndX, lineY - 12);
-        ctx.textAlign = "left";
-
-        // QR Code Box Overlay (Bottom Right of Map Area)
-        const qrX = mapX + mapW - 175;
-        const qrY = mapY + mapH - 190;
-        const qrBoxW = 150;
-        const qrBoxH = 165;
-
-        ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-        ctx.fillRect(qrX, qrY, qrBoxW, qrBoxH);
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(qrX, qrY, qrBoxW, qrBoxH);
-
-        let qrDrawn = false;
-        if (typeof QRCode !== "undefined") {
-            try {
-                const qrContainer = document.createElement("div");
-                new QRCode(qrContainer, {
-                    text: window.location.href,
-                    width: 120,
-                    height: 120,
-                    correctLevel: QRCode.CorrectLevel.M
-                });
-                const qrCanvas = qrContainer.querySelector("canvas");
-                const qrImg = qrContainer.querySelector("img");
-                if (qrCanvas) {
-                    ctx.drawImage(qrCanvas, qrX + 15, qrY + 12, 120, 120);
-                    qrDrawn = true;
-                } else if (qrImg && qrImg.complete) {
-                    ctx.drawImage(qrImg, qrX + 15, qrY + 12, 120, 120);
-                    qrDrawn = true;
-                }
-            } catch (e) {
-                console.warn("QRCode generation error:", e);
-            }
-        }
-
-        if (!qrDrawn) {
-            const qrImage = await loadQrCodeImage(window.location.href);
-            if (qrImage) {
-                ctx.drawImage(qrImage, qrX + 15, qrY + 12, 120, 120);
-            }
-        }
-
-        ctx.fillStyle = "#111827";
-        ctx.font = "bold 12px system-ui, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("SCAN FOR ONLINE MAP", qrX + (qrBoxW / 2), qrY + 152);
-        ctx.textAlign = "left";
-
-        // 5. Clean Footer Text (No border box around footer text!)
-        const footY = height - footerHeight - mapMargin + 18;
-
-        ctx.fillStyle = "#374151";
-        ctx.font = "19px system-ui, sans-serif";
-        const bbox = getBbox(state.allFeatures);
-        const boundsText = `Spatial Extent (WGS84): [${bbox[0][0].toFixed(4)}°W, ${bbox[0][1].toFixed(4)}°N] to [${bbox[1][0].toFixed(4)}°W, ${bbox[1][1].toFixed(4)}°N]`;
-        ctx.fillText(boundsText, mapMargin, footY + 24);
-
-        ctx.fillStyle = "#6b7280";
-        ctx.font = "16px system-ui, sans-serif";
-        ctx.fillText("Printed with Fovea | Esri World Topographic Basemap © Esri, DeLorme, NAVTEQ", mapMargin, footY + 52);
-
-        return layoutCanvas;
-    } finally {
-        // Restore previous basemap if changed
-        if (previousBaseLayer !== "esri-topo") {
-            switchBaseMap(previousBaseLayer);
-        }
-        
-        // Restore map wrapper and tile-map size/display
-        if (mapWrapper && tileMap) {
-            if (origStyle) {
-                mapWrapper.setAttribute("style", origStyle);
-            } else {
-                mapWrapper.removeAttribute("style");
-            }
-            if (origTileStyle) {
-                tileMap.setAttribute("style", origTileStyle);
-            } else {
-                tileMap.removeAttribute("style");
-            }
-            if (state.map) {
-                state.map.resize();
-            }
-        }
-        
-        // Restore original viewport zoom and bounds for screen
-        selectSubject(state.currentId, true, false);
-    }
-}
-
-export function setupMapEffectsAndFullscreen(mapWrapper) {
-    if (!mapWrapper) return;
-
-    mapWrapper.onmousemove = e => {
-        if (window.innerWidth <= 768) return;
-        const rect = mapWrapper.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        mapWrapper.style.setProperty("--mouse-x", `${x}px`);
-        mapWrapper.style.setProperty("--mouse-y", `${y}px`);
-    };
-
-    mapWrapper.onmouseleave = () => {
-        mapWrapper.style.setProperty("--mouse-x", `-1000px`);
-        mapWrapper.style.setProperty("--mouse-y", `-1000px`);
-    };
-
-    const triggerMobileHomeAnimation = () => {
-        if (window.innerWidth <= 768) {
-            const targets = document.querySelectorAll(".intro-header, .maps-tile-header, .maps-tile-sidebar");
-            targets.forEach(el => {
-                el.classList.remove("animate-mobile-slide-down");
-                void el.offsetWidth;
-                el.classList.add("animate-mobile-slide-down");
-            });
-        }
-    };
-
-    const handleResize = () => {
-        updateControlPositions();
-        adjustHeaderFontSize();
-        if (state.map) {
-            state.map.invalidateSize();
-            setTimeout(() => state.map.invalidateSize(), 50);
-            setTimeout(() => state.map.invalidateSize(), 200);
-            setTimeout(() => state.map.invalidateSize(), 400);
-        }
-        updateLabelZoomVisibility();
-    };
-
-    document.addEventListener("fullscreenchange", () => {
-        if (!document.fullscreenElement) {
-            mapWrapper.classList.remove("is-fullscreen");
-            triggerMobileHomeAnimation();
-        } else {
-            mapWrapper.classList.add("is-fullscreen");
-        }
-        handleResize();
-    });
-
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("orientationchange", handleResize);
-}
-
-export async function downloadGeoPdf(filename, triggerButton = null) {
-    try {
-        if (triggerButton) {
-            triggerButton.disabled = true;
-            triggerButton.classList.add("is-preparing");
-        }
-        const canvas = await renderMapLayoutCanvas();
-        
-        if (window.jspdf && window.jspdf.jsPDF) {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({
-                orientation: "landscape",
-                unit: "mm",
-                format: "a4"
-            });
-            
-            const imgData = canvas.toDataURL("image/jpeg", 0.92);
-            pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
-            
-            pdf.setProperties({
-                title: filename.replace(/\.pdf$/, ""),
-                subject: "GeoPDF Map Layout Export - Esri Topo Basemap",
-                keywords: "GeoPDF, GIS, Map, Esri Topo, Fovea",
-                creator: "Fovea Web Map Layout Engine"
-            });
-
-            const pdfBlob = pdf.output("blob");
-            triggerDirectDownload(pdfBlob, filename);
-            showToast(`Exported ${filename}`);
-        } else {
-            canvas.toBlob((blob) => {
-                triggerDirectDownload(blob, filename.replace(/\.pdf$/, "-layout.png"));
-                showToast(`Exported ${filename.replace(/\.pdf$/, "-layout.png")}`);
-            }, "image/png");
-        }
-    } catch (e) {
-        console.error("PDF generation failed:", e);
-        showToast("Error generating PDF layout.");
-    } finally {
-        if (triggerButton) {
-            triggerButton.disabled = false;
-            triggerButton.classList.remove("is-preparing");
-        }
-    }
-}
-
-export async function downloadGeoTiff(filename, triggerButton = null) {
-    try {
-        if (triggerButton) {
-            triggerButton.disabled = true;
-            triggerButton.classList.add("is-preparing");
-        }
-        const canvas = await renderMapLayoutCanvas();
-        const tiffBlob = canvasToTiffBlob(canvas);
-        triggerDirectDownload(tiffBlob, filename);
-        showToast(`Exported ${filename}`);
-    } catch (e) {
-        console.error("TIFF generation failed:", e);
-        showToast("Error generating TIFF layout.");
-    } finally {
-        if (triggerButton) {
-            triggerButton.disabled = false;
-            triggerButton.classList.remove("is-preparing");
-        }
-    }
-}
-
-function triggerDirectDownload(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }, 100);
-}

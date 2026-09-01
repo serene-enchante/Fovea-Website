@@ -147,7 +147,12 @@ export function canvasToTiffBlob(canvas) {
     const ifdSize = 2 + (numEntries * 12) + 4;
     const valueDataOffset = ifdOffset + ifdSize;
 
-    const totalSize = valueDataOffset + 6;
+    // Value offsets for multi-byte tags
+    const bitsOffset = valueDataOffset; // 6 bytes (3 * uint16)
+    const xResOffset = bitsOffset + 6;  // 8 bytes (2 * uint32: 400, 1)
+    const yResOffset = xResOffset + 8;  // 8 bytes (2 * uint32: 400, 1)
+
+    const totalSize = yResOffset + 8;
     const buffer = new ArrayBuffer(totalSize);
     const view = new DataView(buffer);
     const u8 = new Uint8Array(buffer);
@@ -161,10 +166,17 @@ export function canvasToTiffBlob(canvas) {
     u8.set(rgb, headerSize);
 
     // BitsPerSample values (8, 8, 8)
-    const bitsOffset = valueDataOffset;
     view.setUint16(bitsOffset, 8, true);
     view.setUint16(bitsOffset + 2, 8, true);
     view.setUint16(bitsOffset + 4, 8, true);
+
+    // XResolution (400 / 1 -> 400 DPI)
+    view.setUint32(xResOffset, 400, true);
+    view.setUint32(xResOffset + 4, 1, true);
+
+    // YResolution (400 / 1 -> 400 DPI)
+    view.setUint32(yResOffset, 400, true);
+    view.setUint32(yResOffset + 4, 1, true);
 
     // IFD Tags
     let p = ifdOffset;
@@ -187,8 +199,8 @@ export function canvasToTiffBlob(canvas) {
     writeTag(277, 3, 1, 3);                   // SamplesPerPixel = 3
     writeTag(278, 4, 1, height);              // RowsPerStrip
     writeTag(279, 4, 1, imageByteCount);      // StripByteCounts
-    writeTag(282, 5, 1, valueDataOffset);     // XResolution
-    writeTag(283, 5, 1, valueDataOffset);     // YResolution
+    writeTag(282, 5, 1, xResOffset);          // XResolution (400 DPI)
+    writeTag(283, 5, 1, yResOffset);          // YResolution (400 DPI)
     writeTag(296, 3, 1, 2);                   // ResolutionUnit = 2 (Inch)
 
     view.setUint32(p, 0, true);

@@ -136,20 +136,29 @@ export async function openAppInstructionModal(appKeyOrName, mapFileUrlOrBlob = n
     };
   }
 
-  let blob = mapFileUrlOrBlob;
-  let mapFilename = filename;
-  if (!(blob instanceof Blob)) {
-    const generated = await generateAppSpatialBlob(config.formatKey);
-    blob = generated.blob;
-    mapFilename = generated.filename;
+  let blobPromise = null;
+  if (mapFileUrlOrBlob instanceof Blob) {
+    blobPromise = Promise.resolve({ blob: mapFileUrlOrBlob, filename: filename || `map.${config.ext}` });
+    window._pendingAppBlob = mapFileUrlOrBlob;
+  } else {
+    window._pendingAppBlob = null;
+    blobPromise = generateAppSpatialBlob(config.formatKey);
   }
 
-  const finalFilename = mapFilename || `map.${config.ext}`;
-  window._pendingAppBlob = blob;
+  const finalFilename = filename || `map.${config.ext}`;
+  window._pendingAppBlobPromise = blobPromise;
   window._pendingAppFilename = finalFilename;
   window._pendingAppScheme = config.scheme;
   window._pendingAppFormatKey = config.formatKey;
   window._pendingAppKey = config.appKey || normKey;
+
+  // Background resolution
+  blobPromise.then(res => {
+    window._pendingAppBlob = res.blob;
+    if (res.filename) window._pendingAppFilename = res.filename;
+  }).catch(err => {
+    console.error("Background map generation error:", err);
+  });
 
   const appIconEl = document.getElementById("avenza-modal-app-icon");
   if (appIconEl) {
@@ -167,7 +176,7 @@ export async function openAppInstructionModal(appKeyOrName, mapFileUrlOrBlob = n
 
   const downloadBtn = document.getElementById("avenza-modal-download-btn");
   if (downloadBtn) {
-    downloadBtn.classList.remove("is-downloaded");
+    downloadBtn.classList.remove("is-downloaded", "is-preparing");
     downloadBtn.innerHTML = `
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -223,33 +232,12 @@ export async function openInAvenzaWithFallback(mapFileUrlOrBlob, filename, trigg
  * Executes direct app handshake for Suggested Apps (Avenza, Gaia GPS, CalTopo, OsmAnd).
  */
 export async function handleAppDirectOpen(appName, triggerCard = null) {
-  let originalLabelText = "";
-  const labelEl = triggerCard ? triggerCard.querySelector(".suggested-app-name") : null;
-
-  if (triggerCard) {
-    triggerCard.classList.add("is-preparing");
-    if (labelEl) {
-      originalLabelText = labelEl.textContent;
-      labelEl.textContent = "Preparing...";
-    }
-  }
-
-  const resetUi = () => {
-    if (triggerCard) {
-      triggerCard.classList.remove("is-preparing");
-      if (labelEl && originalLabelText) {
-        labelEl.textContent = originalLabelText;
-      }
-    }
-  };
-
   try {
     await openAppInstructionModal(appName, null, null, triggerCard);
-    resetUi();
   } catch (err) {
-    resetUi();
     if (typeof showToast === "function") {
       showToast(`Could not open instructions for ${appName}`);
     }
   }
 }
+

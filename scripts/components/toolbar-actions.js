@@ -1,11 +1,10 @@
 import { state } from '../state.js';
 import { showToast } from './toast-view.js';
 import { displayZoneId } from '../utils/format-utils.js';
-import { closeAllModals } from './modal-view.js';
+import { closeAllModals, closeAvenzaModal, closeAllAppsModal } from './modal-view.js';
 import { launchAppWithStoreFallback } from './avenza-modal-view.js';
 import { getSelectedGeoJSONData } from '../services/bird-data-service.js';
-import { geojsonToKml, geojsonToGpx } from '../services/format-converters.js';
-import { renderMapLayoutCanvas, downloadGeoPdf, downloadGeoTiff } from '../map/map-rendering.js';
+import { renderMapLayoutCanvas, downloadGeoPdf, downloadGeoTiff, preloadMapLayout, getOrRenderLayoutCanvas, disposeRasterCache, scheduleDownloadViewPreload, cancelDownloadViewPreload } from '../map/map-rendering.js';
 import { setupSuggestFormAndDrawing } from './feedback-form.js';
 import { renderSidebarList } from './sidebar-list.js';
 import { CIRCLE_ID } from '../config/app-config.js';
@@ -32,7 +31,12 @@ export async function generateAppSpatialBlob(formatKey) {
   const filename = getActiveDownloadFilename(formatKey === "geopdf" ? "pdf" : formatKey);
 
   if (formatKey === "geopdf") {
-    const canvas = await renderMapLayoutCanvas();
+    const canvas = await getOrRenderLayoutCanvas({
+        features: state.allFeatures,
+        targetFeatureId: state.currentId,
+        currentFeature: state.currentFeature,
+        isCirclesFeature: state.isCirclesFeature
+    });
     if (window.jspdf && window.jspdf.jsPDF) {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({
@@ -55,6 +59,15 @@ export async function generateAppSpatialBlob(formatKey) {
         }, "image/png");
       });
     }
+  } else if (formatKey === "geotiff" || formatKey === "tif") {
+    const canvas = await getOrRenderLayoutCanvas({
+        features: state.allFeatures,
+        targetFeatureId: state.currentId,
+        currentFeature: state.currentFeature,
+        isCirclesFeature: state.isCirclesFeature
+    });
+    const tiffBlob = canvasToTiffBlob(canvas);
+    return { blob: tiffBlob, filename: getActiveDownloadFilename("tif") };
   } else if (formatKey === "gpx") {
     const gpxStr = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
     const blob = new Blob([gpxStr], { type: "application/gpx+xml" });
@@ -310,7 +323,6 @@ export function setupSuggestedAppCards() {
             if (!wasActive) {
                 card.classList.add("is-active");
             }
-            closeAllModals();
             await handleAppDirectOpen(appName, card);
         });
     });
@@ -637,22 +649,59 @@ export function setupActionButtons() {
     if (avenzaDownloadBtn) {
         avenzaDownloadBtn.addEventListener("click", async (e) => {
             e.stopPropagation();
+            if (avenzaDownloadBtn.classList.contains("is-preparing")) return;
+
             let blob = window._pendingAppBlob || window._pendingAvenzaBlob;
             let filename = window._pendingAppFilename || window._pendingAvenzaFilename || "map.pdf";
             let formatKey = window._pendingAppFormatKey || "geopdf";
 
             if (!(blob instanceof Blob)) {
-                const { blob: generatedBlob, filename: genFilename } = await generateAppSpatialBlob(formatKey);
-                blob = generatedBlob;
-                if (genFilename) filename = genFilename;
-                window._pendingAppBlob = blob;
+                if (typeof showToast === "function") showToast("Rendering map layout...");
+                avenzaDownloadBtn.classList.add("is-preparing");
+                const originalHtml = avenzaDownloadBtn.innerHTML;
+                avenzaDownloadBtn.innerHTML = `
+                    <svg class="spin-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="2" x2="12" y2="6"></line>
+                        <line x1="12" y1="18" x2="12" y2="22"></line>
+                        <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                        <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                        <line x1="2" y1="12" x2="6" y2="12"></line>
+                        <line x1="18" y1="12" x2="22" y2="12"></line>
+                        <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                        <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                    </svg>
+                    <span>Preparing...</span>
+                `;
+
+                try {
+                    if (window._pendingAppBlobPromise) {
+                        const res = await window._pendingAppBlobPromise;
+                        blob = res.blob;
+                        if (res.filename) filename = res.filename;
+                    } else {
+                        const { blob: generatedBlob, filename: genFilename } = await generateAppSpatialBlob(formatKey);
+                        blob = generatedBlob;
+                        if (genFilename) filename = genFilename;
+                    }
+                    window._pendingAppBlob = blob;
+                    window._pendingAppFilename = filename;
+                } catch (err) {
+                    console.error("Error generating map download:", err);
+                    if (typeof showToast === "function") showToast("Error generating download file.");
+                    avenzaDownloadBtn.classList.remove("is-preparing");
+                    avenzaDownloadBtn.innerHTML = originalHtml;
+                    return;
+                }
+                avenzaDownloadBtn.classList.remove("is-preparing");
             }
 
             const downloadBlob = new Blob([blob], { type: "application/octet-stream" });
             const url = URL.createObjectURL(downloadBlob);
             const a = document.createElement("a");
+            a.style.display = "none";
             a.href = url;
             a.download = filename;
+            a.addEventListener("click", (e) => e.stopPropagation());
             document.body.appendChild(a);
             a.click();
             setTimeout(() => {
@@ -665,8 +714,10 @@ export function setupActionButtons() {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 <span>Downloaded</span>
             `;
+            if (typeof showToast === "function") showToast(`Downloaded ${filename}`);
         });
     }
+
 
     if (avenzaContinueBtn && avenzaModal) {
         avenzaContinueBtn.addEventListener("click", () => {
@@ -682,7 +733,14 @@ export function setupActionButtons() {
         closeEl.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            closeAllModals();
+            const parentModal = closeEl.closest(".maps-tile-modal, .avenza-instruction-modal");
+            if (parentModal && parentModal.id === "avenza-instruction-modal") {
+                closeAvenzaModal();
+            } else if (parentModal && parentModal.id === "all-apps-modal") {
+                closeAllAppsModal();
+            } else {
+                closeAllModals();
+            }
         });
     });
 
@@ -802,6 +860,10 @@ export function setupActionButtons() {
             if (!isOpen) {
                 downloadModal.setAttribute("aria-hidden", "false");
                 downloadModal.classList.add("is-open");
+                // Wait 0.5s after user clicks downloads view button before beginning preemptive rendering
+                scheduleDownloadViewPreload();
+            } else {
+                cancelDownloadViewPreload();
             }
             window.updateActionButtonsState();
         });
@@ -809,6 +871,7 @@ export function setupActionButtons() {
         downloadModal.querySelectorAll("[data-modal-close]").forEach(closeEl => {
             closeEl.addEventListener("click", (e) => {
                 e.stopPropagation();
+                cancelDownloadViewPreload();
                 closeAllModals();
             });
         });
@@ -909,12 +972,17 @@ export function setupActionButtons() {
         suggestModal.querySelectorAll("[data-modal-close]").forEach(closeEl => {
             closeEl.addEventListener("click", (e) => {
                 e.stopPropagation();
+                if (closeEl.classList.contains("modal__backdrop") && document.body.classList.contains("is-suggest-locked")) {
+                    return;
+                }
                 closeAllModals();
             });
         });
     }
 
     document.addEventListener("click", (e) => {
+        if (!e.isTrusted) return;
+        if (e.target && (e.target.tagName === "A" || e.target.closest("a[download]"))) return;
         if (window.innerWidth >= 769) {
             if (downloadModal && downloadModal.getAttribute("aria-hidden") === "false") {
                 if (!downloadModal.contains(e.target) && !downloadBtn.contains(e.target)) {
@@ -934,6 +1002,7 @@ export function setupActionButtons() {
             if (suggestModal && suggestModal.getAttribute("aria-hidden") === "false") {
                 if (!suggestModal.contains(e.target) && !suggestBtn.contains(e.target)
                     && !document.body.classList.contains("is-annotation-mode")
+                    && !document.body.classList.contains("is-suggest-locked")
                     && !window._preventSuggestClose) {
                     closeAllModals();
                 }

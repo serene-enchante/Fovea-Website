@@ -1,14 +1,48 @@
 import { state } from '../state.js';
 import { CIRCLE_ID } from '../config/app-config.js';
-import { updateUrl, rebuildGeoJsonLayer } from '../maps-tile.js';
 import { renderSidebarList } from '../components/sidebar-list.js';
 import { updateHeader, getFitPadding } from '../components/header-view.js';
-import { updateAllFeatureStyles } from './map-layers.js';
+import { updateAllFeatureStyles, rebuildGeoJsonLayer } from './map-layers.js';
 import { normalizeZoneId, displayZoneId } from '../utils/format-utils.js';
 import { getBbox } from '../utils/geometry-math.js';
+import { disposeRasterCache, scheduleSelectionPreload } from './map-rendering.js';
+import { getSuggestSelectionLabel } from '../components/feedback-form.js';
+import { showToast } from '../components/toast-view.js';
+
+export function updateUrl(id) {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("id");
+
+    if (state.isCirclesFeature) {
+        url.searchParams.set("feature", "circles");
+        url.searchParams.delete("zone");
+    } else {
+        url.searchParams.set("feature", state.currentFeature);
+        if (id && id !== CIRCLE_ID) {
+            let zid = id;
+            const targetFeature = state.allFeatures.find(f => {
+                const fzid = f.properties?.zid;
+                return fzid && (fzid.toLowerCase() === id.toLowerCase() || normalizeZoneId(fzid) === normalizeZoneId(id));
+            });
+            if (targetFeature && targetFeature.properties?.zid) {
+                zid = displayZoneId(targetFeature.properties.zid);
+            }
+            url.searchParams.set("zone", zid);
+        } else {
+            url.searchParams.delete("zone");
+        }
+    }
+    window.history.replaceState({}, "", url.toString());
+}
 
 export function switchToFeature(featureName) {
+    if (document.body.classList.contains("is-suggest-locked") && (featureName !== state.currentFeature || state.isCirclesFeature)) {
+        return;
+    }
+
     if (!state.map) return;
+    disposeRasterCache();
     
     let transitionFinished = false;
     const targetFeatures = (featureName === "florence") ? state.florenceFeatures : state.eugeneFeatures;
@@ -41,7 +75,12 @@ export function switchToFeature(featureName) {
 }
 
 export function switchToCirclesFeature() {
+    if (document.body.classList.contains("is-suggest-locked") && !state.isCirclesFeature) {
+        return;
+    }
+
     if (!state.map) return;
+    disposeRasterCache();
     state.currentFeature = "circles";
     state.isCirclesFeature = true;
     state.allFeatures = state.circlesFeatures;
@@ -70,6 +109,11 @@ function _getHierarchyLevel(id) {
 }
 
 export function selectSubject(id, triggerMapZoom = true, animate = true) {
+    if (document.body.classList.contains("is-suggest-locked") && id !== state.currentId) {
+        return;
+    }
+
+    disposeRasterCache();
     window.scrollTo(0, 0);
     if (state.isHelpModeActive && window.innerWidth <= 768) return;
 
@@ -171,8 +215,11 @@ export function selectSubject(id, triggerMapZoom = true, animate = true) {
         }
 
         updateUrl(id);
-        if (typeof state.refreshLayersModal === "function") {
-            state.refreshLayersModal();
+        const isDownloadOpen = document.getElementById("downloads-modal")?.getAttribute("aria-hidden") === "false";
+        if (isDownloadOpen) {
+            scheduleSelectionPreload();
+        } else {
+            disposeRasterCache();
         }
     };
 

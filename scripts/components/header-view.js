@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { normalizeZoneId } from '../utils/format-utils.js';
+import { normalizeZoneId, displayZoneId } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 
 // Note: updateHeaderLogo depends on 'state' and 'normalizeZoneId'.
@@ -98,6 +98,32 @@ export function balancedHeaderHTML(title) {
 }
 
 
+export function updateDocumentTitle() {
+    if (typeof document === "undefined") return;
+
+    if (state.isCirclesFeature || state.currentFeature === "circles") {
+        document.title = "Fovea - Coast to Cascades CBC Circles";
+        return;
+    }
+
+    const featureName = state.currentFeature === "florence" ? "Florence CBC" :
+                        (state.currentFeature === "cottage-grove" ? "Cottage Grove CBC" :
+                        (state.currentFeature === "oakridge" ? "Oakridge CBC" : "Eugene CBC"));
+
+    const hasSpecificSelection = state.currentId && state.currentId !== CIRCLE_ID;
+
+    if (hasSpecificSelection) {
+        if (state.isBirdSelected && state.selectedBirdName) {
+            document.title = `Fovea - ${featureName} - ${state.selectedBirdName}`;
+        } else {
+            const zid = displayZoneId(state.currentId);
+            document.title = `Fovea - ${featureName} - Zone ${zid}`;
+        }
+    } else {
+        document.title = `Fovea - ${featureName}`;
+    }
+}
+
 export function updateHeader(subjectTitle) {
     const titleEl = document.getElementById("header-title");
     if (titleEl) {
@@ -105,6 +131,7 @@ export function updateHeader(subjectTitle) {
     }
     updateHeaderLogo();
     adjustHeaderFontSize();
+    updateDocumentTitle();
 }
 
 

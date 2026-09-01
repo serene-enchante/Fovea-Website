@@ -15,6 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 
     <!-- Stylesheets -->
+    <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
     <link rel="stylesheet" href="../styles/base.css">
     <link rel="stylesheet" href="../styles/mobile-bottom-nav.css?v=16">
     <link rel="stylesheet" href="../styles/page-download-wizard.css">
@@ -279,9 +280,13 @@
     <div id="toast-notification" class="toast-notification" role="status" aria-live="polite"></div>
 
     <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script type="module" src="../scripts/download-wizard.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
+    <script type="module" src="../scripts/download-wizard.js?v=231"></script>
     <script src="../scripts/mobile-bottom-nav.js?v=1" data-active-page="tools" data-root="../"></script>
 </body>
 
 </html>
+

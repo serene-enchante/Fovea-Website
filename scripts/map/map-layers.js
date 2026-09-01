@@ -636,3 +636,50 @@ export function selectMapStyleByIndex(index) {
 export function updateLabelZoomVisibility() {
     rebuildHtmlLabels();
 }
+
+export function rebuildGeoJsonLayer() {
+    if (!state.map) return;
+    
+    const grouped = {};
+    state.allFeatures.forEach(f => {
+        const props = f.properties || {};
+        const newId = state.isCirclesFeature ? String(props.cid || "") : String(props.zid || "");
+        if (!newId) return;
+
+        if (!grouped[newId]) {
+            grouped[newId] = {
+                type: "Feature",
+                id: newId,
+                properties: {
+                    ...props,
+                    feature_id: newId
+                },
+                geometry: {
+                    type: "MultiPolygon",
+                    coordinates: []
+                }
+            };
+        }
+
+        const geom = f.geometry;
+        if (geom) {
+            if (geom.type === "Polygon") {
+                grouped[newId].geometry.coordinates.push(geom.coordinates);
+            } else if (geom.type === "MultiPolygon") {
+                geom.coordinates.forEach(polyCoords => {
+                    grouped[newId].geometry.coordinates.push(polyCoords);
+                });
+            }
+        }
+    });
+
+    const source = state.map.getSource("eugene-zones");
+    if (source) {
+        source.setData({
+            type: "FeatureCollection",
+            features: Object.values(grouped)
+        });
+    }
+
+    rebuildHtmlLabels();
+}

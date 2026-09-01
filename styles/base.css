@@ -104,3 +104,14 @@ body::before {
     background: var(--overlay-bg);
     z-index: -1;
 }
+
+/* Universal Loading Spinner Utility */
+.spin-icon {
+    animation: spinLoader 0.9s linear infinite;
+    transform-origin: center;
+}
+
+@keyframes spinLoader {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

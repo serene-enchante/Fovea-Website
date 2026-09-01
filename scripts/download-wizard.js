@@ -1,3 +1,6 @@
+import { renderMapLayoutCanvas } from './map/map-rendering.js';
+import { canvasToTiffBlob } from './services/format-converters.js';
+
 /**
  * download-wizard.js
  * Controller for Fovea's Download Wizard tool.
@@ -94,15 +97,16 @@ const APP_INSTRUCTION_CONFIGS = {
     avenza: {
         appName: "Avenza Maps",
         scheme: "avenzamaps://",
-        formatKey: "kmz",
-        ext: "kmz",
+        formatKey: "geopdf",
+        ext: "pdf",
         iconSrc: "images/app_icons/avenza.webp",
-        step1Heading: "Download the Map File",
+        step1Heading: "Download the GeoPDF",
         step2Heading: "Open in Avenza Maps",
         step2Text: "Tap <strong class=\"avenza-ui-badge\">Download</strong> above, then select <strong class=\"avenza-ui-badge\">Open in Avenza Maps</strong> from the share sheet.",
         step3Heading: "Ready Offline",
-        step3Text: "Your count boundary is now imported and ready to use offline with high-precision GPS tracking."
+        step3Text: "Your count boundary is now imported with high-resolution Esri Topo basemaps for offline GPS navigation."
     },
+
     gaia: {
         appName: "Gaia GPS",
         scheme: "gaiagps://",
@@ -188,6 +192,100 @@ export function initDownloadWizard() {
     }
 }
 
+// ──────────────────────────────────────────────────────────────
+// Pre-render Cache & Garbage Management for Download Wizard
+// ──────────────────────────────────────────────────────────────
+
+const WIZARD_RASTER_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL
+
+let wizardRasterCache = {
+    key: null,
+    promise: null,
+    canvas: null,
+    createdAt: 0,
+    timerId: null
+};
+
+function getWizardCacheKey() {
+    const cid = state.selectedCircle?.id || "eugene";
+    const zid = state.selectedZone ? (state.selectedZone.properties?.zid || "0") : "full";
+    return `${cid}:${zid}`;
+}
+
+function disposeWizardRasterCache() {
+    if (wizardRasterCache.timerId) {
+        clearTimeout(wizardRasterCache.timerId);
+        wizardRasterCache.timerId = null;
+    }
+    if (wizardRasterCache.canvas) {
+        try {
+            wizardRasterCache.canvas.width = 0;
+            wizardRasterCache.canvas.height = 0;
+        } catch (e) {}
+    }
+    wizardRasterCache.key = null;
+    wizardRasterCache.promise = null;
+    wizardRasterCache.canvas = null;
+    wizardRasterCache.createdAt = 0;
+}
+
+function preloadWizardRaster() {
+    const key = getWizardCacheKey();
+    const now = Date.now();
+
+    if (wizardRasterCache.key === key && (now - wizardRasterCache.createdAt < WIZARD_RASTER_TTL_MS)) {
+        if (wizardRasterCache.promise) return wizardRasterCache.promise;
+        if (wizardRasterCache.canvas) return Promise.resolve(wizardRasterCache.canvas);
+    }
+
+    disposeWizardRasterCache();
+
+    wizardRasterCache.key = key;
+    wizardRasterCache.createdAt = now;
+
+    const renderPromise = renderMapLayoutCanvas({
+        features: state.loadedFeatures.length > 0 ? state.loadedFeatures : (state.loadedGeoJSON?.features || []),
+        targetFeatureId: state.selectedZone ? (state.selectedZone.properties?.zid || null) : null,
+        currentFeature: state.selectedCircle?.id || "eugene",
+        isCirclesFeature: false,
+        pageUrl: window.location.href
+    })
+    .then(canvas => {
+        if (wizardRasterCache.key === key) {
+            wizardRasterCache.canvas = canvas;
+            wizardRasterCache.promise = null;
+            wizardRasterCache.timerId = setTimeout(disposeWizardRasterCache, WIZARD_RASTER_TTL_MS);
+        } else {
+            try {
+                canvas.width = 0;
+                canvas.height = 0;
+            } catch (e) {}
+        }
+        return canvas;
+    })
+    .catch(err => {
+        if (wizardRasterCache.key === key) {
+            disposeWizardRasterCache();
+        }
+        throw err;
+    });
+
+    wizardRasterCache.promise = renderPromise;
+    return renderPromise;
+}
+
+async function getOrRenderWizardCanvas() {
+    const key = getWizardCacheKey();
+    const now = Date.now();
+
+    if (wizardRasterCache.key === key && (now - wizardRasterCache.createdAt < WIZARD_RASTER_TTL_MS)) {
+        if (wizardRasterCache.canvas) return wizardRasterCache.canvas;
+        if (wizardRasterCache.promise) return await wizardRasterCache.promise;
+    }
+
+    return await preloadWizardRaster();
+}
+
 /**
  * Stepper logic
  */
@@ -219,12 +317,18 @@ function setupStepper() {
             setStep(state.selectedCircle && state.selectedCircle.totalZones > 0 ? 2 : 1);
         });
     }
+
+    window.addEventListener("beforeunload", disposeWizardRasterCache);
 }
 
 /**
  * Changes active wizard step
  */
 function setStep(stepNum) {
+    if (stepNum < 3) {
+        disposeWizardRasterCache();
+    }
+
     state.currentStep = stepNum;
 
     // Update step views visibility
@@ -417,6 +521,8 @@ async function selectCircle(circle, advance = true) {
         return;
     }
 
+    disposeWizardRasterCache();
+
     state.selectedCircle = circle;
     state.selectedZone = null;
 
@@ -564,6 +670,8 @@ function selectZone(zoneFeature = null) {
     }
 
     setStep(3);
+    // Pre-render immediately in background as soon as subject is identified
+    preloadWizardRaster();
 }
 
 /**
@@ -729,14 +837,92 @@ function escapeHtml(str) {
 function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
+    a.style.display = "none";
     a.href = url;
     a.download = filename;
+    a.addEventListener("click", (e) => e.stopPropagation());
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }, 200);
+}
+
+/**
+ * Generates a GeoPDF layout Blob using headless offscreen MapLibre
+ */
+async function generateGeoPdfBlob(targetBtn = null, silent = false) {
+    if (targetBtn) {
+        targetBtn.disabled = true;
+        targetBtn.classList.add("is-preparing");
+    }
+    try {
+        const key = getWizardCacheKey();
+        const isReady = wizardRasterCache.key === key && !!wizardRasterCache.canvas;
+        if (!silent && !isReady) {
+            showToast("Rendering map layout...");
+        }
+
+        const canvas = await getOrRenderWizardCanvas();
+        const filename = getDownloadFilename("pdf");
+
+        if (window.jspdf && window.jspdf.jsPDF) {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: "landscape",
+                unit: "mm",
+                format: "a4"
+            });
+            const imgData = canvas.toDataURL("image/jpeg", 0.92);
+            pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
+            pdf.setProperties({
+                title: filename.replace(/\.pdf$/i, ""),
+                subject: "GeoPDF Map Layout Export - Esri Topo Basemap",
+                keywords: "GeoPDF, GIS, Map, Esri Topo, Fovea",
+                creator: "Fovea Web Map Layout Engine"
+            });
+            return { blob: pdf.output("blob"), filename };
+        } else {
+            return new Promise((resolve) => {
+                canvas.toBlob((blob) => {
+                    resolve({ blob, filename: filename.replace(/\.pdf$/i, "-layout.png") });
+                }, "image/png");
+            });
+        }
+    } finally {
+        if (targetBtn) {
+            targetBtn.disabled = false;
+            targetBtn.classList.remove("is-preparing");
+        }
+    }
+}
+
+/**
+ * Generates a GeoTIFF layout Blob using headless offscreen MapLibre
+ */
+async function generateGeoTiffBlob(targetBtn = null, silent = false) {
+    if (targetBtn) {
+        targetBtn.disabled = true;
+        targetBtn.classList.add("is-preparing");
+    }
+    try {
+        const key = getWizardCacheKey();
+        const isReady = wizardRasterCache.key === key && !!wizardRasterCache.canvas;
+        if (!silent && !isReady) {
+            showToast("Rendering map layout...");
+        }
+
+        const canvas = await getOrRenderWizardCanvas();
+        const filename = getDownloadFilename("tif");
+        const blob = canvasToTiffBlob(canvas);
+        return { blob, filename };
+    } finally {
+        if (targetBtn) {
+            targetBtn.disabled = false;
+            targetBtn.classList.remove("is-preparing");
+        }
+    }
 }
 
 /**
@@ -804,19 +990,33 @@ function setupDirectDownloadButtons() {
         });
     }
 
-    // GeoTIFF Notice
+    // GeoTIFF Download
     const geotiffBtn = document.getElementById("download-format-geotiff");
     if (geotiffBtn) {
-        geotiffBtn.addEventListener("click", () => {
-            showToast("GeoTIFF raster tiles coming soon. Vector formats available above.");
+        geotiffBtn.addEventListener("click", async () => {
+            try {
+                const { blob, filename } = await generateGeoTiffBlob(geotiffBtn);
+                downloadBlob(blob, filename);
+                showToast(`Downloaded ${filename}`);
+            } catch (err) {
+                console.error("GeoTIFF download error:", err);
+                showToast("Error generating GeoTIFF.");
+            }
         });
     }
 
-    // GeoPDF Notice
+    // GeoPDF Download
     const geopdfBtn = document.getElementById("download-format-geopdf");
     if (geopdfBtn) {
-        geopdfBtn.addEventListener("click", () => {
-            showToast("GeoPDF map sheets coming soon. Vector formats available above.");
+        geopdfBtn.addEventListener("click", async () => {
+            try {
+                const { blob, filename } = await generateGeoPdfBlob(geopdfBtn);
+                downloadBlob(blob, filename);
+                showToast(`Downloaded ${filename}`);
+            } catch (err) {
+                console.error("GeoPDF download error:", err);
+                showToast("Error generating GeoPDF.");
+            }
         });
     }
 }
@@ -826,48 +1026,64 @@ function setupDirectDownloadButtons() {
  */
 function setupAppCards() {
     document.querySelectorAll(".wizard-app-card").forEach(card => {
-        card.addEventListener("click", async () => {
+        card.addEventListener("click", () => {
             const appKey = card.dataset.app;
-            await handleAppCardClick(appKey);
+            handleAppCardClick(appKey);
         });
     });
 }
 
 /**
- * Handle Compatible App Card click -> Opens instruction popup
+ * Handle Compatible App Card click -> Opens instruction popup immediately & renders in background
  */
-async function handleAppCardClick(appKey) {
+function handleAppCardClick(appKey) {
     const config = APP_INSTRUCTION_CONFIGS[appKey] || APP_INSTRUCTION_CONFIGS.avenza;
     const geojson = getExportGeoJSON();
     const filename = getDownloadFilename(config.ext);
 
-    let blob = null;
-    if (config.formatKey === "kmz") {
-        const kmlContent = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
-        if (typeof JSZip !== "undefined") {
-            const zip = new JSZip();
-            zip.file("doc.kml", kmlContent);
-            blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
-        } else {
-            blob = new Blob([kmlContent], { type: "application/vnd.google-earth.kml+xml" });
-        }
+    let blobPromise = null;
+    if (config.formatKey === "geopdf" || config.ext === "pdf") {
+        blobPromise = generateGeoPdfBlob(null, true);
+    } else if (config.formatKey === "geotiff" || config.ext === "tif") {
+        blobPromise = generateGeoTiffBlob(null, true);
+    } else if (config.formatKey === "kmz") {
+        blobPromise = (async () => {
+            const kmlContent = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
+            if (typeof JSZip !== "undefined") {
+                const zip = new JSZip();
+                zip.file("doc.kml", kmlContent);
+                const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
+                return { blob, filename };
+            } else {
+                return { blob: new Blob([kmlContent], { type: "application/vnd.google-earth.kml+xml" }), filename: filename.replace(/\.kmz$/i, ".kml") };
+            }
+        })();
     } else if (config.formatKey === "gpx") {
         const gpxContent = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
-        blob = new Blob([gpxContent], { type: "application/gpx+xml" });
+        blobPromise = Promise.resolve({ blob: new Blob([gpxContent], { type: "application/gpx+xml" }), filename });
     } else {
-        blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
+        blobPromise = Promise.resolve({ blob: new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" }), filename });
     }
 
-    state.activeGeneratedBlob = blob;
+    state.activeGeneratedBlobPromise = blobPromise;
+    state.activeGeneratedBlob = null;
     state.activeGeneratedFilename = filename;
 
-    openAppInstructionModal(config, filename, blob);
+    blobPromise.then(res => {
+        state.activeGeneratedBlob = res.blob;
+        if (res.filename) state.activeGeneratedFilename = res.filename;
+    }).catch(err => {
+        console.error("Background export error:", err);
+    });
+
+    // Open popup instantly without delay
+    openAppInstructionModal(config, filename);
 }
 
 /**
  * Opens App Instruction Modal
  */
-function openAppInstructionModal(config, filename, blob) {
+function openAppInstructionModal(config, filename) {
     const modal = document.getElementById("avenza-instruction-modal");
     if (!modal) return;
 
@@ -911,11 +1127,65 @@ function openAppInstructionModal(config, filename, blob) {
     // Download Button handler in Modal
     const modalDownloadBtn = document.getElementById("avenza-modal-download-btn");
     if (modalDownloadBtn) {
-        modalDownloadBtn.onclick = () => {
-            if (state.activeGeneratedBlob && state.activeGeneratedFilename) {
-                downloadBlob(state.activeGeneratedBlob, state.activeGeneratedFilename);
-                showToast(`Downloaded ${state.activeGeneratedFilename}`);
+        modalDownloadBtn.classList.remove("is-downloaded", "is-preparing");
+        const defaultHtml = `
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Download File</span>
+        `;
+        modalDownloadBtn.innerHTML = defaultHtml;
+
+        modalDownloadBtn.onclick = async () => {
+            if (modalDownloadBtn.classList.contains("is-preparing")) return;
+
+            let blob = state.activeGeneratedBlob;
+            let targetFilename = state.activeGeneratedFilename || filename;
+
+            if (!(blob instanceof Blob)) {
+                showToast("Rendering map layout...");
+                modalDownloadBtn.classList.add("is-preparing");
+                modalDownloadBtn.innerHTML = `
+                    <svg class="spin-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="2" x2="12" y2="6"></line>
+                        <line x1="12" y1="18" x2="12" y2="22"></line>
+                        <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                        <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                        <line x1="2" y1="12" x2="6" y2="12"></line>
+                        <line x1="18" y1="12" x2="22" y2="12"></line>
+                        <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                        <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                    </svg>
+                    <span>Preparing...</span>
+                `;
+
+                try {
+                    if (state.activeGeneratedBlobPromise) {
+                        const res = await state.activeGeneratedBlobPromise;
+                        blob = res.blob;
+                        if (res.filename) targetFilename = res.filename;
+                    }
+                    state.activeGeneratedBlob = blob;
+                    state.activeGeneratedFilename = targetFilename;
+                } catch (err) {
+                    console.error("Modal download error:", err);
+                    showToast("Error generating download file.");
+                    modalDownloadBtn.classList.remove("is-preparing");
+                    modalDownloadBtn.innerHTML = defaultHtml;
+                    return;
+                }
+                modalDownloadBtn.classList.remove("is-preparing");
             }
+
+            downloadBlob(blob, targetFilename);
+            modalDownloadBtn.classList.add("is-downloaded");
+            modalDownloadBtn.innerHTML = `
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Downloaded</span>
+            `;
+            showToast(`Downloaded ${targetFilename}`);
         };
     }
 
@@ -932,6 +1202,7 @@ function openAppInstructionModal(config, filename, blob) {
     modal.classList.add("is-open");
     modal.setAttribute("aria-hidden", "false");
 }
+
 
 /**
  * Setup modal close triggers

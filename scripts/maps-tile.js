@@ -900,8 +900,10 @@ async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton
   if (fileOrBlob instanceof Blob) {
     const url = URL.createObjectURL(fileOrBlob);
     const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = url;
     a.download = fileName;
+    a.addEventListener('click', (e) => e.stopPropagation());
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
@@ -910,11 +912,15 @@ async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton
     }, 100);
   } else if (typeof fileOrBlob === 'string') {
     const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = fileOrBlob;
     a.download = fileName;
+    a.addEventListener('click', (e) => e.stopPropagation());
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+    setTimeout(() => {
+      document.body.removeChild(a);
+    }, 100);
   }
 }
 
@@ -982,7 +988,7 @@ async function generateAppSpatialBlob(formatKey) {
   const filename = getActiveDownloadFilename(formatKey === "geopdf" ? "pdf" : formatKey);
 
   if (formatKey === "geopdf") {
-    const canvas = await renderMapLayoutCanvas();
+    const canvas = await getOrRenderLayoutCanvas();
     if (window.jspdf && window.jspdf.jsPDF) {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({
@@ -1005,6 +1011,10 @@ async function generateAppSpatialBlob(formatKey) {
         }, "image/png");
       });
     }
+  } else if (formatKey === "geotiff" || formatKey === "tif") {
+    const canvas = await getOrRenderLayoutCanvas();
+    const tiffBlob = canvasToTiffBlob(canvas);
+    return { blob: tiffBlob, filename: getActiveDownloadFilename("tif") };
   } else if (formatKey === "gpx") {
     const gpxStr = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
     const blob = new Blob([gpxStr], { type: "application/gpx+xml" });
@@ -1218,20 +1228,29 @@ async function openAppInstructionModal(appKeyOrName, mapFileUrlOrBlob = null, fi
     };
   }
 
-  let blob = mapFileUrlOrBlob;
-  let mapFilename = filename;
-  if (!(blob instanceof Blob)) {
-    const generated = await generateAppSpatialBlob(config.formatKey);
-    blob = generated.blob;
-    mapFilename = generated.filename;
+  let blobPromise = null;
+  if (mapFileUrlOrBlob instanceof Blob) {
+    blobPromise = Promise.resolve({ blob: mapFileUrlOrBlob, filename: filename || `map.${config.ext}` });
+    window._pendingAppBlob = mapFileUrlOrBlob;
+  } else {
+    window._pendingAppBlob = null;
+    blobPromise = generateAppSpatialBlob(config.formatKey);
   }
 
-  const finalFilename = mapFilename || `map.${config.ext}`;
-  window._pendingAppBlob = blob;
+  const finalFilename = filename || `map.${config.ext}`;
+  window._pendingAppBlobPromise = blobPromise;
   window._pendingAppFilename = finalFilename;
   window._pendingAppScheme = config.scheme;
   window._pendingAppFormatKey = config.formatKey;
   window._pendingAppKey = config.appKey || normKey;
+
+  // Background resolution
+  blobPromise.then(res => {
+    window._pendingAppBlob = res.blob;
+    if (res.filename) window._pendingAppFilename = res.filename;
+  }).catch(err => {
+    console.error("Background map generation error:", err);
+  });
 
   const appIconEl = document.getElementById("avenza-modal-app-icon");
   if (appIconEl) {
@@ -1249,7 +1268,7 @@ async function openAppInstructionModal(appKeyOrName, mapFileUrlOrBlob = null, fi
 
   const downloadBtn = document.getElementById("avenza-modal-download-btn");
   if (downloadBtn) {
-    downloadBtn.classList.remove("is-downloaded");
+    downloadBtn.classList.remove("is-downloaded", "is-preparing");
     downloadBtn.innerHTML = `
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1303,31 +1322,9 @@ async function openInAvenzaWithFallback(mapFileUrlOrBlob, filename, triggerCard 
  * Executes direct app handshake for Suggested Apps (Avenza, Gaia GPS, CalTopo, OsmAnd).
  */
 async function handleAppDirectOpen(appName, triggerCard = null) {
-  let originalLabelText = "";
-  const labelEl = triggerCard ? triggerCard.querySelector(".suggested-app-name") : null;
-
-  if (triggerCard) {
-    triggerCard.classList.add("is-preparing");
-    if (labelEl) {
-      originalLabelText = labelEl.textContent;
-      labelEl.textContent = "Preparing...";
-    }
-  }
-
-  const resetUi = () => {
-    if (triggerCard) {
-      triggerCard.classList.remove("is-preparing");
-      if (labelEl && originalLabelText) {
-        labelEl.textContent = originalLabelText;
-      }
-    }
-  };
-
   try {
     await openAppInstructionModal(appName, null, null, triggerCard);
-    resetUi();
   } catch (err) {
-    resetUi();
     if (typeof showToast === "function") {
       showToast(`Could not open instructions for ${appName}`);
     }
@@ -1465,6 +1462,89 @@ function geojsonToGpx(geojson, docName = "Map Data") {
 </gpx>`;
 }
 
+function canvasToTiffBlob(canvas) {
+    const width = canvas.width;
+    const height = canvas.height;
+    const ctx = canvas.getContext("2d");
+    const imgData = ctx.getImageData(0, 0, width, height);
+    const rgba = imgData.data;
+
+    const numPixels = width * height;
+    const rgb = new Uint8Array(numPixels * 3);
+    for (let i = 0, j = 0; i < rgba.length; i += 4, j += 3) {
+        rgb[j] = rgba[i];       // R
+        rgb[j + 1] = rgba[i + 1]; // G
+        rgb[j + 2] = rgba[i + 2]; // B
+    }
+
+    const imageByteCount = rgb.length;
+    const headerSize = 8;
+    const ifdOffset = headerSize + imageByteCount;
+    const numEntries = 12;
+    const ifdSize = 2 + (numEntries * 12) + 4;
+    const valueDataOffset = ifdOffset + ifdSize;
+
+    // Value offsets for multi-byte tags
+    const bitsOffset = valueDataOffset; // 6 bytes (3 * uint16)
+    const xResOffset = bitsOffset + 6;  // 8 bytes (2 * uint32: 400, 1)
+    const yResOffset = xResOffset + 8;  // 8 bytes (2 * uint32: 400, 1)
+
+    const totalSize = yResOffset + 8;
+    const buffer = new ArrayBuffer(totalSize);
+    const view = new DataView(buffer);
+    const u8 = new Uint8Array(buffer);
+
+    // TIFF Header ("II" Little Endian)
+    u8[0] = 0x49; u8[1] = 0x49;
+    view.setUint16(2, 42, true);
+    view.setUint32(4, ifdOffset, true);
+
+    // Write RGB Pixels
+    u8.set(rgb, headerSize);
+
+    // BitsPerSample values (8, 8, 8)
+    view.setUint16(bitsOffset, 8, true);
+    view.setUint16(bitsOffset + 2, 8, true);
+    view.setUint16(bitsOffset + 4, 8, true);
+
+    // XResolution (400 / 1 -> 400 DPI)
+    view.setUint32(xResOffset, 400, true);
+    view.setUint32(xResOffset + 4, 1, true);
+
+    // YResolution (400 / 1 -> 400 DPI)
+    view.setUint32(yResOffset, 400, true);
+    view.setUint32(yResOffset + 4, 1, true);
+
+    // IFD Tags
+    let p = ifdOffset;
+    view.setUint16(p, numEntries, true); p += 2;
+
+    function writeTag(tag, type, count, value) {
+        view.setUint16(p, tag, true);
+        view.setUint16(p + 2, type, true);
+        view.setUint32(p + 4, count, true);
+        view.setUint32(p + 8, value, true);
+        p += 12;
+    }
+
+    writeTag(256, 4, 1, width);               // ImageWidth
+    writeTag(257, 4, 1, height);              // ImageLength
+    writeTag(258, 3, 3, bitsOffset);          // BitsPerSample
+    writeTag(259, 3, 1, 1);                   // Compression = 1 (Uncompressed)
+    writeTag(262, 3, 1, 2);                   // PhotometricInterpretation = 2 (RGB)
+    writeTag(273, 4, 1, headerSize);          // StripOffsets
+    writeTag(277, 3, 1, 3);                   // SamplesPerPixel = 3
+    writeTag(278, 4, 1, height);              // RowsPerStrip
+    writeTag(279, 4, 1, imageByteCount);      // StripByteCounts
+    writeTag(282, 5, 1, xResOffset);          // XResolution (400 DPI)
+    writeTag(283, 5, 1, yResOffset);          // YResolution (400 DPI)
+    writeTag(296, 3, 1, 2);                   // ResolutionUnit = 2 (Inch)
+
+    view.setUint32(p, 0, true);
+
+    return new Blob([buffer], { type: "image/tiff" });
+}
+
 function switchBaseMap(baseMapId) {
     if (!state.map || !state.baseMapsList) return;
     const targetId = (baseMapId === "dark" || baseMapId === "default") ? "default" : baseMapId;
@@ -1538,33 +1618,67 @@ function switchBaseMap(baseMapId) {
     }
 }
 
-function getLayoutScaleBar(map, layoutMapWidth) {
-    if (!map) return { miles: 1, pxWidth: 150 };
-    const canvas = map.getCanvas();
-    const cX = canvas.width / 2;
-    const cY = canvas.height / 2;
-    
-    const samplePx = 200;
-    const p1 = map.unproject([cX - (samplePx / 2), cY]);
-    const p2 = map.unproject([cX + (samplePx / 2), cY]);
-    
-    let distMiles = 1;
-    if (typeof turf !== "undefined" && turf.distance) {
-        distMiles = turf.distance([p1.lng, p1.lat], [p2.lng, p2.lat], { units: "miles" });
-    } else {
-        const lat1 = p1.lat * Math.PI / 180;
-        const lat2 = p2.lat * Math.PI / 180;
-        const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-        const dLon = (p2.lng - p1.lng) * Math.PI / 180;
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        distMiles = 3958.8 * c;
-    }
+// ──────────────────────────────────────────────────────────────
+// Headless offscreen MapLibre renderer for PDF / TIFF exports
+// No dependency on the on-screen map DOM or state.map
+// ──────────────────────────────────────────────────────────────
 
-    const milesPerLayoutPx = distMiles / (samplePx * (layoutMapWidth / canvas.width));
-    const targetPx = 200;
-    const approxMiles = targetPx * milesPerLayoutPx;
-    
+const ESRI_TOPO_TILE_URL_PRINT = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}";
+const OFFSCREEN_MAP_WIDTH = 3800;
+const OFFSCREEN_MAP_HEIGHT = 2500;
+const LAYOUT_WIDTH = 4000;
+const LAYOUT_HEIGHT = 3000;
+
+/**
+ * Compute bounding box from GeoJSON features (self-contained, no imports).
+ */
+function computeBboxForPrint(features) {
+    let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+    const processCoord = (coord) => {
+        if (coord[0] < minLng) minLng = coord[0];
+        if (coord[1] < minLat) minLat = coord[1];
+        if (coord[0] > maxLng) maxLng = coord[0];
+        if (coord[1] > maxLat) maxLat = coord[1];
+    };
+    const processGeom = (geom) => {
+        if (!geom) return;
+        if (geom.type === "Polygon") {
+            geom.coordinates[0].forEach(processCoord);
+        } else if (geom.type === "MultiPolygon") {
+            geom.coordinates.forEach(poly => poly[0].forEach(processCoord));
+        } else if (geom.type === "Point") {
+            processCoord(geom.coordinates);
+        }
+    };
+    if (Array.isArray(features)) {
+        features.forEach(f => processGeom(f.geometry));
+    } else {
+        processGeom(features.geometry);
+    }
+    if (minLng === Infinity) return [[-123.3, 43.9], [-122.9, 44.2]];
+    return [[minLng, minLat], [maxLng, maxLat]];
+}
+
+/**
+ * Calculate a scale bar from geographic bounds and layout pixel width.
+ * Pure math — no dependency on any map instance.
+ */
+function getLayoutScaleBar(bounds, layoutMapWidth) {
+    if (!bounds || !bounds[0] || !bounds[1]) return { miles: 1, pxWidth: 250 };
+
+    const [[minLng, minLat], [maxLng, maxLat]] = bounds;
+    const centerLat = (minLat + maxLat) / 2;
+
+    const lat1Rad = centerLat * Math.PI / 180;
+    const dLon = (maxLng - minLng) * Math.PI / 180;
+    const a = Math.cos(lat1Rad) * Math.cos(lat1Rad) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const totalMiles = 3958.8 * c;
+
+    const milesPerPx = totalMiles / layoutMapWidth;
+    const targetPx = 330;
+    const approxMiles = targetPx * milesPerPx;
+
     const niceIncrements = [0.1, 0.25, 0.5, 1, 2, 3, 5, 10, 15, 20, 25, 50, 100];
     let chosenMiles = niceIncrements[0];
     let minDiff = Math.abs(approxMiles - chosenMiles);
@@ -1576,7 +1690,7 @@ function getLayoutScaleBar(map, layoutMapWidth) {
         }
     }
 
-    const scaleBarPx = Math.max(100, Math.min(450, chosenMiles / milesPerLayoutPx));
+    const scaleBarPx = Math.max(160, Math.min(750, chosenMiles / milesPerPx));
     return { miles: chosenMiles, pxWidth: scaleBarPx };
 }
 
@@ -1586,397 +1700,724 @@ function loadQrCodeImage(dataUrl) {
         img.crossOrigin = "anonymous";
         img.onload = () => resolve(img);
         img.onerror = () => resolve(null);
-        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&format=png&data=${encodeURIComponent(dataUrl)}`;
-        setTimeout(() => resolve(null), 1500);
+        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&format=png&data=${encodeURIComponent(dataUrl)}`;
+        setTimeout(() => resolve(null), 3000);
     });
 }
 
-async function renderMapLayoutCanvas() {
-    showToast("Rendering Esri Topo Print Layout...");
+/**
+ * Fast & exact Pole of Inaccessibility (Polylabel) algorithm.
+ * Finds the most distant internal point from the polygon outline (maximum clearance from all borders).
+ * Guaranteed to place labels in the widest, most spacious part of any polygon (even concave/complex).
+ */
+function polylabel(polygon, precision = 0.0005) {
+    const outerRing = polygon[0];
+    if (!outerRing || outerRing.length < 3) return null;
+
+    // Bounding box
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (let i = 0; i < outerRing.length; i++) {
+        const p = outerRing[i];
+        if (p[0] < minX) minX = p[0];
+        if (p[1] < minY) minY = p[1];
+        if (p[0] > maxX) maxX = p[0];
+        if (p[1] > maxY) maxY = p[1];
+    }
+
+    const width = maxX - minX;
+    const height = maxY - minY;
+    const cellSize = Math.min(width, height);
+    const h = cellSize / 2;
+
+    if (cellSize === 0) return [minX, minY];
+
+    // Signed distance from point to polygon (positive if inside, negative if outside)
+    function pointToPolygonDist(px, py) {
+        let inside = false;
+        let minDistSq = Infinity;
+
+        for (let k = 0; k < polygon.length; k++) {
+            const ring = polygon[k];
+            for (let i = 0, len = ring.length, j = len - 1; i < len; j = i++) {
+                const a = ring[i];
+                const b = ring[j];
+
+                if ((a[1] > py !== b[1] > py) &&
+                    (px < (b[0] - a[0]) * (py - a[1]) / (b[1] - a[1]) + a[0])) {
+                    inside = !inside;
+                }
+
+                // Distance to segment [a, b]
+                let dx = b[0] - a[0];
+                let dy = b[1] - a[1];
+                let distSq;
+                if (dx === 0 && dy === 0) {
+                    distSq = (px - a[0]) ** 2 + (py - a[1]) ** 2;
+                } else {
+                    const t = Math.max(0, Math.min(1, ((px - a[0]) * dx + (py - a[1]) * dy) / (dx * dx + dy * dy)));
+                    const projX = a[0] + t * dx;
+                    const projY = a[1] + t * dy;
+                    distSq = (px - projX) ** 2 + (py - projY) ** 2;
+                }
+
+                if (distSq < minDistSq) minDistSq = distSq;
+            }
+        }
+
+        const dist = Math.sqrt(minDistSq);
+        return inside ? dist : -dist;
+    }
+
+    // Cell object constructor
+    function createCell(x, y, h) {
+        const d = pointToPolygonDist(x, y);
+        return {
+            x: x,
+            y: y,
+            h: h,
+            d: d,
+            max: d + h * Math.SQRT2
+        };
+    }
+
+    // Priority queue of cells
+    const cellQueue = [];
     
-    // Remember current active basemap to restore later
-    const previousBaseLayer = state.currentBaseLayer || "dark";
-    
-    // Get map wrapper and tile-map elements to temporarily resize to high resolution print canvas size
-    const mapWrapper = document.getElementById("map-wrapper");
-    const tileMap = document.getElementById("tile-map");
-    let origStyle = "";
-    let origTileStyle = "";
-    if (mapWrapper && tileMap) {
-        origStyle = mapWrapper.getAttribute("style") || "";
-        origTileStyle = tileMap.getAttribute("style") || "";
-        
-        // Temporarily size mapWrapper to 2280x1500 (landscape printing canvas size) and push offscreen
-        mapWrapper.style.setProperty("position", "fixed", "important");
-        mapWrapper.style.setProperty("left", "-9999px", "important");
-        mapWrapper.style.setProperty("top", "0px", "important");
-        mapWrapper.style.setProperty("width", "2280px", "important");
-        mapWrapper.style.setProperty("height", "1500px", "important");
-        mapWrapper.style.setProperty("z-index", "-99999", "important");
-        
-        // Also force tile-map to override mobile's 100vh rule to match wrapper dimensions
-        tileMap.style.setProperty("width", "2280px", "important");
-        tileMap.style.setProperty("height", "1500px", "important");
-        
-        if (state.map) {
-            state.map.resize();
+    // Initial best cell at centroid
+    let sumX = 0, sumY = 0, totalPts = outerRing.length;
+    for (let i = 0; i < totalPts; i++) {
+        sumX += outerRing[i][0];
+        sumY += outerRing[i][1];
+    }
+    let bestCell = createCell(sumX / totalPts, sumY / totalPts, 0);
+
+    // Initial grid of cells covering the bbox
+    for (let x = minX; x < maxX; x += cellSize) {
+        for (let y = minY; y < maxY; y += cellSize) {
+            const cell = createCell(x + h, y + h, h);
+            cellQueue.push(cell);
+            if (cell.d > bestCell.d) bestCell = cell;
         }
     }
 
-    try {
-        // Switch basemap to Esri Topo if not already active
-        if (state.currentBaseLayer !== "esri-topo") {
-            switchBaseMap("esri-topo");
+    // Sort descending by max potential
+    cellQueue.sort((a, b) => b.max - a.max);
+
+    // Subdivide and search
+    let iter = 0;
+    while (cellQueue.length > 0 && iter < 1000) {
+        iter++;
+        const cell = cellQueue.shift();
+
+        if (cell.d > bestCell.d) {
+            bestCell = cell;
         }
 
-        // Fit map bounds to the current selected feature on the print viewport layout with generous margins (padding)
-        if (state.map) {
-            const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
-            let targetFeature = null;
-            if (!isCircle) {
-                targetFeature = state.allFeatures.find(f => {
-                    const zid = f.properties?.zid;
-                    return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
+        // Stop if cell's max potential cannot beat bestCell
+        if (cell.max - bestCell.d <= precision) continue;
+
+        // Subdivide cell into 4 smaller cells
+        const subH = cell.h / 2;
+        const sub1 = createCell(cell.x - subH, cell.y - subH, subH);
+        const sub2 = createCell(cell.x + subH, cell.y - subH, subH);
+        const sub3 = createCell(cell.x - subH, cell.y + subH, subH);
+        const sub4 = createCell(cell.x + subH, cell.y + subH, subH);
+
+        [sub1, sub2, sub3, sub4].forEach(sub => {
+            if (sub.max > bestCell.d) {
+                // Insert into sorted queue
+                let inserted = false;
+                for (let i = 0; i < cellQueue.length; i++) {
+                    if (sub.max > cellQueue[i].max) {
+                        cellQueue.splice(i, 0, sub);
+                        inserted = true;
+                        break;
+                    }
+                }
+                if (!inserted) cellQueue.push(sub);
+            }
+        });
+    }
+
+    return [bestCell.x, bestCell.y];
+}
+
+/**
+ * Helper to compute the most spacious interior point for a GeoJSON feature (maximum border clearance).
+ */
+function getFeatureCenter(feature) {
+    if (!feature || !feature.geometry) return null;
+    const geom = feature.geometry;
+    if (geom.type === "Point") return geom.coordinates;
+
+    const polygons = geom.type === "Polygon" ? [geom.coordinates] : 
+                     (geom.type === "MultiPolygon" ? geom.coordinates : []);
+    
+    if (polygons.length === 0) return null;
+
+    // Pick the polygon with largest bbox area if MultiPolygon
+    let mainPoly = polygons[0];
+    if (polygons.length > 1) {
+        let maxBboxArea = 0;
+        polygons.forEach(p => {
+            if (p[0] && p[0].length >= 3) {
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                p[0].forEach(c => {
+                    if (c[0] < minX) minX = c[0];
+                    if (c[1] < minY) minY = c[1];
+                    if (c[0] > maxX) maxX = c[0];
+                    if (c[1] > maxY) maxY = c[1];
                 });
+                const area = (maxX - minX) * (maxY - minY);
+                if (area > maxBboxArea) {
+                    maxBboxArea = area;
+                    mainPoly = p;
+                }
             }
-            
-            // padding: 120 adds a clean margin of 120 pixels around the feature so it doesn't touch the map frame borders
-            if (isCircle || !targetFeature) {
-                state.map.fitBounds(getBbox(state.allFeatures), { padding: 120, animate: false });
-            } else {
-                state.map.fitBounds(getBbox([targetFeature]), { padding: 120, maxZoom: 14, animate: false });
+        });
+    }
+
+    return polylabel(mainPoly);
+}
+
+/**
+ * Create a headless offscreen MapLibre GL instance, render Esri Topo tiles
+ * with optional zone polygon overlays, and return a standalone canvas copy + zone label positions.
+ */
+async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom = 18) {
+    const container = document.createElement("div");
+    container.style.cssText = `
+        position: fixed; left: -9999px; top: 0;
+        width: ${OFFSCREEN_MAP_WIDTH}px; height: ${OFFSCREEN_MAP_HEIGHT}px;
+        z-index: -99999; visibility: hidden; pointer-events: none;
+    `;
+    document.body.appendChild(container);
+
+    try {
+        const style = {
+            version: 8,
+            sources: {
+                "esri-topo": {
+                    type: "raster",
+                    tiles: [ESRI_TOPO_TILE_URL_PRINT],
+                    tileSize: 256,
+                    maxzoom: 18
+                }
+            },
+            layers: [
+                { id: "esri-topo-layer", type: "raster", source: "esri-topo" }
+            ]
+        };
+
+        const offscreenMap = new maplibregl.Map({
+            container: container,
+            style: style,
+            preserveDrawingBuffer: true,
+            interactive: false,
+            attributionControl: false,
+            maxZoom: 20,
+            minZoom: 0
+        });
+
+        await new Promise((resolve) => {
+            offscreenMap.on("load", resolve);
+            offscreenMap.on("error", (e) => {
+                console.warn("Offscreen map error:", e);
+                resolve();
+            });
+            setTimeout(resolve, 5000);
+        });
+
+        if (geojsonOverlay) {
+            try {
+                offscreenMap.addSource("zone-polygons", {
+                    type: "geojson",
+                    data: geojsonOverlay
+                });
+                offscreenMap.addLayer({
+                    id: "zone-polygons-outline",
+                    type: "line",
+                    source: "zone-polygons",
+                    paint: {
+                        "line-color": "#dc2626",
+                        "line-width": 4.5,
+                        "line-opacity": 0.9
+                    }
+                });
+            } catch (e) {
+                console.warn("Could not add zone polygon overlay:", e);
             }
         }
 
-        // Wait for MapLibre to load and render Esri Topo tiles
+        offscreenMap.fitBounds(bounds, { padding: 180, maxZoom: maxZoom, animate: false });
+
         await new Promise((resolve) => {
             let checkCount = 0;
             const checkIdle = () => {
                 checkCount++;
-                if ((state.map && state.map.areTilesLoaded()) || checkCount > 35) {
-                    if (state.map) state.map.off('idle', checkIdle);
+                if (offscreenMap.areTilesLoaded() || checkCount > 40) {
+                    offscreenMap.off("idle", checkIdle);
                     resolve();
                 }
             };
-            if (state.map) {
-                state.map.on('idle', checkIdle);
-                state.map.triggerRepaint();
-            }
-            setTimeout(resolve, 1500); // Failsafe timeout for network tiles
+            offscreenMap.on("idle", checkIdle);
+            offscreenMap.triggerRepaint();
+            setTimeout(resolve, 4000);
         });
 
-        const mapCanvas = state.map ? state.map.getCanvas() : null;
-
-        // High resolution layout canvas (2400 x 1800 px - 4:3 ratio, print-optimized quality)
-        const layoutCanvas = document.createElement("canvas");
-        const width = 2400;
-        const height = 1800;
-        layoutCanvas.width = width;
-        layoutCanvas.height = height;
-        const ctx = layoutCanvas.getContext("2d");
-
-        // 1. Pure White outer canvas background (Paper Print-Friendly)
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, width, height);
-
-        // 2. Define inner map frame layout box
-        const mapMargin = 60;
-        const headerHeight = 110;
-        const footerHeight = 70;
-
-        const mapX = mapMargin;
-        const mapY = mapMargin + headerHeight;
-        const mapW = width - (mapMargin * 2);
-        const mapH = height - mapY - footerHeight - mapMargin;
-
-        // Background for map box (clean off-white for topo rendering)
-        ctx.fillStyle = "#f9fafb";
-        ctx.fillRect(mapX, mapY, mapW, mapH);
-
-        // Draw MapLibre WebGL canvas image into map box (no stretching needed as viewport is exactly 2280x1500)
-        if (mapCanvas) {
-            try {
-                ctx.drawImage(mapCanvas, mapX, mapY, mapW, mapH);
-            } catch (err) {
-                console.warn("Could not draw map canvas directly:", err);
-            }
-        }
-
-        // Inner map frame border - Crisp minimal dark border
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(mapX, mapY, mapW, mapH);
-
-        // 3. Header Text (No border box around header text!)
-        const hasSpecificZone = state.currentId && state.currentId !== CIRCLE_ID;
-
-        // Header Title Text (Crisp Dark Typography for Paper Printing)
-        ctx.fillStyle = "#111827";
-        ctx.font = "bold 46px system-ui, -apple-system, sans-serif";
-        const headerTitleText = state.isCirclesFeature 
-            ? "COAST TO CASCADES BIRD ALLIANCE" 
-            : (state.currentFeature === "florence" ? "FLORENCE CHRISTMAS BIRD COUNT" : "EUGENE CHRISTMAS BIRD COUNT");
-        ctx.fillText(headerTitleText, mapMargin, mapMargin + 45);
-
-        // Subtitle / Selection Name (ONLY if specific zone, remove "COUNT CIRCLE MAP")
-        if (hasSpecificZone) {
-            ctx.fillStyle = "#059669";
-            ctx.font = "bold 30px system-ui, -apple-system, sans-serif";
-            const subTitleText = `SURVEY ZONE ${displayZoneId(state.currentId)}`;
-            ctx.fillText(subTitleText, mapMargin, mapMargin + 90);
-        }
-
-        // Date & Basemap Metadata (Right-aligned, no box)
-        ctx.fillStyle = "#374151";
-        ctx.font = "26px system-ui, -apple-system, sans-serif";
-        ctx.textAlign = "right";
-        const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-        ctx.fillText(dateStr, mapMargin + mapW, mapMargin + 45);
-        ctx.font = "20px system-ui, -apple-system, sans-serif";
-        ctx.fillStyle = "#6b7280";
-        ctx.fillText("Base Map: Esri World Topography", mapMargin + mapW, mapMargin + 85);
-        ctx.textAlign = "left";
-
-        // 4. Minimal Cartographic Map Overlays
-        // North Arrow Emblem (Minimalist Print Style)
-        const naX = mapX + mapW - 75;
-        const naY = mapY + 85;
-        ctx.save();
-        ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-        ctx.beginPath();
-        ctx.arc(naX, naY, 40, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-
-        // North Pointer Needle
-        ctx.fillStyle = "#111827";
-        ctx.beginPath();
-        ctx.moveTo(naX, naY - 28);
-        ctx.lineTo(naX + 12, naY + 8);
-        ctx.lineTo(naX, naY + 2);
-        ctx.fill();
-
-        ctx.fillStyle = "#9ca3af";
-        ctx.beginPath();
-        ctx.moveTo(naX, naY - 28);
-        ctx.lineTo(naX - 12, naY + 8);
-        ctx.lineTo(naX, naY + 2);
-        ctx.fill();
-
-        ctx.fillStyle = "#111827";
-        ctx.font = "bold 20px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("N", naX, naY - 32);
-        ctx.restore();
-
-        // Actual Calculated Scale Bar in Miles (Bottom Left of Map Area)
-        const scaleInfo = getLayoutScaleBar(state.map, mapW);
-
-        const barX = mapX + 30;
-        const barY = mapY + mapH - 100;
-        const barW = Math.max(260, scaleInfo.pxWidth + 60);
-        const barH = 70;
-
-        // Scale Box
-        ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-        ctx.fillRect(barX, barY, barW, barH);
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(barX, barY, barW, barH);
-
-        // Scale Bar Line & Ticks
-        const lineStartX = barX + 30;
-        const lineEndX = lineStartX + scaleInfo.pxWidth;
-        const lineY = barY + 45;
-
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(lineStartX, lineY);
-        ctx.lineTo(lineEndX, lineY);
-        ctx.moveTo(lineStartX, lineY - 8);
-        ctx.lineTo(lineStartX, lineY + 8);
-        ctx.moveTo(lineEndX, lineY - 8);
-        ctx.lineTo(lineEndX, lineY + 8);
-        const midX = (lineStartX + lineEndX) / 2;
-        ctx.moveTo(midX, lineY - 5);
-        ctx.lineTo(midX, lineY + 5);
-        ctx.stroke();
-
-        // Scale Bar Numerical Labels
-        ctx.fillStyle = "#111827";
-        ctx.font = "bold 16px system-ui, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("0", lineStartX, lineY - 12);
-        ctx.fillText(`${scaleInfo.miles} mi`, lineEndX, lineY - 12);
-        ctx.textAlign = "left";
-
-        // QR Code Box Overlay (Bottom Right of Map Area)
-        const qrX = mapX + mapW - 175;
-        const qrY = mapY + mapH - 190;
-        const qrBoxW = 150;
-        const qrBoxH = 165;
-
-        ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-        ctx.fillRect(qrX, qrY, qrBoxW, qrBoxH);
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(qrX, qrY, qrBoxW, qrBoxH);
-
-        let qrDrawn = false;
-        if (typeof QRCode !== "undefined") {
-            try {
-                const qrContainer = document.createElement("div");
-                new QRCode(qrContainer, {
-                    text: window.location.href,
-                    width: 120,
-                    height: 120,
-                    correctLevel: QRCode.CorrectLevel.M
-                });
-                const qrCanvas = qrContainer.querySelector("canvas");
-                const qrImg = qrContainer.querySelector("img");
-                if (qrCanvas) {
-                    ctx.drawImage(qrCanvas, qrX + 15, qrY + 12, 120, 120);
-                    qrDrawn = true;
-                } else if (qrImg && qrImg.complete) {
-                    ctx.drawImage(qrImg, qrX + 15, qrY + 12, 120, 120);
-                    qrDrawn = true;
+        // Project zone / circle centers to pixel coordinates before destroying map
+        const zoneLabels = [];
+        if (geojsonOverlay && Array.isArray(geojsonOverlay.features)) {
+            geojsonOverlay.features.forEach(f => {
+                const props = f.properties || {};
+                let label = "";
+                let isCircle = false;
+                if (props.cid) {
+                    label = String(props.cid);
+                    isCircle = true;
+                } else if (props.zid) {
+                    label = typeof displayZoneId === "function" ? displayZoneId(props.zid) : String(props.zid);
+                } else if (props.name) {
+                    label = String(props.name);
                 }
-            } catch (e) {
-                console.warn("QRCode generation error:", e);
-            }
+
+                if (!label) return;
+
+                const center = getFeatureCenter(f);
+                if (center) {
+                    try {
+                        const pt = offscreenMap.project(center);
+                        if (pt && typeof pt.x === "number" && typeof pt.y === "number") {
+                            zoneLabels.push({
+                                label: label,
+                                x: pt.x,
+                                y: pt.y,
+                                isCircle: isCircle
+                            });
+                        }
+                    } catch (e) {}
+                }
+            });
         }
 
-        if (!qrDrawn) {
-            const qrImage = await loadQrCodeImage(window.location.href);
-            if (qrImage) {
-                ctx.drawImage(qrImage, qrX + 15, qrY + 12, 120, 120);
-            }
-        }
+        const mapCanvas = offscreenMap.getCanvas();
+        const resultCanvas = document.createElement("canvas");
+        resultCanvas.width = mapCanvas.width;
+        resultCanvas.height = mapCanvas.height;
+        const resultCtx = resultCanvas.getContext("2d");
+        resultCtx.drawImage(mapCanvas, 0, 0);
 
-        ctx.fillStyle = "#111827";
-        ctx.font = "bold 12px system-ui, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("SCAN FOR ONLINE MAP", qrX + (qrBoxW / 2), qrY + 152);
-        ctx.textAlign = "left";
-
-        // 5. Clean Footer Text (No border box around footer text!)
-        const footY = height - footerHeight - mapMargin + 18;
-
-        ctx.fillStyle = "#374151";
-        ctx.font = "19px system-ui, sans-serif";
-        const bbox = getBbox(state.allFeatures);
-        const boundsText = `Spatial Extent (WGS84): [${bbox[0][0].toFixed(4)}°W, ${bbox[0][1].toFixed(4)}°N] to [${bbox[1][0].toFixed(4)}°W, ${bbox[1][1].toFixed(4)}°N]`;
-        ctx.fillText(boundsText, mapMargin, footY + 24);
-
-        ctx.fillStyle = "#6b7280";
-        ctx.font = "16px system-ui, sans-serif";
-        ctx.fillText("Printed with Fovea | Esri World Topographic Basemap © Esri, DeLorme, NAVTEQ", mapMargin, footY + 52);
-
-        return layoutCanvas;
+        offscreenMap.remove();
+        return { canvas: resultCanvas, zoneLabels: zoneLabels };
     } finally {
-        // Restore previous basemap if changed
-        if (previousBaseLayer !== "esri-topo") {
-            switchBaseMap(previousBaseLayer);
+        if (container.parentNode) {
+            container.parentNode.removeChild(container);
         }
-        
-        // Restore map wrapper and tile-map size/display
-        if (mapWrapper && tileMap) {
-            if (origStyle) {
-                mapWrapper.setAttribute("style", origStyle);
-            } else {
-                mapWrapper.removeAttribute("style");
-            }
-            if (origTileStyle) {
-                tileMap.setAttribute("style", origTileStyle);
-            } else {
-                tileMap.removeAttribute("style");
-            }
-            if (state.map) {
-                state.map.resize();
-            }
-        }
-        
-        // Restore original viewport zoom and bounds for screen
-        selectSubject(state.currentId, true, false);
     }
 }
 
-function canvasToTiffBlob(canvas) {
-    const width = canvas.width;
-    const height = canvas.height;
-    const ctx = canvas.getContext("2d");
-    const imgData = ctx.getImageData(0, 0, width, height);
-    const rgba = imgData.data;
+/**
+ * Render a full cartographic print layout canvas using a headless offscreen MapLibre instance.
+ * Completely independent of the on-screen map.
+ * @returns {Promise<HTMLCanvasElement>} The final 4000×3000 layout canvas
+ */
+async function renderMapLayoutCanvas() {
+    const allFeatures = state.allFeatures || [];
+    const featureId = state.currentId;
+    const featureName = state.currentFeature || "eugene";
+    const isCircles = state.isCirclesFeature;
+    const qrUrl = window.location.href;
 
-    const numPixels = width * height;
-    const rgb = new Uint8Array(numPixels * 3);
-    for (let i = 0, j = 0; i < rgba.length; i += 4, j += 3) {
-        rgb[j] = rgba[i];       // R
-        rgb[j + 1] = rgba[i + 1]; // G
-        rgb[j + 2] = rgba[i + 2]; // B
+    const isCircle = !featureId || featureId === CIRCLE_ID;
+    let targetFeature = null;
+    if (!isCircle) {
+        targetFeature = allFeatures.find(f => {
+            const zid = f.properties?.zid;
+            return zid && (zid.toLowerCase() === featureId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(featureId));
+        });
     }
 
-    const imageByteCount = rgb.length;
-    const headerSize = 8;
-    const ifdOffset = headerSize + imageByteCount;
-    const numEntries = 12;
-    const ifdSize = 2 + (numEntries * 12) + 4;
-    const valueDataOffset = ifdOffset + ifdSize;
+    const targetBounds = (isCircle || !targetFeature)
+        ? computeBboxForPrint(allFeatures)
+        : computeBboxForPrint([targetFeature]);
 
-    const totalSize = valueDataOffset + 6;
-    const buffer = new ArrayBuffer(totalSize);
-    const view = new DataView(buffer);
-    const u8 = new Uint8Array(buffer);
+    const overlayGeojson = {
+        type: "FeatureCollection",
+        features: allFeatures.filter(f => f.geometry)
+    };
 
-    // TIFF Header ("II" Little Endian)
-    u8[0] = 0x49; u8[1] = 0x49;
-    view.setUint16(2, 42, true);
-    view.setUint32(4, ifdOffset, true);
+    const maxZoom = (isCircle || !targetFeature) ? 20 : 18;
+    const { canvas: mapCanvas, zoneLabels } = await renderHeadlessMap(targetBounds, overlayGeojson, maxZoom);
 
-    // Write RGB Pixels
-    u8.set(rgb, headerSize);
+    const layoutCanvas = document.createElement("canvas");
+    const width = LAYOUT_WIDTH;
+    const height = LAYOUT_HEIGHT;
+    layoutCanvas.width = width;
+    layoutCanvas.height = height;
+    const ctx = layoutCanvas.getContext("2d");
 
-    // BitsPerSample values (8, 8, 8)
-    const bitsOffset = valueDataOffset;
-    view.setUint16(bitsOffset, 8, true);
-    view.setUint16(bitsOffset + 2, 8, true);
-    view.setUint16(bitsOffset + 4, 8, true);
+    // 1. Outer white background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
 
-    // IFD Tags
-    let p = ifdOffset;
-    view.setUint16(p, numEntries, true); p += 2;
+    // 2. Define inner map frame layout box (4000×3000 scaled)
+    const mapMargin = 100;
+    const headerHeight = 180;
+    const footerHeight = 120;
 
-    function writeTag(tag, type, count, value) {
-        view.setUint16(p, tag, true);
-        view.setUint16(p + 2, type, true);
-        view.setUint32(p + 4, count, true);
-        view.setUint32(p + 8, value, true);
-        p += 12;
+    const mapX = mapMargin;
+    const mapY = mapMargin + headerHeight;
+    const mapW = width - (mapMargin * 2);
+    const mapH = height - mapY - footerHeight - mapMargin;
+
+    ctx.fillStyle = "#f9fafb";
+    ctx.fillRect(mapX, mapY, mapW, mapH);
+
+    if (mapCanvas) {
+        try {
+            ctx.drawImage(mapCanvas, mapX, mapY, mapW, mapH);
+        } catch (err) {
+            console.warn("Could not draw map canvas:", err);
+        } finally {
+            try {
+                mapCanvas.width = 0;
+                mapCanvas.height = 0;
+            } catch (e) {}
+        }
     }
 
-    writeTag(256, 4, 1, width);               // ImageWidth
-    writeTag(257, 4, 1, height);              // ImageLength
-    writeTag(258, 3, 3, bitsOffset);          // BitsPerSample
-    writeTag(259, 3, 1, 1);                   // Compression = 1 (Uncompressed)
-    writeTag(262, 3, 1, 2);                   // PhotometricInterpretation = 2 (RGB)
-    writeTag(273, 4, 1, headerSize);          // StripOffsets
-    writeTag(277, 3, 1, 3);                   // SamplesPerPixel = 3
-    writeTag(278, 4, 1, height);              // RowsPerStrip
-    writeTag(279, 4, 1, imageByteCount);      // StripByteCounts
-    writeTag(282, 5, 1, valueDataOffset);     // XResolution
-    writeTag(283, 5, 1, valueDataOffset);     // YResolution
-    writeTag(296, 3, 1, 2);                   // ResolutionUnit = 2 (Inch)
+    // Draw red zone / circle labels directly (no circle background)
+    if (zoneLabels && zoneLabels.length > 0) {
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
 
-    view.setUint32(p, 0, true);
+        zoneLabels.forEach(({ label, x, y, isCircle }) => {
+            const canvasX = mapX + x;
+            const canvasY = mapY + y;
 
-    return new Blob([buffer], { type: "image/tiff" });
+            // Only render label if inside the map boundary with margin
+            if (canvasX >= mapX + 35 && canvasX <= mapX + mapW - 35 &&
+                canvasY >= mapY + 35 && canvasY <= mapY + mapH - 35) {
+
+                if (isCircle) {
+                    // Count circle regional labels (e.g. Eugene, Florence, Oakridge, Cottage Grove)
+                    const text = label;
+                    ctx.font = "bold 52px system-ui, -apple-system, sans-serif";
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 10;
+                    ctx.lineJoin = "round";
+                    ctx.strokeText(text, canvasX, canvasY);
+                    ctx.fillStyle = "#dc2626";
+                    ctx.fillText(text, canvasX, canvasY);
+                } else {
+                    // Survey zone number labels (e.g. 1, 06, 14A)
+                    const fontSize = label.length > 2 ? 40 : 48;
+                    ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
+
+                    // White text halo outline for contrast over terrain contours
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 8;
+                    ctx.lineJoin = "round";
+                    ctx.strokeText(label, canvasX, canvasY);
+
+                    // Bold red zone number text
+                    ctx.fillStyle = "#dc2626";
+                    ctx.fillText(label, canvasX, canvasY);
+                }
+            }
+        });
+        ctx.restore();
+    }
+
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 5;
+    ctx.strokeRect(mapX, mapY, mapW, mapH);
+
+    // 3. Header Typography
+    const hasSpecificZone = featureId && featureId !== CIRCLE_ID;
+
+    ctx.fillStyle = "#111827";
+    ctx.font = "bold 76px system-ui, -apple-system, sans-serif";
+    const headerTitleText = isCircles
+        ? "COAST TO CASCADES BIRD ALLIANCE"
+        : (featureName === "florence" ? "FLORENCE CHRISTMAS BIRD COUNT" : "EUGENE CHRISTMAS BIRD COUNT");
+    ctx.fillText(headerTitleText, mapMargin, mapMargin + 75);
+
+    if (hasSpecificZone) {
+        ctx.fillStyle = "#dc2626";
+        ctx.font = "bold 50px system-ui, -apple-system, sans-serif";
+        const subTitleText = `SURVEY ZONE ${displayZoneId(featureId)}`;
+        ctx.fillText(subTitleText, mapMargin, mapMargin + 150);
+    }
+
+    ctx.fillStyle = "#374151";
+    ctx.font = "44px system-ui, -apple-system, sans-serif";
+    ctx.textAlign = "right";
+    const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    ctx.fillText(dateStr, mapMargin + mapW, mapMargin + 75);
+    ctx.font = "34px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = "#6b7280";
+    ctx.fillText("Base Map: Esri World Topography", mapMargin + mapW, mapMargin + 140);
+    ctx.textAlign = "left";
+
+    // 4. Overlays
+    // North Arrow
+    const naX = mapX + mapW - 125;
+    const naY = mapY + 140;
+    ctx.save();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.beginPath();
+    ctx.arc(naX, naY, 66, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.fillStyle = "#111827";
+    ctx.beginPath();
+    ctx.moveTo(naX, naY - 46);
+    ctx.lineTo(naX + 20, naY + 13);
+    ctx.lineTo(naX, naY + 3);
+    ctx.fill();
+
+    ctx.fillStyle = "#9ca3af";
+    ctx.beginPath();
+    ctx.moveTo(naX, naY - 46);
+    ctx.lineTo(naX - 20, naY + 13);
+    ctx.lineTo(naX, naY + 3);
+    ctx.fill();
+
+    ctx.fillStyle = "#111827";
+    ctx.font = "bold 33px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("N", naX, naY - 53);
+    ctx.restore();
+
+    // Scale Bar
+    const scaleInfo = getLayoutScaleBar(targetBounds, mapW);
+
+    const barX = mapX + 50;
+    const barY = mapY + mapH - 165;
+    const barW = Math.max(430, scaleInfo.pxWidth + 100);
+    const barH = 115;
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.fillRect(barX, barY, barW, barH);
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 3.5;
+    ctx.strokeRect(barX, barY, barW, barH);
+
+    const lineStartX = barX + 50;
+    const lineEndX = lineStartX + scaleInfo.pxWidth;
+    const lineY = barY + 75;
+
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(lineStartX, lineY);
+    ctx.lineTo(lineEndX, lineY);
+    ctx.moveTo(lineStartX, lineY - 13);
+    ctx.lineTo(lineStartX, lineY + 13);
+    ctx.moveTo(lineEndX, lineY - 13);
+    ctx.lineTo(lineEndX, lineY + 13);
+    const midX = (lineStartX + lineEndX) / 2;
+    ctx.moveTo(midX, lineY - 8);
+    ctx.lineTo(midX, lineY + 8);
+    ctx.stroke();
+
+    ctx.fillStyle = "#111827";
+    ctx.font = "bold 26px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("0", lineStartX, lineY - 20);
+    ctx.fillText(`${scaleInfo.miles} mi`, lineEndX, lineY - 20);
+    ctx.textAlign = "left";
+
+    // QR Code
+    const qrX = mapX + mapW - 290;
+    const qrY = mapY + mapH - 315;
+    const qrBoxW = 250;
+    const qrBoxH = 275;
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.fillRect(qrX, qrY, qrBoxW, qrBoxH);
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 3.5;
+    ctx.strokeRect(qrX, qrY, qrBoxW, qrBoxH);
+
+    let qrDrawn = false;
+    if (typeof QRCode !== "undefined") {
+        try {
+            const qrContainer = document.createElement("div");
+            new QRCode(qrContainer, {
+                text: qrUrl,
+                width: 200,
+                height: 200,
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            const qrCanvas = qrContainer.querySelector("canvas");
+            const qrImg = qrContainer.querySelector("img");
+            if (qrCanvas) {
+                ctx.drawImage(qrCanvas, qrX + 25, qrY + 20, 200, 200);
+                qrDrawn = true;
+            } else if (qrImg && qrImg.complete) {
+                ctx.drawImage(qrImg, qrX + 25, qrY + 20, 200, 200);
+                qrDrawn = true;
+            }
+        } catch (e) {
+            console.warn("QRCode generation error:", e);
+        }
+    }
+
+    if (!qrDrawn) {
+        const qrImage = await loadQrCodeImage(qrUrl);
+        if (qrImage) {
+            ctx.drawImage(qrImage, qrX + 25, qrY + 20, 200, 200);
+        }
+    }
+
+    ctx.fillStyle = "#111827";
+    ctx.font = "bold 20px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("SCAN FOR ONLINE MAP", qrX + (qrBoxW / 2), qrY + 252);
+    ctx.textAlign = "left";
+
+    // 5. Footer Text
+    const footY = height - footerHeight - mapMargin + 30;
+
+    ctx.fillStyle = "#374151";
+    ctx.font = "31px system-ui, sans-serif";
+    const bbox = computeBboxForPrint(allFeatures);
+    const boundsText = `Spatial Extent (WGS84): [${bbox[0][0].toFixed(4)}°W, ${bbox[0][1].toFixed(4)}°N] to [${bbox[1][0].toFixed(4)}°W, ${bbox[1][1].toFixed(4)}°N]`;
+    ctx.fillText(boundsText, mapMargin, footY + 40);
+
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "26px system-ui, sans-serif";
+    ctx.fillText("Printed with Fovea | Esri World Topographic Basemap © Esri, DeLorme, NAVTEQ", mapMargin, footY + 86);
+
+    return layoutCanvas;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Pre-render Cache & Garbage Management Engine
+// ──────────────────────────────────────────────────────────────
+
+const RASTER_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL
+const DOWNLOAD_VIEW_PRELOAD_DELAY_MS = 500; // 0.5s wait after opening downloads view
+
+let activeRasterCache = {
+    key: null,
+    promise: null,
+    canvas: null,
+    createdAt: 0,
+    timerId: null
+};
+
+let downloadViewPreloadTimer = null;
+
+function scheduleDownloadViewPreload() {
+    cancelDownloadViewPreload();
+    downloadViewPreloadTimer = setTimeout(() => {
+        downloadViewPreloadTimer = null;
+        preloadMapLayout();
+    }, DOWNLOAD_VIEW_PRELOAD_DELAY_MS);
+}
+
+function cancelDownloadViewPreload() {
+    if (downloadViewPreloadTimer) {
+        clearTimeout(downloadViewPreloadTimer);
+        downloadViewPreloadTimer = null;
+    }
+}
+
+const scheduleSelectionPreload = scheduleDownloadViewPreload;
+const cancelSelectionPreload = cancelDownloadViewPreload;
+
+function getRasterCacheKey() {
+    const cid = state.currentFeature || "eugene";
+    const zid = state.currentId;
+    const isCirc = state.isCirclesFeature;
+    return `${cid}:${zid || "full"}:${isCirc ? "circles" : "zone"}`;
+}
+
+function disposeRasterCache() {
+    cancelSelectionPreload();
+    if (activeRasterCache.timerId) {
+        clearTimeout(activeRasterCache.timerId);
+        activeRasterCache.timerId = null;
+    }
+    if (activeRasterCache.canvas) {
+        try {
+            activeRasterCache.canvas.width = 0;
+            activeRasterCache.canvas.height = 0;
+        } catch (e) {}
+    }
+    activeRasterCache.key = null;
+    activeRasterCache.promise = null;
+    activeRasterCache.canvas = null;
+    activeRasterCache.createdAt = 0;
+}
+
+function preloadMapLayout() {
+    cancelSelectionPreload();
+    const key = getRasterCacheKey();
+    const now = Date.now();
+
+    if (activeRasterCache.key === key && (now - activeRasterCache.createdAt < RASTER_CACHE_TTL_MS)) {
+        if (activeRasterCache.promise) return activeRasterCache.promise;
+        if (activeRasterCache.canvas) return Promise.resolve(activeRasterCache.canvas);
+    }
+
+    disposeRasterCache();
+
+    activeRasterCache.key = key;
+    activeRasterCache.createdAt = now;
+
+    const renderPromise = renderMapLayoutCanvas()
+        .then(canvas => {
+            if (activeRasterCache.key === key) {
+                activeRasterCache.canvas = canvas;
+                activeRasterCache.promise = null;
+                activeRasterCache.timerId = setTimeout(disposeRasterCache, RASTER_CACHE_TTL_MS);
+            } else {
+                try {
+                    canvas.width = 0;
+                    canvas.height = 0;
+                } catch (e) {}
+            }
+            return canvas;
+        })
+        .catch(err => {
+            if (activeRasterCache.key === key) {
+                disposeRasterCache();
+            }
+            throw err;
+        });
+
+    activeRasterCache.promise = renderPromise;
+    return renderPromise;
+}
+
+async function getOrRenderLayoutCanvas() {
+    const key = getRasterCacheKey();
+    const now = Date.now();
+
+    if (activeRasterCache.key === key && (now - activeRasterCache.createdAt < RASTER_CACHE_TTL_MS)) {
+        if (activeRasterCache.canvas) return activeRasterCache.canvas;
+        if (activeRasterCache.promise) return await activeRasterCache.promise;
+    }
+
+    return await preloadMapLayout();
 }
 
 async function downloadGeoPdf(triggerButton = null) {
-    const canvas = await renderMapLayoutCanvas();
+    const key = getRasterCacheKey();
+    const isReady = activeRasterCache.key === key && !!activeRasterCache.canvas;
+    if (!isReady) {
+        showToast("Rendering map layout...");
+    }
+
+    const canvas = await getOrRenderLayoutCanvas();
     const filename = getActiveDownloadFilename("pdf");
     
     if (window.jspdf && window.jspdf.jsPDF) {
@@ -2009,7 +2450,13 @@ async function downloadGeoPdf(triggerButton = null) {
 }
 
 async function downloadGeoTiff(triggerButton = null) {
-    const canvas = await renderMapLayoutCanvas();
+    const key = getRasterCacheKey();
+    const isReady = activeRasterCache.key === key && !!activeRasterCache.canvas;
+    if (!isReady) {
+        showToast("Rendering map layout...");
+    }
+
+    const canvas = await getOrRenderLayoutCanvas();
     const filename = getActiveDownloadFilename("tif");
     const tiffBlob = canvasToTiffBlob(canvas);
     await handleSpatialFileShare(null, tiffBlob, filename, triggerButton);
@@ -2203,6 +2650,32 @@ function balancedHeaderHTML(title) {
     return line1.map(escape).join(' ') + '<br>' + line2.map(escape).join(' ');
 }
 
+function updateDocumentTitle() {
+    if (typeof document === "undefined") return;
+
+    if (state.isCirclesFeature || state.currentFeature === "circles") {
+        document.title = "Fovea - Coast to Cascades CBC Circles";
+        return;
+    }
+
+    const featureName = state.currentFeature === "florence" ? "Florence CBC" :
+                        (state.currentFeature === "cottage-grove" ? "Cottage Grove CBC" :
+                        (state.currentFeature === "oakridge" ? "Oakridge CBC" : "Eugene CBC"));
+
+    const hasSpecificSelection = state.currentId && state.currentId !== CIRCLE_ID;
+
+    if (hasSpecificSelection) {
+        if (state.isBirdSelected && state.selectedBirdName) {
+            document.title = `Fovea - ${featureName} - ${state.selectedBirdName}`;
+        } else {
+            const zid = displayZoneId(state.currentId);
+            document.title = `Fovea - ${featureName} - Zone ${zid}`;
+        }
+    } else {
+        document.title = `Fovea - ${featureName}`;
+    }
+}
+
 function updateHeader(subjectTitle) {
     const titleEl = document.getElementById("header-title");
     if (titleEl) {
@@ -2210,6 +2683,7 @@ function updateHeader(subjectTitle) {
     }
     updateHeaderLogo();
     adjustHeaderFontSize();
+    updateDocumentTitle();
 }
 
 /**
@@ -2244,8 +2718,32 @@ function getFitPadding(extra = 0) {
     }
 }
 
+function getSuggestSelectionLabel() {
+    if (state.isCirclesFeature) {
+        return "Coast to Cascades";
+    }
+    const circleName = state.currentFeature === "florence" ? "Florence CBC" : "Eugene CBC";
+    const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
+    if (isCircle) {
+        return circleName;
+    }
+    const targetFeature = (state.allFeatures || []).find(f => {
+        const zid = f.properties?.zid;
+        return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || (typeof normalizeZoneId === "function" && normalizeZoneId(zid) === normalizeZoneId(state.currentId)));
+    });
+    if (targetFeature && targetFeature.properties?.zid) {
+        return `Zone ${displayZoneId(targetFeature.properties.zid)}`;
+    }
+    return `Zone ${displayZoneId(state.currentId)}`;
+}
+
 function switchToFeature(featureName, circleLayer) {
+    if (document.body.classList.contains("is-suggest-locked") && (featureName !== state.currentFeature || state.isCirclesFeature)) {
+        return;
+    }
+
     if (!state.map) return;
+    disposeRasterCache();
 
     let transitionFinished = false;
 
@@ -2276,6 +2774,11 @@ function switchToFeature(featureName, circleLayer) {
 }
 
 function switchToCirclesFeature() {
+    if (document.body.classList.contains("is-suggest-locked") && !state.isCirclesFeature) {
+        return;
+    }
+
+    disposeRasterCache();
     state.currentFeature = "circles";
     state.isCirclesFeature = true;
     state.allFeatures = state.circlesFeatures;
@@ -2293,6 +2796,11 @@ function _getHierarchyLevel(id) {
 }
 
 function selectSubject(id, triggerMapZoom = true, animate = true) {
+    if (document.body.classList.contains("is-suggest-locked") && id !== state.currentId) {
+        return;
+    }
+
+    disposeRasterCache();
     window.scrollTo(0, 0);
     if (state.isHelpModeActive && window.innerWidth <= 768) return;
 
@@ -2396,6 +2904,12 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
         updateUrl(id);
         if (typeof state.refreshLayersModal === "function") {
             state.refreshLayersModal();
+        }
+        const isDownloadOpen = document.getElementById("downloads-modal")?.getAttribute("aria-hidden") === "false";
+        if (isDownloadOpen) {
+            scheduleDownloadViewPreload();
+        } else {
+            disposeRasterCache();
         }
     };
 
@@ -5880,7 +6394,34 @@ const MAP_VIEWER_APPS = [
     }
 ];
 
+function closeAvenzaModal() {
+    const avenzaModal = document.getElementById("avenza-instruction-modal");
+    if (avenzaModal) {
+        avenzaModal.setAttribute("aria-hidden", "true");
+        avenzaModal.classList.remove("is-open");
+    }
+    document.body.classList.remove("has-avenza-modal");
+
+    const isAnyOtherModalOpen = document.querySelector(".maps-tile-modal.is-open:not(#avenza-instruction-modal)");
+    if (!isAnyOtherModalOpen) {
+        const bottomNav = document.querySelector(".mobile-bottom-nav-container");
+        if (bottomNav) {
+            bottomNav.classList.remove("is-hidden-entirely");
+            bottomNav.style.removeProperty("display");
+        }
+    }
+}
+
+function closeAllAppsModal() {
+    const allAppsModal = document.getElementById("all-apps-modal");
+    if (allAppsModal) {
+        allAppsModal.setAttribute("aria-hidden", "true");
+        allAppsModal.classList.remove("is-open");
+    }
+}
+
 function closeAllModals() {
+    cancelDownloadViewPreload();
     const avenzaModal = document.getElementById("avenza-instruction-modal");
     if (avenzaModal) {
         avenzaModal.setAttribute("aria-hidden", "true");
@@ -6094,7 +6635,6 @@ function setupSuggestedAppCards() {
             if (!wasActive) {
                 card.classList.add("is-active");
             }
-            closeAllModals();
             await handleAppDirectOpen(appName, card);
         });
     });
@@ -6426,17 +6966,52 @@ function setupActionButtons() {
             let formatKey = window._pendingAppFormatKey || "geopdf";
 
             if (!(blob instanceof Blob)) {
-                const { blob: generatedBlob, filename: genFilename } = await generateAppSpatialBlob(formatKey);
-                blob = generatedBlob;
-                if (genFilename) filename = genFilename;
-                window._pendingAppBlob = blob;
+                if (typeof showToast === "function") showToast("Rendering map layout...");
+                avenzaDownloadBtn.classList.add("is-preparing");
+                const originalHtml = avenzaDownloadBtn.innerHTML;
+                avenzaDownloadBtn.innerHTML = `
+                    <svg class="spin-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="2" x2="12" y2="6"></line>
+                        <line x1="12" y1="18" x2="12" y2="22"></line>
+                        <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                        <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                        <line x1="2" y1="12" x2="6" y2="12"></line>
+                        <line x1="18" y1="12" x2="22" y2="12"></line>
+                        <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                        <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                    </svg>
+                    <span>Preparing...</span>
+                `;
+
+                try {
+                    if (window._pendingAppBlobPromise) {
+                        const res = await window._pendingAppBlobPromise;
+                        blob = res.blob;
+                        if (res.filename) filename = res.filename;
+                    } else {
+                        const { blob: generatedBlob, filename: genFilename } = await generateAppSpatialBlob(formatKey);
+                        blob = generatedBlob;
+                        if (genFilename) filename = genFilename;
+                    }
+                    window._pendingAppBlob = blob;
+                    window._pendingAppFilename = filename;
+                } catch (err) {
+                    console.error("Error generating map download:", err);
+                    if (typeof showToast === "function") showToast("Error generating download file.");
+                    avenzaDownloadBtn.classList.remove("is-preparing");
+                    avenzaDownloadBtn.innerHTML = originalHtml;
+                    return;
+                }
+                avenzaDownloadBtn.classList.remove("is-preparing");
             }
 
             const downloadBlob = new Blob([blob], { type: "application/octet-stream" });
             const url = URL.createObjectURL(downloadBlob);
             const a = document.createElement("a");
+            a.style.display = "none";
             a.href = url;
             a.download = filename;
+            a.addEventListener("click", (e) => e.stopPropagation());
             document.body.appendChild(a);
             a.click();
             setTimeout(() => {
@@ -6449,6 +7024,7 @@ function setupActionButtons() {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 <span>Downloaded</span>
             `;
+            if (typeof showToast === "function") showToast(`Downloaded ${filename}`);
         });
     }
 
@@ -6466,7 +7042,14 @@ function setupActionButtons() {
         closeEl.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            closeAllModals();
+            const parentModal = closeEl.closest(".maps-tile-modal, .avenza-instruction-modal");
+            if (parentModal && parentModal.id === "avenza-instruction-modal") {
+                closeAvenzaModal();
+            } else if (parentModal && parentModal.id === "all-apps-modal") {
+                closeAllAppsModal();
+            } else {
+                closeAllModals();
+            }
         });
     });
 
@@ -6593,6 +7176,10 @@ function setupActionButtons() {
             if (!isOpen) {
                 downloadModal.setAttribute("aria-hidden", "false");
                 downloadModal.classList.add("is-open");
+                // Wait 0.5s after user clicks downloads view button before beginning preemptive rendering
+                scheduleDownloadViewPreload();
+            } else {
+                cancelDownloadViewPreload();
             }
             window.updateActionButtonsState();
         });
@@ -6600,6 +7187,7 @@ function setupActionButtons() {
         downloadModal.querySelectorAll("[data-modal-close]").forEach(closeEl => {
             closeEl.addEventListener("click", (e) => {
                 e.stopPropagation();
+                cancelDownloadViewPreload();
                 closeAllModals();
             });
         });
@@ -6698,12 +7286,17 @@ function setupActionButtons() {
         suggestModal.querySelectorAll("[data-modal-close]").forEach(closeEl => {
             closeEl.addEventListener("click", (e) => {
                 e.stopPropagation();
+                if (closeEl.classList.contains("modal__backdrop") && document.body.classList.contains("is-suggest-locked")) {
+                    return;
+                }
                 closeAllModals();
             });
         });
     }
 
     document.addEventListener("click", (e) => {
+        if (!e.isTrusted) return;
+        if (e.target && (e.target.tagName === "A" || e.target.closest("a[download]"))) return;
         if (window.innerWidth >= 769) {
             if (downloadModal && downloadModal.getAttribute("aria-hidden") === "false") {
                 if (!downloadModal.contains(e.target) && !downloadBtn.contains(e.target)) {
@@ -6723,6 +7316,7 @@ function setupActionButtons() {
             if (suggestModal && suggestModal.getAttribute("aria-hidden") === "false") {
                 if (!suggestModal.contains(e.target) && !suggestBtn.contains(e.target)
                     && !document.body.classList.contains("is-annotation-mode")
+                    && !document.body.classList.contains("is-suggest-locked")
                     && !window._preventSuggestClose) {
                     closeAllModals();
                 }
@@ -6743,130 +7337,262 @@ function setupSuggestFormAndDrawing(closeAllModals) {
 
     if (!suggestForm) return;
 
-    let currentMode = null;
-    let drawnCoords = [];
-    let markerPlaced = false;
+    const MAX_ITEMS = 5;
+
+    // Multi-feature collections (up to 5 of each)
+    let markers = [];           // Array<[lng, lat]>
+    let lines = [];             // Array<Array<[lng, lat]>>
+    let polygons = [];          // Array<Array<[lng, lat]>>
+
+    // In-progress drafting buffers
+    let activeLineCoords = [];  // Array<[lng, lat]>
+    let activePolyCoords = [];  // Array<[lng, lat]>
+    let currentDrawingMode = null; // 'marker' | 'line' | 'polygon' | null
 
     // SVG icons
     const PIN_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`;
+    const LINE_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19L19 4"></path><circle cx="4" cy="19" r="2"></circle><circle cx="19" cy="4" r="2"></circle></svg>`;
+    const POLYGON_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`;
+    const CHECK_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
     const CLEAR_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 
-    const setMarkerBtnToAdd = () => {
-        if (!markerBtn) return;
-        markerBtn.innerHTML = `${PIN_ICON}<span>Add a Marker</span>`;
-        markerBtn.classList.remove("is-clear-mode");
-    };
+    const updateStatusText = () => {
+        if (!statusEl) return;
 
-    const setMarkerBtnToClear = () => {
-        if (!markerBtn) return;
-        markerBtn.innerHTML = `${CLEAR_ICON}<span>Clear Marker</span>`;
-        markerBtn.classList.add("is-clear-mode");
-    };
+        const items = [];
+        if (markers.length > 0) {
+            items.push(`<span class="suggest-status-badge" data-action="clear-markers" title="Click to clear markers">${markers.length === 1 ? '1 Marker' : `${markers.length} Markers`} &times;</span>`);
+        }
+        if (lines.length > 0) {
+            items.push(`<span class="suggest-status-badge" data-action="clear-lines" title="Click to clear lines">${lines.length === 1 ? '1 Line' : `${lines.length} Lines`} &times;</span>`);
+        }
+        if (polygons.length > 0) {
+            items.push(`<span class="suggest-status-badge" data-action="clear-polygons" title="Click to clear polygons">${polygons.length === 1 ? '1 Polygon' : `${polygons.length} Polygons`} &times;</span>`);
+        }
 
-    const clearAnnotation = (silent = false) => {
-        drawnCoords = [];
-        markerPlaced = false;
-        currentMode = null;
-        if (state.map && state.map.getCanvas()) state.map.getCanvas().style.cursor = "";
-        document.body.classList.remove("is-annotation-mode");
-        if (state.map && state.map.getSource("suggest-annotation-source")) {
-            state.map.getSource("suggest-annotation-source").setData({
-                type: "FeatureCollection",
-                features: []
+        if (items.length > 0) {
+            statusEl.innerHTML = items.join(" ");
+            // Bind click-to-clear on badge chips
+            statusEl.querySelectorAll("[data-action]").forEach(chip => {
+                chip.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const action = chip.getAttribute("data-action");
+                    if (action === "clear-markers") {
+                        markers = [];
+                        if (typeof showToast === "function") showToast("Markers cleared");
+                    } else if (action === "clear-lines") {
+                        lines = [];
+                        if (typeof showToast === "function") showToast("Lines cleared");
+                    } else if (action === "clear-polygons") {
+                        polygons = [];
+                        if (typeof showToast === "function") showToast("Polygons cleared");
+                    }
+                    updateAnnotationSource();
+                    updateButtonsUI();
+                    updateStatusText();
+                    updateSuggestLockState();
+                });
             });
-        }
-        if (statusEl) statusEl.textContent = "No location pinned on map";
-        setMarkerBtnToAdd();
-        if (!silent) showToast("Marker cleared");
-    };
-
-    const annotationExitBtn = document.getElementById("annotation-exit-btn");
-    if (annotationExitBtn) {
-        annotationExitBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            clearAnnotation();
-        });
-    }
-
-    // Press X to exit annotation mode
-    document.addEventListener("keydown", (e) => {
-        if ((e.key === "x" || e.key === "X") && document.body.classList.contains("is-annotation-mode")) {
-            e.preventDefault();
-            clearAnnotation();
-        }
-    });
-
-    const resetDrawingMode = () => {
-        currentMode = null;
-        if (state.map && state.map.getCanvas()) state.map.getCanvas().style.cursor = "";
-        document.body.classList.remove("is-annotation-mode");
-        [markerBtn, lineBtn, polygonBtn].forEach(btn => {
-            if (btn) btn.classList.remove("is-active");
-        });
-    };
-
-    const updateAnnotationSource = () => {
-        if (!state.map) return;
-        let feature = null;
-        if (drawnCoords.length > 0) {
-            feature = {
-                type: "Feature",
-                geometry: { type: "Point", coordinates: drawnCoords[0] }
-            };
-        }
-
-        const geojson = {
-            type: "FeatureCollection",
-            features: feature ? [feature] : []
-        };
-
-        if (state.map.getSource("suggest-annotation-source")) {
-            state.map.getSource("suggest-annotation-source").setData(geojson);
         } else {
-            state.map.addSource("suggest-annotation-source", {
-                type: "geojson",
-                data: geojson
-            });
+            statusEl.textContent = "No location pinned on map";
+        }
+    };
 
-            // Build a green location-pin SVG and register it as a MapLibre image
-            const addMarkerLayer = () => {
-                if (!state.map.hasImage("suggest-pin-icon")) {
-                    const primaryColor = getThemeAccent();
-                    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">
-                        <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 30 18 30S36 31.5 36 18C36 8.06 27.94 0 18 0z" fill="${primaryColor}"/>
-                        <circle cx="18" cy="18" r="7" fill="${primaryColor}"/>
-                    </svg>`;
-                    const blob = new Blob([svg], { type: "image/svg+xml" });
-                    const url = URL.createObjectURL(blob);
-                    const img = new Image(36, 48);
-                    img.onload = () => {
-                        if (!state.map.hasImage("suggest-pin-icon")) {
-                            state.map.addImage("suggest-pin-icon", img);
-                        }
-                        if (!state.map.getLayer("suggest-annotation-point-layer")) {
-                            state.map.addLayer({
-                                id: "suggest-annotation-point-layer",
-                                type: "symbol",
-                                source: "suggest-annotation-source",
-                                filter: ["==", "$type", "Point"],
-                                layout: {
-                                    "icon-image": "suggest-pin-icon",
-                                    "icon-size": 0.55,
-                                    "icon-anchor": "bottom",
-                                    "icon-allow-overlap": true
-                                }
-                            });
-                        }
-                        URL.revokeObjectURL(url);
-                    };
-                    img.src = url;
-                } else {
-                    state.map.addLayer({
+    const updateSuggestLockState = () => {
+        const titleInput = document.getElementById("suggest-input-title");
+        const msgInput = document.getElementById("suggest-input-message");
+        const hasTitle = titleInput && titleInput.value.trim().length > 0;
+        const hasMsg = msgInput && msgInput.value.trim().length > 0;
+        const hasAnnotation = Boolean(
+            (markers && markers.length > 0) ||
+            (lines && lines.length > 0) ||
+            (polygons && polygons.length > 0) ||
+            (activeLineCoords && activeLineCoords.length > 0) ||
+            (activePolyCoords && activePolyCoords.length > 0) ||
+            currentDrawingMode
+        );
+        const isLocked = Boolean(hasTitle || hasMsg || hasAnnotation);
+
+        state.isSuggestLocked = isLocked;
+        const exitBtn = document.getElementById("suggest-exit-btn");
+        const exitTextSpan = exitBtn ? exitBtn.querySelector(".suggest-exit-text") : null;
+
+        if (isLocked) {
+            document.body.classList.add("is-suggest-locked");
+            if (exitBtn) {
+                const selLabel = getSuggestSelectionLabel();
+                if (exitTextSpan) {
+                    exitTextSpan.textContent = `Exit Suggest Mode for "${selLabel}" (loses progress)`;
+                }
+                exitBtn.setAttribute("aria-label", `Exit Suggest Mode for "${selLabel}" (loses progress)`);
+            }
+        } else {
+            document.body.classList.remove("is-suggest-locked");
+        }
+    };
+    window.updateSuggestLockState = updateSuggestLockState;
+
+    const titleInput = document.getElementById("suggest-input-title");
+    const msgInput = document.getElementById("suggest-input-message");
+    if (titleInput) titleInput.addEventListener("input", updateSuggestLockState);
+    if (msgInput) msgInput.addEventListener("input", updateSuggestLockState);
+
+    const updateButtonsUI = () => {
+        // Marker Button
+        if (markerBtn) {
+            if (currentDrawingMode === "marker") {
+                markerBtn.innerHTML = `${PIN_ICON}<span>Placing Marker...</span>`;
+                markerBtn.classList.add("is-active");
+                markerBtn.classList.remove("is-clear-mode");
+            } else if (markers.length >= MAX_ITEMS) {
+                markerBtn.innerHTML = `${CLEAR_ICON}<span>Clear Markers</span>`;
+                markerBtn.classList.add("is-clear-mode");
+                markerBtn.classList.remove("is-active");
+            } else {
+                markerBtn.innerHTML = `${PIN_ICON}<span>Add a Marker</span>`;
+                markerBtn.classList.remove("is-clear-mode", "is-active");
+            }
+        }
+
+        // Line Button
+        if (lineBtn) {
+            if (currentDrawingMode === "line") {
+                lineBtn.innerHTML = `${CHECK_ICON}<span>Finish Line (${activeLineCoords.length} pts)</span>`;
+                lineBtn.classList.add("is-active");
+                lineBtn.classList.remove("is-clear-mode");
+            } else if (lines.length >= MAX_ITEMS) {
+                lineBtn.innerHTML = `${CLEAR_ICON}<span>Clear Lines</span>`;
+                lineBtn.classList.add("is-clear-mode");
+                lineBtn.classList.remove("is-active");
+            } else {
+                lineBtn.innerHTML = `${LINE_ICON}<span>Add Line</span>`;
+                lineBtn.classList.remove("is-clear-mode", "is-active");
+            }
+        }
+
+        // Polygon Button
+        if (polygonBtn) {
+            if (currentDrawingMode === "polygon") {
+                polygonBtn.innerHTML = `${CHECK_ICON}<span>Finish Polygon (${activePolyCoords.length} pts)</span>`;
+                polygonBtn.classList.add("is-active");
+                polygonBtn.classList.remove("is-clear-mode");
+            } else if (polygons.length >= MAX_ITEMS) {
+                polygonBtn.innerHTML = `${CLEAR_ICON}<span>Clear Polygons</span>`;
+                polygonBtn.classList.add("is-clear-mode");
+                polygonBtn.classList.remove("is-active");
+            } else {
+                polygonBtn.innerHTML = `${POLYGON_ICON}<span>Add Polygon</span>`;
+                polygonBtn.classList.remove("is-clear-mode", "is-active");
+            }
+        }
+    };
+
+    const ensureAnnotationLayers = (map) => {
+        if (!map) return;
+        const primaryColor = getThemeAccent();
+
+        if (!map.getSource("suggest-annotation-source")) {
+            map.addSource("suggest-annotation-source", {
+                type: "geojson",
+                data: { type: "FeatureCollection", features: [] }
+            });
+        }
+
+        // Polygon Fill Layer
+        if (!map.getLayer("suggest-annotation-polygon-fill-layer")) {
+            map.addLayer({
+                id: "suggest-annotation-polygon-fill-layer",
+                type: "fill",
+                source: "suggest-annotation-source",
+                filter: ["==", "$type", "Polygon"],
+                paint: {
+                    "fill-color": primaryColor,
+                    "fill-opacity": 0.28
+                }
+            });
+        }
+
+        // Polygon Outline Layer
+        if (!map.getLayer("suggest-annotation-polygon-stroke-layer")) {
+            map.addLayer({
+                id: "suggest-annotation-polygon-stroke-layer",
+                type: "line",
+                source: "suggest-annotation-source",
+                filter: ["==", "$type", "Polygon"],
+                paint: {
+                    "line-color": primaryColor,
+                    "line-width": 3,
+                    "line-opacity": 0.95
+                }
+            });
+        }
+
+        // Line Halo Layer
+        if (!map.getLayer("suggest-annotation-line-halo-layer")) {
+            map.addLayer({
+                id: "suggest-annotation-line-halo-layer",
+                type: "line",
+                source: "suggest-annotation-source",
+                filter: ["==", "$type", "LineString"],
+                paint: {
+                    "line-color": "#000000",
+                    "line-width": 6,
+                    "line-opacity": 0.35
+                }
+            });
+        }
+
+        // Line Layer
+        if (!map.getLayer("suggest-annotation-line-layer")) {
+            map.addLayer({
+                id: "suggest-annotation-line-layer",
+                type: "line",
+                source: "suggest-annotation-source",
+                filter: ["==", "$type", "LineString"],
+                paint: {
+                    "line-color": primaryColor,
+                    "line-width": 3.5,
+                    "line-opacity": 0.95
+                }
+            });
+        }
+
+        // Vertices Layer
+        if (!map.getLayer("suggest-annotation-vertex-layer")) {
+            map.addLayer({
+                id: "suggest-annotation-vertex-layer",
+                type: "circle",
+                source: "suggest-annotation-source",
+                filter: ["all", ["==", "$type", "Point"], ["==", "kind", "vertex"]],
+                paint: {
+                    "circle-radius": 5,
+                    "circle-color": "#ffffff",
+                    "circle-stroke-color": primaryColor,
+                    "circle-stroke-width": 2.5
+                }
+            });
+        }
+
+        // Marker Symbol Layer
+        if (!map.hasImage("suggest-pin-icon")) {
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">
+                <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 30 18 30S36 31.5 36 18C36 8.06 27.94 0 18 0z" fill="${primaryColor}"/>
+                <circle cx="18" cy="18" r="7" fill="${primaryColor}"/>
+            </svg>`;
+            const blob = new Blob([svg], { type: "image/svg+xml" });
+            const url = URL.createObjectURL(blob);
+            const img = new Image(36, 48);
+            img.onload = () => {
+                if (!map.hasImage("suggest-pin-icon")) {
+                    map.addImage("suggest-pin-icon", img);
+                }
+                if (!map.getLayer("suggest-annotation-point-layer")) {
+                    map.addLayer({
                         id: "suggest-annotation-point-layer",
                         type: "symbol",
                         source: "suggest-annotation-source",
-                        filter: ["==", "$type", "Point"],
+                        filter: ["all", ["==", "$type", "Point"], ["==", "kind", "marker"]],
                         layout: {
                             "icon-image": "suggest-pin-icon",
                             "icon-size": 0.55,
@@ -6875,62 +7601,335 @@ function setupSuggestFormAndDrawing(closeAllModals) {
                         }
                     });
                 }
+                URL.revokeObjectURL(url);
             };
-
-            addMarkerLayer();
+            img.src = url;
+        } else if (!map.getLayer("suggest-annotation-point-layer")) {
+            map.addLayer({
+                id: "suggest-annotation-point-layer",
+                type: "symbol",
+                source: "suggest-annotation-source",
+                filter: ["all", ["==", "$type", "Point"], ["==", "kind", "marker"]],
+                layout: {
+                    "icon-image": "suggest-pin-icon",
+                    "icon-size": 0.55,
+                    "icon-anchor": "bottom",
+                    "icon-allow-overlap": true
+                }
+            });
         }
     };
 
-    if (state.map) {
-        state.map.on("click", (e) => {
-            if (!currentMode) return;
-            const pt = [e.lngLat.lng, e.lngLat.lat];
+    const updateAnnotationSource = () => {
+        if (!state.map) return;
+        ensureAnnotationLayers(state.map);
 
-            if (currentMode === "marker") {
-                drawnCoords = [pt];
-                updateAnnotationSource();
-                window._preventSuggestClose = true;  // block modal-close on this same click
-                setTimeout(() => { window._preventSuggestClose = false; }, 0);
-                resetDrawingMode();
-                markerPlaced = true;
-                if (statusEl) {
-                    statusEl.innerHTML = `<span class="suggest-status-badge">Marker: ${pt[1].toFixed(4)}°, ${pt[0].toFixed(4)}°</span>`;
-                }
-                setMarkerBtnToClear();
+        const features = [];
 
-                if (suggestModal) {
-                    suggestModal.setAttribute("aria-hidden", "false");
-                    suggestModal.classList.add("is-open");
-                    if (window.updateActionButtonsState) window.updateActionButtonsState();
-                }
-                showToast("Marker added to map!");
+        // 1. All placed markers
+        markers.forEach((coord, idx) => {
+            features.push({
+                type: "Feature",
+                properties: { kind: "marker", index: idx },
+                geometry: { type: "Point", coordinates: coord }
+            });
+        });
+
+        // 2. All placed lines + in-progress line
+        lines.forEach((line) => {
+            if (line.length >= 2) {
+                features.push({
+                    type: "Feature",
+                    properties: { kind: "line" },
+                    geometry: { type: "LineString", coordinates: line }
+                });
+            }
+            line.forEach(coord => {
+                features.push({
+                    type: "Feature",
+                    properties: { kind: "vertex" },
+                    geometry: { type: "Point", coordinates: coord }
+                });
+            });
+        });
+
+        if (activeLineCoords.length > 0) {
+            if (activeLineCoords.length >= 2) {
+                features.push({
+                    type: "Feature",
+                    properties: { kind: "line" },
+                    geometry: { type: "LineString", coordinates: activeLineCoords }
+                });
+            }
+            activeLineCoords.forEach(coord => {
+                features.push({
+                    type: "Feature",
+                    properties: { kind: "vertex" },
+                    geometry: { type: "Point", coordinates: coord }
+                });
+            });
+        }
+
+        // 3. All placed polygons + in-progress polygon
+        polygons.forEach((poly) => {
+            if (poly.length >= 3) {
+                const ring = [...poly, poly[0]];
+                features.push({
+                    type: "Feature",
+                    properties: { kind: "polygon" },
+                    geometry: { type: "Polygon", coordinates: [ring] }
+                });
+            }
+            poly.forEach(coord => {
+                features.push({
+                    type: "Feature",
+                    properties: { kind: "vertex" },
+                    geometry: { type: "Point", coordinates: coord }
+                });
+            });
+        });
+
+        if (activePolyCoords.length > 0) {
+            if (activePolyCoords.length >= 3) {
+                const ring = [...activePolyCoords, activePolyCoords[0]];
+                features.push({
+                    type: "Feature",
+                    properties: { kind: "polygon" },
+                    geometry: { type: "Polygon", coordinates: [ring] }
+                });
+            } else if (activePolyCoords.length === 2) {
+                features.push({
+                    type: "Feature",
+                    properties: { kind: "line" },
+                    geometry: { type: "LineString", coordinates: activePolyCoords }
+                });
+            }
+            activePolyCoords.forEach(coord => {
+                features.push({
+                    type: "Feature",
+                    properties: { kind: "vertex" },
+                    geometry: { type: "Point", coordinates: coord }
+                });
+            });
+        }
+
+        const geojson = {
+            type: "FeatureCollection",
+            features: features
+        };
+
+        if (state.map.getSource("suggest-annotation-source")) {
+            state.map.getSource("suggest-annotation-source").setData(geojson);
+        }
+    };
+
+    const resetDrawingStateOnly = () => {
+        currentDrawingMode = null;
+        activeLineCoords = [];
+        activePolyCoords = [];
+        if (state.map && state.map.getCanvas()) state.map.getCanvas().style.cursor = "";
+        if (state.map && state.map.doubleClickZoom) state.map.doubleClickZoom.enable();
+        document.body.classList.remove("is-annotation-mode");
+        updateButtonsUI();
+        updateStatusText();
+    };
+
+    const clearAllAnnotations = (silent = false) => {
+        markers = [];
+        lines = [];
+        polygons = [];
+        resetDrawingStateOnly();
+        if (state.map && state.map.getSource("suggest-annotation-source")) {
+            state.map.getSource("suggest-annotation-source").setData({
+                type: "FeatureCollection",
+                features: []
+            });
+        }
+        updateStatusText();
+        updateSuggestLockState();
+        if (!silent && typeof showToast === "function") showToast("All annotations cleared");
+    };
+
+    const suggestExitBtn = document.getElementById("suggest-exit-btn");
+    if (suggestExitBtn) {
+        suggestExitBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (titleInput) titleInput.value = "";
+            if (msgInput) msgInput.value = "";
+            clearAllAnnotations(true);
+            updateSuggestLockState();
+            if (typeof closeAllModals === "function") closeAllModals();
+            if (typeof showToast === "function") showToast("Suggest mode exited (progress discarded)");
+        });
+    }
+
+    const finishDrawingLine = () => {
+        if (activeLineCoords.length < 2) {
+            if (typeof showToast === "function") showToast("Click map to add at least 2 points for a line.");
+            return;
+        }
+        lines.push([...activeLineCoords]);
+        resetDrawingStateOnly();
+        updateAnnotationSource();
+        updateSuggestLockState();
+        if (suggestModal) {
+            suggestModal.setAttribute("aria-hidden", "false");
+            suggestModal.classList.add("is-open");
+            if (window.updateActionButtonsState) window.updateActionButtonsState();
+        }
+        if (typeof showToast === "function") showToast("Line added to map!");
+    };
+
+    const finishDrawingPolygon = () => {
+        if (activePolyCoords.length < 3) {
+            if (typeof showToast === "function") showToast("Click map to add at least 3 corners for a polygon.");
+            return;
+        }
+        polygons.push([...activePolyCoords]);
+        resetDrawingStateOnly();
+        updateAnnotationSource();
+        updateSuggestLockState();
+        if (suggestModal) {
+            suggestModal.setAttribute("aria-hidden", "false");
+            suggestModal.classList.add("is-open");
+            if (window.updateActionButtonsState) window.updateActionButtonsState();
+        }
+        if (typeof showToast === "function") showToast("Polygon added to map!");
+    };
+
+    const cancelCurrentDrawing = () => {
+        resetDrawingStateOnly();
+        updateAnnotationSource();
+        updateSuggestLockState();
+    };
+
+    const annotationExitBtn = document.getElementById("annotation-exit-btn");
+    if (annotationExitBtn) {
+        annotationExitBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (currentDrawingMode === "line" && activeLineCoords.length >= 2) {
+                finishDrawingLine();
+            } else if (currentDrawingMode === "polygon" && activePolyCoords.length >= 3) {
+                finishDrawingPolygon();
+            } else {
+                cancelCurrentDrawing();
             }
         });
     }
 
-    const startDrawing = (mode, btnEl, msg) => {
+    // Press X to exit drawing mode
+    document.addEventListener("keydown", (e) => {
+        if ((e.key === "x" || e.key === "X") && document.body.classList.contains("is-annotation-mode")) {
+            e.preventDefault();
+            if (currentDrawingMode === "line" && activeLineCoords.length >= 2) {
+                finishDrawingLine();
+            } else if (currentDrawingMode === "polygon" && activePolyCoords.length >= 3) {
+                finishDrawingPolygon();
+            } else {
+                cancelCurrentDrawing();
+            }
+        }
+    });
+
+    const startDrawingMode = (mode, msg) => {
         if (!state.map) {
-            showToast("Map is not available");
+            if (typeof showToast === "function") showToast("Map is not available");
             return;
         }
-        resetDrawingMode();
-        currentMode = mode;
-        drawnCoords = [];
-        if (btnEl) btnEl.classList.add("is-active");
+        currentDrawingMode = mode;
+        activeLineCoords = [];
+        activePolyCoords = [];
+
+        updateButtonsUI();
+        updateStatusText();
+
         if (state.map.getCanvas()) state.map.getCanvas().style.cursor = "crosshair";
+        if (state.map.doubleClickZoom) state.map.doubleClickZoom.disable();
         document.body.classList.add("is-annotation-mode");
-        showToast(msg);
+        if (typeof showToast === "function") showToast(msg);
     };
+
+    if (state.map) {
+        state.map.on("click", (e) => {
+            if (!currentDrawingMode) return;
+            const pt = [e.lngLat.lng, e.lngLat.lat];
+
+            if (currentDrawingMode === "marker") {
+                if (markers.length < MAX_ITEMS) {
+                    markers.push(pt);
+                    updateAnnotationSource();
+                    window._preventSuggestClose = true;
+                    setTimeout(() => { window._preventSuggestClose = false; }, 0);
+                    resetDrawingStateOnly();
+                    updateSuggestLockState();
+
+                    if (suggestModal) {
+                        suggestModal.setAttribute("aria-hidden", "false");
+                        suggestModal.classList.add("is-open");
+                        if (window.updateActionButtonsState) window.updateActionButtonsState();
+                    }
+                    if (typeof showToast === "function") showToast("Marker added to map!");
+                } else {
+                    if (typeof showToast === "function") showToast("Maximum of 5 markers reached.");
+                }
+            } else if (currentDrawingMode === "line") {
+                activeLineCoords.push(pt);
+                updateAnnotationSource();
+                window._preventSuggestClose = true;
+                setTimeout(() => { window._preventSuggestClose = false; }, 0);
+                updateButtonsUI();
+                updateStatusText();
+                updateSuggestLockState();
+            } else if (currentDrawingMode === "polygon") {
+                activePolyCoords.push(pt);
+                updateAnnotationSource();
+                window._preventSuggestClose = true;
+                setTimeout(() => { window._preventSuggestClose = false; }, 0);
+                updateButtonsUI();
+                updateStatusText();
+                updateSuggestLockState();
+            }
+        });
+
+        state.map.on("dblclick", (e) => {
+            if (!currentDrawingMode) return;
+            e.preventDefault();
+            if (currentDrawingMode === "line") {
+                if (activeLineCoords.length >= 2) {
+                    finishDrawingLine();
+                } else {
+                    cancelCurrentDrawing();
+                    if (typeof showToast === "function") showToast("Line cancelled (need at least 2 points)");
+                }
+            } else if (currentDrawingMode === "polygon") {
+                if (activePolyCoords.length >= 3) {
+                    finishDrawingPolygon();
+                } else {
+                    cancelCurrentDrawing();
+                    if (typeof showToast === "function") showToast("Polygon cancelled (need at least 3 corners)");
+                }
+            }
+        });
+    }
 
     if (markerBtn) {
         markerBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (markerPlaced) {
-                // Toggle to clear mode
-                clearAnnotation();
+            if (currentDrawingMode === "marker") {
+                cancelCurrentDrawing();
+            } else if (markers.length >= MAX_ITEMS) {
+                // Clear all markers
+                markers = [];
+                updateAnnotationSource();
+                updateButtonsUI();
+                updateStatusText();
+                updateSuggestLockState();
+                if (typeof showToast === "function") showToast("Markers cleared");
             } else {
-                startDrawing("marker", markerBtn, "Click anywhere on the map to place a marker!");
+                startDrawingMode("marker", "Click anywhere on the map to place a marker!");
             }
         });
     }
@@ -6939,7 +7938,24 @@ function setupSuggestFormAndDrawing(closeAllModals) {
         lineBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            showToast("Feature not available (coming soon)");
+            if (currentDrawingMode === "line") {
+                if (activeLineCoords.length >= 2) {
+                    finishDrawingLine();
+                } else {
+                    cancelCurrentDrawing();
+                    if (typeof showToast === "function") showToast("Line cancelled (need at least 2 points)");
+                }
+            } else if (lines.length >= MAX_ITEMS) {
+                // Clear all lines
+                lines = [];
+                updateAnnotationSource();
+                updateButtonsUI();
+                updateStatusText();
+                updateSuggestLockState();
+                if (typeof showToast === "function") showToast("Lines cleared");
+            } else {
+                startDrawingMode("line", "Click on map to add line points. Click Finish or dbl-click when done.");
+            }
         });
     }
 
@@ -6947,7 +7963,24 @@ function setupSuggestFormAndDrawing(closeAllModals) {
         polygonBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            showToast("Feature not available (coming soon)");
+            if (currentDrawingMode === "polygon") {
+                if (activePolyCoords.length >= 3) {
+                    finishDrawingPolygon();
+                } else {
+                    cancelCurrentDrawing();
+                    if (typeof showToast === "function") showToast("Polygon cancelled (need at least 3 corners)");
+                }
+            } else if (polygons.length >= MAX_ITEMS) {
+                // Clear all polygons
+                polygons = [];
+                updateAnnotationSource();
+                updateButtonsUI();
+                updateStatusText();
+                updateSuggestLockState();
+                if (typeof showToast === "function") showToast("Polygons cleared");
+            } else {
+                startDrawingMode("polygon", "Click on map to add polygon corners. Click Finish or dbl-click when done.");
+            }
         });
     }
 
@@ -6960,18 +7993,19 @@ function setupSuggestFormAndDrawing(closeAllModals) {
         const message = msgInput ? msgInput.value.trim() : "";
 
         if (!title || !message) {
-            showToast("Please fill in all required fields.");
+            if (typeof showToast === "function") showToast("Please fill in all required fields.");
             return;
         }
 
         // Placeholder submit action
-        showToast("Suggestion submitted! Thank you for your feedback.");
+        if (typeof showToast === "function") showToast("Suggestion submitted! Thank you for your feedback.");
 
         // Reset form & clear annotation
         if (titleInput) titleInput.value = "";
         if (msgInput) msgInput.value = "";
 
-        clearAnnotation(true); // silent — submit toast already shown
+        clearAllAnnotations(true); // silent — submit toast already shown
+        updateSuggestLockState();
 
         // Close modal
         if (closeAllModals) closeAllModals();

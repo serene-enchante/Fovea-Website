@@ -3820,18 +3820,34 @@ body.has-active-modal .maps-tile-header__actions {
 
 .suggest-annotation-status {
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.5);
-    margin-top: 0.25rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 0.35rem;
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
 }
 
 .suggest-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     color: var(--accent-primary);
     font-weight: 600;
     background: rgba(var(--accent-rgb), 0.16);
-    padding: 0.2rem 0.6rem;
+    padding: 0.2rem 0.55rem;
     border-radius: 20px;
+    font-size: 0.73rem;
+}
+
+.suggest-status-badge[data-action] {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.suggest-status-badge[data-action]:hover {
+    background: rgba(255, 69, 58, 0.22);
+    color: #ff453a;
 }
 
 .suggest-submit-btn {
@@ -4131,6 +4147,47 @@ body.is-annotation-mode .annotation-exit-btn {
     animation: annotationExitSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ── Suggest Mode Lock Exit Prompt ──────────────────────────────────── */
+.suggest-exit-btn {
+    display: none;
+}
+
+body.is-suggest-locked .suggest-exit-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.5rem;
+    position: fixed;
+    z-index: 999999998 !important;
+    background: rgba(35, 8, 10, 0.96) !important;
+    color: #ff453a !important;
+    border: none !important;
+    outline: none !important;
+    border-radius: 30px !important;
+    padding: 0.65rem 1.25rem !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    cursor: pointer;
+    bottom: 24px !important;
+    right: 24px !important;
+    left: auto !important;
+    transform: none !important;
+    animation: annotationExitSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+body.is-suggest-locked .suggest-exit-btn:hover {
+    background: rgba(48, 12, 14, 0.98) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.9) !important;
+}
+
+body.is-annotation-mode .suggest-exit-btn {
+    display: none !important;
+}
+
 @keyframes annotationExitSlideUp {
     from { opacity: 0; transform: translateY(20px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -4192,6 +4249,17 @@ body.is-annotation-mode .annotation-exit-btn {
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%) !important;
+        animation: annotationExitSlideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    body.is-suggest-locked .suggest-exit-btn {
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        max-width: calc(100vw - 32px) !important;
+        white-space: normal !important;
+        text-align: center !important;
         animation: annotationExitSlideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
@@ -6382,3 +6450,21 @@ body.theme-light.is-annotation-mode .annotation-exit-btn {
     border: 1px solid rgba(220, 38, 38, 0.22) !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(220, 38, 38, 0.08) !important;
 }
+
+[data-theme="light"] body.is-suggest-locked .suggest-exit-btn,
+html.theme-light body.is-suggest-locked .suggest-exit-btn,
+body.theme-light.is-suggest-locked .suggest-exit-btn {
+    background: rgba(254, 242, 242, 0.96) !important;
+    color: #dc2626 !important;
+    border: 1px solid rgba(220, 38, 38, 0.22) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(220, 38, 38, 0.08) !important;
+}
+
+[data-theme="light"] body.is-suggest-locked .suggest-exit-btn:hover,
+html.theme-light body.is-suggest-locked .suggest-exit-btn:hover,
+body.theme-light.is-suggest-locked .suggest-exit-btn:hover {
+    background: #ffffff !important;
+    border-color: rgba(220, 38, 38, 0.35) !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14) !important;
+}
+
