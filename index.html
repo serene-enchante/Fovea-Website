@@ -1747,20 +1747,22 @@
                         homeContainer.classList.remove("search-active");
                     }
 
-                    // Restore automatic horizontal rotation centered at the Equator (0)
-                    isSpinning = true;
-                    try {
-                        if (homeMap) {
-                            homeMap.easeTo({
-                                center: [-123.079, 0],
-                                duration: 2200,
-                                easing: (t) => 1 - Math.pow(1 - t, 4)
-                            });
+                    // Restore automatic horizontal rotation centered at the Equator (0) if paused
+                    if (!isSpinning) {
+                        isSpinning = true;
+                        try {
+                            if (homeMap) {
+                                homeMap.easeTo({
+                                    center: [-123.079, 0],
+                                    duration: 2200,
+                                    easing: (t) => 1 - Math.pow(1 - t, 4)
+                                });
+                            }
+                        } catch (e) {
+                            // Suppress map state errors if map is not fully loaded yet
                         }
-                    } catch (e) {
-                        // Suppress map state errors if map is not fully loaded yet
+                        rotateGlobe();
                     }
-                    rotateGlobe();
                     return;
                 }
 
@@ -1814,8 +1816,7 @@
                 selectedIndex = -1;
 
                 // Stop auto-rotation while viewing search results
-                isSpinning = false;
-                if (rotationId) cancelAnimationFrame(rotationId);
+                stopGlobeRotation();
 
                 // Add interactive MapLibre WebGL marker dots for suggested circles
                 updateMapMarkers(matches);
@@ -1875,18 +1876,20 @@
                     if (homeContainer) {
                         homeContainer.classList.remove("search-active");
                     }
-                    // Restore spinning centered at the Equator (0)
-                    isSpinning = true;
-                    try {
-                        if (homeMap) {
-                            homeMap.easeTo({
-                                center: [-123.079, 0],
-                                duration: 2200,
-                                easing: (t) => 1 - Math.pow(1 - t, 4)
-                            });
-                        }
-                    } catch (err) {}
-                    rotateGlobe();
+                    // Restore spinning centered at the Equator (0) if paused
+                    if (!isSpinning) {
+                        isSpinning = true;
+                        try {
+                            if (homeMap) {
+                                homeMap.easeTo({
+                                    center: [-123.079, 0],
+                                    duration: 2200,
+                                    easing: (t) => 1 - Math.pow(1 - t, 4)
+                                });
+                            }
+                        } catch (err) {}
+                        rotateGlobe();
+                    }
                 }
             });
 
@@ -2062,17 +2065,50 @@
                     resetTransitions();
                 });
 
-                function rotateGlobe() {
-                    if (!isSpinning) return;
-                    try {
-                        const center = homeMap.getCenter();
-                        center.lng += 0.02; // speed of rotation (reduced for subtle architectural spin)
-                        if (center.lng > 180) center.lng -= 360;
-                        homeMap.setCenter(center);
-                    } catch (e) {
-                        // Suppress map center errors if page navigates mid-frame
+                let lastFrameTime = 0;
+
+                function stopGlobeRotation() {
+                    isSpinning = false;
+                    if (rotationId) {
+                        cancelAnimationFrame(rotationId);
+                        rotationId = null;
                     }
-                    rotationId = requestAnimationFrame(rotateGlobe);
+                }
+
+                function rotateGlobe() {
+                    // Prevent duplicate concurrent animation loops
+                    if (rotationId) {
+                        cancelAnimationFrame(rotationId);
+                        rotationId = null;
+                    }
+                    isSpinning = true;
+                    lastFrameTime = performance.now();
+
+                    function tick(now) {
+                        if (!isSpinning) {
+                            rotationId = null;
+                            return;
+                        }
+
+                        const dt = Math.min((now - lastFrameTime) / 1000, 0.1); // clamp to 100ms
+                        lastFrameTime = now;
+
+                        try {
+                            if (homeMap) {
+                                const center = homeMap.getCenter();
+                                // Stable rotation: 1.2 degrees per second (~0.02 deg/frame at 60fps)
+                                center.lng += 1.2 * dt;
+                                if (center.lng > 180) center.lng -= 360;
+                                homeMap.setCenter(center);
+                            }
+                        } catch (e) {
+                            // Suppress map center errors if page navigates mid-frame
+                        }
+
+                        rotationId = requestAnimationFrame(tick);
+                    }
+
+                    rotationId = requestAnimationFrame(tick);
                 }
 
                 // Helper to initialize search markers WebGL layer
@@ -2206,8 +2242,7 @@
                     e.stopPropagation();
 
                     // Stop auto rotation
-                    isSpinning = false;
-                    if (rotationId) cancelAnimationFrame(rotationId);
+                    stopGlobeRotation();
 
                     // Save origin for back transitions
                     sessionStorage.setItem("fovea_nav_origin", "maps");
@@ -2280,8 +2315,7 @@
                         if (document.body.className.includes("is-transitioning-")) return;
 
                         // Stop globe auto rotation
-                        isSpinning = false;
-                        if (rotationId) cancelAnimationFrame(rotationId);
+                        stopGlobeRotation();
 
                         // Save origin for back transitions
                         sessionStorage.setItem("fovea_nav_origin", "settings");
@@ -2304,8 +2338,7 @@
                         e.preventDefault();
                         if (document.body.className.includes("is-transitioning-")) return;
 
-                        isSpinning = false;
-                        if (rotationId) cancelAnimationFrame(rotationId);
+                        stopGlobeRotation();
 
                         document.body.classList.add("is-transitioning-left");
                         if (fadeOverlay) {
