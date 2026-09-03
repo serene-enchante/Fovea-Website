@@ -1733,10 +1733,14 @@ body.theme-light #page-transition-overlay {
     border: none !important;
 }
 
-.maps-tile-map-container.is-fullscreen #tile-map {
+.maps-tile-map-container.is-fullscreen #tile-map,
+.maps-tile-map-container.is-fullscreen #tile-map .maplibregl-canvas-container,
+.maps-tile-map-container.is-fullscreen #tile-map .maplibregl-canvas,
+.maps-tile-map-container.is-fullscreen #tile-map canvas {
     width: 100vw !important;
     height: 100vh !important;
     height: 100dvh !important;
+    border-radius: 0 !important;
 }
 
 .maps-tile-map-container.is-fullscreen .map-fade-overlay,
@@ -1754,6 +1758,14 @@ body.theme-light #page-transition-overlay {
     width: 100%;
     height: 100%;
     position: relative;
+    border-radius: 24px 0 0 0 !important;
+    overflow: hidden !important;
+}
+
+#tile-map .maplibregl-canvas-container,
+#tile-map .maplibregl-canvas,
+#tile-map canvas {
+    border-radius: 24px 0 0 0 !important;
 }
 
 /* Custom control overlay container — fills the map, pointer-events pass-through */
@@ -2781,7 +2793,11 @@ body.theme-light .maps-tile-map-container .default-map-thumbnail {
         width: auto !important;
     }
 
-    .maps-tile-map-container {
+    .maps-tile-map-container,
+    #tile-map,
+    #tile-map .maplibregl-canvas-container,
+    #tile-map .maplibregl-canvas,
+    #tile-map canvas {
         border-radius: 24px !important;
     }
 
