@@ -102,9 +102,7 @@ const APP_INSTRUCTION_CONFIGS = {
         iconSrc: "images/app_icons/avenza.webp",
         step1Heading: "Download the GeoPDF",
         step2Heading: "Open in Avenza Maps",
-        step2Text: "Tap <strong class=\"avenza-ui-badge\">Download</strong> above, then select <strong class=\"avenza-ui-badge\">Open in Avenza Maps</strong> from the share sheet.",
-        step3Heading: "Ready Offline",
-        step3Text: "Your count boundary is now imported with high-resolution Esri Topo basemaps for offline GPS navigation."
+        step2Text: "Tap <strong class=\"avenza-ui-badge\">Download</strong> above, then select <strong class=\"avenza-ui-badge\">Open in Avenza Maps</strong> from the share sheet."
     },
 
     gaia: {
@@ -115,9 +113,7 @@ const APP_INSTRUCTION_CONFIGS = {
         iconSrc: "images/app_icons/gaia.webp",
         step1Heading: "Download the GPX File",
         step2Heading: "Import into Gaia GPS",
-        step2Text: "Tap <strong class=\"avenza-ui-badge\">Download</strong> above, then tap <strong class=\"avenza-ui-badge\">Open in Gaia GPS</strong> to import the boundary.",
-        step3Heading: "Track in the Field",
-        step3Text: "View the count zone boundaries with topo and satellite layers on your phone."
+        step2Text: "Tap <strong class=\"avenza-ui-badge\">Download</strong> above, then tap <strong class=\"avenza-ui-badge\">Open in Gaia GPS</strong> to import the boundary."
     },
     caltopo: {
         appName: "CalTopo",
@@ -127,9 +123,7 @@ const APP_INSTRUCTION_CONFIGS = {
         iconSrc: "images/app_icons/caltopo.webp",
         step1Heading: "Download the GPX File",
         step2Heading: "Import into CalTopo",
-        step2Text: "Download the file and open it with CalTopo to overlay the zone on USGS quad or custom layers.",
-        step3Heading: "Ready Offline",
-        step3Text: "Access comprehensive terrain and slope angles while in the field."
+        step2Text: "Download the file and open it with CalTopo to overlay the zone on USGS quad or custom layers."
     },
     osmand: {
         appName: "OsmAnd Maps",
@@ -139,9 +133,7 @@ const APP_INSTRUCTION_CONFIGS = {
         iconSrc: "images/app_icons/osmandmaps.webp",
         step1Heading: "Download the GPX File",
         step2Heading: "Open with OsmAnd",
-        step2Text: "Tap <strong class=\"avenza-ui-badge\">Download</strong>, then choose <strong class=\"avenza-ui-badge\">OsmAnd Maps</strong> to import the boundary track.",
-        step3Heading: "Offline Navigation",
-        step3Text: "100% offline open-source navigation with contour lines and trail networks."
+        step2Text: "Tap <strong class=\"avenza-ui-badge\">Download</strong>, then choose <strong class=\"avenza-ui-badge\">OsmAnd Maps</strong> to import the boundary track."
     }
 };
 
@@ -1117,12 +1109,6 @@ function openAppInstructionModal(config, filename) {
 
     const step2Text = document.getElementById("avenza-step2-text");
     if (step2Text) step2Text.innerHTML = config.step2Text;
-
-    const step3Heading = document.getElementById("avenza-step3-heading");
-    if (step3Heading) step3Heading.textContent = config.step3Heading;
-
-    const step3Text = document.getElementById("avenza-step3-text");
-    if (step3Text) step3Text.innerHTML = config.step3Text;
 
     // Download Button handler in Modal
     const modalDownloadBtn = document.getElementById("avenza-modal-download-btn");

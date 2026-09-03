@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Legal & Policies - fovea</title>
+    <meta name="description" content="Fovea Legal & Policies - Privacy policy, terms of service, field boundary disclaimers, and data attribution.">
+
+    <link rel="icon" type="image/png" href="../images/logo-fav.png">
+
+    <script>
+        (function() {
+            try {
+                const storedTheme = localStorage.getItem("fovea-theme") || "dark";
+                const isSystemLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+                if (storedTheme === "light" || (storedTheme === "auto" && isSystemLight)) {
+                    document.documentElement.setAttribute("data-theme", "light");
+                    document.documentElement.classList.add("theme-light");
+                }
+            } catch(e) {}
+        })();
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'Aliceregular';
+            src: url('../fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff2') format('woff2'),
+                 url('../fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --body-text-color: rgba(255, 255, 255, 0.76);
+            --subtext-color: rgba(255, 255, 255, 0.45);
+            --border-color: rgba(255, 255, 255, 0.12);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --callout-bg: rgba(255, 255, 255, 0.04);
+            --font-serif: 'Aliceregular', 'Alice', Georgia, serif;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-mono: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+            --accent-color: #64b5f6;
+            --accent-light: #91cfff;
+            --accent-hover: #79c1f8;
+            --accent-rgb: 100, 181, 246;
+            --accent-primary: var(--accent-color);
+        }
+
+        [data-theme="light"],
+        html.theme-light,
+        body.theme-light {
+            --bg-color: #ffffff;
+            --text-color: #111827;
+            --body-text-color: #374151;
+            --subtext-color: #6b7280;
+            --border-color: rgba(0, 0, 0, 0.12);
+            --card-bg: rgba(0, 0, 0, 0.02);
+            --callout-bg: rgba(0, 0, 0, 0.03);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .privacy-page-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding: 5.5rem 1.75rem 6rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Ambient Glow Background */
+        .ambient-glow {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: clamp(320px, 60vw, 700px);
+            height: clamp(320px, 60vw, 700px);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.035) 0%, rgba(0, 0, 0, 0) 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .privacy-card {
+            max-width: 760px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            opacity: 0;
+            transform: translateY(12px);
+            animation: fadeInContent 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.1s;
+        }
+
+        @keyframes fadeInContent {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Corner Navigation Text Buttons (Home) */
+        .corner-nav-btn {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 100px;
+            font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--subtext-color);
+            text-decoration: none;
+            z-index: 100;
+            user-select: none;
+            pointer-events: auto;
+            display: flex;
+            align-items: flex-end;
+            padding-bottom: 2.2rem;
+            transition: color 0.25s ease;
+        }
+
+        .corner-nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            height: 70vh;
+            width: 100px;
+            pointer-events: none;
+            opacity: 0;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                        opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            background: #0f0f0f;
+            z-index: -1;
+        }
+
+        .corner-nav-btn span {
+            display: inline-block;
+            transition: transform 0.25s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .corner-nav-left {
+            left: 0;
+            padding-left: 1.5rem;
+            justify-content: flex-start;
+        }
+
+        .corner-nav-left::before {
+            left: 0;
+            transform: translateY(-50%) translateX(-100%);
+            border-radius: 0 36px 36px 0;
+        }
+
+        .corner-nav-left:hover {
+            color: #ffffff;
+        }
+
+        .corner-nav-left:hover::before {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
+        }
+
+        .corner-nav-left:hover span {
+            transform: translateX(-4px);
+        }
+
+        .corner-arrow-circle {
+            position: absolute;
+            top: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #72767d;
+            transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        color 0.25s ease,
+                        left 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .corner-nav-left .corner-arrow-circle {
+            left: 0;
+            transform: translateY(-50%) scale(0.65);
+        }
+
+        .corner-nav-left:hover .corner-arrow-circle {
+            opacity: 1;
+            transform: translateY(-50%) scale(1);
+            left: 1.3rem;
+            color: #ffffff;
+        }
+
+        body.is-transitioning-left::after {
+            content: '';
+            position: fixed;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            border-radius: 0;
+            z-index: 99998;
+            animation: fillScreenLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fillScreenLeft {
+            0% {
+                width: 100px;
+                height: 70vh;
+                border-radius: 0 36px 36px 0;
+            }
+            100% {
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+            }
+        }
+
+        body[class*="is-transitioning-"] .privacy-page-container,
+        body[class*="is-transitioning-"] .corner-nav-btn span,
+        body[class*="is-transitioning-"] .corner-arrow-circle {
+            opacity: 0 !important;
+            transition: opacity 0.4s ease !important;
+        }
+
+        body.is-transitioning-left .corner-nav-left {
+            z-index: 99999 !important;
+        }
+
+        /* Typography & Header */
+        .privacy-header-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .privacy-header {
+            font-family: var(--font-serif);
+            font-size: clamp(2.6rem, 5.5vw, 3.8rem);
+            font-weight: 400;
+            color: var(--text-color);
+            letter-spacing: -0.025em;
+            line-height: 1.1;
+        }
+
+        .privacy-subtitle {
+            font-size: 1.05rem;
+            color: var(--subtext-color);
+            line-height: 1.5;
+        }
+
+        /* Document Segment Tabs */
+        .legal-tabs-wrapper {
+            position: sticky;
+            top: 1rem;
+            z-index: 40;
+            background: var(--bg-color);
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .legal-tabs {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 0.25rem;
+        }
+
+        .legal-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .legal-tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.95rem;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--subtext-color);
+            font-family: var(--font-sans);
+            font-size: 0.84rem;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .legal-tab-btn:hover {
+            color: var(--text-color);
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .legal-tab-btn.is-active {
+            background: var(--accent-primary);
+            color: #000000;
+            font-weight: 600;
+            border-color: var(--accent-primary);
+            box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.25);
+        }
+
+        /* Document Panels */
+        .legal-panel {
+            display: none;
+            flex-direction: column;
+            gap: 2rem;
+            animation: fadeInTab 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .legal-panel.is-active {
+            display: flex;
+        }
+
+        @keyframes fadeInTab {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .privacy-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .privacy-section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+        }
+
+        .privacy-body-text {
+            font-size: clamp(0.96rem, 1.4vw, 1.04rem);
+            line-height: 1.75;
+            color: var(--body-text-color);
+            font-weight: 300;
+            letter-spacing: 0.01em;
+        }
+
+        .privacy-body-text strong {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        /* Callout Box */
+        .privacy-callout-box {
+            background: rgba(var(--accent-rgb), 0.05);
+            border: 1px solid rgba(var(--accent-rgb), 0.22);
+            border-radius: 12px;
+            padding: 1.25rem 1.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .privacy-callout-box--warning {
+            background: rgba(255, 171, 0, 0.05);
+            border-color: rgba(255, 171, 0, 0.25);
+        }
+
+        .privacy-callout-box__title {
+            font-size: 0.98rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .privacy-callout-box--warning .privacy-callout-box__title {
+            color: #ffb74d;
+        }
+
+        .privacy-list {
+            list-style: disc;
+            padding-left: 1.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            font-size: clamp(0.94rem, 1.4vw, 1rem);
+            line-height: 1.65;
+            color: var(--body-text-color);
+            font-weight: 300;
+        }
+
+        .privacy-list li strong {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        /* Citation Code Snippet Box */
+        .citation-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #e4e4e7;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        /* Bottom Action Buttons */
+        .privacy-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1.75rem;
+            border-top: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .action-pill-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 9999px;
+            color: #ffffff;
+            font-size: 0.86rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .action-pill-btn:hover {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .action-pill-btn--primary {
+            background: var(--accent-primary);
+            color: #000000;
+            border: none;
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.25);
+        }
+
+        .action-pill-btn--primary:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Fade Overlay */
+        .fade-overlay {
+            position: fixed;
+            inset: 0;
+            background: #000000;
+            opacity: 1;
+            pointer-events: none;
+            z-index: 99999;
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .fade-overlay.is-loaded {
+            opacity: 0;
+        }
+
+        /* Light Theme Overrides */
+        [data-theme="light"] .fade-overlay,
+        html.theme-light .fade-overlay,
+        body.theme-light .fade-overlay {
+            background: #ffffff;
+        }
+
+        [data-theme="light"] .ambient-glow,
+        html.theme-light .ambient-glow,
+        body.theme-light .ambient-glow {
+            background: radial-gradient(circle, rgba(0, 0, 0, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+        }
+
+        [data-theme="light"] .corner-nav-btn::before,
+        html.theme-light .corner-nav-btn::before,
+        body.theme-light .corner-nav-btn::before {
+            background: #f3f4f6;
+        }
+
+        [data-theme="light"] .corner-nav-btn,
+        html.theme-light .corner-nav-btn,
+        body.theme-light .corner-nav-btn {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .corner-nav-left:hover,
+        html.theme-light .corner-nav-left:hover,
+        body.theme-light .corner-nav-left:hover {
+            color: #111827;
+        }
+
+        [data-theme="light"] .corner-arrow-circle,
+        html.theme-light .corner-arrow-circle,
+        body.theme-light .corner-arrow-circle {
+            color: #4b5563;
+        }
+
+        [data-theme="light"] .corner-nav-btn:hover .corner-arrow-circle,
+        html.theme-light .corner-nav-btn:hover .corner-arrow-circle,
+        body.theme-light .corner-nav-btn:hover .corner-arrow-circle {
+            color: #111827;
+        }
+
+        [data-theme="light"] .legal-tabs-wrapper {
+            background: var(--bg-color);
+        }
+
+        [data-theme="light"] .legal-tab-btn {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.1);
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .legal-tab-btn:hover {
+            background: rgba(0, 0, 0, 0.08);
+            color: #111827;
+        }
+
+        [data-theme="light"] .legal-tab-btn.is-active {
+            background: var(--accent-primary);
+            color: #ffffff;
+            border-color: var(--accent-primary);
+        }
+
+        [data-theme="light"] .action-pill-btn,
+        html.theme-light .action-pill-btn,
+        body.theme-light .action-pill-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            color: #111827;
+        }
+
+        [data-theme="light"] .action-pill-btn:hover,
+        html.theme-light .action-pill-btn:hover,
+        body.theme-light .action-pill-btn:hover {
+            background: rgba(0, 0, 0, 0.09);
+            border-color: rgba(0, 0, 0, 0.20);
+        }
+
+        [data-theme="light"] .action-pill-btn--primary,
+        html.theme-light .action-pill-btn--primary,
+        body.theme-light .action-pill-btn--primary {
+            background: var(--accent-primary);
+            color: #ffffff;
+        }
+
+        [data-theme="light"] .privacy-callout-box,
+        html.theme-light .privacy-callout-box,
+        body.theme-light .privacy-callout-box {
+            background: rgba(var(--accent-rgb), 0.08);
+            border-color: rgba(var(--accent-rgb), 0.35);
+        }
+
+        [data-theme="light"] .privacy-callout-box--warning,
+        html.theme-light .privacy-callout-box--warning,
+        body.theme-light .privacy-callout-box--warning {
+            background: rgba(255, 171, 0, 0.08);
+            border-color: rgba(255, 171, 0, 0.35);
+        }
+
+        [data-theme="light"] .citation-box {
+            background: #f8fafc;
+            border-color: rgba(0, 0, 0, 0.12);
+            color: #1e293b;
+        }
+    </style>
+    <link rel="stylesheet" href="../styles/mobile-bottom-nav.css?v=16">
+</head>
+
+<body>
+    <div class="fade-overlay"></div>
+    <div class="ambient-glow"></div>
+
+    <!-- Corner Navigation Button (Back to Home) -->
+    <a href="../" class="corner-nav-btn corner-nav-left" aria-label="Back to home page" title="Back to home">
+        <span>Home</span>
+        <div class="corner-arrow-circle">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </div>
+    </a>
+
+    <main class="privacy-page-container">
+        <article class="privacy-card">
+
+            <header class="privacy-header-group">
+                <h1 class="privacy-header">Legal & Policies</h1>
+                <p class="privacy-subtitle">Operational guidelines, terms of use, privacy practices, and scientific disclaimers for Fovea.</p>
+            </header>
+
+            <!-- Navigation Tabs -->
+            <div class="legal-tabs-wrapper">
+                <nav class="legal-tabs" aria-label="Legal document sections">
+                    <button type="button" class="legal-tab-btn is-active" data-tab="privacy" role="tab" aria-selected="true" aria-controls="panel-privacy">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        <span>Privacy Policy</span>
+                    </button>
+                    <button type="button" class="legal-tab-btn" data-tab="terms" role="tab" aria-selected="false" aria-controls="panel-terms">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                        <span>Terms of Service</span>
+                    </button>
+                    <button type="button" class="legal-tab-btn" data-tab="disclaimer" role="tab" aria-selected="false" aria-controls="panel-disclaimer">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <span>Field & Map Disclaimer</span>
+                    </button>
+                    <button type="button" class="legal-tab-btn" data-tab="attribution" role="tab" aria-selected="false" aria-controls="panel-attribution">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <span>Data Attribution & Citation</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- TAB 1: PRIVACY POLICY -->
+            <div id="panel-privacy" class="legal-panel is-active" role="tabpanel" aria-labelledby="tab-privacy">
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">Overview</h2>
+                    <p class="privacy-body-text">
+                        Fovea is a decentralized citizen science spatial data platform designed to make count circle observations and geographic boundaries accessible, verifiable, and transparent. We respect your privacy and collect only the minimal data necessary to maintain spatial accuracy and support interactive mapping.
+                    </p>
+                </section>
+
+                <!-- Suggestion Form Focus -->
+                <section class="privacy-section" id="suggestions">
+                    <h2 class="privacy-section-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
+                        Suggestion Form & Map Annotations
+                    </h2>
+                    <p class="privacy-body-text">
+                        When you use the <strong>Suggest Edit</strong> tool to submit circle notes, report boundary discrepancies, or draw spatial annotations (markers, lines, or polygons) on the map:
+                    </p>
+
+                    <div class="privacy-callout-box">
+                        <div class="privacy-callout-box__title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            <span>Google Sheets Intake & Routing</span>
+                        </div>
+                        <p class="privacy-body-text">
+                            Information entered into the suggestion form routes directly to a <strong>Google Sheets form</strong> backend via Google Apps Script.
+                        </p>
+                    </div>
+
+                    <ul class="privacy-list">
+                        <li>
+                            <strong>Information Collected:</strong> Submissions include the subject/title, description text, spatial coordinates of drawn annotations (GeoJSON features), timestamp, and any contact information (such as an email address) that you voluntarily supply.
+                        </li>
+                        <li>
+                            <strong>Site Manager's Discretion:</strong> All feedback and suggested boundaries submitted through the form are reviewed by the site manager. At the <strong>site manager's discretion</strong>, submitted suggestions and annotations may be incorporated into public spatial datasets, shared with local count circle compilers, or distributed to scientific researchers and conservation partners to correct spatial errors and improve the accuracy of citizen science data.
+                        </li>
+                        <li>
+                            <strong>Contact Details:</strong> If you choose to provide an email address or contact info, it is used strictly for clarifying questions regarding the specifics of your suggested edit. Your contact information will never be sold, rented, or used for commercial marketing.
+                        </li>
+                    </ul>
+                </section>
+
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">Local Browser Storage</h2>
+                    <p class="privacy-body-text">
+                        Fovea uses your browser's local storage (<code>localStorage</code>) strictly to preserve visual preferences, such as your selected theme mode (Dark or Light) and local viewing states. This data remains on your device and is not tracked across websites.
+                    </p>
+                </section>
+
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">Third-Party Infrastructure</h2>
+                    <p class="privacy-body-text">
+                        Fovea utilizes the following external infrastructure to provide its services:
+                    </p>
+                    <ul class="privacy-list">
+                        <li>
+                            <strong>Google Workspace / Google Sheets:</strong> Used as the backend form processor for suggestion submissions.
+                        </li>
+                        <li>
+                            <strong>MapLibre GL & Spatial Tile Servers:</strong> Used to render interactive 3D globe and 2D vector map layers.
+                        </li>
+                    </ul>
+                </section>
+
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">Questions & Data Removal</h2>
+                    <p class="privacy-body-text">
+                        If you have questions regarding this privacy policy, or wish to request the modification or redaction of a suggestion you previously submitted, please contact the site manager.
+                    </p>
+                </section>
+            </div>
+
+            <!-- TAB 2: TERMS OF SERVICE -->
+            <div id="panel-terms" class="legal-panel" role="tabpanel" aria-labelledby="tab-terms">
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">Acceptance of Terms</h2>
+                    <p class="privacy-body-text">
+                        By accessing, browsing, or using Fovea, including viewing spatial datasets, downloading export files, or submitting map annotations, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the website or its tools.
+                    </p>
+                </section>
+
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">Acceptable Use Policy</h2>
+                    <p class="privacy-body-text">
+                        You agree to use Fovea solely for lawful research, educational, conservation, and recreational birding purposes. You must not:
+                    </p>
+                    <ul class="privacy-list">
+                        <li>Engage in automated scraping, denial of service attacks, or excessive querying that degrades platform performance for other users.</li>
+                        <li>Submit spam, fraudulent data, malicious scripts, or intentionally inaccurate geographic boundaries to the suggestion form.</li>
+                        <li>Attempt to reverse engineer or interfere with the Google Sheets backend infrastructure or MapLibre rendering pipeline.</li>
+                    </ul>
+                </section>
+
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">User Contributions & License</h2>
+                    <p class="privacy-body-text">
+                        When you submit edits, feedback, or draw annotations through Fovea, you grant the platform and its site manager a <strong>perpetual, worldwide, irrevocable, royalty-free, transferable license</strong> to use, reproduce, modify, adapt, publish, translate, create derivative works from, and distribute your contribution in any format or medium.
+                    </p>
+                    <p class="privacy-body-text">
+                        You represent and warrant that you have the right to submit all material you provide and that your submission does not violate any third-party copyrights or proprietary rights.
+                    </p>
+                </section>
+
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">Site Manager Discretion & Editorial Rights</h2>
+                    <p class="privacy-body-text">
+                        The site manager reserves the sole and unconstrained right to review, accept, reject, edit, or remove any suggested edits, boundary corrections, or annotations. Submission of an edit does not guarantee inclusion in public datasets or count circle geometries.
+                    </p>
+                </section>
+
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">"As-Is" Provision & Limitation of Liability</h2>
+                    <p class="privacy-body-text">
+                        Fovea and all associated tools, downloads, and spatial visualizations are provided on an <strong>"AS IS"</strong> and <strong>"AS AVAILABLE"</strong> basis without warranty of any kind, whether express or implied. Under no circumstances shall Fovea, its maintainers, or scientific contributors be liable for any direct, indirect, incidental, or consequential damages resulting from your use of the platform.
+                    </p>
+                </section>
+            </div>
+
+            <!-- TAB 3: FIELD & MAPPING DISCLAIMER -->
+            <div id="panel-disclaimer" class="legal-panel" role="tabpanel" aria-labelledby="tab-disclaimer">
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">Informational Use Only (Not a Legal Survey)</h2>
+                    <div class="privacy-callout-box privacy-callout-box--warning">
+                        <div class="privacy-callout-box__title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            <span>Notice: Not for Critical Navigation or Legal Boundaries</span>
+                        </div>
+                        <p class="privacy-body-text">
+                            Map boundaries, count circle radii (e.g., 15-mile CBC diameters), center points, and coordinates displayed on Fovea are geographic approximations compiled for citizen science observation. They are <strong>NOT legal survey monuments</strong>, property tax boundaries, or nautical/aviation navigation tools.
+                        </p>
+                    </div>
+                </section>
+
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">Private Property & Trespass Prohibition</h2>
+                    <p class="privacy-body-text">
+                        Count circles frequently overlay a mixture of public lands, private properties, conservation easements, and restricted reserves. 
+                    </p>
+                    <ul class="privacy-list">
+                        <li><strong>No Right of Entry:</strong> The display of any area within a count circle on Fovea does <strong>NOT</strong> grant permission, implied right-of-way, or authorization to enter upon private property.</li>
+                        <li><strong>Respect Signage:</strong> Users are strictly responsible for observing all posted signs, boundary markers, gates, and obtaining explicit landowner permission before accessing any non-public lands.</li>
+                        <li><strong>Trespass Liability:</strong> Neither Fovea nor count circle organizers assume any liability for individuals who trespass or enter restricted lands while participating in bird counts or field observation.</li>
+                    </ul>
+                </section>
+
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">Field Hazards & Assumption of Risk</h2>
+                    <p class="privacy-body-text">
+                        Field birding and citizen science outdoor activities involve inherent environmental risks, including severe weather, hazardous terrain, wild animals, road traffic, and limited emergency communication.
+                    </p>
+                    <p class="privacy-body-text">
+                        By using Fovea maps in the field, you acknowledge that you are solely responsible for your personal safety, route assessment, weather preparation, and gear. You agree to hold Fovea and its developers harmless from any injury, damage, loss, or citation incurred during field activities.
+                    </p>
+                </section>
+            </div>
+
+            <!-- TAB 4: DATA ATTRIBUTION & CITATION -->
+            <div id="panel-attribution" class="legal-panel" role="tabpanel" aria-labelledby="tab-attribution">
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">Third-Party Data Sources</h2>
+                    <p class="privacy-body-text">
+                        Fovea integrates spatial datasets and basemap services from several scientific and open data initiatives:
+                    </p>
+                    <ul class="privacy-list">
+                        <li>
+                            <strong>Audubon Christmas Bird Count (CBC):</strong> Historical count circle centers, boundaries, and count records are provided courtesy of the <strong>National Audubon Society</strong> and community compilers. Christmas Bird Count data is used for scientific research, education, and bird conservation.
+                        </li>
+                        <li>
+                            <strong>OpenStreetMap & Carto:</strong> Basemap vector and raster tiles are © <a href="https://www.openstreetmap.org/copyright" target="_blank" style="color: var(--accent-color); text-decoration: underline;">OpenStreetMap contributors</a> and Carto, licensed under the Open Database License (ODbL).
+                        </li>
+                        <li>
+                            <strong>MapLibre GL:</strong> Interactive 3D and 2D mapping engine built on the open-source MapLibre GL library.
+                        </li>
+                    </ul>
+                </section>
+
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">Exported Data Licensing</h2>
+                    <p class="privacy-body-text">
+                        Geospatial vector files (GeoJSON, Shapefile, KML, CSV) and map packages (Avenza PDF) exported from Fovea are made available under the <strong>Creative Commons Attribution 4.0 International (CC BY 4.0)</strong> license, subject to the underlying terms of the National Audubon Society and OpenStreetMap contributors.
+                    </p>
+                </section>
+
+                <section class="privacy-section">
+                    <h2 class="privacy-section-title">How to Cite Fovea</h2>
+                    <p class="privacy-body-text">
+                        If you use Fovea maps, boundaries, or export packages in scientific research, academic publications, or public reports, please use the following citation format:
+                    </p>
+
+                    <div class="citation-box">
+Fovea Citizen Science Spatial Platform. (2026). Audubon Christmas Bird Count Spatial Boundaries and Data Viewer. Retrieved from https://fovea.site
+                    </div>
+                </section>
+            </div>
+
+            <!-- Bottom Navigation Actions -->
+            <div class="privacy-actions">
+                <a href="../maps/?feature=circles" class="action-pill-btn action-pill-btn--primary">
+                    <span>Explore Maps</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </a>
+                <a href="../info/" class="action-pill-btn">
+                    <span>About Fovea</span>
+                </a>
+            </div>
+
+        </article>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Fade out page overlay on load
+            const overlay = document.querySelector(".fade-overlay");
+            if (overlay) {
+                setTimeout(() => {
+                    overlay.classList.add("is-loaded");
+                }, 100);
+            }
+
+            // Tab Switching Logic with Hash Support
+            const tabs = document.querySelectorAll(".legal-tab-btn");
+            const panels = document.querySelectorAll(".legal-panel");
+
+            function activateTab(tabId, updateHash = true) {
+                const targetTab = document.querySelector(`.legal-tab-btn[data-tab="${tabId}"]`);
+                const targetPanel = document.getElementById(`panel-${tabId}`);
+
+                if (!targetTab || !targetPanel) return;
+
+                tabs.forEach(t => {
+                    t.classList.remove("is-active");
+                    t.setAttribute("aria-selected", "false");
+                });
+
+                panels.forEach(p => {
+                    p.classList.remove("is-active");
+                });
+
+                targetTab.classList.add("is-active");
+                targetTab.setAttribute("aria-selected", "true");
+                targetPanel.classList.add("is-active");
+
+                if (updateHash) {
+                    history.replaceState(null, "", `#${tabId}`);
+                }
+            }
+
+            tabs.forEach(tab => {
+                tab.addEventListener("click", () => {
+                    const tabId = tab.dataset.tab;
+                    activateTab(tabId, true);
+                });
+            });
+
+            // Handle initial URL hash
+            const initialHash = window.location.hash.replace("#", "").toLowerCase();
+            if (initialHash) {
+                if (initialHash === "suggestions" || initialHash === "privacy") {
+                    activateTab("privacy", false);
+                    if (initialHash === "suggestions") {
+                        setTimeout(() => {
+                            const el = document.getElementById("suggestions");
+                            if (el) el.scrollIntoView({ behavior: "smooth" });
+                        }, 250);
+                    }
+                } else if (document.getElementById(`panel-${initialHash}`)) {
+                    activateTab(initialHash, false);
+                }
+            }
+
+            window.addEventListener("hashchange", () => {
+                const hash = window.location.hash.replace("#", "").toLowerCase();
+                if (document.getElementById(`panel-${hash}`)) {
+                    activateTab(hash, false);
+                }
+            });
+
+            // Corner navigation transition back to home
+            const cornerNavBtn = document.querySelector(".corner-nav-btn");
+            if (cornerNavBtn) {
+                cornerNavBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    if (document.body.className.includes("is-transitioning-")) return;
+
+                    document.body.classList.add("is-transitioning-left");
+
+                    setTimeout(() => {
+                        window.location.href = cornerNavBtn.getAttribute("href") || "../";
+                    }, 800);
+                });
+            }
+
+            window.addEventListener("pageshow", () => {
+                document.body.classList.remove("is-transitioning-left", "is-transitioning-right");
+            });
+        });
+    </script>
+    <script src="../scripts/mobile-bottom-nav.js?v=1" data-active-page="info" data-root="../"></script>
+</body>
+</html>

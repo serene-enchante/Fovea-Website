@@ -649,18 +649,34 @@
             font-size: 0.84rem;
             color: var(--subtext-color);
         }
-        /* Top Right Controls */
-        .top-right-controls {
+        /* Top Left Controls (Privacy & Legal + Info) */
+        .top-left-controls {
             position: fixed;
             top: 2rem;
-            right: 2rem;
+            left: 2rem;
             display: flex;
             align-items: center;
-            gap: 0.95rem;
+            gap: 0.85rem;
             z-index: 100;
             pointer-events: auto;
             opacity: 0;
             animation: fadeInSearch 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.4s;
+        }
+
+        .top-left-legal-link {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--subtext-color);
+            text-decoration: none;
+            transition: color 0.25s ease;
+            user-select: none;
+            letter-spacing: 0.01em;
+        }
+
+        .top-left-legal-link:hover {
+            color: #ffffff;
         }
 
         .settings-btn,
@@ -689,33 +705,6 @@
             transform: scale(1.1);
         }
 
-        .user-profile-status {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.78rem;
-            font-weight: 500;
-            color: var(--subtext-color);
-            transition: color 0.25s ease;
-            user-select: none;
-        }
-
-        .user-profile-status:hover {
-            color: #ffffff;
-        }
-
-        .profile-pic {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1.5px solid rgba(255, 255, 255, 0.15);
-            transition: border-color 0.25s ease;
-        }
-
-        .user-profile-status:hover .profile-pic {
-            border-color: rgba(255, 255, 255, 0.4);
-        }
 
         /* Toast Popup Notification */
         .toast-notification {
@@ -1060,7 +1049,8 @@
         body[class*="is-transitioning-"] .intro-header,
         body[class*="is-transitioning-"] .settings-btn,
         body[class*="is-transitioning-"] .info-btn,
-        body[class*="is-transitioning-"] .profile-pic-container,
+        body[class*="is-transitioning-"] .top-left-controls,
+        body[class*="is-transitioning-"] .top-left-legal-link,
         body[class*="is-transitioning-"] .corner-nav-btn span,
         body[class*="is-transitioning-"] .corner-arrow-circle {
             opacity: 0 !important;
@@ -1391,32 +1381,26 @@
 
         [data-theme="light"] .settings-btn,
         [data-theme="light"] .info-btn,
-        [data-theme="light"] .user-profile-status,
+        [data-theme="light"] .top-left-legal-link,
         html.theme-light .settings-btn,
         html.theme-light .info-btn,
-        html.theme-light .user-profile-status,
+        html.theme-light .top-left-legal-link,
         body.theme-light .settings-btn,
         body.theme-light .info-btn,
-        body.theme-light .user-profile-status {
+        body.theme-light .top-left-legal-link {
             color: #6b7280;
         }
 
         [data-theme="light"] .settings-btn:hover,
         [data-theme="light"] .info-btn:hover,
-        [data-theme="light"] .user-profile-status:hover,
+        [data-theme="light"] .top-left-legal-link:hover,
         html.theme-light .settings-btn:hover,
         html.theme-light .info-btn:hover,
-        html.theme-light .user-profile-status:hover,
+        html.theme-light .top-left-legal-link:hover,
         body.theme-light .settings-btn:hover,
         body.theme-light .info-btn:hover,
-        body.theme-light .user-profile-status:hover {
+        body.theme-light .top-left-legal-link:hover {
             color: #111827;
-        }
-
-        [data-theme="light"] .profile-pic,
-        html.theme-light .profile-pic,
-        body.theme-light .profile-pic {
-            border-color: rgba(0, 0, 0, 0.15);
         }
 
         [data-theme="light"] .toast-notification,
@@ -1436,18 +1420,18 @@
     <div class="ambient-glow"></div>
     <div id="toast-notification" class="toast-notification"></div>
 
-    <!-- Top Right Controls (About Info & User Profile status) -->
-    <div class="top-right-controls">
+    <!-- Top Left Controls (Privacy & Legal + About Info) -->
+    <div class="top-left-controls">
+        <a href="privacy/" class="top-left-legal-link" aria-label="Privacy and Legal Policies" title="Privacy & Legal">
+            <span>Privacy & Legal</span>
+        </a>
         <a href="info/" class="info-btn" aria-label="About fovea" title="About">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="16" x2="12" y2="12"></line>
                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
         </a>
-        <div class="user-profile-status" id="user-profile-status">
-            <span class="status-text">Log in / Sign up</span>
-        </div>
     </div>
 
     <!-- Corner Navigation Buttons (Tools & Settings) -->
@@ -1536,7 +1520,6 @@
                 <span>Download Wizard</span>
             </a>
         </div>
-
     </main>
 
     <!-- Globe Portal Container -->
@@ -1964,15 +1947,6 @@
             if (settingsBtn) {
                 settingsBtn.addEventListener("click", () => {
                     window.location.href = "settings/";
-                });
-            }
-
-            // Bind click listener for user profile status
-            const profileStatus = document.getElementById("user-profile-status");
-            if (profileStatus) {
-                profileStatus.style.cursor = "pointer";
-                profileStatus.addEventListener("click", () => {
-                    showComingSoonToast("GitHub Sign-In");
                 });
             }
 
