@@ -591,41 +591,52 @@
         .globe-container {
             position: fixed;
             left: 50%;
-            bottom: -215px; /* Half of 430px base width */
-            transform: translateX(-50%) translateY(0) scale(1.2); /* Scale to 1.2 for 516px on-screen diameter */
-            width: 430px;
-            height: 430px;
+            bottom: -315px; /* Brought up from screen bottom */
+            transform: translateX(-50%) translateY(0);
+            width: 736px;
+            height: 736px;
             border-radius: 50%;
-            cursor: pointer;
+            -webkit-clip-path: circle(50% at 50% 50%);
+            clip-path: circle(50% at 50% 50%);
+            cursor: default;
             z-index: 5; /* Lowered z-index so autocomplete dropdown sits on top */
-            background: #000000;
-            box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(255, 255, 255, 0.05);
+            background: transparent;
+            box-shadow: none;
             overflow: hidden;
             transform-origin: center bottom; /* Scales upwards from screen bottom boundary */
-            transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1), 
-                        box-shadow 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform;
+            contain: paint;
         }
 
-        .globe-container:hover {
-            transform: translateX(-50%) translateY(-25px) scale(1.26);
-            box-shadow: 0 -8px 50px rgba(0, 0, 0, 0.95), 0 0 35px rgba(var(--accent-rgb), 0.22);
+        .globe-container * {
+            pointer-events: none !important;
         }
 
-
-
-
+        .globe-container.is-hovered {
+            cursor: pointer;
+            transform: translateX(-50%) translateY(-28px);
+            box-shadow: none;
+        }
 
         .globe-container.is-flying {
-            transform: translateX(-50%) translateY(-120vh) scale(1.2) !important; /* Keep scale constant at desktop 1.2 */
+            transform: translateX(-50%) translateY(-120vh) !important;
             transition: transform 1.2s cubic-bezier(0.76, 0, 0.24, 1) !important;
             pointer-events: none;
         }
 
-        .home-globe-map {
-            width: 100%;
-            height: 100%;
+        .home-globe-map,
+        .home-globe-map .maplibregl-canvas-container,
+        .home-globe-map .maplibregl-canvas,
+        .home-globe-map canvas {
+            width: 100% !important;
+            height: 100% !important;
             background: transparent;
-            border-radius: 50%;
+            border-radius: 50% !important;
+            overflow: hidden !important;
+        }
+
+        .home-globe-map {
             opacity: 0;
             transition: opacity 0.8s ease;
         }
@@ -675,16 +686,16 @@
                 padding-bottom: 170px !important;
             }
             .globe-container {
-                bottom: -150px !important;
-                width: 300px !important;
-                height: 300px !important;
-                transform: translateX(-50%) translateY(0) scale(1.1) !important;
+                bottom: -175px !important;
+                width: 420px !important;
+                height: 420px !important;
+                transform: translateX(-50%) translateY(0) !important;
             }
-            .globe-container:hover {
-                transform: translateX(-50%) translateY(-15px) scale(1.16) !important;
+            .globe-container.is-hovered {
+                transform: translateX(-50%) translateY(-15px) !important;
             }
             .globe-container.is-flying {
-                transform: translateX(-50%) translateY(-120vh) scale(1.1) !important; /* Keep scale constant at mobile 1.1 */
+                transform: translateX(-50%) translateY(-120vh) !important;
             }
             .corner-nav-btn {
                 display: none !important;
@@ -1128,14 +1139,14 @@
         [data-theme="light"] .globe-container,
         html.theme-light .globe-container,
         body.theme-light .globe-container {
-            background: #ffffff;
-            box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.15), inset 0 0 40px rgba(0, 0, 0, 0.05);
+            background: transparent;
+            box-shadow: none;
         }
 
-        [data-theme="light"] .globe-container:hover,
-        html.theme-light .globe-container:hover,
-        body.theme-light .globe-container:hover {
-            box-shadow: 0 -8px 50px rgba(0, 0, 0, 0.20), 0 0 35px rgba(var(--accent-rgb), 0.22);
+        [data-theme="light"] .globe-container.is-hovered,
+        html.theme-light .globe-container.is-hovered,
+        body.theme-light .globe-container.is-hovered {
+            box-shadow: none;
         }
 
         [data-theme="light"] .globe-overlay-shimmer,
@@ -1636,17 +1647,26 @@
 
             if (globePortal && globeDiv) {
                 const isHomeLight = document.documentElement.getAttribute("data-theme") === "light" || document.body.classList.contains("theme-light");
+                const getGlobeRestZoom = () => (window.innerWidth <= 768 ? 1.37 : 2.18);
                 homeMap = new maplibregl.Map({
                     container: 'home-globe',
                     style: isHomeLight ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
                     projection: { type: 'globe' },
                     center: [-123.079, 0], // Centered at the equator to display a true, undistorted 3D sphere
-                    zoom: 1.9, // Lower zoom level preserves highly pronounced 3D horizon curvature
-                    minZoom: 1.5,
+                    zoom: getGlobeRestZoom(), // 2.18 renders 738.5px globe inside 736px dome with zero gap and zero clipping
+                    minZoom: 0.5,
                     maxZoom: 3.5,
                     antialias: true,
                     attributionControl: false,
                     interactive: false
+                });
+
+                window.addEventListener("resize", () => {
+                    if (!homeMap) return;
+                    const targetZoom = getGlobeRestZoom();
+                    if (Math.abs(homeMap.getZoom() - targetZoom) > 0.1) {
+                        homeMap.setZoom(targetZoom);
+                    }
                 });
 
                 rotationId = null;
@@ -1682,11 +1702,11 @@
                     currentMatches = [];
                     updateMapMarkers([]);
                     
-                    // Reset MapLibre camera to original resting state (pitch: 0, zoom: 1.9, lat: 0)
+                    // Reset MapLibre camera to original resting state (pitch: 0, lat: 0)
                     try {
                         homeMap.easeTo({
                             pitch: 0,
-                            zoom: 1.9, // Restores aligned scale on recovery
+                            zoom: getGlobeRestZoom(), // Restores aligned scale on recovery
                             center: [homeMap.getCenter().lng, 0],
                             duration: 1000,
                             easing: (t) => 1 - Math.pow(1 - t, 4)
@@ -1827,6 +1847,26 @@
 
                 // On click transition flight
                 globePortal.addEventListener("click", (e) => {
+                    // Ignore clicks that land in empty space outside the 3D globe surface
+                    if (homeMap) {
+                        const canvas = homeMap.getCanvas();
+                        if (canvas) {
+                            const rect = canvas.getBoundingClientRect();
+                            const mapX = e.clientX - rect.left;
+                            const mapY = e.clientY - rect.top;
+                            try {
+                                let onGlobe = false;
+                                if (homeMap.transform && typeof homeMap.transform.isPointOnMapSurface === "function" && window.maplibregl && maplibregl.Point) {
+                                    onGlobe = homeMap.transform.isPointOnMapSurface(new maplibregl.Point(mapX, mapY));
+                                } else {
+                                    const lngLat = homeMap.unproject([mapX, mapY]);
+                                    onGlobe = !!(lngLat && typeof lngLat.lng === "number" && !isNaN(lngLat.lng));
+                                }
+                                if (!onGlobe) return;
+                            } catch (err) {}
+                        }
+                    }
+
                     e.preventDefault();
                     e.stopPropagation();
 
@@ -1849,6 +1889,50 @@
                     setTimeout(() => {
                         window.location.href = "maps/";
                     }, 1000);
+                });
+
+                // MapLibre native 3D planet surface raycast tracking:
+                // Triggers ONLY when cursor ray intersects the actual 3D Earth sphere
+                let isGlobeHovered = false;
+                window.addEventListener("mousemove", (e) => {
+                    if (!globePortal || !homeMap || globePortal.classList.contains("is-flying")) {
+                        if (isGlobeHovered) {
+                            isGlobeHovered = false;
+                            globePortal.classList.remove("is-hovered");
+                        }
+                        return;
+                    }
+                    const canvas = homeMap.getCanvas();
+                    if (!canvas) return;
+                    const rect = canvas.getBoundingClientRect();
+                    const mapX = e.clientX - rect.left;
+                    const mapY = e.clientY - rect.top;
+
+                    let shouldHover = false;
+                    if (mapX >= 0 && mapX <= rect.width && mapY >= 0 && mapY <= rect.height) {
+                        try {
+                            if (homeMap.transform && typeof homeMap.transform.isPointOnMapSurface === "function" && window.maplibregl && maplibregl.Point) {
+                                shouldHover = homeMap.transform.isPointOnMapSurface(new maplibregl.Point(mapX, mapY));
+                            } else {
+                                const lngLat = homeMap.unproject([mapX, mapY]);
+                                shouldHover = !!(lngLat && typeof lngLat.lng === "number" && !isNaN(lngLat.lng) && !isNaN(lngLat.lat));
+                            }
+                        } catch (err) {
+                            shouldHover = false;
+                        }
+                    }
+
+                    if (shouldHover !== isGlobeHovered) {
+                        isGlobeHovered = shouldHover;
+                        globePortal.classList.toggle("is-hovered", isGlobeHovered);
+                    }
+                }, { passive: true });
+
+                document.addEventListener("mouseleave", () => {
+                    if (isGlobeHovered && globePortal) {
+                        isGlobeHovered = false;
+                        globePortal.classList.remove("is-hovered");
+                    }
                 });
 
                 // Corner Nav Page Transitions
