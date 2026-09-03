@@ -120,7 +120,25 @@
             z-index: 1;
         }
 
-        /* Logo Title */
+        /* Logo Title & Dataset Dropdown Wrapper */
+        .logo-wrapper {
+            position: relative;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-end;
+            margin-bottom: 1.6rem;
+            user-select: none;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInLogo 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.1s;
+            pointer-events: auto;
+            z-index: 50; /* Stacking context above search-wrapper (z-index: 20) */
+        }
+
+        .logo-wrapper.is-open {
+            z-index: 1000 !important; /* Floats popup above search bar and other UI */
+        }
+
         .logo-title {
             font-family: var(--font-serif);
             font-size: clamp(4.5rem, 11vw, 8.5rem);
@@ -129,13 +147,171 @@
             text-transform: lowercase;
             letter-spacing: -0.03em;
             line-height: 1;
-            margin-bottom: 2.25rem;
-            user-select: none;
+            margin-bottom: 0;
             text-align: center;
-            opacity: 0;
-            transform: translateY(10px);
-            animation: fadeInLogo 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.1s;
-            pointer-events: auto; /* Restore interactivity */
+        }
+
+        /* Dataset Selector Dropdown (Right-aligned below fovea logo) */
+        .dataset-dropdown-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            margin-top: -0.85rem;
+            margin-right: -0.85rem;
+            z-index: 100;
+        }
+
+        .dataset-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.1rem 0.3rem;
+            background: transparent;
+            border: none;
+            outline: none;
+            border-radius: 6px;
+            color: var(--accent-color);
+            font-family: var(--font-sans);
+            font-size: 0.88rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            line-height: 1;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .dataset-toggle-btn:hover {
+            color: var(--accent-light, #91cfff);
+            background: rgba(var(--accent-rgb, 100, 181, 246), 0.1);
+        }
+
+        .dataset-toggle-chevron {
+            width: 11px;
+            height: 11px;
+            stroke: var(--accent-color);
+            stroke-width: 2.5;
+            transition: transform 0.2s ease, stroke 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .dataset-toggle-btn:hover .dataset-toggle-chevron {
+            stroke: var(--accent-light, #91cfff);
+        }
+
+        .dataset-toggle-btn[aria-expanded="true"] .dataset-toggle-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Floating Options Dropdown Popup Menu (Matching Settings Page) */
+        .dataset-select-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0 !important;
+            left: auto !important;
+            z-index: 99999 !important;
+            min-width: 215px;
+            background: #000000 !important;
+            border: 1px solid #333333 !important;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.95), 0 4px 16px rgba(0, 0, 0, 0.8) !important;
+            border-radius: 12px !important;
+            padding: 0.35rem !important;
+            display: none;
+            flex-direction: column;
+            gap: 0.15rem;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .dataset-select-menu[aria-hidden="false"] {
+            display: flex !important;
+            animation: datasetMenuFadeIn 0.15s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes datasetMenuFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dataset-menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            color: #e4e4e7 !important;
+            font-family: var(--font-sans);
+            font-size: 0.86rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            gap: 1rem;
+        }
+
+        .dataset-menu-item__left {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            min-width: 0;
+        }
+
+        .dataset-menu-item:hover:not(.is-disabled) {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff !important;
+        }
+
+        .dataset-menu-item.is-active {
+            color: var(--accent-color) !important;
+            font-weight: 600;
+        }
+
+        .dataset-menu-item.is-active .dataset-menu-item__icon,
+        .dataset-menu-item.is-active .dataset-menu-item__check {
+            stroke: var(--accent-color);
+        }
+
+        .dataset-menu-item__icon {
+            width: 14px;
+            height: 14px;
+            stroke: #a1a1aa;
+            stroke-width: 2.2;
+            flex-shrink: 0;
+            transition: stroke 0.2s ease;
+        }
+
+        .dataset-menu-item:hover:not(.is-disabled) .dataset-menu-item__icon {
+            stroke: #ffffff;
+        }
+
+        .dataset-menu-item__check {
+            stroke: var(--accent-color);
+            stroke-width: 2.5;
+            flex-shrink: 0;
+        }
+
+        .dataset-menu-item.is-disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .dataset-menu-item__badge {
+            font-size: 0.72rem;
+            font-weight: 500;
+            padding: 0.15rem 0.45rem;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.02em;
+            margin-left: 0.25rem;
+            white-space: nowrap;
         }
 
         @keyframes fadeInLogo {
@@ -1136,6 +1312,58 @@
             color: #111827;
         }
 
+        [data-theme="light"] .dataset-toggle-btn:hover,
+        html.theme-light .dataset-toggle-btn:hover,
+        body.theme-light .dataset-toggle-btn:hover {
+            background: rgba(var(--accent-rgb, 100, 181, 246), 0.12);
+        }
+
+        [data-theme="light"] .dataset-select-menu,
+        html.theme-light .dataset-select-menu,
+        body.theme-light .dataset-select-menu {
+            background: #ffffff !important;
+            border-color: rgba(0, 0, 0, 0.12) !important;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        [data-theme="light"] .dataset-menu-item,
+        html.theme-light .dataset-menu-item,
+        body.theme-light .dataset-menu-item {
+            color: #374151 !important;
+        }
+
+        [data-theme="light"] .dataset-menu-item:hover:not(.is-disabled),
+        html.theme-light .dataset-menu-item:hover:not(.is-disabled),
+        body.theme-light .dataset-menu-item:hover:not(.is-disabled) {
+            background: rgba(0, 0, 0, 0.05);
+            color: #111827 !important;
+        }
+
+        [data-theme="light"] .dataset-menu-item__icon,
+        html.theme-light .dataset-menu-item__icon,
+        body.theme-light .dataset-menu-item__icon {
+            stroke: #6b7280;
+        }
+
+        [data-theme="light"] .dataset-menu-item:hover:not(.is-disabled) .dataset-menu-item__icon,
+        html.theme-light .dataset-menu-item:hover:not(.is-disabled) .dataset-menu-item__icon,
+        body.theme-light .dataset-menu-item:hover:not(.is-disabled) .dataset-menu-item__icon {
+            stroke: #111827;
+        }
+
+        [data-theme="light"] .dataset-menu-item.is-active,
+        html.theme-light .dataset-menu-item.is-active,
+        body.theme-light .dataset-menu-item.is-active {
+            color: var(--accent-color) !important;
+        }
+
+        [data-theme="light"] .dataset-menu-item__badge,
+        html.theme-light .dataset-menu-item__badge,
+        body.theme-light .dataset-menu-item__badge {
+            background: rgba(0, 0, 0, 0.06);
+            color: #6b7280;
+        }
+
         [data-theme="light"] .globe-container,
         html.theme-light .globe-container,
         body.theme-light .globe-container {
@@ -1243,7 +1471,43 @@
     </a>
 
     <main class="home-container">
-        <h1 class="logo-title">fovea</h1>
+        <div class="logo-wrapper">
+            <h1 class="logo-title">fovea</h1>
+            <div class="dataset-dropdown-wrapper">
+                <button type="button" id="dataset-toggle-btn" class="dataset-toggle-btn" aria-label="Select dataset" aria-expanded="false">
+                    <span class="dataset-toggle-label">Audubon CBC</span>
+                    <svg class="dataset-toggle-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+
+                <!-- Floating Options Dropdown Popup Menu (Matching Settings Page) -->
+                <div id="dataset-menu" class="dataset-select-menu" aria-hidden="true" role="menu">
+                    <div class="dataset-menu-item is-active" data-value="audubon-cbc" role="menuitem">
+                        <div class="dataset-menu-item__left">
+                            <svg class="dataset-menu-item__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                                <path d="M2 12h20"></path>
+                            </svg>
+                            <span>Audubon CBC</span>
+                        </div>
+                        <svg class="dataset-menu-item__check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="dataset-menu-item is-disabled" data-value="add-connection" role="menuitem">
+                        <div class="dataset-menu-item__left">
+                            <svg class="dataset-menu-item__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>Add connection</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="search-wrapper">
             <div class="search-box">
@@ -1398,6 +1662,76 @@
             const searchBox = document.querySelector(".search-box");
             setupProximityGlow(searchBox, 140, 240);
 
+            // Dataset selector dropdown (Audubon CBC / Add New)
+            const datasetToggleBtn = document.getElementById("dataset-toggle-btn");
+            const datasetMenu = document.getElementById("dataset-menu");
+            if (datasetToggleBtn && datasetMenu) {
+                let isDatasetMenuOpen = false;
+                const logoWrap = document.querySelector(".logo-wrapper");
+
+                function openDatasetMenu() {
+                    isDatasetMenuOpen = true;
+                    if (dropdown) dropdown.style.display = "none";
+                    datasetMenu.setAttribute("aria-hidden", "false");
+                    datasetToggleBtn.setAttribute("aria-expanded", "true");
+                    if (logoWrap) logoWrap.classList.add("is-open");
+                }
+
+                function closeDatasetMenu() {
+                    isDatasetMenuOpen = false;
+                    datasetMenu.setAttribute("aria-hidden", "true");
+                    datasetToggleBtn.setAttribute("aria-expanded", "false");
+                    if (logoWrap) logoWrap.classList.remove("is-open");
+                }
+
+                datasetToggleBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    if (isDatasetMenuOpen) {
+                        closeDatasetMenu();
+                    } else {
+                        openDatasetMenu();
+                    }
+                });
+
+                const datasetItems = datasetMenu.querySelectorAll(".dataset-menu-item");
+                datasetItems.forEach(item => {
+                    item.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        if (item.classList.contains("is-disabled")) {
+                            return;
+                        }
+                        datasetItems.forEach(i => {
+                            i.classList.remove("is-active");
+                            const check = i.querySelector(".dataset-menu-item__check");
+                            if (check) check.style.display = "none";
+                        });
+                        item.classList.add("is-active");
+                        const check = item.querySelector(".dataset-menu-item__check");
+                        if (check) check.style.display = "block";
+
+                        const label = item.querySelector(".dataset-menu-item__left span");
+                        const toggleLabel = document.querySelector(".dataset-toggle-label");
+                        if (label && toggleLabel) {
+                            toggleLabel.textContent = label.textContent;
+                        }
+
+                        closeDatasetMenu();
+                    });
+                });
+
+                document.addEventListener("click", (e) => {
+                    if (isDatasetMenuOpen && !e.target.closest(".dataset-dropdown-wrapper")) {
+                        closeDatasetMenu();
+                    }
+                });
+
+                document.addEventListener("keydown", (e) => {
+                    if (e.key === "Escape" && isDatasetMenuOpen) {
+                        closeDatasetMenu();
+                    }
+                });
+            }
+
             const renderDropdown = (query) => {
                 const q = query.trim().toLowerCase();
                 
@@ -1521,6 +1855,7 @@
             });
 
             input.addEventListener("focus", (e) => {
+                if (typeof closeDatasetMenu === "function") closeDatasetMenu();
                 if (e.target.value.trim()) {
                     renderDropdown(e.target.value);
                 }
