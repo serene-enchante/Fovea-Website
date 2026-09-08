@@ -1,4 +1,4 @@
-export const EUGENE_GEOJSON_PATH = "../geojson/Eugene-02-wgs84.geojson";
+export const EUGENE_GEOJSON_PATH = "../geojson/Eugene-03-wgs84.geojson";
 export const FLORENCE_GEOJSON_PATH = "../geojson/Florence-00-wgs84.geojson";
 export const CIRCLES_GEOJSON_PATH = "../geojson/circles-wgs84.geojson";
 export const CIRCLE_ID = "ecbc-circle";

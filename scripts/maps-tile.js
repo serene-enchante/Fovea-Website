@@ -1,4 +1,4 @@
-const EUGENE_GEOJSON_PATH = "../geojson/Eugene-02-wgs84.geojson";
+const EUGENE_GEOJSON_PATH = "../geojson/Eugene-03-wgs84.geojson";
 const FLORENCE_GEOJSON_PATH = "../geojson/Florence-00-wgs84.geojson";
 const CIRCLES_GEOJSON_PATH = "../geojson/circles-wgs84.geojson";
 const CIRCLE_ID = "ecbc-circle";
@@ -757,7 +757,7 @@ function getActiveDownloadFilename(ext) {
     } else {
         base = (state.currentId && state.currentId !== CIRCLE_ID) 
             ? `Eugene-Zone-${displayZoneId(state.currentId)}` 
-            : "Eugene-01-wgs84";
+            : "Eugene-03-wgs84";
     }
     return `${base}.${ext}`;
 }

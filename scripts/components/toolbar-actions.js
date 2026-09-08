@@ -21,7 +21,7 @@ export function getActiveDownloadFilename(ext) {
     } else {
         base = (state.currentId && state.currentId !== CIRCLE_ID) 
             ? `Eugene-Zone-${displayZoneId(state.currentId)}` 
-            : "Eugene-01-wgs84";
+            : "Eugene-03-wgs84";
     }
     return `${base}.${ext}`;
 }
