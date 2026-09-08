@@ -680,8 +680,53 @@ export function setupSuggestFormAndDrawing(closeAllModals) {
         });
     }
 
+    const finalizePendingDrawing = () => {
+        let changed = false;
+
+        // Finalize pending line if any
+        if (activeLineCoords && activeLineCoords.length > 0) {
+            if (activeLineCoords.length >= 2) {
+                lines.push([...activeLineCoords]);
+                changed = true;
+            } else if (activeLineCoords.length === 1) {
+                markers.push([...activeLineCoords[0]]);
+                changed = true;
+            }
+            activeLineCoords = [];
+        }
+
+        // Finalize pending polygon if any
+        if (activePolyCoords && activePolyCoords.length > 0) {
+            if (activePolyCoords.length >= 3) {
+                polygons.push([...activePolyCoords]);
+                changed = true;
+            } else if (activePolyCoords.length === 2) {
+                lines.push([...activePolyCoords]);
+                changed = true;
+            } else if (activePolyCoords.length === 1) {
+                markers.push([...activePolyCoords[0]]);
+                changed = true;
+            }
+            activePolyCoords = [];
+        }
+
+        if (changed || currentDrawingMode) {
+            resetDrawingStateOnly();
+            updateAnnotationSource();
+            updateSuggestLockState();
+        }
+    };
+
+    const submitBtnEl = document.getElementById("btn-submit-suggestion");
+    if (submitBtnEl) {
+        submitBtnEl.addEventListener("click", () => {
+            finalizePendingDrawing();
+        });
+    }
+
     suggestForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+        finalizePendingDrawing();
         const titleInput = document.getElementById("suggest-input-title");
         const msgInput = document.getElementById("suggest-input-message");
         const submitBtn = document.getElementById("btn-submit-suggestion");
