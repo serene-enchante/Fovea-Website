@@ -298,6 +298,24 @@
             transform: translateY(-1px);
         }
 
+        .info-text-link {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--subtext-color);
+            text-decoration: none;
+            transition: color 0.2s ease, text-decoration 0.2s ease;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+        }
+
+        .info-text-link:hover {
+            color: var(--text-color);
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
         :root {
             --accent-color: #64b5f6;
             --accent-light: #91cfff;
@@ -454,6 +472,18 @@
             color: #ffffff;
         }
 
+        [data-theme="light"] .info-text-link,
+        html.theme-light .info-text-link,
+        body.theme-light .info-text-link {
+            color: var(--subtext-color);
+        }
+
+        [data-theme="light"] .info-text-link:hover,
+        html.theme-light .info-text-link:hover,
+        body.theme-light .info-text-link:hover {
+            color: var(--text-color);
+        }
+
         [data-theme="light"] .toast-notification,
         html.theme-light .toast-notification,
         body.theme-light .toast-notification {
@@ -512,7 +542,7 @@
                         <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
                 </a>
-                <a href="../privacy/" class="action-pill-btn">
+                <a href="../privacy/" class="info-text-link">
                     <span>Privacy & Legal</span>
                 </a>
             </div>

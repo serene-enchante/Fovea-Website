@@ -649,41 +649,25 @@
             font-size: 0.84rem;
             color: var(--subtext-color);
         }
-        /* Top Left Controls (Privacy & Legal + Info) */
-        .top-left-controls {
+        /* Top Right Controls (About Info) */
+        .top-right-controls {
             position: fixed;
             top: 2rem;
-            left: 2rem;
+            right: 2rem;
             display: flex;
             align-items: center;
             gap: 0.85rem;
-            z-index: 100;
+            z-index: 500;
             pointer-events: auto;
             opacity: 0;
             animation: fadeInSearch 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.4s;
-        }
-
-        .top-left-legal-link {
-            display: inline-flex;
-            align-items: center;
-            font-size: 0.78rem;
-            font-weight: 500;
-            color: var(--subtext-color);
-            text-decoration: none;
-            transition: color 0.25s ease;
-            user-select: none;
-            letter-spacing: 0.01em;
-        }
-
-        .top-left-legal-link:hover {
-            color: #ffffff;
         }
 
         .settings-btn,
         .info-btn {
             background: none;
             border: none;
-            padding: 4px;
+            padding: 8px;
             margin: 0;
             cursor: pointer;
             color: var(--subtext-color);
@@ -693,6 +677,10 @@
             align-items: center;
             justify-content: center;
             text-decoration: none;
+            position: relative;
+            z-index: 501;
+            pointer-events: auto;
+            border-radius: 50%;
         }
 
         .settings-btn:hover {
@@ -870,7 +858,7 @@
         /* Corner Navigation Text Buttons (About & Tools as Full-Height viewport slivers) */
         .corner-nav-btn {
             position: fixed;
-            top: 0;
+            top: 5rem;
             bottom: 0;
             width: 100px;
             font-family: 'Nunito', system-ui, -apple-system, sans-serif;
@@ -891,7 +879,7 @@
         .corner-nav-btn::before {
             content: '';
             position: absolute;
-            top: 50%;
+            top: calc(50% - 2.5rem);
             height: 70vh; /* Floating edge panel height */
             width: 100px;
             pointer-events: none;
@@ -962,7 +950,7 @@
         /* Centered Hover Arrow Button (No capsule outline/fill) */
         .corner-arrow-circle {
             position: absolute;
-            top: 50%;
+            top: calc(50% - 2.5rem);
             width: 38px;
             height: 38px;
             display: flex;
@@ -1049,8 +1037,7 @@
         body[class*="is-transitioning-"] .intro-header,
         body[class*="is-transitioning-"] .settings-btn,
         body[class*="is-transitioning-"] .info-btn,
-        body[class*="is-transitioning-"] .top-left-controls,
-        body[class*="is-transitioning-"] .top-left-legal-link,
+        body[class*="is-transitioning-"] .top-right-controls,
         body[class*="is-transitioning-"] .corner-nav-btn span,
         body[class*="is-transitioning-"] .corner-arrow-circle {
             opacity: 0 !important;
@@ -1381,25 +1368,19 @@
 
         [data-theme="light"] .settings-btn,
         [data-theme="light"] .info-btn,
-        [data-theme="light"] .top-left-legal-link,
         html.theme-light .settings-btn,
         html.theme-light .info-btn,
-        html.theme-light .top-left-legal-link,
         body.theme-light .settings-btn,
-        body.theme-light .info-btn,
-        body.theme-light .top-left-legal-link {
+        body.theme-light .info-btn {
             color: #6b7280;
         }
 
         [data-theme="light"] .settings-btn:hover,
         [data-theme="light"] .info-btn:hover,
-        [data-theme="light"] .top-left-legal-link:hover,
         html.theme-light .settings-btn:hover,
         html.theme-light .info-btn:hover,
-        html.theme-light .top-left-legal-link:hover,
         body.theme-light .settings-btn:hover,
-        body.theme-light .info-btn:hover,
-        body.theme-light .top-left-legal-link:hover {
+        body.theme-light .info-btn:hover {
             color: #111827;
         }
 
@@ -1420,20 +1401,6 @@
     <div class="ambient-glow"></div>
     <div id="toast-notification" class="toast-notification"></div>
 
-    <!-- Top Left Controls (Privacy & Legal + About Info) -->
-    <div class="top-left-controls">
-        <a href="privacy/" class="top-left-legal-link" aria-label="Privacy and Legal Policies" title="Privacy & Legal">
-            <span>Privacy & Legal</span>
-        </a>
-        <a href="info/" class="info-btn" aria-label="About fovea" title="About">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-        </a>
-    </div>
-
     <!-- Corner Navigation Buttons (Tools & Settings) -->
     <a href="tools/" class="corner-nav-btn corner-nav-left" aria-label="Tools">
         <span>Tools</span>
@@ -1453,6 +1420,17 @@
             </svg>
         </div>
     </a>
+
+    <!-- Top Right Controls (About Info) -->
+    <div class="top-right-controls">
+        <a href="info/" class="info-btn" aria-label="About fovea" title="About">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+        </a>
+    </div>
 
     <main class="home-container">
         <div class="logo-wrapper">
@@ -2279,12 +2257,23 @@
                     }
                 });
 
+                // Bind info button click
+                const infoBtn = document.querySelector(".info-btn");
+                if (infoBtn) {
+                    infoBtn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                    });
+                }
+
                 // Corner Nav Page Transitions
                 const settingsNavBtn = document.querySelector(".corner-nav-right");
                 const toolsNavBtn = document.querySelector(".corner-nav-left");
 
                 if (settingsNavBtn) {
                     settingsNavBtn.addEventListener("click", (e) => {
+                        if (e.target.closest(".top-right-controls") || e.target.closest(".info-btn")) {
+                            return;
+                        }
                         e.preventDefault();
                         if (document.body.className.includes("is-transitioning-")) return;
 
@@ -2309,6 +2298,9 @@
 
                 if (toolsNavBtn) {
                     toolsNavBtn.addEventListener("click", (e) => {
+                        if (e.target.closest(".top-right-controls") || e.target.closest(".info-btn")) {
+                            return;
+                        }
                         e.preventDefault();
                         if (document.body.className.includes("is-transitioning-")) return;
 
