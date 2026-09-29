@@ -1,4 +1,4 @@
-const EUGENE_GEOJSON_PATH = "../geojson/Eugene-03-wgs84.geojson";
+const EUGENE_GEOJSON_PATH = "../geojson/Eugene-04-wgs84.geojson";
 const FLORENCE_GEOJSON_PATH = "../geojson/Florence-00-wgs84.geojson";
 const CIRCLES_GEOJSON_PATH = "../geojson/circles-wgs84.geojson";
 const CIRCLE_ID = "ecbc-circle";
@@ -645,6 +645,7 @@ const EUGENE_ZONE_DESCRIPTIONS = {
     "07": "Encompasses river valley bottomlands and agricultural groves, blending riparian woodlands, oxbows, and open pastures attractive to wintering passerines.",
     "08": "Features rolling oak savanna, open prairie meadows, and upland conifer ridges, offering prime foraging terrain for wintering bluebirds and hunting raptors.",
     "09": "Dominates southern upland ridge slopes, featuring dense Douglas fir forest, fern-covered ravines, and foothill woods hosting wintering forest birds.",
+    "10": "Spans high-elevation rocky crests, conifer-covered slopes, southern foothill ravines, and residential woods, combining mixed fir-madrone canopy, brushy edges, and open ridgelines that attract wintering finches, nuthatches, towhees, and jays.",
     "10A": "Covers high-elevation rocky crests and conifer-covered slopes, featuring mixed fir-madrone woods and open ridgelines that attract wintering finches and nuthatches.",
     "10B": "Spans southern foothill ravines and residential woods, combining mixed evergreen canopy, brushy ravines, and garden edges favored by wintering towhees and jays.",
     "11A": "Features southwestern agricultural foothills, with rolling pastures, seasonal ponds, and oak-pine savanna supporting wintering sparrows and meadow birds.",
@@ -700,6 +701,7 @@ function zoneImagePath(zoneId) {
 
     if (zid === "6A" || zid === "6B" || zid === "06A" || zid === "06B") return "../images/zone-images/z06-01.jpg";
     if (zid === "8" || zid === "08") return "../images/zone-images/z08A-01.jpg";
+    if (zid === "10") return "../images/zone-images/z10A-01.jpg";
     if (zid === "20B") return "../images/zone-images/20B-01.jpg";
     if (zid === "1") zid = "01";
 
@@ -757,7 +759,7 @@ function getActiveDownloadFilename(ext) {
     } else {
         base = (state.currentId && state.currentId !== CIRCLE_ID) 
             ? `Eugene-Zone-${displayZoneId(state.currentId)}` 
-            : "Eugene-03-wgs84";
+            : "Eugene-04-wgs84";
     }
     return `${base}.${ext}`;
 }

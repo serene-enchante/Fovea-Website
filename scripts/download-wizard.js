@@ -57,9 +57,9 @@ const COUNT_CIRCLES = [
     {
         id: "eugene",
         name: "Eugene",
-        subtitle: "Lane County, Oregon · 27 Zones",
-        totalZones: 27,
-        geojsonPath: "geojson/Eugene-03-wgs84.geojson",
+        subtitle: "Lane County, Oregon · 28 Zones",
+        totalZones: 28,
+        geojsonPath: "geojson/Eugene-04-wgs84.geojson",
         thumbnail: "images/logo-small.png",
         hasData: true
     },
