@@ -8,6 +8,7 @@ import { launchAppWithStoreFallback } from './services/app-launch-service.js';
 import { resolveAppInstructionConfig } from './services/app-instruction-config.js';
 import { getAppSelectionTitle, getSelectionThumbnail } from './map/app-selection-presentation.js';
 import { getBbox } from './utils/geometry-math.js';
+import { formatArea, formatDate, zoneImagePath } from './utils/format-utils.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -673,32 +674,6 @@ function getZoneDescription(targetFeature, isFlorence) {
     if (descriptions["0" + normalizedZid]) return descriptions["0" + normalizedZid];
 
     return props.description || `Survey Zone ${zid} Christmas Bird Count designated boundary and field observation area.`;
-}
-
-function zoneImagePath(zoneId) {
-    let zid = displayZoneId(zoneId);
-    if (!zid) return FALLBACK_IMAGE;
-
-    if (zid === "6A" || zid === "6B" || zid === "06A" || zid === "06B") return "../images/zone-images/z06-01.jpg";
-    if (zid === "8" || zid === "08") return "../images/zone-images/z08A-01.jpg";
-    if (zid === "10") return "../images/zone-images/z10A-01.jpg";
-    if (zid === "20B") return "../images/zone-images/20B-01.jpg";
-    if (zid === "1") zid = "01";
-
-    return `../images/zone-images/z${zid}-01.jpg`;
-}
-
-function formatDate(value) {
-    if (!value) return "Unknown";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return String(value);
-    return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-}
-
-function formatArea(value) {
-    const num = Number(value);
-    if (Number.isNaN(num)) return "-";
-    return num.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 });
 }
 
 function showToast(message, isError = false) {

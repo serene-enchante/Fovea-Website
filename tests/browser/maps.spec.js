@@ -6,7 +6,7 @@ async function openMap(page, path = '/maps/') {
         Object.defineProperty(navigator, 'canShare', { configurable: true, value: undefined });
     });
     await page.goto(path);
-    await expect(page.locator('#tile-map canvas')).toBeVisible();
+    await expect(page.locator('#tile-map canvas.maplibregl-canvas')).toBeVisible();
     await expect(page.locator('#header-title')).not.toHaveText('Loading...');
 }
 
