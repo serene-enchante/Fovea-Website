@@ -1,6 +1,7 @@
 import { CIRCLE_ID } from './config/app-config.js';
 import { parseMapRoute, serializeMapRoute } from './map/map-route-state.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
+import { getSelectedGeoJSONData as createSelectedGeoJSONData } from './services/geo-selection.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -765,20 +766,12 @@ function getActiveDownloadFilename(ext) {
 }
 
 function getSelectedGeoJSONData() {
-    let features = state.allFeatures || [];
-    if (!state.isCirclesFeature && state.currentId && state.currentId !== CIRCLE_ID) {
-        const target = features.find(f => {
-            const zid = f.properties?.zid;
-            return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
-        });
-        if (target) {
-            features = [target];
-        }
-    }
-    return {
-        type: "FeatureCollection",
-        features: JSON.parse(JSON.stringify(features))
-    };
+    return createSelectedGeoJSONData({
+        features: state.allFeatures,
+        currentId: state.currentId,
+        isCirclesFeature: state.isCirclesFeature,
+        circleId: CIRCLE_ID
+    });
 }
 
 const SPATIAL_MIME_TYPES = {

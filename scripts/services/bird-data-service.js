@@ -1,24 +1,16 @@
 import { state } from '../state.js';
 import { CIRCLE_ID } from '../config/app-config.js';
-import { normalizeZoneId } from '../utils/format-utils.js';
 import { parseMapRoute } from '../map/map-route-state.js';
 import { loadGeoDatasets } from './geo-data-repository.js';
+import { getSelectedGeoJSONData as createSelectedGeoJSONData } from './geo-selection.js';
 
 export function getSelectedGeoJSONData() {
-    let features = state.allFeatures || [];
-    if (!state.isCirclesFeature && state.currentId && state.currentId !== CIRCLE_ID) {
-        const target = features.find(f => {
-            const zid = f.properties?.zid;
-            return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
-        });
-        if (target) {
-            features = [target];
-        }
-    }
-    return {
-        type: "FeatureCollection",
-        features: JSON.parse(JSON.stringify(features))
-    };
+    return createSelectedGeoJSONData({
+        features: state.allFeatures,
+        currentId: state.currentId,
+        isCirclesFeature: state.isCirclesFeature,
+        circleId: CIRCLE_ID
+    });
 }
 
 export function getInitialIdFromUrl() {
