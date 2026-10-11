@@ -5002,24 +5002,6 @@ function setupSuggestFormAndDrawing(closeAllModals) {
         }
     }
 
-async function performDirectCopyLink() {
-    const url = window.location.href;
-    try {
-        await navigator.clipboard.writeText(url);
-        showToast("Link copied to clipboard!");
-    } catch (err) {
-        const tempInput = document.createElement("input");
-        tempInput.value = url;
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        document.execCommand("copy");
-        document.body.removeChild(tempInput);
-        showToast("Link copied to clipboard!");
-    }
-}
-
-
-
 function setupCapsules() {
     setupSidebarCapsuleEvents({
         state,
