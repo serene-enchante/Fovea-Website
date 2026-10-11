@@ -29,7 +29,7 @@ const LAYOUT_HEIGHT = 3000;
  * Finds the most distant internal point from the polygon outline (maximum clearance from all borders).
  * Guaranteed to place labels in the widest, most spacious part of any polygon (even concave/complex).
  */
-function polylabel(polygon, precision = 0.0005) {
+export function polylabel(polygon, precision = 0.0005) {
     const outerRing = polygon[0];
     if (!outerRing || outerRing.length < 3) return null;
 
@@ -164,7 +164,7 @@ function polylabel(polygon, precision = 0.0005) {
 /**
  * Helper to compute the most spacious interior point for a GeoJSON feature (maximum border clearance).
  */
-function getFeatureCenter(feature) {
+export function getFeatureCenter(feature) {
     if (!feature || !feature.geometry) return null;
     const geom = feature.geometry;
     if (geom.type === "Point") return geom.coordinates;
