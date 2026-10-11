@@ -1,7 +1,6 @@
 import { CIRCLE_ID } from './config/app-config.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
 import { getInitialIdFromUrl, getSelectedGeoJSONData } from './services/bird-data-service.js';
-import { getDownloadFilename } from './services/download-file-names.js';
 import { handleSpatialFileShare as shareSpatialFile } from './services/file-download-service.js';
 import { launchAppWithStoreFallback } from './services/app-launch-service.js';
 import { canvasToTiffBlob, geojsonToGpx, geojsonToKml } from './services/format-converters.js';
@@ -29,7 +28,8 @@ import { setupSidebarScrollListener, updateKeyboardTileFocus } from './component
 import { openImageLightbox, setupImageLightbox } from './components/image-lightbox.js';
 import { setupHelpModeSystem } from './components/map-modals.js';
 import { setupMobileBottomNav } from './components/bottom-nav-view.js';
-import { setupViewToggleMenu, updateAllAppsModalHeaderTitle, updateShareModalDescription, toggleFullscreen } from './components/toolbar-actions.js';
+import { showToast } from './components/toast-view.js';
+import { setupViewToggleMenu, updateAllAppsModalHeaderTitle, updateShareModalDescription, toggleFullscreen, getActiveDownloadFilename } from './components/toolbar-actions.js';
 import { closeAvenzaModal, closeAllAppsModal, closeAllModals as closeModalsView } from './components/modal-view.js';
 import { handleAppDirectOpen } from './components/avenza-modal-view.js';
 import { setMobileSnapState, setupListSwipeBack, setupMobileResizeBar, setupSwipeNavigation } from './components/mobile-view.js';
@@ -292,40 +292,10 @@ function getZoneDescription(targetFeature, isFlorence) {
     return props.description || `Survey Zone ${zid} Christmas Bird Count designated boundary and field observation area.`;
 }
 
-function showToast(message, isError = false) {
-    let toast = document.getElementById("toast-notification");
-    const container = document.querySelector(".maps-tile-map-area") || document.body;
-    if (!toast) {
-        toast = document.createElement("div");
-        toast.id = "toast-notification";
-        toast.className = "toast-notification";
-        container.appendChild(toast);
-    } else if (toast.parentElement !== container) {
-        container.appendChild(toast);
-    }
 
-    toast.innerHTML = `<span>${message}</span>`;
-
-    if (isError) {
-        toast.classList.add("toast-notification--disabled");
-    } else {
-        toast.classList.remove("toast-notification--disabled");
-    }
-    toast.classList.add("is-visible");
-    if (window._toastTimer) clearTimeout(window._toastTimer);
-    window._toastTimer = setTimeout(() => {
-        toast.classList.remove("is-visible");
-    }, 2800);
-}
 
 // --- Client-Side Exporter Helpers (GeoJSON, KMZ, GPX) ---
-function getActiveDownloadFilename(ext) {
-    return getDownloadFilename({
-        currentFeature: state.currentFeature,
-        currentId: state.currentId,
-        circleId: CIRCLE_ID
-    }, ext);
-}
+
 
 function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton = null) {
   return shareSpatialFile(
@@ -409,9 +379,7 @@ async function generateAppSpatialBlob(formatKey) {
  * Opens the blackout instruction modal dynamically configured for any app (Avenza, Gaia GPS, CalTopo, OsmAnd).
  */
 
-function saveBlob(blob, filename, triggerButton = null) {
-  return handleSpatialFileShare(null, blob, filename, triggerButton);
-}
+
 
 function switchBaseMap(baseMapId) {
     return applyBaseMap(baseMapId, { state, updateStyles: updateAllFeatureStyles });
