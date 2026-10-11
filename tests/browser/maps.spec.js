@@ -23,20 +23,18 @@ for (const { circle, zone, expectedTitle } of [
     });
 }
 
-test('selects Eugene, selects Florence, and returns to all circles', async ({ page }) => {
-    await openMap(page);
-    await expect(page.locator('#header-title')).toContainText(/Coast to Cascades\s*Bird Alliance/);
-
-    await page.locator('.overview-preview-item[data-cid="Eugene"]').click();
-    await expect(page).toHaveURL(/feature=eugene/);
+test('clears legacy deep-link parameters while selecting Eugene, circles, and Florence', async ({ page }) => {
+    await openMap(page, '/maps/?circle=Eugene');
     await expect(page.locator('#header-title')).toContainText(/Eugene Christmas Bird\s*Count Circle/);
 
     await page.locator('#btn-capsule-back').click();
     await expect(page).toHaveURL(/feature=circles/);
+    await expect(page).not.toHaveURL(/(?:\?|&)circle=/);
     await expect(page.locator('#header-title')).toContainText(/Coast to Cascades\s*Bird Alliance/);
 
     await page.locator('.overview-preview-item[data-cid="Florence"]').click();
     await expect(page).toHaveURL(/feature=florence/);
+    await expect(page).not.toHaveURL(/(?:\?|&)circle=/);
     await expect(page.locator('#header-title')).toContainText(/Florence Christmas Bird\s*Count Circle/);
 });
 
