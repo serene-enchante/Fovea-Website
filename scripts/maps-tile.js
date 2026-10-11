@@ -4,6 +4,7 @@ import { loadGeoDataset } from './services/geo-data-repository.js';
 import { findFeatureByZoneId, getSelectedGeoJSONData as createSelectedGeoJSONData } from './services/geo-selection.js';
 import { getDownloadFilename } from './services/download-file-names.js';
 import { handleSpatialFileShare as shareSpatialFile } from './services/file-download-service.js';
+import { launchAppWithStoreFallback } from './services/app-launch-service.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -834,61 +835,6 @@ async function generateAppSpatialBlob(formatKey) {
     const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
     return { blob, filename };
   }
-}
-
-/**
- * Resolves App Store (iOS) or Google Play Store (Android) URL for a given app.
- */
-function getAppStoreUrl(appKey) {
-  const normKey = String(appKey).toLowerCase().replace(/[^a-z]/g, "");
-  const isAndroid = /android/i.test(navigator.userAgent || "");
-  
-  const storeUrls = {
-    avenza: {
-      ios: "https://apps.apple.com/app/id388424049",
-      android: "https://play.google.com/store/apps/details?id=com.Avenza"
-    },
-    gaia: {
-      ios: "https://apps.apple.com/app/id355727877",
-      android: "https://play.google.com/store/apps/details?id=com.trailbehind.android.gaiagps.pro"
-    },
-    caltopo: {
-      ios: "https://apps.apple.com/app/id1489069904",
-      android: "https://play.google.com/store/apps/details?id=com.caltopo.android"
-    },
-    osmand: {
-      ios: "https://apps.apple.com/app/id934850375",
-      android: "https://play.google.com/store/apps/details?id=net.osmand"
-    }
-  };
-
-  const appStore = storeUrls[normKey] || storeUrls.avenza;
-  return isAndroid ? appStore.android : appStore.ios;
-}
-
-/**
- * Attempts to launch custom URI scheme. If app is not installed (page context stays active after 1500ms), fallback to App Store / Play Store.
- */
-function launchAppWithStoreFallback(appScheme, appKey) {
-  const storeUrl = getAppStoreUrl(appKey);
-  const startTime = Date.now();
-
-  let fallbackTimer = setTimeout(() => {
-    if (Date.now() - startTime < 2500) {
-      window.open(storeUrl, "_blank");
-    }
-  }, 1500);
-
-  const clearFallback = () => {
-    clearTimeout(fallbackTimer);
-    window.removeEventListener("blur", clearFallback);
-    document.removeEventListener("visibilitychange", clearFallback);
-  };
-
-  window.addEventListener("blur", clearFallback);
-  document.addEventListener("visibilitychange", clearFallback);
-
-  window.location.href = appScheme;
 }
 
 /**
