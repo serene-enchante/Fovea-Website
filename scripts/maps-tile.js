@@ -2851,21 +2851,12 @@ function setupActionButtons() {
             });
         });
 
-        setupSpatialDownloadButtons({ shareFile: handleSpatialFileShare, notify: showToast });
-
-        const geopdfBtn = document.getElementById("download-geopdf");
-        if (geopdfBtn) {
-            geopdfBtn.addEventListener("click", async () => {
-                await downloadGeoPdf(geopdfBtn);
-            });
-        }
-
-        const geotiffBtn = document.getElementById("download-geotiff");
-        if (geotiffBtn) {
-            geotiffBtn.addEventListener("click", async () => {
-                await downloadGeoTiff(geotiffBtn);
-            });
-        }
+        setupSpatialDownloadButtons({
+            shareFile: handleSpatialFileShare,
+            notify: showToast,
+            downloadPdf: button => downloadGeoPdf(button),
+            downloadTiff: button => downloadGeoTiff(button)
+        });
     }
 
     if (helpBtn && helpModal) {

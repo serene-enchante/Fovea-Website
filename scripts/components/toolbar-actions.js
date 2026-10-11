@@ -20,7 +20,12 @@ export function getActiveDownloadFilename(ext) {
     }, ext);
 }
 
-export function setupSpatialDownloadButtons({ shareFile = handleSpatialFileShare, notify = showToast } = {}) {
+export function setupSpatialDownloadButtons({
+    shareFile = handleSpatialFileShare,
+    notify = showToast,
+    downloadPdf = button => downloadGeoPdf(getActiveDownloadFilename("pdf"), button),
+    downloadTiff = button => downloadGeoTiff(getActiveDownloadFilename("tif"), button)
+} = {}) {
     const geojsonBtn = document.getElementById("download-geojson");
     if (geojsonBtn) {
         geojsonBtn.addEventListener("click", async (event) => {
@@ -61,6 +66,16 @@ export function setupSpatialDownloadButtons({ shareFile = handleSpatialFileShare
             await shareFile(event, blob, filename, gpxBtn);
             notify(`Exported ${filename}`);
         });
+    }
+
+    const geopdfBtn = document.getElementById("download-geopdf");
+    if (geopdfBtn) {
+        geopdfBtn.addEventListener("click", async () => downloadPdf(geopdfBtn));
+    }
+
+    const geotiffBtn = document.getElementById("download-geotiff");
+    if (geotiffBtn) {
+        geotiffBtn.addEventListener("click", async () => downloadTiff(geotiffBtn));
     }
 }
 
@@ -916,21 +931,6 @@ export function setupActionButtons() {
 
         setupSpatialDownloadButtons();
 
-        const geopdfBtn = document.getElementById("download-geopdf");
-        if (geopdfBtn) {
-            geopdfBtn.addEventListener("click", async () => {
-                const filename = getActiveDownloadFilename("pdf");
-                await downloadGeoPdf(filename, geopdfBtn);
-            });
-        }
-
-        const geotiffBtn = document.getElementById("download-geotiff");
-        if (geotiffBtn) {
-            geotiffBtn.addEventListener("click", async () => {
-                const filename = getActiveDownloadFilename("tif");
-                await downloadGeoTiff(filename, geotiffBtn);
-            });
-        }
     }
 
     if (helpBtn && helpModal) {
