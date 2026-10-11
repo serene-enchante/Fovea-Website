@@ -24,6 +24,7 @@ import { setupMapCanvasEvents, setupMapHoverEvents } from './map/map-events.js';
 import { setupMapViewportEffects } from './map/map-viewport.js';
 import { updateMapControlPositions } from './map/map-control-layout.js';
 import { adjustHeaderFontSize, getFitPadding, updateHeader } from './components/header-view.js';
+import { syncSidebarTabs } from './components/sidebar-tabs.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
 import { state } from './state.js';
 
@@ -2807,60 +2808,8 @@ function renderBirdsList(listContainer) {
 }
 
 function renderSidebarList() {
-    const isBirdSelected = Boolean(state.selectedBird);
+    const isOverview = syncSidebarTabs(state, document);
     const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
-    const isSpecificZone = !state.isCirclesFeature && !isCircle && !isBirdSelected;
-
-    const observationsCapsule = document.querySelector('.sidebar-capsule[data-tab="observations"]');
-    if (observationsCapsule) {
-        observationsCapsule.style.display = isBirdSelected ? "inline-flex" : "none";
-    }
-
-    const birdsCapsule = document.querySelector('.sidebar-capsule[data-tab="birds"]');
-    if (birdsCapsule) {
-        birdsCapsule.style.display = isSpecificZone ? "inline-flex" : "none";
-    }
-
-    const organizersCapsule = document.querySelector('.sidebar-capsule[data-tab="organizers"]');
-    if (organizersCapsule) {
-        organizersCapsule.style.display = isBirdSelected ? "none" : "inline-flex";
-    }
-
-    const resourcesCapsule = document.querySelector('.sidebar-capsule[data-tab="resources"]');
-    if (resourcesCapsule) {
-        resourcesCapsule.style.display = isBirdSelected ? "none" : "inline-flex";
-    }
-
-    if (!isSpecificZone && state.activeTab === "birds" && !isBirdSelected) {
-        state.activeTab = "overview";
-    }
-
-    const itemsCapsule = document.querySelector('.sidebar-capsule[data-tab="items"]');
-    if (itemsCapsule) {
-        itemsCapsule.style.display = (isSpecificZone || isBirdSelected) ? "none" : "inline-flex";
-        itemsCapsule.textContent = state.isCirclesFeature ? "Circles" : "Circle Zones";
-    }
-
-    if ((isSpecificZone || isBirdSelected) && state.activeTab === "items") {
-        state.activeTab = "overview";
-    }
-
-    if (!isBirdSelected && state.activeTab === "observations") {
-        state.activeTab = "overview";
-    }
-
-    const isOverview = state.activeTab === "overview" || state.activeTab === "about";
-
-    // Sync capsule active state with state.activeTab
-    const capsules = document.querySelectorAll(".sidebar-capsule");
-    capsules.forEach(cap => {
-        const tab = cap.getAttribute("data-tab");
-        if (!isOverview && tab === state.activeTab) {
-            cap.classList.add("is-active");
-        } else {
-            cap.classList.remove("is-active");
-        }
-    });
 
     const listContainer = document.getElementById("sidebar-zone-list");
     if (!listContainer) return;
