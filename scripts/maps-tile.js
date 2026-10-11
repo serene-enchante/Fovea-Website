@@ -19,7 +19,7 @@ import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapSt
 import { setupMapCanvasEvents, setupMapHoverEvents } from './map/map-events.js';
 import { setupProximityGlowCanvas } from './map/map-proximity.js';
 import { setupMapViewportEffects } from './map/map-viewport.js';
-import { getFeatureCenter } from './map/map-rendering.js';
+import { getFeatureCenter, renderHeadlessMap } from './map/map-rendering.js';
 import { updateMapControlPositions } from './map/map-control-layout.js';
 import { setupSearch } from './map/map-search.js';
 import { adjustHeaderFontSize, getFitPadding, updateHeader } from './components/header-view.js';
@@ -331,7 +331,6 @@ function switchBaseMap(baseMapId) {
 // No dependency on the on-screen map DOM or state.map
 // ──────────────────────────────────────────────────────────────
 
-const ESRI_TOPO_TILE_URL_PRINT = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}";
 const OFFSCREEN_MAP_WIDTH = 3800;
 const OFFSCREEN_MAP_HEIGHT = 2500;
 const LAYOUT_WIDTH = 4000;
@@ -353,137 +352,7 @@ const LAYOUT_HEIGHT = 3000;
  * Create a headless offscreen MapLibre GL instance, render Esri Topo tiles
  * with optional zone polygon overlays, and return a standalone canvas copy + zone label positions.
  */
-async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom = 18) {
-    const container = document.createElement("div");
-    container.style.cssText = `
-        position: fixed; left: -9999px; top: 0;
-        width: ${OFFSCREEN_MAP_WIDTH}px; height: ${OFFSCREEN_MAP_HEIGHT}px;
-        z-index: -99999; visibility: hidden; pointer-events: none;
-    `;
-    document.body.appendChild(container);
 
-    try {
-        const style = {
-            version: 8,
-            sources: {
-                "esri-topo": {
-                    type: "raster",
-                    tiles: [ESRI_TOPO_TILE_URL_PRINT],
-                    tileSize: 256,
-                    maxzoom: 18
-                }
-            },
-            layers: [
-                { id: "esri-topo-layer", type: "raster", source: "esri-topo" }
-            ]
-        };
-
-        const offscreenMap = new maplibregl.Map({
-            container: container,
-            style: style,
-            preserveDrawingBuffer: true,
-            interactive: false,
-            attributionControl: false,
-            maxZoom: 20,
-            minZoom: 0
-        });
-
-        await new Promise((resolve) => {
-            offscreenMap.on("load", resolve);
-            offscreenMap.on("error", (e) => {
-                console.warn("Offscreen map error:", e);
-                resolve();
-            });
-            setTimeout(resolve, 5000);
-        });
-
-        if (geojsonOverlay) {
-            try {
-                offscreenMap.addSource("zone-polygons", {
-                    type: "geojson",
-                    data: geojsonOverlay
-                });
-                offscreenMap.addLayer({
-                    id: "zone-polygons-outline",
-                    type: "line",
-                    source: "zone-polygons",
-                    paint: {
-                        "line-color": "#dc2626",
-                        "line-width": 4.5,
-                        "line-opacity": 0.9
-                    }
-                });
-            } catch (e) {
-                console.warn("Could not add zone polygon overlay:", e);
-            }
-        }
-
-        offscreenMap.fitBounds(bounds, { padding: 180, maxZoom: maxZoom, animate: false });
-
-        await new Promise((resolve) => {
-            let checkCount = 0;
-            const checkIdle = () => {
-                checkCount++;
-                if (offscreenMap.areTilesLoaded() || checkCount > 40) {
-                    offscreenMap.off("idle", checkIdle);
-                    resolve();
-                }
-            };
-            offscreenMap.on("idle", checkIdle);
-            offscreenMap.triggerRepaint();
-            setTimeout(resolve, 4000);
-        });
-
-        // Project zone / circle centers to pixel coordinates before destroying map
-        const zoneLabels = [];
-        if (geojsonOverlay && Array.isArray(geojsonOverlay.features)) {
-            geojsonOverlay.features.forEach(f => {
-                const props = f.properties || {};
-                let label = "";
-                let isCircle = false;
-                if (props.cid) {
-                    label = String(props.cid);
-                    isCircle = true;
-                } else if (props.zid) {
-                    label = typeof displayZoneId === "function" ? displayZoneId(props.zid) : String(props.zid);
-                } else if (props.name) {
-                    label = String(props.name);
-                }
-
-                if (!label) return;
-
-                const center = getFeatureCenter(f);
-                if (center) {
-                    try {
-                        const pt = offscreenMap.project(center);
-                        if (pt && typeof pt.x === "number" && typeof pt.y === "number") {
-                            zoneLabels.push({
-                                label: label,
-                                x: pt.x,
-                                y: pt.y,
-                                isCircle: isCircle
-                            });
-                        }
-                    } catch (e) {}
-                }
-            });
-        }
-
-        const mapCanvas = offscreenMap.getCanvas();
-        const resultCanvas = document.createElement("canvas");
-        resultCanvas.width = mapCanvas.width;
-        resultCanvas.height = mapCanvas.height;
-        const resultCtx = resultCanvas.getContext("2d");
-        resultCtx.drawImage(mapCanvas, 0, 0);
-
-        offscreenMap.remove();
-        return { canvas: resultCanvas, zoneLabels: zoneLabels };
-    } finally {
-        if (container.parentNode) {
-            container.parentNode.removeChild(container);
-        }
-    }
-}
 
 /**
  * Render a full cartographic print layout canvas using a headless offscreen MapLibre instance.

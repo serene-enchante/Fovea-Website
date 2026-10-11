@@ -208,7 +208,7 @@ export function getFeatureCenter(feature) {
  * @param {number} maxZoom - Maximum zoom level for fitBounds
  * @returns {Promise<{canvas: HTMLCanvasElement, zoneLabels: Array}>} The rendered map canvas and projected zone label points
  */
-async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom = 18) {
+export async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom = 18) {
     // 1. Create a hidden offscreen container (3800×2500 px with safe WebGL headroom)
     const container = document.createElement("div");
     container.style.cssText = `
