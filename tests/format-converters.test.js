@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { geojsonToGpx, geojsonToKml } from '../scripts/services/format-converters.js';
+import { canvasToTiffBlob, geojsonToGpx, geojsonToKml } from '../scripts/services/format-converters.js';
 
 const features = {
     type: 'FeatureCollection',
@@ -35,4 +35,18 @@ test('converts GeoJSON points and polygons to GPX waypoints and tracks', () => {
     assert.match(gpx, /<wpt lat="44\.1" lon="-123\.1">/);
     assert.match(gpx, /<trk>\s*<name>04<\/name>/);
     assert.match(gpx, /<trkpt lat="44" lon="-123\.2"\/>/);
+});
+
+test('encodes canvas pixels as an RGB TIFF', async () => {
+    const canvas = {
+        width: 1,
+        height: 1,
+        getContext: () => ({ getImageData: () => ({ data: new Uint8ClampedArray([12, 34, 56, 255]) }) })
+    };
+
+    const blob = canvasToTiffBlob(canvas);
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+
+    assert.equal(blob.type, 'image/tiff');
+    assert.deepEqual([...bytes.slice(0, 11)], [0x49, 0x49, 42, 0, 11, 0, 0, 0, 12, 34, 56]);
 });
