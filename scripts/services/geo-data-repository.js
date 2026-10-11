@@ -1,14 +1,4 @@
-import {
-    CIRCLES_GEOJSON_PATH,
-    EUGENE_GEOJSON_PATH,
-    FLORENCE_GEOJSON_PATH
-} from '../config/app-config.js';
-
-const DATASET_PATHS = Object.freeze({
-    circles: CIRCLES_GEOJSON_PATH,
-    eugene: EUGENE_GEOJSON_PATH,
-    florence: FLORENCE_GEOJSON_PATH
-});
+import { getMapDataset, MAP_DATASET_IDS } from '../config/map-data-manifest.js';
 
 const datasetRequests = new Map();
 
@@ -24,9 +14,7 @@ function validateFeatureCollection(datasetId, data) {
 }
 
 export function getGeoDatasetPath(datasetId) {
-    const path = DATASET_PATHS[datasetId];
-    if (!path) throw new Error(`Unknown map dataset: ${datasetId}`);
-    return path;
+    return getMapDataset(datasetId).path;
 }
 
 export async function loadGeoDataset(datasetId, { signal } = {}) {
@@ -50,7 +38,7 @@ export async function loadGeoDataset(datasetId, { signal } = {}) {
     return request;
 }
 
-export async function loadGeoDatasets(datasetIds = Object.keys(DATASET_PATHS), options) {
+export async function loadGeoDatasets(datasetIds = MAP_DATASET_IDS, options) {
     const entries = await Promise.all(
         datasetIds.map(async datasetId => [datasetId, await loadGeoDataset(datasetId, options)])
     );

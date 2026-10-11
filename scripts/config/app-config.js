@@ -1,6 +1,8 @@
-export const EUGENE_GEOJSON_PATH = "../geojson/Eugene-04-wgs84.geojson";
-export const FLORENCE_GEOJSON_PATH = "../geojson/Florence-00-wgs84.geojson";
-export const CIRCLES_GEOJSON_PATH = "../geojson/circles-wgs84.geojson";
+import { MAP_DATASETS } from './map-data-manifest.js';
+
+export const EUGENE_GEOJSON_PATH = MAP_DATASETS.eugene.path;
+export const FLORENCE_GEOJSON_PATH = MAP_DATASETS.florence.path;
+export const CIRCLES_GEOJSON_PATH = MAP_DATASETS.circles.path;
 export const CIRCLE_ID = "ecbc-circle";
 
 export const SPATIAL_MIME_TYPES = {

@@ -7,6 +7,7 @@ import {
     loadGeoDataset,
     loadGeoDatasets
 } from '../scripts/services/geo-data-repository.js';
+import { getMapDataset, MAP_DATASET_IDS, MAP_DATASETS } from '../scripts/config/map-data-manifest.js';
 
 const originalFetch = globalThis.fetch;
 
@@ -34,6 +35,15 @@ test('returns the canonical path for every map dataset', () => {
     assert.equal(getGeoDatasetPath('eugene'), '../geojson/Eugene-04-wgs84.geojson');
     assert.equal(getGeoDatasetPath('florence'), '../geojson/Florence-00-wgs84.geojson');
     assert.throws(() => getGeoDatasetPath('unknown'), /Unknown map dataset/);
+});
+
+test('defines active datasets in one immutable manifest', () => {
+    assert.deepEqual(MAP_DATASET_IDS, ['circles', 'eugene', 'florence']);
+    assert.equal(getMapDataset('eugene'), MAP_DATASETS.eugene);
+    assert.equal(MAP_DATASETS.florence.label, 'Florence Christmas Bird Count');
+    assert.ok(Object.isFrozen(MAP_DATASETS));
+    assert.ok(Object.isFrozen(MAP_DATASETS.circles));
+    assert.throws(() => getMapDataset('unknown'), /Unknown map dataset/);
 });
 
 test('loads and validates the requested datasets', async () => {
