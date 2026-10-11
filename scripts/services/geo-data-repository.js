@@ -12,6 +12,10 @@ const DATASET_PATHS = Object.freeze({
 
 const datasetRequests = new Map();
 
+export function clearGeoDataCache() {
+    datasetRequests.clear();
+}
+
 function validateFeatureCollection(datasetId, data) {
     if (data?.type !== 'FeatureCollection' || !Array.isArray(data.features)) {
         throw new Error(`Invalid GeoJSON FeatureCollection for ${datasetId}`);

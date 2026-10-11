@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+
+const mapPagePath = new URL('../maps/index.html', import.meta.url);
+const mapScriptPath = new URL('../scripts/maps-tile.js', import.meta.url);
+
+test('the map page loads the map application as an ES module', async () => {
+    const page = await readFile(mapPagePath, 'utf8');
+
+    assert.match(page, /<script type="module" src="\.\.\/scripts\/maps-tile\.js\?v=247"><\/script>/);
+    assert.match(page, /maplibre-gl\.js/);
+    assert.match(page, /turf\.min\.js/);
+});
+
+test('the map application uses the shared GeoJSON repository', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+
+    assert.match(source, /import \{ loadGeoDatasets \} from '\.\/services\/geo-data-repository\.js';/);
+    assert.match(source, /await loadGeoDatasets\(\)/);
+});
