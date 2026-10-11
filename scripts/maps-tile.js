@@ -28,6 +28,7 @@ import { syncSidebarTabs } from './components/sidebar-tabs.js';
 import { activateSidebarTab, setupSidebarCapsuleEvents } from './components/sidebar-capsule-events.js';
 import { getSuggestSelectionLabel } from './components/feedback-form.js';
 import { setupSidebarScrollListener, updateKeyboardTileFocus } from './components/sidebar-list.js';
+import { openImageLightbox, setupImageLightbox } from './components/image-lightbox.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
 import { state } from './state.js';
 
@@ -6305,50 +6306,6 @@ function setupListSwipeBack() {
             }, 200);
         }
     }, { passive: true });
-}
-
-function openImageLightbox(src, alt = "Enlarged view", text = "", credit = "") {
-    const modal = document.getElementById("image-lightbox-modal");
-    const img = document.getElementById("lightbox-img");
-    const textEl = document.getElementById("lightbox-text");
-    const creditEl = document.getElementById("lightbox-credit");
-    if (modal && img) {
-        img.src = src;
-        img.alt = alt;
-        if (textEl) {
-            textEl.textContent = text;
-            textEl.style.display = text ? "block" : "none";
-        }
-        if (creditEl) {
-            creditEl.textContent = credit;
-            creditEl.style.display = credit ? "block" : "none";
-        }
-        modal.setAttribute("aria-hidden", "false");
-        modal.classList.add("is-open");
-    }
-}
-
-function setupImageLightbox() {
-    const modal = document.getElementById("image-lightbox-modal");
-    if (!modal) return;
-
-    const closeModal = () => {
-        modal.setAttribute("aria-hidden", "true");
-        modal.classList.remove("is-open");
-    };
-
-    modal.querySelectorAll("[data-modal-close]").forEach(closeEl => {
-        closeEl.addEventListener("click", (e) => {
-            e.stopPropagation();
-            closeModal();
-        });
-    });
-
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && modal.getAttribute("aria-hidden") === "false") {
-            closeModal();
-        }
-    });
 }
 
 function setupMobileResizeBar() {
