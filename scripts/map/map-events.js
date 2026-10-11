@@ -1,126 +1,80 @@
-import { state } from '../state.js';
-import { unhighlightTileItem, highlightTileItem } from '../components/sidebar-list.js';
-import { switchToFeature, selectSubject } from './map-selection.js';
-import { showToast } from '../components/toast-view.js';
-import { CIRCLE_ID } from '../config/app-config.js';
+import { highlightTileItem, unhighlightTileItem } from '../components/sidebar-list.js';
 
-let hoverEventsAttached = false;
+export function setupMapHoverEvents({ map, state, onFeatureClick }) {
+    if (!map || state._zoneEventsAttached) return;
+    state._zoneEventsAttached = true;
 
-export function setupMapHoverEvents() {
-    if (hoverEventsAttached) return;
-    hoverEventsAttached = true;
+    let hoveredStateId = null;
+    const activeHoverAlphas = {};
+    let hoverAnimationRaf = null;
 
-        let hoveredStateId = null;
-        let activeHoverAlphas = {};
-        let hoverAnimationRaf = null;
+    function updateHoverAlphas() {
+        let animationNeeded = false;
+        const allIds = new Set(Object.keys(activeHoverAlphas));
+        if (hoveredStateId) allIds.add(hoveredStateId);
 
-        function updateHoverAlphas() {
-            let animNeeded = false;
-            const allIds = new Set(Object.keys(activeHoverAlphas));
-            if (hoveredStateId) allIds.add(hoveredStateId);
+        allIds.forEach(id => {
+            const target = id === hoveredStateId ? 1 : 0;
+            const current = activeHoverAlphas[id] || 0;
+            const next = current + (target - current) * 0.28;
 
-            allIds.forEach(id => {
-                const target = (id === hoveredStateId) ? 1.0 : 0.0;
-                const current = activeHoverAlphas[id] || 0.0;
-                const next = current + (target - current) * 0.28;
-
-                if (Math.abs(target - next) < 0.015) {
-                    activeHoverAlphas[id] = target;
-                    if (target === 0) {
-                        delete activeHoverAlphas[id];
-                        try {
-                            state.map.setFeatureState({ source: 'zones', id: id }, { hover: false, hoverAlpha: 0 });
-                        } catch (e) {}
-                        return;
-                    }
-                } else {
-                    activeHoverAlphas[id] = next;
-                    animNeeded = true;
+            if (Math.abs(target - next) < 0.015) {
+                activeHoverAlphas[id] = target;
+                if (target === 0) {
+                    delete activeHoverAlphas[id];
+                    try { map.setFeatureState({ source: 'zones', id }, { hover: false, hoverAlpha: 0 }); } catch {}
+                    return;
                 }
-
-                const alphaToSet = activeHoverAlphas[id] || 0.0;
-                try {
-                    state.map.setFeatureState({ source: 'zones', id: id }, { 
-                        hover: alphaToSet > 0.01,
-                        hoverAlpha: alphaToSet
-                    });
-                } catch (e) {}
-            });
-
-            if (animNeeded) {
-                hoverAnimationRaf = requestAnimationFrame(updateHoverAlphas);
             } else {
-                hoverAnimationRaf = null;
+                activeHoverAlphas[id] = next;
+                animationNeeded = true;
             }
+
+            try {
+                map.setFeatureState({ source: 'zones', id }, {
+                    hover: activeHoverAlphas[id] > 0.01,
+                    hoverAlpha: activeHoverAlphas[id]
+                });
+            } catch {}
+        });
+
+        if (animationNeeded) hoverAnimationRaf = requestAnimationFrame(updateHoverAlphas);
+        else hoverAnimationRaf = null;
+    }
+
+    function setHoveredFeatureId(newId) {
+        if (hoveredStateId === newId) return;
+        Object.keys(activeHoverAlphas).forEach(previousId => {
+            if (previousId === newId) return;
+            try { map.setFeatureState({ source: 'zones', id: previousId }, { hover: false, hoverAlpha: 0 }); } catch {}
+            delete activeHoverAlphas[previousId];
+        });
+        if (hoveredStateId && hoveredStateId !== newId) {
+            try { map.setFeatureState({ source: 'zones', id: hoveredStateId }, { hover: false, hoverAlpha: 0 }); } catch {}
+            unhighlightTileItem();
         }
 
-        function setHoveredFeatureId(newId) {
-            if (hoveredStateId === newId) return;
-
-            // Immediately clear feature-state on all previous features so zero ghosting remains
-            Object.keys(activeHoverAlphas).forEach(prevId => {
-                if (prevId !== newId) {
-                    try {
-                        state.map.setFeatureState({ source: 'zones', id: prevId }, { hover: false, hoverAlpha: 0 });
-                    } catch (e) {}
-                    delete activeHoverAlphas[prevId];
-                }
-            });
-            if (hoveredStateId && hoveredStateId !== newId) {
-                try {
-                    state.map.setFeatureState({ source: 'zones', id: hoveredStateId }, { hover: false, hoverAlpha: 0 });
-                } catch (e) {}
-                unhighlightTileItem();
-            }
-
-            hoveredStateId = newId;
-            state._hoveredFeatureId = newId;
-
-            if (hoveredStateId) {
-                highlightTileItem(hoveredStateId);
-                state.map.getCanvas().style.cursor = 'pointer';
-                activeHoverAlphas[hoveredStateId] = 0.0;
-            } else {
-                state.map.getCanvas().style.cursor = '';
-            }
-
-            if (!hoverAnimationRaf) {
-                hoverAnimationRaf = requestAnimationFrame(updateHoverAlphas);
-            }
+        hoveredStateId = newId;
+        state._hoveredFeatureId = newId;
+        if (newId) {
+            highlightTileItem(newId);
+            map.getCanvas().style.cursor = 'pointer';
+            activeHoverAlphas[newId] = 0;
+        } else {
+            map.getCanvas().style.cursor = '';
         }
 
-        state.map.on('mousemove', 'zones-fill', (e) => {
-            if (e.features.length > 0) {
-                const newHoveredId = e.features[0].id;
-                setHoveredFeatureId(newHoveredId);
-            }
-        });
+        if (!hoverAnimationRaf) hoverAnimationRaf = requestAnimationFrame(updateHoverAlphas);
+    }
 
-        state.map.on('mouseleave', 'zones-fill', () => {
-            setHoveredFeatureId(null);
-        });
-
-        state.map.on('click', 'zones-fill', (e) => {
-            state.lastZoneClickTime = Date.now();
-            if (e.features.length > 0 && e.features[0].id != null) {
-                const featureId = String(e.features[0].id);
-                const props = e.features[0].properties;
-                
-                if (state.isCirclesFeature) {
-                    if (props.cid === "Eugene") {
-                        switchToFeature("eugene");
-                    } else if (props.cid === "Florence") {
-                        switchToFeature("florence");
-                    } else if (props.cid === "Oakridge" || props.cid === "Cottage Grove") {
-                        showToast("There is no data for this count circle");
-                    }
-                } else {
-                    if (state.currentId === featureId) {
-                        selectSubject(CIRCLE_ID);
-                    } else {
-                        selectSubject(featureId, true);
-                    }
-                }
-            }
-        });
+    map.on('mousemove', 'zones-fill', event => {
+        if (event.features?.length) setHoveredFeatureId(event.features[0].id);
+    });
+    map.on('mouseleave', 'zones-fill', () => setHoveredFeatureId(null));
+    map.on('click', 'zones-fill', event => {
+        const feature = event.features?.[0];
+        if (!feature || feature.id == null) return;
+        state.lastZoneClickTime = Date.now();
+        onFeatureClick?.({ feature, featureId: String(feature.id) });
+    });
 }

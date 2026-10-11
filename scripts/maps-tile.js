@@ -15,6 +15,7 @@ import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath }
 import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
 import { createMapInstance, updateUserLocationOnMap as renderUserLocation } from './map/map-init.js';
 import { addRasterBaseLayers } from './map/map-layers.js';
+import { setupMapHoverEvents } from './map/map-events.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -4275,108 +4276,23 @@ function rebuildGeoJsonLayer() {
         updateLabelZoomVisibility();
         updateAllFeatureStyles();
         
-        let hoveredStateId = null;
-        let activeHoverAlphas = {};
-        let hoverAnimationRaf = null;
-
-        function updateHoverAlphas() {
-            let animNeeded = false;
-            const allIds = new Set(Object.keys(activeHoverAlphas));
-            if (hoveredStateId) allIds.add(hoveredStateId);
-
-            allIds.forEach(id => {
-                const target = (id === hoveredStateId) ? 1.0 : 0.0;
-                const current = activeHoverAlphas[id] || 0.0;
-                const next = current + (target - current) * 0.28;
-
-                if (Math.abs(target - next) < 0.015) {
-                    activeHoverAlphas[id] = target;
-                    if (target === 0) {
-                        delete activeHoverAlphas[id];
-                        state.map.setFeatureState({ source: 'zones', id: id }, { hover: false, hoverAlpha: 0 });
-                        return;
-                    }
-                } else {
-                    activeHoverAlphas[id] = next;
-                    animNeeded = true;
-                }
-
-                const alphaToSet = activeHoverAlphas[id] || 0.0;
-                state.map.setFeatureState({ source: 'zones', id: id }, { 
-                    hover: alphaToSet > 0.01,
-                    hoverAlpha: alphaToSet
-                });
-            });
-
-            if (animNeeded) {
-                hoverAnimationRaf = requestAnimationFrame(updateHoverAlphas);
-            } else {
-                hoverAnimationRaf = null;
-            }
-        }
-
-        function setHoveredFeatureId(newId) {
-            if (hoveredStateId === newId) return;
-
-            // Immediately clear feature-state on all previous features so zero ghosting remains
-            Object.keys(activeHoverAlphas).forEach(prevId => {
-                if (prevId !== newId) {
-                    state.map.setFeatureState({ source: 'zones', id: prevId }, { hover: false, hoverAlpha: 0 });
-                    delete activeHoverAlphas[prevId];
-                }
-            });
-            if (hoveredStateId && hoveredStateId !== newId) {
-                state.map.setFeatureState({ source: 'zones', id: hoveredStateId }, { hover: false, hoverAlpha: 0 });
-                unhighlightTileItem();
-            }
-
-            hoveredStateId = newId;
-            state._hoveredFeatureId = newId;
-
-            if (hoveredStateId) {
-                highlightTileItem(hoveredStateId);
-                state.map.getCanvas().style.cursor = 'pointer';
-                activeHoverAlphas[hoveredStateId] = 0.0;
-            } else {
-                state.map.getCanvas().style.cursor = '';
-            }
-
-            if (!hoverAnimationRaf) {
-                hoverAnimationRaf = requestAnimationFrame(updateHoverAlphas);
-            }
-        }
-
-        state.map.on('mousemove', 'zones-fill', (e) => {
-            if (e.features.length > 0) {
-                const newHoveredId = e.features[0].id;
-                setHoveredFeatureId(newHoveredId);
-            }
-        });
-
-        state.map.on('mouseleave', 'zones-fill', () => {
-            setHoveredFeatureId(null);
-        });
-
-        state.map.on('click', 'zones-fill', (e) => {
-            state.lastZoneClickTime = Date.now();
-            if (e.features.length > 0 && e.features[0].id != null) {
-                const featureId = String(e.features[0].id);
-                const props = e.features[0].properties;
-                
+        setupMapHoverEvents({
+            map: state.map,
+            state,
+            onFeatureClick: ({ feature, featureId }) => {
+                const props = feature.properties || {};
                 if (state.isCirclesFeature) {
                     if (props.cid === "Eugene") {
-                        switchToFeature("eugene", getBbox([e.features[0]]));
+                        switchToFeature("eugene", getBbox([feature]));
                     } else if (props.cid === "Florence") {
-                        switchToFeature("florence", getBbox([e.features[0]]));
+                        switchToFeature("florence", getBbox([feature]));
                     } else if (props.cid === "Oakridge" || props.cid === "Cottage Grove") {
                         showToast("There is no data for this count circle");
                     }
+                } else if (state.currentId === featureId) {
+                    selectSubject(CIRCLE_ID);
                 } else {
-                    if (state.currentId === featureId) {
-                        selectSubject(CIRCLE_ID);
-                    } else {
-                        selectSubject(featureId, true);
-                    }
+                    selectSubject(featureId, true);
                 }
             }
         });
