@@ -17,6 +17,7 @@ import { createMapInstance, updateUserLocationOnMap as renderUserLocation } from
 import { addRasterBaseLayers, addZoneFeatureLayers, buildZoneFeatureData } from './map/map-layers.js';
 import { setupMapHoverEvents } from './map/map-events.js';
 import { createFeatureTransitionController } from './map/map-selection.js';
+import { state } from './state.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -290,7 +291,7 @@ function updateAllFeatureStyles() {
     rebuildHtmlLabels();
 }
 
-const state = {
+Object.assign(state, {
     allFeatures: [],
     circlesFeatures: [],
     eugeneFeatures: [],
@@ -315,7 +316,7 @@ const state = {
     baseMapsList: [],
     currentBaseLayer: "default",
     snapState: "default"
-};
+});
 
 const EUGENE_ZONE_DESCRIPTIONS = {
     "01": "Comprises northern agricultural plains and foothill margins, featuring open grass fields, hedgerows, and oak savanna that host wintering raptors and sparrows.",
