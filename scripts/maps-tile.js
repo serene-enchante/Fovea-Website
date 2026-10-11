@@ -6,7 +6,7 @@ import { getDownloadFilename } from './services/download-file-names.js';
 import { handleSpatialFileShare as shareSpatialFile } from './services/file-download-service.js';
 import { launchAppWithStoreFallback } from './services/app-launch-service.js';
 import { resolveAppInstructionConfig } from './services/app-instruction-config.js';
-import { geojsonToKml } from './services/format-converters.js';
+import { geojsonToGpx, geojsonToKml } from './services/format-converters.js';
 import { getAppSelectionTitle, getSelectionThumbnail } from './map/app-selection-presentation.js';
 import { findPointInsidePolygon, getBbox } from './utils/geometry-math.js';
 import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
@@ -616,67 +616,6 @@ async function handleAppDirectOpen(appName, triggerCard = null) {
 
 function saveBlob(blob, filename, triggerButton = null) {
   return handleSpatialFileShare(null, blob, filename, triggerButton);
-}
-
-function geojsonToGpx(geojson, docName = "Map Data") {
-    function esc(str) {
-        if (str === null || str === undefined) return "";
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    }
-
-    const features = geojson.type === 'FeatureCollection' ? geojson.features : (geojson.type === 'Feature' ? [geojson] : []);
-    let gpxWpts = "";
-    let gpxTrks = "";
-
-    features.forEach(f => {
-        const props = f.properties || {};
-        const title = esc(props.name || props.zid || props.cid || props.title || "Feature");
-        const geom = f.geometry;
-        if (!geom) return;
-
-        function processLine(coords, trkName) {
-            const pts = coords.map(c => `<trkpt lat="${c[1]}" lon="${c[0]}"/>`).join('\n        ');
-            return `
-  <trk>
-    <name>${trkName}</name>
-    <trkseg>
-        ${pts}
-    </trkseg>
-  </trk>`;
-        }
-
-        if (geom.type === 'Point') {
-            gpxWpts += `
-  <wpt lat="${geom.coordinates[1]}" lon="${geom.coordinates[0]}">
-    <name>${title}</name>
-  </wpt>`;
-        } else if (geom.type === 'LineString') {
-            gpxTrks += processLine(geom.coordinates, title);
-        } else if (geom.type === 'MultiLineString') {
-            geom.coordinates.forEach((line, idx) => {
-                gpxTrks += processLine(line, `${title} (${idx + 1})`);
-            });
-        } else if (geom.type === 'Polygon') {
-            geom.coordinates.forEach((ring, idx) => {
-                const ringName = idx === 0 ? title : `${title} (Hole ${idx})`;
-                gpxTrks += processLine(ring, ringName);
-            });
-        } else if (geom.type === 'MultiPolygon') {
-            geom.coordinates.forEach((poly, polyIdx) => {
-                poly.forEach((ring, ringIdx) => {
-                    const ringName = ringIdx === 0 ? `${title} (Part ${polyIdx + 1})` : `${title} (Part ${polyIdx + 1} Hole ${ringIdx})`;
-                    gpxTrks += processLine(ring, ringName);
-                });
-            });
-        }
-    });
-
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Fovea Web Map" xmlns="http://www.topografix.com/GPX/1/1">
-  <metadata>
-    <name>${esc(docName)}</name>
-  </metadata>${gpxWpts}${gpxTrks}
-</gpx>`;
 }
 
 function canvasToTiffBlob(canvas) {
