@@ -1,16 +1,17 @@
 
 
-export function closeAvenzaModal() {
-    const avenzaModal = document.getElementById("avenza-instruction-modal");
+export function closeAvenzaModal(documentObject = globalThis.document) {
+    if (!documentObject) return;
+    const avenzaModal = documentObject.getElementById("avenza-instruction-modal");
     if (avenzaModal) {
         avenzaModal.setAttribute("aria-hidden", "true");
         avenzaModal.classList.remove("is-open");
     }
-    document.body.classList.remove("has-avenza-modal");
+    documentObject.body.classList.remove("has-avenza-modal");
 
-    const isAnyOtherModalOpen = document.querySelector(".maps-tile-modal.is-open:not(#avenza-instruction-modal)");
+    const isAnyOtherModalOpen = documentObject.querySelector(".maps-tile-modal.is-open:not(#avenza-instruction-modal)");
     if (!isAnyOtherModalOpen) {
-        const bottomNav = document.querySelector(".mobile-bottom-nav-container");
+        const bottomNav = documentObject.querySelector(".mobile-bottom-nav-container");
         if (bottomNav) {
             bottomNav.classList.remove("is-hidden-entirely");
             bottomNav.style.removeProperty("display");
@@ -18,63 +19,70 @@ export function closeAvenzaModal() {
     }
 }
 
-export function closeAllAppsModal() {
-    const allAppsModal = document.getElementById("all-apps-modal");
+export function closeAllAppsModal(documentObject = globalThis.document) {
+    if (!documentObject) return;
+    const allAppsModal = documentObject.getElementById("all-apps-modal");
     if (allAppsModal) {
         allAppsModal.setAttribute("aria-hidden", "true");
         allAppsModal.classList.remove("is-open");
     }
 }
 
-export function closeAllModals() {
-    const avenzaModal = document.getElementById("avenza-instruction-modal");
+export function closeAllModals({
+    documentObject = globalThis.document,
+    windowObject = globalThis.window,
+    onBeforeClose = () => {}
+} = {}) {
+    if (!documentObject) return;
+    onBeforeClose();
+    const avenzaModal = documentObject.getElementById("avenza-instruction-modal");
     if (avenzaModal) {
         avenzaModal.setAttribute("aria-hidden", "true");
         avenzaModal.classList.remove("is-open");
     }
-    document.body.classList.remove("has-avenza-modal");
+    documentObject.body.classList.remove("has-avenza-modal");
 
-    const bottomNav = document.querySelector(".mobile-bottom-nav-container");
+    const bottomNav = documentObject.querySelector(".mobile-bottom-nav-container");
     if (bottomNav) {
         bottomNav.classList.remove("is-hidden-entirely");
         bottomNav.style.removeProperty("display");
     }
 
-    const downloadModal = document.getElementById("downloads-modal");
+    const downloadModal = documentObject.getElementById("downloads-modal");
     if (downloadModal) {
         downloadModal.setAttribute("aria-hidden", "true");
         downloadModal.classList.remove("is-open");
     }
 
-    const copyModal = document.getElementById("copy-link-modal");
+    const copyModal = documentObject.getElementById("copy-link-modal");
     if (copyModal) {
         copyModal.setAttribute("aria-hidden", "true");
         copyModal.classList.remove("is-open");
     }
 
-    const helpModal = document.getElementById("help-modal");
+    const helpModal = documentObject.getElementById("help-modal");
     if (helpModal) {
         helpModal.setAttribute("aria-hidden", "true");
         helpModal.classList.remove("is-open");
     }
 
-    const suggestModal = document.getElementById("suggest-modal");
+    const suggestModal = documentObject.getElementById("suggest-modal");
     if (suggestModal) {
         suggestModal.setAttribute("aria-hidden", "true");
         suggestModal.classList.remove("is-open");
     }
 
-    const allAppsModal = document.getElementById("all-apps-modal");
+    const allAppsModal = documentObject.getElementById("all-apps-modal");
     if (allAppsModal) {
         allAppsModal.setAttribute("aria-hidden", "true");
         allAppsModal.classList.remove("is-open");
     }
 
-    if (typeof window.updateActionButtonsState === "function") {
-        window.updateActionButtonsState();
+    if (typeof windowObject?.updateActionButtonsState === "function") {
+        windowObject.updateActionButtonsState();
     }
 
-    if (typeof window.renderSidebarList === "function") {
-        window.renderSidebarList();
+    if (typeof windowObject?.renderSidebarList === "function") {
+        windowObject.renderSidebarList();
     }
 }
