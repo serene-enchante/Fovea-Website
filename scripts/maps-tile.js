@@ -9,7 +9,7 @@ import { resolveAppInstructionConfig } from './services/app-instruction-config.j
 import { getAppSelectionTitle, getSelectionThumbnail } from './map/app-selection-presentation.js';
 import { findPointInsidePolygon, getBbox } from './utils/geometry-math.js';
 import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
-import { darkenHexColor, getThemeAccent, getThemeAccentLight, hexToRgba } from './utils/color-utils.js';
+import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
