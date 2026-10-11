@@ -25,6 +25,7 @@ import { setupMapViewportEffects } from './map/map-viewport.js';
 import { updateMapControlPositions } from './map/map-control-layout.js';
 import { adjustHeaderFontSize, getFitPadding, updateHeader } from './components/header-view.js';
 import { syncSidebarTabs } from './components/sidebar-tabs.js';
+import { setupSidebarCapsuleEvents } from './components/sidebar-capsule-events.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
 import { state } from './state.js';
 
@@ -5995,35 +5996,11 @@ function setupSearch() {
 }
 
 function setupCapsules() {
-    const capsules = document.querySelectorAll(".sidebar-capsule");
-    capsules.forEach(cap => {
-        cap.addEventListener("click", (e) => {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            const tab = cap.getAttribute("data-tab");
-            if (tab === "tools") {
-                showToast("Tools view is not available (coming soon)");
-                return;
-            }
-            if (tab === "settings") {
-                showToast("Settings view is not available (coming soon)");
-                return;
-            }
-
-            const isAlreadyActive = cap.classList.contains("is-active");
-            if (isAlreadyActive) {
-                // Deselect active tab and return to overview default
-                capsules.forEach(c => c.classList.remove("is-active"));
-                state.activeTab = "overview";
-            } else {
-                capsules.forEach(c => c.classList.remove("is-active"));
-                cap.classList.add("is-active");
-                state.activeTab = tab || "items";
-            }
-            renderSidebarList();
-        });
+    setupSidebarCapsuleEvents({
+        state,
+        documentObject: document,
+        onRender: renderSidebarList,
+        notify: showToast
     });
 }
 
