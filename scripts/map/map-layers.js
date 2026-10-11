@@ -3,6 +3,7 @@ import { normalizeZoneId } from "../utils/format-utils.js";
 import { state } from '../state.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { showToast } from '../components/toast-view.js'; // Might be needed for selectMapStyleByIndex
+import { findPointInsidePolygon, getBbox } from '../utils/geometry-math.js';
 
 // Exported feature expressions & layer logic
 export function toExpression(f) {
@@ -669,6 +670,51 @@ export function addZoneFeatureLayers(map, geojsonData) {
         },
         paint: { 'text-color': 'rgba(0,0,0,0)', 'text-halo-color': 'rgba(0,0,0,0)' }
     });
+}
+
+export function buildZoneFeatureData(features, isCirclesView) {
+    const grouped = {};
+    (features || []).forEach(feature => {
+        const properties = feature.properties || {};
+        const id = isCirclesView ? String(properties.cid || '') : String(properties.zid || '');
+        if (!id) return;
+
+        if (!grouped[id]) {
+            grouped[id] = {
+                type: 'Feature',
+                id,
+                properties: { ...properties, feature_id: id },
+                geometry: { type: 'MultiPolygon', coordinates: [] }
+            };
+        }
+
+        const geometry = feature.geometry;
+        if (geometry?.type === 'Polygon') grouped[id].geometry.coordinates.push(geometry.coordinates);
+        else if (geometry?.type === 'MultiPolygon') grouped[id].geometry.coordinates.push(...geometry.coordinates);
+        else if (geometry) grouped[id].geometry = geometry;
+    });
+
+    const geojsonData = { type: 'FeatureCollection', features: Object.values(grouped) };
+    const labelData = geojsonData.features.map(feature => {
+        const bounds = getBbox([feature]);
+        const insidePoint = findPointInsidePolygon(feature.geometry);
+        const center = insidePoint || [
+            (bounds[0][0] + bounds[1][0]) / 2,
+            (bounds[0][1] + bounds[1][1]) / 2
+        ];
+        const text = isCirclesView ? String(feature.properties.cid || '') : String(feature.properties.zid || '');
+        return {
+            id: feature.id,
+            lng: center[0],
+            lat: center[1],
+            text,
+            degWidth: bounds[1][0] - bounds[0][0],
+            textLen: text.length,
+            isCircle: !!feature.properties.cid && !feature.properties.zid
+        };
+    });
+
+    return { geojsonData, labelData };
 }
 
 export function rebuildGeoJsonLayer() {

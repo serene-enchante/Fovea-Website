@@ -14,7 +14,7 @@ import { getLayoutScaleBar } from './utils/map-print-math.js';
 import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
 import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
 import { createMapInstance, updateUserLocationOnMap as renderUserLocation } from './map/map-init.js';
-import { addRasterBaseLayers, addZoneFeatureLayers } from './map/map-layers.js';
+import { addRasterBaseLayers, addZoneFeatureLayers, buildZoneFeatureData } from './map/map-layers.js';
 import { setupMapHoverEvents } from './map/map-events.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
@@ -4073,89 +4073,8 @@ function rebuildHtmlLabels() {
 
 function rebuildGeoJsonLayer() {
     if (!state.map) return;
-    
-    const grouped = {};
-    state.allFeatures.forEach(f => {
-        const props = f.properties || {};
-        const newId = state.isCirclesFeature ? String(props.cid || "") : String(props.zid || "");
-        if (!newId) return;
-
-        if (!grouped[newId]) {
-            grouped[newId] = {
-                type: "Feature",
-                id: newId,
-                properties: {
-                    ...props,
-                    feature_id: newId
-                },
-                geometry: {
-                    type: "MultiPolygon",
-                    coordinates: []
-                }
-            };
-        }
-
-        const geom = f.geometry;
-        if (geom) {
-            if (geom.type === "Polygon") {
-                grouped[newId].geometry.coordinates.push(geom.coordinates);
-            } else if (geom.type === "MultiPolygon") {
-                grouped[newId].geometry.coordinates.push(...geom.coordinates);
-            } else {
-                grouped[newId].geometry = geom;
-            }
-        }
-    });
-
-    const geojsonData = {
-        type: "FeatureCollection",
-        features: Object.values(grouped)
-    };
-
-    // Build a separate geojson collection with exactly one Point per unique ID
-    const labelFeatures = [];
-    Object.keys(grouped).forEach(newId => {
-        const feat = grouped[newId];
-        const bbox = getBbox([feat]);
-        const insidePt = findPointInsidePolygon(feat.geometry);
-        let centerLng, centerLat;
-        if (insidePt) {
-            centerLng = insidePt[0];
-            centerLat = insidePt[1];
-        } else {
-            centerLng = (bbox[0][0] + bbox[1][0]) / 2;
-            centerLat = (bbox[0][1] + bbox[1][1]) / 2;
-        }
-
-        const degWidth = bbox[1][0] - bbox[0][0];
-        const textVal = state.isCirclesFeature ? String(feat.properties.cid || "") : String(feat.properties.zid || "");
-
-        labelFeatures.push({
-            type: "Feature",
-            id: newId,
-            properties: {
-                ...feat.properties,
-                feature_id: newId,
-                deg_width: degWidth,
-                text_len: textVal.length
-            },
-            geometry: {
-                type: "Point",
-                coordinates: [centerLng, centerLat]
-            }
-        });
-    });
-
-    // Store label data on state for HTML overlay rendering
-    state.labelData = labelFeatures.map(f => ({
-        id: f.id,
-        lng: f.geometry.coordinates[0],
-        lat: f.geometry.coordinates[1],
-        text: state.isCirclesFeature ? String(f.properties.cid || '') : String(f.properties.zid || ''),
-        degWidth: f.properties.deg_width,
-        textLen: f.properties.text_len,
-        isCircle: !!f.properties.cid && !f.properties.zid
-    }));
+    const { geojsonData, labelData } = buildZoneFeatureData(state.allFeatures, state.isCirclesFeature);
+    state.labelData = labelData;
 
     if (state.map.getSource('zones')) {
         state.map.getSource('zones').setData(geojsonData);
