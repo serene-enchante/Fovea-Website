@@ -21,6 +21,7 @@ import {
 } from './map/map-init.js';
 import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData } from './map/map-layers.js';
 import { setupMapCanvasEvents, setupMapHoverEvents } from './map/map-events.js';
+import { setupMapViewportEffects } from './map/map-viewport.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
 import { state } from './state.js';
 
@@ -3298,20 +3299,6 @@ function selectMapStyleByIndex(index) {
 function setupMapEffectsAndFullscreen(mapWrapper) {
     if (!mapWrapper) return;
 
-    mapWrapper.onmousemove = e => {
-        if (window.innerWidth <= 768) return;
-        const rect = mapWrapper.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        mapWrapper.style.setProperty("--mouse-x", `${x}px`);
-        mapWrapper.style.setProperty("--mouse-y", `${y}px`);
-    };
-
-    mapWrapper.onmouseleave = () => {
-        mapWrapper.style.setProperty("--mouse-x", `-1000px`);
-        mapWrapper.style.setProperty("--mouse-y", `-1000px`);
-    };
-
     const triggerMobileHomeAnimation = () => {
         if (window.innerWidth <= 768) {
             const targets = document.querySelectorAll(".intro-header, .maps-tile-header, .maps-tile-sidebar");
@@ -3335,18 +3322,10 @@ function setupMapEffectsAndFullscreen(mapWrapper) {
         updateLabelZoomVisibility();
     };
 
-    document.addEventListener("fullscreenchange", () => {
-        if (!document.fullscreenElement) {
-            mapWrapper.classList.remove("is-fullscreen");
-            triggerMobileHomeAnimation();
-        } else {
-            mapWrapper.classList.add("is-fullscreen");
-        }
-        handleResize();
+    setupMapViewportEffects(mapWrapper, {
+        onResize: handleResize,
+        onMobileHomeAnimation: triggerMobileHomeAnimation
     });
-
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("orientationchange", handleResize);
 }
 
 function toggleFullscreen() {
