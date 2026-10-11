@@ -1,7 +1,7 @@
 import { CIRCLE_ID } from './config/app-config.js';
-import { parseMapRoute, serializeMapRoute } from './map/map-route-state.js';
+import { parseMapRoute } from './map/map-route-state.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
-import { findFeatureByZoneId, getSelectedGeoJSONData as createSelectedGeoJSONData } from './services/geo-selection.js';
+import { getSelectedGeoJSONData as createSelectedGeoJSONData } from './services/geo-selection.js';
 import { getDownloadFilename } from './services/download-file-names.js';
 import { handleSpatialFileShare as shareSpatialFile } from './services/file-download-service.js';
 import { launchAppWithStoreFallback } from './services/app-launch-service.js';
@@ -1420,20 +1420,6 @@ function getInitialIdFromUrl() {
     state.currentFeature = route.currentFeature;
     state.isCirclesFeature = route.isCirclesFeature;
     return route.initialId;
-}
-
-function updateUrl(id) {
-    const url = new URL(window.location.href);
-    const targetFeature = findFeatureByZoneId(state.allFeatures, id);
-    const selectedId = targetFeature?.properties?.zid || id;
-    url.search = serializeMapRoute(url.search, {
-        currentFeature: state.currentFeature,
-        isCirclesFeature: state.isCirclesFeature,
-        id: selectedId,
-        circleId: CIRCLE_ID,
-        displayZoneId
-    });
-    window.history.replaceState({}, "", url.toString());
 }
 
 function updateControlPositions() {
