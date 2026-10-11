@@ -12,24 +12,30 @@ export function createMapInstance(mapLibre, options) {
     return new mapLibre.Map(options);
 }
 
-export function switchBaseMap(baseMapId) {
-    if (!state.map || !state.baseMapsList) return;
-    const targetMap = state.baseMapsList.find(b => b.id === baseMapId);
+export function switchBaseMap(baseMapId, { state: mapState = state, updateStyles = updateAllFeatureStyles } = {}) {
+    if (!mapState.map || !mapState.baseMapsList) return;
+    const targetId = baseMapId === 'dark' || baseMapId === 'default' ? 'default' : baseMapId;
+    const targetMap = mapState.baseMapsList.find(item => item.id === targetId) || mapState.baseMapsList[0];
     if (!targetMap) return;
-    
-    state.baseMapsList.forEach(bm => {
-        if (state.map.getLayer(bm.layerId)) {
-            state.map.setLayoutProperty(bm.layerId, 'visibility', bm.layerId === targetMap.layerId ? 'visible' : 'none');
+
+    mapState.baseMapsList.forEach(item => {
+        if (mapState.map.getLayer(item.layerId)) {
+            mapState.map.setLayoutProperty(item.layerId, 'visibility', item.id === targetId ? 'visible' : 'none');
         }
-        const lowResLayerId = `${bm.layerId}-low`;
-        if (state.map.getLayer(lowResLayerId)) {
-            state.map.setLayoutProperty(lowResLayerId, 'visibility', bm.layerId === targetMap.layerId ? 'visible' : 'none');
+        const lowResLayerId = `${item.layerId}-low`;
+        if (mapState.map.getLayer(lowResLayerId)) {
+            mapState.map.setLayoutProperty(lowResLayerId, 'visibility', item.id === targetId ? 'visible' : 'none');
         }
     });
-    state.currentBaseLayer = baseMapId;
+    mapState.currentBaseLayer = targetId;
 
-    // Apply road network line opacity dynamically: semi-transparent on satellite, solid on dark
-    const isSatellite = baseMapId === 'satellite';
+    if (targetId === 'default') {
+        ['base-satellite', 'base-esri-street', 'base-esri-topo', 'base-dark-raster'].forEach(layerId => {
+            if (mapState.map.getLayer(layerId)) mapState.map.setLayoutProperty(layerId, 'visibility', 'none');
+        });
+    }
+
+    const isSatellite = targetId === 'satellite';
     const roadLayers = [
         'road_service_case', 'road_minor_case', 'road_pri_case_ramp', 'road_trunk_case_ramp', 'road_mot_case_ramp',
         'road_sec_case_noramp', 'road_pri_case_noramp', 'road_trunk_case_noramp', 'road_mot_case_noramp', 'road_path',
@@ -42,35 +48,31 @@ export function switchBaseMap(baseMapId) {
         'bridge_path', 'bridge_service_fill', 'bridge_minor_fill', 'bridge_sec_fill', 'bridge_pri_fill', 'bridge_trunk_fill',
         'bridge_mot_fill'
     ];
-    roadLayers.forEach(lId => {
-        if (state.map.getLayer(lId)) {
-            state.map.setPaintProperty(lId, 'line-opacity', isSatellite ? 0.35 : 1.0);
-            if (isSatellite) {
-                state.map.setPaintProperty(lId, 'line-color', '#ffffff');
-            } else if (state._originalRoadColors && state._originalRoadColors[lId] !== undefined) {
-                state.map.setPaintProperty(lId, 'line-color', state._originalRoadColors[lId]);
-            }
+    roadLayers.forEach(layerId => {
+        if (!mapState.map.getLayer(layerId)) return;
+        mapState.map.setPaintProperty(layerId, 'line-opacity', isSatellite ? 0.35 : 1.0);
+        if (isSatellite) mapState.map.setPaintProperty(layerId, 'line-color', '#ffffff');
+        else if (mapState._originalRoadColors?.[layerId] !== undefined) {
+            mapState.map.setPaintProperty(layerId, 'line-color', mapState._originalRoadColors[layerId]);
         }
     });
 
-    const tileMapEl = document.getElementById("tile-map");
-    if (tileMapEl) {
-        tileMapEl.style.setProperty("background-color", "#000000", "important");
-        tileMapEl.style.setProperty("background", "#000000", "important");
+    const isLightMode = document.body.classList.contains('theme-light') || targetId === 'esri-street' || targetId === 'esri-topo';
+    const tileMap = document.getElementById('tile-map');
+    if (tileMap) {
+        const background = isLightMode ? '#f8f9fa' : '#000000';
+        tileMap.style.setProperty('background-color', background, 'important');
+        tileMap.style.setProperty('background', background, 'important');
     }
-
-    const mapWrapper = document.getElementById("map-wrapper");
+    const mapWrapper = document.getElementById('map-wrapper');
     if (mapWrapper) {
-        if (baseMapId === "esri-street" || baseMapId === "esri-topo") {
-            mapWrapper.classList.add("is-light-basemap");
+        if (targetId === 'esri-street' || targetId === 'esri-topo' || (targetId === 'default' && isLightMode)) {
+            mapWrapper.classList.add('is-light-basemap');
         } else {
-            mapWrapper.classList.remove("is-light-basemap");
+            mapWrapper.classList.remove('is-light-basemap');
         }
     }
-
-    if (typeof updateAllFeatureStyles === "function") {
-        updateAllFeatureStyles();
-    }
+    updateStyles();
 }
 
 let watchId = null;
