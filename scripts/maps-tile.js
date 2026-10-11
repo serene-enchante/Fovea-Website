@@ -25,7 +25,6 @@ import {
     hasCachedLayoutCanvas,
     scheduleDownloadViewPreload
 } from './map/map-rendering.js';
-import { updateMapControlPositions } from './map/map-control-layout.js';
 import { setupSearch } from './map/map-search.js';
 import { adjustHeaderFontSize, getFitPadding, updateHeader } from './components/header-view.js';
 import { syncSidebarTabs } from './components/sidebar-tabs.js';
@@ -39,7 +38,7 @@ import { showToast } from './components/toast-view.js';
 import { setupViewToggleMenu, updateAllAppsModalHeaderTitle, updateShareModalDescription, toggleFullscreen, getActiveDownloadFilename, setupDownloadAppSearch } from './components/toolbar-actions.js';
 import { closeAvenzaModal, closeAllAppsModal, closeAllModals as closeModalsView } from './components/modal-view.js';
 import { handleAppDirectOpen } from './components/avenza-modal-view.js';
-import { setMobileSnapState, setupListSwipeBack, setupMobileResizeBar, setupSwipeNavigation } from './components/mobile-view.js';
+import { setMobileSnapState, setupListSwipeBack, setupMobileResizeBar, setupSwipeNavigation, updateControlPositions } from './components/mobile-view.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
 import { state } from './state.js';
 
@@ -411,11 +410,6 @@ async function downloadGeoTiff(triggerButton = null) {
     const tiffBlob = canvasToTiffBlob(canvas);
     await handleSpatialFileShare(null, tiffBlob, filename, triggerButton);
     showToast(`Exported ${filename}`);
-}
-
-function updateControlPositions() {
-    if (!state.map) return;
-    updateMapControlPositions({ documentObject: document, isMobile: window.innerWidth <= 768 });
 }
 
 async function loadFeaturesForMapView(featureName) {
