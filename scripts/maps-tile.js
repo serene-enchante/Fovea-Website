@@ -26,6 +26,7 @@ import { updateMapControlPositions } from './map/map-control-layout.js';
 import { adjustHeaderFontSize, getFitPadding, updateHeader } from './components/header-view.js';
 import { syncSidebarTabs } from './components/sidebar-tabs.js';
 import { activateSidebarTab, setupSidebarCapsuleEvents } from './components/sidebar-capsule-events.js';
+import { getSuggestSelectionLabel } from './components/feedback-form.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
 import { state } from './state.js';
 
@@ -1432,25 +1433,6 @@ function updateUrl(id) {
 function updateControlPositions() {
     if (!state.map) return;
     updateMapControlPositions({ documentObject: document, isMobile: window.innerWidth <= 768 });
-}
-
-function getSuggestSelectionLabel() {
-    if (state.isCirclesFeature) {
-        return "Coast to Cascades";
-    }
-    const circleName = state.currentFeature === "florence" ? "Florence CBC" : "Eugene CBC";
-    const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
-    if (isCircle) {
-        return circleName;
-    }
-    const targetFeature = (state.allFeatures || []).find(f => {
-        const zid = f.properties?.zid;
-        return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || (typeof normalizeZoneId === "function" && normalizeZoneId(zid) === normalizeZoneId(state.currentId)));
-    });
-    if (targetFeature && targetFeature.properties?.zid) {
-        return `Zone ${displayZoneId(targetFeature.properties.zid)}`;
-    }
-    return `Zone ${displayZoneId(state.currentId)}`;
 }
 
 async function loadFeaturesForMapView(featureName) {
