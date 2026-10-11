@@ -5,7 +5,7 @@
 
 ## Executive summary
 
-The main concern is valid: the map experience has grown into a tightly coupled browser application. Its production entry point is a single 9,897-line script, `scripts/maps-tile.js`, coupled to a 6,500-line stylesheet, `styles/page-maps-tile.css`. It owns data loading, map rendering, selection, UI composition, downloads, external API calls, feedback submission, navigation, mobile gestures, and page initialization in one global scope.
+The main concern is valid: the map experience has grown into a tightly coupled browser application. Its production entry point is an 8,865-line script, `scripts/maps-tile.js`, coupled to a 6,500-line stylesheet, `styles/page-maps-tile.css`. It owns data loading, map rendering, selection, UI composition, downloads, external API calls, feedback submission, navigation, mobile gestures, and page initialization in one global scope.
 
 There is an attempted module split under `scripts/map`, `scripts/components`, `scripts/services`, `scripts/utils`, and `scripts/config`. That split is a useful foundation, but it is not the code the live map page serves: `maps/index.html` still loads `scripts/maps-tile.js` directly. The extracted code also has incomplete behavior; for example, `scripts/map/map-init.js` contains a stub for updating the user-location marker. Switching the page to the extracted files wholesale would be a high-risk rewrite.
 
@@ -15,7 +15,7 @@ The practical strategy is an incremental strangler refactor: establish a stable 
 
 | Finding | Evidence | Consequence |
 | --- | --- | --- |
-| The production map is a monolith | `maps/index.html` loads `../scripts/maps-tile.js?v=246`; the file is 9,897 lines and defines at least 145 `addEventListener` calls. | A change to an isolated feature requires understanding unrelated state, event handlers, and DOM assumptions. |
+| The production map is a monolith | `maps/index.html` loads `../scripts/maps-tile.js?v=247`; the file is 8,865 lines and defines at least 145 `addEventListener` calls. | A change to an isolated feature requires understanding unrelated state, event handlers, and DOM assumptions. |
 | The modular replacement is not connected to production | The page does not import the files in `scripts/map`, `scripts/components`, or `scripts/services`; those files contain counterparts for map rendering, downloads, sidebar UI, feedback, and mobile navigation. | There are two competing implementations, inviting drift and making it unclear where a feature should be changed. |
 | The partial extraction has a known functional gap | `scripts/map/map-init.js` defines `updateUserLocationOnMap` as a stub, while it is invoked by geolocation tracking. | Migration needs feature-level parity checks before any module is promoted to the live entry point. |
 | Shared behavior is implemented several times | Map, settings, wizard, and navigation code each define theme, toast, formatting, or mobile-navigation behaviors; `scripts/maps-tile.js`, `scripts/mobile-bottom-nav.js`, and `scripts/components/bottom-nav-view.js` all contain mobile bottom-nav logic. GeoJSON export selection, zone-ID matching, export filenames, file sharing, suggested-app settings and resolution, store fallback behavior, app selection presentation, and map bounds now have shared implementations. | Fixes can land in one implementation and fail to reach the route that customers use. |
@@ -42,6 +42,12 @@ flowchart LR
 ```
 
 The issue is less the number of files than the lack of boundaries. A feature such as selection needs data, URL mutation, map state, sidebar DOM, download rendering, and possibly mobile layout; all are reachable from the same global script. The target should make those dependencies explicit.
+
+## Progress through this branch
+
+The branch has established testable shared boundaries for route parsing, active map-data configuration and lazy loading, GeoJSON selection, zone formatting and descriptions, download filenames and share metadata, external app instructions and store fallbacks, KML/GPX/TIFF export conversion, print geometry, QR image loading, and location containment.
+
+The production file has reduced by 1,032 lines from the assessment baseline. Node tests now cover 43 pure-function cases, and Playwright checks deep links, circles-to-count selection through the full list, downloads, and mobile navigation. The remaining high-risk work is the MapLibre initialization and layer slice, route/selection coordination, sidebar rendering, modals, search, feedback, and mobile gesture handling.
 
 ## Refactor goals and guardrails
 
