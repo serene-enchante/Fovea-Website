@@ -16,6 +16,7 @@ test('the map page loads the map application as an ES module', async () => {
 test('the map application uses the shared GeoJSON repository', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
 
-    assert.match(source, /import \{ loadGeoDatasets \} from '\.\/services\/geo-data-repository\.js';/);
-    assert.match(source, /await loadGeoDatasets\(\)/);
+    assert.match(source, /import \{ loadGeoDataset \} from '\.\/services\/geo-data-repository\.js';/);
+    assert.match(source, /state\.allFeatures = await loadFeaturesForMapView\(initialFeature\);/);
+    assert.match(source, /targetFeatures = await loadFeaturesForMapView\(featureName\);/);
 });

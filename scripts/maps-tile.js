@@ -1,5 +1,5 @@
 import { CIRCLE_ID } from './config/app-config.js';
-import { loadGeoDatasets } from './services/geo-data-repository.js';
+import { loadGeoDataset } from './services/geo-data-repository.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -2738,13 +2738,47 @@ function getSuggestSelectionLabel() {
     return `Zone ${displayZoneId(state.currentId)}`;
 }
 
-function switchToFeature(featureName, circleLayer) {
+let latestMapDatasetTransition = 0;
+
+async function loadFeaturesForMapView(featureName) {
+    const datasetId = featureName === 'florence' ? 'florence'
+        : featureName === 'eugene' ? 'eugene'
+            : 'circles';
+    const dataset = await loadGeoDataset(datasetId);
+    const features = dataset.features;
+
+    if (datasetId === 'circles') {
+        state.circlesFeatures = features;
+    } else if (datasetId === 'florence') {
+        state.florenceFeatures = features;
+    } else {
+        state.eugeneFeatures = features;
+    }
+
+    return features;
+}
+
+async function switchToFeature(featureName, circleLayer) {
     if (document.body.classList.contains("is-suggest-locked") && (featureName !== state.currentFeature || state.isCirclesFeature)) {
         return;
     }
 
     if (!state.map) return;
     disposeRasterCache();
+    const transitionId = ++latestMapDatasetTransition;
+
+    let targetFeatures;
+    try {
+        targetFeatures = await loadFeaturesForMapView(featureName);
+    } catch (error) {
+        if (transitionId === latestMapDatasetTransition) {
+            console.error(`Unable to load ${featureName} map data:`, error);
+            showToast(`Unable to load ${featureName} map data`, true);
+        }
+        return;
+    }
+
+    if (transitionId !== latestMapDatasetTransition) return;
 
     let transitionFinished = false;
 
@@ -2754,7 +2788,7 @@ function switchToFeature(featureName, circleLayer) {
 
         state.currentFeature = featureName;
         state.isCirclesFeature = false;
-        state.allFeatures = (featureName === "florence") ? state.florenceFeatures : state.eugeneFeatures;
+        state.allFeatures = targetFeatures;
         state.currentId = CIRCLE_ID;
 
         rebuildGeoJsonLayer();
@@ -2774,15 +2808,31 @@ function switchToFeature(featureName, circleLayer) {
     }
 }
 
-function switchToCirclesFeature() {
+async function switchToCirclesFeature() {
     if (document.body.classList.contains("is-suggest-locked") && !state.isCirclesFeature) {
         return;
     }
 
+    if (!state.map) return;
     disposeRasterCache();
+    const transitionId = ++latestMapDatasetTransition;
+
+    let circlesFeatures;
+    try {
+        circlesFeatures = await loadFeaturesForMapView('circles');
+    } catch (error) {
+        if (transitionId === latestMapDatasetTransition) {
+            console.error('Unable to load circles map data:', error);
+            showToast('Unable to load circle map data', true);
+        }
+        return;
+    }
+
+    if (transitionId !== latestMapDatasetTransition) return;
+
     state.currentFeature = "circles";
     state.isCirclesFeature = true;
-    state.allFeatures = state.circlesFeatures;
+    state.allFeatures = circlesFeatures;
     state.currentId = CIRCLE_ID;
     rebuildGeoJsonLayer();
     selectSubject(CIRCLE_ID, true);
@@ -9430,20 +9480,9 @@ async function init() {
             state.currentBaseLayer = "default";
         }
 
-        const { circles: circlesData, eugene: eugeneData, florence: florenceData } = await loadGeoDatasets();
-
-        state.circlesFeatures = Array.isArray(circlesData.features) ? circlesData.features : [];
-        state.eugeneFeatures = Array.isArray(eugeneData.features) ? eugeneData.features : [];
-        state.florenceFeatures = Array.isArray(florenceData.features) ? florenceData.features : [];
-
         const initialId = getInitialIdFromUrl();
-        if (state.isCirclesFeature) {
-            state.allFeatures = state.circlesFeatures;
-        } else if (state.currentFeature === "florence") {
-            state.allFeatures = state.florenceFeatures;
-        } else {
-            state.allFeatures = state.eugeneFeatures;
-        }
+        const initialFeature = state.isCirclesFeature ? 'circles' : state.currentFeature;
+        state.allFeatures = await loadFeaturesForMapView(initialFeature);
 
         renderSidebarList();
         initializeMap();
@@ -9897,4 +9936,3 @@ function setupMobileBottomNav() {
         }
     });
 }
-
