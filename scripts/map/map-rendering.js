@@ -870,6 +870,13 @@ export async function getOrRenderLayoutCanvas(options = {}) {
     return await preloadMapLayout(options);
 }
 
+export function hasCachedLayoutCanvas(options = {}) {
+    const key = getRasterCacheKey(options);
+    return activeRasterCache.key === key
+        && (Date.now() - activeRasterCache.createdAt < RASTER_CACHE_TTL_MS)
+        && !!activeRasterCache.canvas;
+}
+
 export async function downloadGeoPdf(filename, triggerButton = null) {
     try {
         if (triggerButton) {

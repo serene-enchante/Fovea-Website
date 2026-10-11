@@ -17,7 +17,14 @@ import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapSt
 import { setupMapCanvasEvents, setupMapHoverEvents } from './map/map-events.js';
 import { setupProximityGlowCanvas } from './map/map-proximity.js';
 import { setupMapViewportEffects } from './map/map-viewport.js';
-import { getFeatureCenter, renderMapLayoutCanvas } from './map/map-rendering.js';
+import {
+    cancelDownloadViewPreload,
+    disposeRasterCache,
+    getFeatureCenter,
+    getOrRenderLayoutCanvas,
+    hasCachedLayoutCanvas,
+    scheduleDownloadViewPreload
+} from './map/map-rendering.js';
 import { updateMapControlPositions } from './map/map-control-layout.js';
 import { setupSearch } from './map/map-search.js';
 import { adjustHeaderFontSize, getFitPadding, updateHeader } from './components/header-view.js';
@@ -355,121 +362,8 @@ function switchBaseMap(baseMapId) {
  */
 
 
-// ──────────────────────────────────────────────────────────────
-// Pre-render Cache & Garbage Management Engine
-// ──────────────────────────────────────────────────────────────
-
-const RASTER_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL
-const DOWNLOAD_VIEW_PRELOAD_DELAY_MS = 500; // 0.5s wait after opening downloads view
-
-let activeRasterCache = {
-    key: null,
-    promise: null,
-    canvas: null,
-    createdAt: 0,
-    timerId: null
-};
-
-let downloadViewPreloadTimer = null;
-
-function scheduleDownloadViewPreload() {
-    cancelDownloadViewPreload();
-    downloadViewPreloadTimer = setTimeout(() => {
-        downloadViewPreloadTimer = null;
-        preloadMapLayout();
-    }, DOWNLOAD_VIEW_PRELOAD_DELAY_MS);
-}
-
-function cancelDownloadViewPreload() {
-    if (downloadViewPreloadTimer) {
-        clearTimeout(downloadViewPreloadTimer);
-        downloadViewPreloadTimer = null;
-    }
-}
-
-const scheduleSelectionPreload = scheduleDownloadViewPreload;
-const cancelSelectionPreload = cancelDownloadViewPreload;
-
-function getRasterCacheKey() {
-    const cid = state.currentFeature || "eugene";
-    const zid = state.currentId;
-    const isCirc = state.isCirclesFeature;
-    return `${cid}:${zid || "full"}:${isCirc ? "circles" : "zone"}`;
-}
-
-function disposeRasterCache() {
-    cancelSelectionPreload();
-    if (activeRasterCache.timerId) {
-        clearTimeout(activeRasterCache.timerId);
-        activeRasterCache.timerId = null;
-    }
-    if (activeRasterCache.canvas) {
-        try {
-            activeRasterCache.canvas.width = 0;
-            activeRasterCache.canvas.height = 0;
-        } catch (e) {}
-    }
-    activeRasterCache.key = null;
-    activeRasterCache.promise = null;
-    activeRasterCache.canvas = null;
-    activeRasterCache.createdAt = 0;
-}
-
-function preloadMapLayout() {
-    cancelSelectionPreload();
-    const key = getRasterCacheKey();
-    const now = Date.now();
-
-    if (activeRasterCache.key === key && (now - activeRasterCache.createdAt < RASTER_CACHE_TTL_MS)) {
-        if (activeRasterCache.promise) return activeRasterCache.promise;
-        if (activeRasterCache.canvas) return Promise.resolve(activeRasterCache.canvas);
-    }
-
-    disposeRasterCache();
-
-    activeRasterCache.key = key;
-    activeRasterCache.createdAt = now;
-
-    const renderPromise = renderMapLayoutCanvas()
-        .then(canvas => {
-            if (activeRasterCache.key === key) {
-                activeRasterCache.canvas = canvas;
-                activeRasterCache.promise = null;
-                activeRasterCache.timerId = setTimeout(disposeRasterCache, RASTER_CACHE_TTL_MS);
-            } else {
-                try {
-                    canvas.width = 0;
-                    canvas.height = 0;
-                } catch (e) {}
-            }
-            return canvas;
-        })
-        .catch(err => {
-            if (activeRasterCache.key === key) {
-                disposeRasterCache();
-            }
-            throw err;
-        });
-
-    activeRasterCache.promise = renderPromise;
-    return renderPromise;
-}
-
-async function getOrRenderLayoutCanvas() {
-    const key = getRasterCacheKey();
-    const now = Date.now();
-
-    if (activeRasterCache.key === key && (now - activeRasterCache.createdAt < RASTER_CACHE_TTL_MS)) {
-        if (activeRasterCache.canvas) return activeRasterCache.canvas;
-        if (activeRasterCache.promise) return await activeRasterCache.promise;
-    }
-
-    return await preloadMapLayout();
-}
-
 async function downloadGeoPdf(triggerButton = null) {
-    const key = getRasterCacheKey();
-    const isReady = activeRasterCache.key === key && !!activeRasterCache.canvas;
+    const isReady = hasCachedLayoutCanvas();
     if (!isReady) {
         showToast("Rendering map layout...");
     }
@@ -507,8 +401,7 @@ async function downloadGeoPdf(triggerButton = null) {
 }
 
 async function downloadGeoTiff(triggerButton = null) {
-    const key = getRasterCacheKey();
-    const isReady = activeRasterCache.key === key && !!activeRasterCache.canvas;
+    const isReady = hasCachedLayoutCanvas();
     if (!isReady) {
         showToast("Rendering map layout...");
     }
