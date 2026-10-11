@@ -7,6 +7,7 @@ import { showToast } from '../components/toast-view.js';
 import { updateControlPositions } from '../components/mobile-view.js';
 import { adjustHeaderFontSize } from '../components/header-view.js';
 import { getLayoutScaleBar } from '../utils/map-print-math.js';
+import { getBbox } from '../utils/geometry-math.js';
 
 // ──────────────────────────────────────────────────────────────
 // Headless offscreen MapLibre renderer for PDF / TIFF export
@@ -26,33 +27,6 @@ const LAYOUT_HEIGHT = 3000;
  * Compute bounding box from GeoJSON features.
  * Returns [[minLng, minLat], [maxLng, maxLat]].
  */
-function computeBbox(features) {
-    let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
-    const processCoord = (coord) => {
-        if (coord[0] < minLng) minLng = coord[0];
-        if (coord[1] < minLat) minLat = coord[1];
-        if (coord[0] > maxLng) maxLng = coord[0];
-        if (coord[1] > maxLat) maxLat = coord[1];
-    };
-    const processGeom = (geom) => {
-        if (!geom) return;
-        if (geom.type === "Polygon") {
-            geom.coordinates[0].forEach(processCoord);
-        } else if (geom.type === "MultiPolygon") {
-            geom.coordinates.forEach(poly => poly[0].forEach(processCoord));
-        } else if (geom.type === "Point") {
-            processCoord(geom.coordinates);
-        }
-    };
-    if (Array.isArray(features)) {
-        features.forEach(f => processGeom(f.geometry));
-    } else {
-        processGeom(features.geometry);
-    }
-    if (minLng === Infinity) return [[-123.3, 43.9], [-122.9, 44.2]];
-    return [[minLng, minLat], [maxLng, maxLat]];
-}
-
 /**
  * Normalize a zone ID for comparison (strips leading zeroes).
  */
@@ -448,8 +422,8 @@ export async function renderMapLayoutCanvas({
     }
 
     const targetBounds = (isCircle || !targetFeature)
-        ? computeBbox(allFeatures)
-        : computeBbox([targetFeature]);
+        ? getBbox(allFeatures)
+        : getBbox([targetFeature]);
 
     // Build GeoJSON overlay for zone polygons
     const overlayGeojson = {
@@ -712,7 +686,7 @@ export async function renderMapLayoutCanvas({
     const footY = height - footerHeight - mapMargin + 30;
     ctx.fillStyle = "#374151";
     ctx.font = "31px system-ui, sans-serif";
-    const bbox = computeBbox(allFeatures);
+    const bbox = getBbox(allFeatures);
     const boundsText = `Spatial Extent (WGS84): [${bbox[0][0].toFixed(4)}°W, ${bbox[0][1].toFixed(4)}°N] to [${bbox[1][0].toFixed(4)}°W, ${bbox[1][1].toFixed(4)}°N]`;
     ctx.fillText(boundsText, mapMargin, footY + 40);
 
@@ -1033,4 +1007,3 @@ function triggerDirectDownload(blob, filename) {
         URL.revokeObjectURL(url);
     }, 100);
 }
-
