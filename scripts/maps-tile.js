@@ -31,7 +31,7 @@ import { setupSidebarScrollListener, updateKeyboardTileFocus } from './component
 import { openImageLightbox, setupImageLightbox } from './components/image-lightbox.js';
 import { setupHelpModeSystem } from './components/map-modals.js';
 import { setupMobileBottomNav } from './components/bottom-nav-view.js';
-import { setupViewToggleMenu, updateAllAppsModalHeaderTitle, updateShareModalDescription } from './components/toolbar-actions.js';
+import { setupViewToggleMenu, updateAllAppsModalHeaderTitle, updateShareModalDescription, toggleFullscreen } from './components/toolbar-actions.js';
 import { closeAvenzaModal, closeAllAppsModal, closeAllModals as closeModalsView } from './components/modal-view.js';
 import { setMobileSnapState, setupListSwipeBack, setupMobileResizeBar, setupSwipeNavigation } from './components/mobile-view.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
@@ -2859,53 +2859,7 @@ function setupMapEffectsAndFullscreen(mapWrapper) {
     });
 }
 
-function toggleFullscreen() {
-    const mapWrapper = document.getElementById("map-wrapper");
-    if (!mapWrapper) return;
 
-    const handleResize = () => {
-        if (state.map) {
-            state.map.invalidateSize();
-            setTimeout(() => state.map.invalidateSize(), 50);
-            setTimeout(() => state.map.invalidateSize(), 200);
-            setTimeout(() => state.map.invalidateSize(), 400);
-        }
-    };
-
-    const triggerMobileHomeAnimation = () => {
-        if (window.innerWidth <= 768) {
-            const targets = document.querySelectorAll(".intro-header, .maps-tile-header, .maps-tile-sidebar");
-            targets.forEach(el => {
-                el.classList.remove("animate-mobile-slide-down");
-                void el.offsetWidth;
-                el.classList.add("animate-mobile-slide-down");
-            });
-        }
-    };
-
-    if (!document.fullscreenElement && !mapWrapper.classList.contains("is-fullscreen")) {
-        if (mapWrapper.requestFullscreen) {
-            mapWrapper.requestFullscreen().catch(() => {
-                mapWrapper.classList.add("is-fullscreen");
-                handleResize();
-            });
-        } else {
-            mapWrapper.classList.add("is-fullscreen");
-            handleResize();
-        }
-    } else {
-        if (document.exitFullscreen && document.fullscreenElement) {
-            document.exitFullscreen().catch(() => {
-                mapWrapper.classList.remove("is-fullscreen");
-                triggerMobileHomeAnimation();
-                handleResize();
-            });
-        } else {
-            mapWrapper.classList.remove("is-fullscreen");
-            triggerMobileHomeAnimation();
-        }
-    }
-}
 
 // Cursor proximity glow: set feature-state 'proximity' (0–1) based on
 // screen-space distance from cursor to each zone center point
