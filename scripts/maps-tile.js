@@ -14,7 +14,7 @@ import { getLayoutScaleBar } from './utils/map-print-math.js';
 import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
 import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
 import { createMapInstance, updateUserLocationOnMap as renderUserLocation } from './map/map-init.js';
-import { addRasterBaseLayers } from './map/map-layers.js';
+import { addRasterBaseLayers, addZoneFeatureLayers } from './map/map-layers.js';
 import { setupMapHoverEvents } from './map/map-events.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
@@ -4162,107 +4162,7 @@ function rebuildGeoJsonLayer() {
         updateLabelZoomVisibility();
         updateAllFeatureStyles();
     } else {
-        state.map.addSource('zones', {
-            type: 'geojson',
-            data: geojsonData,
-            promoteId: 'feature_id'
-        });
-        const beforeId = state.map.getLayer('place_hamlet') ? 'place_hamlet' : undefined;
-
-        state.map.addLayer({
-            id: 'zones-fill',
-            type: 'fill',
-            source: 'zones',
-            paint: {
-                'fill-color': [
-                    'case',
-                    ['boolean', ['feature-state', 'selected'], false], getThemeAccent(),
-                    '#ffffff'
-                ],
-                'fill-opacity': [
-                    'case',
-                    ['boolean', ['feature-state', 'selected'], false], 0.0,
-                    ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], 0.02,
-                    0.07
-                ],
-                'fill-color-transition': { duration: 0 },
-                'fill-opacity-transition': { duration: 0 }
-            }
-        }, beforeId);
-
-        state.map.addLayer({
-            id: 'zones-outline',
-            type: 'line',
-            source: 'zones',
-            layout: {
-                'line-join': 'round',
-                'line-cap': 'round'
-            },
-            paint: {
-                'line-color': [
-                    'case',
-                    ['boolean', ['feature-state', 'selected'], false], getThemeAccentLight(),
-                    ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], 'rgba(255, 255, 255, 0.25)',
-                    '#ffffff'
-                ],
-                'line-width': [
-                    'case',
-                    ['boolean', ['feature-state', 'selected'], false], 2.2,
-                    1.0
-                ],
-                'line-color-transition': { duration: 0 },
-                'line-width-transition': { duration: 0 },
-                'line-opacity-transition': { duration: 0 }
-            }
-        }, beforeId);
-
-        state.map.addLayer({
-            id: 'zones-outline-highlight',
-            type: 'line',
-            source: 'zones',
-            layout: {
-                'line-join': 'round',
-                'line-cap': 'round'
-            },
-            paint: {
-                'line-color': [
-                    'case',
-                    ['boolean', ['feature-state', 'selected'], false], getThemeAccentLight(),
-                    'transparent'
-                ],
-                'line-width': [
-                    'case',
-                    ['boolean', ['feature-state', 'selected'], false], 3.2,
-                    0.0
-                ],
-                'line-color-transition': { duration: 250 },
-                'line-width-transition': { duration: 250 }
-            }
-        }, beforeId);
-
-        state.map.addLayer({
-            id: 'zones-collision-labels',
-            type: 'symbol',
-            source: 'zones',
-            layout: {
-                'text-field': ['get', 'feature_id'],
-                'text-size': [
-                    'interpolate',
-                    ['linear'],
-                    ['zoom'],
-                    8, 14,
-                    12, 18,
-                    14, 20
-                ],
-                'text-ignore-placement': false,
-                'text-allow-overlap': false,
-                'text-padding': 10
-            },
-            paint: {
-                'text-color': 'rgba(0,0,0,0)',
-                'text-halo-color': 'rgba(0,0,0,0)'
-            }
-        }, beforeId);
+        addZoneFeatureLayers(state.map, geojsonData);
 
         // Register map move/zoom listeners for HTML label repositioning (once)
         if (!state._labelListenersAttached) {

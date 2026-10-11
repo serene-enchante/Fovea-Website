@@ -600,6 +600,77 @@ export function updateLabelZoomVisibility() {
     rebuildHtmlLabels();
 }
 
+export function addZoneFeatureLayers(map, geojsonData) {
+    map.addSource('zones', {
+        type: 'geojson',
+        data: geojsonData,
+        promoteId: 'feature_id'
+    });
+    const beforeId = map.getLayer('place_hamlet') ? 'place_hamlet' : undefined;
+    const addLayer = layer => beforeId ? map.addLayer(layer, beforeId) : map.addLayer(layer);
+
+    addLayer({
+        id: 'zones-fill',
+        type: 'fill',
+        source: 'zones',
+        paint: {
+            'fill-color': ['case', ['boolean', ['feature-state', 'selected'], false], getThemeAccent(), '#ffffff'],
+            'fill-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false], 0.0,
+                ['match', ['get', 'cid'], 'Oakridge', 0.02, 'Cottage Grove', 0.02, 0.07]
+            ],
+            'fill-color-transition': { duration: 0 },
+            'fill-opacity-transition': { duration: 0 }
+        }
+    });
+
+    addLayer({
+        id: 'zones-outline',
+        type: 'line',
+        source: 'zones',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+            'line-color': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false], getThemeAccentLight(),
+                ['match', ['get', 'cid'], 'Oakridge', 'rgba(255, 255, 255, 0.25)', 'Cottage Grove', 'rgba(255, 255, 255, 0.25)', '#ffffff']
+            ],
+            'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 2.2, 1.0],
+            'line-color-transition': { duration: 0 },
+            'line-width-transition': { duration: 0 },
+            'line-opacity-transition': { duration: 0 }
+        }
+    });
+
+    addLayer({
+        id: 'zones-outline-highlight',
+        type: 'line',
+        source: 'zones',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+            'line-color': ['case', ['boolean', ['feature-state', 'selected'], false], getThemeAccentLight(), 'transparent'],
+            'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 3.2, 0.0],
+            'line-color-transition': { duration: 250 },
+            'line-width-transition': { duration: 250 }
+        }
+    });
+
+    addLayer({
+        id: 'zones-collision-labels',
+        type: 'symbol',
+        source: 'zones',
+        layout: {
+            'text-field': ['get', 'feature_id'],
+            'text-size': ['interpolate', ['linear'], ['zoom'], 8, 14, 12, 18, 14, 20],
+            'text-ignore-placement': false,
+            'text-allow-overlap': false,
+            'text-padding': 10
+        },
+        paint: { 'text-color': 'rgba(0,0,0,0)', 'text-halo-color': 'rgba(0,0,0,0)' }
+    });
+}
+
 export function rebuildGeoJsonLayer() {
     if (!state.map) return;
     
