@@ -19,7 +19,7 @@ import {
     switchBaseMap as applyBaseMap,
     toggleLocationTracking as trackUserLocation
 } from './map/map-init.js';
-import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapStyleByIndex } from './map/map-layers.js';
+import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapStyleByIndex, updatePlaceLabelsFilter, updateLabelZoomVisibility } from './map/map-layers.js';
 import { setupMapCanvasEvents, setupMapHoverEvents } from './map/map-events.js';
 import { setupMapViewportEffects } from './map/map-viewport.js';
 import { updateMapControlPositions } from './map/map-control-layout.js';
@@ -69,115 +69,9 @@ const MAP_STYLES = {
 };
 
 
-function toExpression(f) {
-    if (!f) return null;
-    if (!Array.isArray(f)) return f;
-    
-    const op = f[0];
-    if (op === 'all' || op === 'any' || op === 'none') {
-        return [op, ...f.slice(1).map(toExpression)];
-    }
-    
-    // If it's already an expression (e.g. second element is an array), return as is
-    if (Array.isArray(f[1])) {
-        return f;
-    }
-    
-    const key = f[1];
-    if (op === '==' || op === '!=' || op === '>' || op === '>=' || op === '<' || op === '<=') {
-        return [op, ['get', key], f[2]];
-    }
-    if (op === 'has') {
-        return ['has', key];
-    }
-    if (op === '!has') {
-        return ['!', ['has', key]];
-    }
-    if (op === 'in') {
-        return ['in', ['get', key], ['literal', f.slice(2)]];
-    }
-    if (op === '!in') {
-        return ['!', ['in', ['get', key], ['literal', f.slice(2)]]];
-    }
-    
-    return f;
-}
 
-function updatePlaceLabelsFilter() {
-    if (!state.map) return;
 
-    // Lazily cache original place filters if not done already for this style
-    if (!state._originalPlaceFilters) {
-        state._originalPlaceFilters = {};
-        const placeLayersForFilter = [
-            'place_city_r5',
-            'place_city_r6',
-            'place_town',
-            'place_villages',
-            'place_suburbs',
-            'place_hamlet',
-            'place_city_dot_r7',
-            'place_city_dot_r4',
-            'place_city_dot_r2',
-            'place_city_dot_z7',
-            'place_capital_dot_z7'
-        ];
-        
-        let foundAny = false;
-        placeLayersForFilter.forEach(lId => {
-            if (state.map.getLayer(lId)) {
-                state._originalPlaceFilters[lId] = state.map.getFilter(lId) || null;
-                foundAny = true;
-            }
-        });
 
-        if (!foundAny) {
-            // Style layers are not available yet (still loading), return and try again on next draw/update
-            delete state._originalPlaceFilters;
-            return;
-        }
-    }
-
-    const isCirclesView = !!(state.isCirclesFeature || state.currentFeature === 'circles');
-    
-    // Only apply the filter update if the view type changed to save performance
-    if (state._lastHiddenCircleNames === isCirclesView) return;
-    state._lastHiddenCircleNames = isCirclesView;
-
-    const circleNames = ['Eugene', 'Florence', 'Cottage Grove', 'Oakridge'];
-    console.log("Applying duplicate circles filter. Hide circle names:", isCirclesView);
-
-    Object.keys(state._originalPlaceFilters).forEach(lId => {
-        if (state.map.getLayer(lId)) {
-            const origFilter = toExpression(state._originalPlaceFilters[lId]);
-            if (isCirclesView) {
-                // If it's a circle overview, exclude the circle names from showing in the basemap
-                let newFilter;
-                const exclusion = [
-                    'all',
-                    ['match', ['get', 'name'], 'Eugene', false, 'Florence', false, 'Cottage Grove', false, 'Oakridge', false, true],
-                    ['match', ['get', 'name_en'], 'Eugene', false, 'Florence', false, 'Cottage Grove', false, 'Oakridge', false, true]
-                ];
-                
-                if (!origFilter) {
-                    newFilter = exclusion;
-                } else if (origFilter[0] === 'all') {
-                    newFilter = [...origFilter, ...exclusion.slice(1)];
-                } else {
-                    newFilter = ['all', origFilter, ...exclusion.slice(1)];
-                }
-                state.map.setFilter(lId, newFilter);
-            } else {
-                // Restore original filter
-                if (origFilter === null) {
-                    state.map.setFilter(lId, undefined);
-                } else {
-                    state.map.setFilter(lId, origFilter);
-                }
-            }
-        }
-    });
-}
 
 function updateAllFeatureStyles() {
     if (!state.map || !state.map.getSource('zones')) return;
@@ -3277,9 +3171,7 @@ function setupProximityGlowCanvas() {
 }
 
 // HTML label overlay — repositions div labels on every map render
-function updateLabelZoomVisibility() {
-    rebuildHtmlLabels();
-}
+
 
 function rebuildHtmlLabels() {
     if (!state.map || !state.labelData) return;
