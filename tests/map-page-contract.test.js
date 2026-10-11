@@ -23,6 +23,7 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.match(source, /import \{ displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath \} from '\.\/utils\/format-utils\.js';/);
     assert.match(source, /import \{ getThemeAccent, getThemeAccentLight \} from '\.\/utils\/color-utils\.js';/);
     assert.doesNotMatch(source, /function generateZoneGeometrySVG\(/);
+    assert.doesNotMatch(source, /function getDefaultStyle\(/);
 });
 
 test('the map application uses the shared suggested-app configuration', async () => {

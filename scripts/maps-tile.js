@@ -42,10 +42,6 @@ const MAP_STYLES = {
 };
 
 
-function getDefaultStyle() {
-    return MAP_STYLES.default;
-}
-
 function toExpression(f) {
     if (!f) return null;
     if (!Array.isArray(f)) return f;
