@@ -21,6 +21,7 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.match(source, /targetFeatures = await loadFeaturesForMapView\(featureName\);/);
     assert.match(source, /import \{ findPointInsidePolygon, getBbox \} from '\.\/utils\/geometry-math\.js';/);
     assert.match(source, /import \{ displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath \} from '\.\/utils\/format-utils\.js';/);
+    assert.match(source, /import \{ darkenHexColor, getThemeAccent, getThemeAccentLight, hexToRgba \} from '\.\/utils\/color-utils\.js';/);
 });
 
 test('the map application uses the shared suggested-app configuration', async () => {
