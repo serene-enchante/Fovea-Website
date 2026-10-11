@@ -8,7 +8,7 @@ import { launchAppWithStoreFallback } from './services/app-launch-service.js';
 import { resolveAppInstructionConfig } from './services/app-instruction-config.js';
 import { getAppSelectionTitle, getSelectionThumbnail } from './map/app-selection-presentation.js';
 import { getBbox } from './utils/geometry-math.js';
-import { formatArea, formatDate, zoneImagePath } from './utils/format-utils.js';
+import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -600,18 +600,6 @@ const state = {
     currentBaseLayer: "default",
     snapState: "default"
 };
-
-function normalizeZoneId(value) {
-    if (!value) return "";
-    const upper = String(value).toUpperCase().trim();
-    const match = upper.match(/^0*(\d+)([A-Z]?)$/);
-    if (!match) return upper;
-    return `${Number(match[1])}${match[2]}`;
-}
-
-function displayZoneId(zid) {
-    return String(zid || "").toUpperCase().trim();
-}
 
 const EUGENE_ZONE_DESCRIPTIONS = {
     "01": "Comprises northern agricultural plains and foothill margins, featuring open grass fields, hedgerows, and oak savanna that host wintering raptors and sparrows.",
