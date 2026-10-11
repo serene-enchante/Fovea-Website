@@ -27,6 +27,7 @@ import { adjustHeaderFontSize, getFitPadding, updateHeader } from './components/
 import { syncSidebarTabs } from './components/sidebar-tabs.js';
 import { activateSidebarTab, setupSidebarCapsuleEvents } from './components/sidebar-capsule-events.js';
 import { getSuggestSelectionLabel } from './components/feedback-form.js';
+import { setupSidebarScrollListener } from './components/sidebar-list.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
 import { state } from './state.js';
 
@@ -7057,47 +7058,6 @@ async function init() {
         triggerEntrance();
     }
 }
-
-function setupSidebarScrollListener() {
-    const scrollBox = document.getElementById("sidebar-zone-list");
-    const header = document.getElementById("sidebar-header");
-    const sidebar = document.querySelector(".maps-tile-sidebar");
-
-    if (!scrollBox || !header || !sidebar) return;
-
-    // On mobile the sidebar itself is the scroll container (unified layout).
-    // On desktop the scrollBox (zone list) is the scroll container.
-    const isMobile = () => window.innerWidth <= 768;
-    const getScrollTarget = () => isMobile() ? sidebar : scrollBox;
-
-    const bottomNav = document.querySelector(".mobile-bottom-nav");
-
-    const onScroll = (e) => {
-        const target = e.currentTarget;
-        const scrollTop = target.scrollTop;
-        const scrolled = scrollTop > 4;
-
-        header.classList.toggle("is-scrolled", scrolled);
-        sidebar.classList.toggle("is-scrolled", scrolled);
-        // body class lets the resize bar ::after gradient fire (sibling of sidebar)
-        document.body.classList.toggle("sidebar-is-scrolled", scrolled);
-
-        // Hide mobile bottom nav when scrolling down, show only when back at the top
-        if (isMobile() && bottomNav) {
-            if (scrollTop > 12) {
-                bottomNav.classList.add("is-hidden");
-            } else {
-                bottomNav.classList.remove("is-hidden");
-            }
-        }
-    };
-
-    // Attach to both — only one will actually be scrolling at a time
-    sidebar.addEventListener("scroll", onScroll, { passive: true });
-    scrollBox.addEventListener("scroll", onScroll, { passive: true });
-}
-
-
 
 function setupViewToggleMenu() {
     const toggleBtn = document.getElementById("header-view-toggle");

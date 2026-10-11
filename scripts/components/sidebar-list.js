@@ -311,19 +311,19 @@ export function unhighlightTileItem() {
     });
 }
 
-export function setupSidebarScrollListener() {
-    const scrollBox = document.getElementById("sidebar-zone-list");
-    const header = document.getElementById("sidebar-header");
-    const sidebar = document.querySelector(".maps-tile-sidebar");
+export function setupSidebarScrollListener({ documentObject = globalThis.document, windowObject = globalThis.window } = {}) {
+    if (!documentObject || !windowObject) return;
+    const scrollBox = documentObject.getElementById("sidebar-zone-list");
+    const header = documentObject.getElementById("sidebar-header");
+    const sidebar = documentObject.querySelector(".maps-tile-sidebar");
 
     if (!scrollBox || !header || !sidebar) return;
 
     // On mobile the sidebar itself is the scroll container (unified layout).
     // On desktop the scrollBox (zone list) is the scroll container.
-    const isMobile = () => window.innerWidth <= 768;
-    const getScrollTarget = () => isMobile() ? sidebar : scrollBox;
+    const isMobile = () => windowObject.innerWidth <= 768;
 
-    const bottomNav = document.querySelector(".mobile-bottom-nav");
+    const bottomNav = documentObject.querySelector(".mobile-bottom-nav");
 
     const onScroll = (e) => {
         const target = e.currentTarget;
@@ -333,7 +333,7 @@ export function setupSidebarScrollListener() {
         header.classList.toggle("is-scrolled", scrolled);
         sidebar.classList.toggle("is-scrolled", scrolled);
         // body class lets the resize bar ::after gradient fire (sibling of sidebar)
-        document.body.classList.toggle("sidebar-is-scrolled", scrolled);
+        documentObject.body.classList.toggle("sidebar-is-scrolled", scrolled);
 
         // Hide mobile bottom nav when scrolling down, show only when back at the top
         if (isMobile() && bottomNav) {
@@ -349,4 +349,3 @@ export function setupSidebarScrollListener() {
     sidebar.addEventListener("scroll", onScroll, { passive: true });
     scrollBox.addEventListener("scroll", onScroll, { passive: true });
 }
-
