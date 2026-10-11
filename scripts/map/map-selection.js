@@ -182,12 +182,19 @@ function _getHierarchyLevel(id) {
     return 2;
 }
 
-export function selectSubject(id, triggerMapZoom = true, animate = true) {
+export function selectSubject(id, triggerMapZoom = true, animate = true, callbacks = {}) {
+    const renderHeader = callbacks.updateHeader || updateHeader;
+    const renderSidebar = callbacks.renderSidebarList || renderSidebarList;
+    const updateStyles = callbacks.updateAllFeatureStyles || updateAllFeatureStyles;
+    const disposeCache = callbacks.disposeRasterCache || disposeRasterCache;
+    const schedulePreload = callbacks.scheduleSelectionPreload || scheduleSelectionPreload;
+    const clearObservations = callbacks.clearBirdObservations || (() => {});
+
     if (document.body.classList.contains("is-suggest-locked") && id !== state.currentId) {
         return;
     }
 
-    disposeRasterCache();
+    disposeCache();
     window.scrollTo(0, 0);
     if (state.isHelpModeActive && window.innerWidth <= 768) return;
 
@@ -211,31 +218,29 @@ export function selectSubject(id, triggerMapZoom = true, animate = true) {
     const isLevelChanged = oldLevel !== newLevel;
 
     const performSelection = () => {
+        clearObservations();
         state.currentId = id;
         const backBtn = document.getElementById("btn-capsule-back");
 
         if (state.isCirclesFeature) {
-            updateHeader("Coast to Cascades Bird Alliance");
-            if (backBtn) backBtn.classList.remove("is-visible");
-            rebuildGeoJsonLayer();
-            renderSidebarList();
+            renderHeader("Coast to Cascades Bird Alliance");
+            if (backBtn) {
+                backBtn.disabled = true;
+                backBtn.classList.add("is-disabled");
+                backBtn.removeAttribute("title");
+                backBtn.removeAttribute("aria-label");
+            }
+            renderSidebar();
             updateUrl(id);
             if (triggerMapZoom && state.map) {
-                const zoomFn = () => {
-                    state.map.fitBounds(getBbox(state.allFeatures), {
-                        padding: getFitPadding(),
-                        animate: animate,
-                        speed: 0.8,
-                        curve: 1.4
-                    });
-                };
-                if (state.map.isStyleLoaded()) {
-                    zoomFn();
-                } else {
-                    state.map.once('load', zoomFn);
-                }
+                state.map.fitBounds(getBbox(state.allFeatures), {
+                    padding: getFitPadding(),
+                    animate,
+                    speed: 0.8,
+                    curve: 1.4
+                });
             }
-            updateAllFeatureStyles();
+            updateStyles();
             return;
         }
 
@@ -250,24 +255,26 @@ export function selectSubject(id, triggerMapZoom = true, animate = true) {
 
         if (isCircle || !targetFeature) {
             const titleName = state.currentFeature === "florence" ? "Florence Christmas Bird Count Circle" : "Eugene Christmas Bird Count Circle";
-            updateHeader(titleName);
+            renderHeader(titleName);
             if (backBtn) {
-                backBtn.classList.add("is-visible");
+                backBtn.disabled = false;
+                backBtn.classList.remove("is-disabled");
                 backBtn.setAttribute("aria-label", "Back to all circles");
                 backBtn.setAttribute("title", "Back to all circles");
             }
         } else {
             const zid = displayZoneId(targetFeature.properties.zid);
-            updateHeader(`Zone ${zid}`);
+            renderHeader(`Zone ${zid}`);
             if (backBtn) {
-                backBtn.classList.add("is-visible");
+                backBtn.disabled = false;
+                backBtn.classList.remove("is-disabled");
                 backBtn.setAttribute("aria-label", "Back to full circle");
                 backBtn.setAttribute("title", "Back to full circle");
             }
         }
 
-        renderSidebarList();
-        updateAllFeatureStyles();
+        renderSidebar();
+        updateStyles();
 
         if (triggerMapZoom && state.map) {
             if (isCircle || !targetFeature) {
@@ -289,11 +296,12 @@ export function selectSubject(id, triggerMapZoom = true, animate = true) {
         }
 
         updateUrl(id);
+        if (typeof state.refreshLayersModal === "function") state.refreshLayersModal();
         const isDownloadOpen = document.getElementById("downloads-modal")?.getAttribute("aria-hidden") === "false";
         if (isDownloadOpen) {
-            scheduleSelectionPreload();
+            schedulePreload();
         } else {
-            disposeRasterCache();
+            disposeCache();
         }
     };
 
