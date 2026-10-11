@@ -13,7 +13,7 @@ import { findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry } from './uti
 import { getLayoutScaleBar } from './utils/map-print-math.js';
 import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
 import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
-import { updateUserLocationOnMap as renderUserLocation } from './map/map-init.js';
+import { createMapInstance, updateUserLocationOnMap as renderUserLocation } from './map/map-init.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -4487,7 +4487,7 @@ function initializeMap() {
         ? "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
         : "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
-    state.map = new maplibregl.Map({
+    state.map = createMapInstance(maplibregl, {
         container: 'tile-map',
         preserveDrawingBuffer: true,
         maxZoom: 20,

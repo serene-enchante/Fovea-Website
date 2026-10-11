@@ -5,6 +5,13 @@ import { state } from '../state.js';
 import { MAP_STYLES } from '../config/map-styles.js';
 import { updateAllFeatureStyles } from './map-layers.js';
 
+export function createMapInstance(mapLibre, options) {
+    if (typeof mapLibre?.Map !== 'function') {
+        throw new Error('MapLibre is unavailable');
+    }
+    return new mapLibre.Map(options);
+}
+
 export function switchBaseMap(baseMapId) {
     if (!state.map || !state.baseMapsList) return;
     const targetMap = state.baseMapsList.find(b => b.id === baseMapId);
