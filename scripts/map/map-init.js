@@ -2,7 +2,6 @@ import { isPointInGeoJSONGeometry } from '../utils/geometry-math.js';
 import { displayZoneId } from '../utils/format-utils.js';
 import { showToast } from '../components/toast-view.js';
 import { state } from '../state.js';
-import { MAP_STYLES } from '../config/map-styles.js';
 import { updateAllFeatureStyles } from './map-layers.js';
 
 export function createMapInstance(mapLibre, options) {
