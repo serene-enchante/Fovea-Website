@@ -13,8 +13,12 @@ import { findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry } from './uti
 import { getLayoutScaleBar } from './utils/map-print-math.js';
 import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
 import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
-import { createMapInstance, updateUserLocationOnMap as renderUserLocation } from './map/map-init.js';
-import { switchBaseMap as applyBaseMap } from './map/map-init.js';
+import {
+    checkUserLocationZone as updateLocationZone,
+    createMapInstance,
+    switchBaseMap as applyBaseMap,
+    toggleLocationTracking as trackUserLocation
+} from './map/map-init.js';
 import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData } from './map/map-layers.js';
 import { setupMapHoverEvents } from './map/map-events.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
@@ -3812,99 +3816,10 @@ function rebuildGeoJsonLayer() {
     }
 
     if (state.isLocating && state.userLocationMarker) {
-        checkUserLocationZone(state.userLocationMarker.getLngLat());
+        updateLocationZone(state.userLocationMarker.getLngLat());
     }
 
     updateAllFeatureStyles();
-}
-
-function checkUserLocationZone(latlng) {
-    const badge = document.getElementById("user-location-badge");
-    if (!badge) return;
-
-    if (!state.isLocating || !latlng) {
-        badge.classList.remove("is-visible");
-        badge.innerHTML = "";
-        return;
-    }
-
-    const lng = latlng.lng;
-    const lat = latlng.lat;
-
-    let foundFeature = null;
-    for (let f of state.allFeatures) {
-        if (isPointInGeoJSONGeometry(lng, lat, f.geometry)) {
-            foundFeature = f;
-            break;
-        }
-    }
-
-    if (foundFeature) {
-        const props = foundFeature.properties || {};
-        let zoneName = "";
-        if (state.isCirclesFeature) {
-            zoneName = props.cid || "Circle";
-        } else {
-            const zid = displayZoneId(props.zid);
-            zoneName = `Zone ${zid}`;
-        }
-        badge.innerHTML = `<span class="map-location-badge__dot"></span><span>You are in ${zoneName}</span>`;
-        badge.classList.add("is-visible");
-    } else {
-        badge.classList.remove("is-visible");
-        badge.innerHTML = "";
-    }
-}
-
-
-function toggleLocationTracking() {
-    if (!state.map) return;
-    const locateControlEl = document.querySelector(".map-ctrl-locate");
-
-    if (state.isLocating) {
-        state.isLocating = false;
-        if (watchId !== null) {
-            navigator.geolocation.clearWatch(watchId);
-            watchId = null;
-        }
-        if (state.userLocationMarker) {
-            state.userLocationMarker.remove();
-            state.userLocationMarker = null;
-        }
-        if (state.map.getSource('user-accuracy-source')) {
-            if (state.map.getLayer('user-accuracy-layer')) state.map.removeLayer('user-accuracy-layer');
-            state.map.removeSource('user-accuracy-source');
-        }
-        if (locateControlEl) locateControlEl.classList.remove("is-active");
-        checkUserLocationZone(null);
-    } else {
-        state.isLocating = true;
-        if (locateControlEl) locateControlEl.classList.add("is-active");
-        
-        if (!navigator.geolocation) {
-            showToast("Geolocation is not supported by your browser");
-            state.isLocating = false;
-            if (locateControlEl) locateControlEl.classList.remove("is-active");
-            return;
-        }
-
-        watchId = navigator.geolocation.watchPosition(
-            (position) => {
-                const lng = position.coords.longitude;
-                const lat = position.coords.latitude;
-                const accuracy = position.coords.accuracy;
-                renderUserLocation(lng, lat, accuracy, state, checkUserLocationZone);
-            },
-            (error) => {
-                console.error("Location error:", error);
-                state.isLocating = false;
-                if (locateControlEl) locateControlEl.classList.remove("is-active");
-                checkUserLocationZone(null);
-                showToast("Unable to access device location");
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-    }
 }
 
 function initializeMap() {
@@ -4045,7 +3960,7 @@ function initializeMap() {
     locateBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleLocationTracking();
+        trackUserLocation(state);
     });
     locateDiv.appendChild(locateBtn);
     topLeft.appendChild(locateDiv);

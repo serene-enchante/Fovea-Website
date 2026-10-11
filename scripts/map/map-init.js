@@ -76,6 +76,7 @@ export function switchBaseMap(baseMapId, { state: mapState = state, updateStyles
 }
 
 let watchId = null;
+let activeGeolocation = null;
 
 function createAccuracyCircle(lng, lat, radiusMeters, pointCount = 64) {
     const coordinates = [];
@@ -162,11 +163,11 @@ export function updateUserLocationOnMap(lng, lat, accuracy, mapState = state, on
     onLocationUpdated(mapState.userLocationMarker.getLngLat());
 }
 
-export function checkUserLocationZone(latlng) {
+export function checkUserLocationZone(latlng, mapState = state) {
     const badge = document.getElementById("user-location-badge");
     if (!badge) return;
 
-    if (!state.isLocating || !latlng) {
+    if (!mapState.isLocating || !latlng) {
         badge.classList.remove("is-visible");
         badge.innerHTML = "";
         return;
@@ -176,7 +177,7 @@ export function checkUserLocationZone(latlng) {
     const lat = latlng.lat;
 
     let foundFeature = null;
-    for (let f of state.allFeatures) {
+    for (let f of mapState.allFeatures) {
         if (isPointInGeoJSONGeometry(lng, lat, f.geometry)) {
             foundFeature = f;
             break;
@@ -186,7 +187,7 @@ export function checkUserLocationZone(latlng) {
     if (foundFeature) {
         const props = foundFeature.properties || {};
         let zoneName = "";
-        if (state.isCirclesFeature) {
+        if (mapState.isCirclesFeature) {
             zoneName = props.cid || "Circle";
         } else {
             const zid = displayZoneId(props.zid);
@@ -200,92 +201,60 @@ export function checkUserLocationZone(latlng) {
     }
 }
 
-export function toggleLocationTracking() {
-    if (!state.map) return;
+export function toggleLocationTracking(mapState = state, {
+    geolocation = globalThis.navigator?.geolocation,
+    notify = showToast,
+    checkLocation = latlng => checkUserLocationZone(latlng, mapState)
+} = {}) {
+    if (!mapState.map) return;
     const locateControlEl = document.querySelector(".map-ctrl-locate");
 
-    if (state.isLocating) {
-        state.isLocating = false;
+    if (mapState.isLocating) {
+        mapState.isLocating = false;
         if (watchId !== null) {
-            navigator.geolocation.clearWatch(watchId);
+            activeGeolocation?.clearWatch(watchId);
             watchId = null;
+            activeGeolocation = null;
         }
-        if (state.userLocationMarker) {
-            state.userLocationMarker.remove();
-            state.userLocationMarker = null;
+        if (mapState.userLocationMarker) {
+            mapState.userLocationMarker.remove();
+            mapState.userLocationMarker = null;
         }
-        if (state.map.getSource('user-accuracy-source')) {
-            if (state.map.getLayer('user-accuracy-layer')) state.map.removeLayer('user-accuracy-layer');
-            state.map.removeSource('user-accuracy-source');
+        if (mapState.map.getSource('user-accuracy-source')) {
+            if (mapState.map.getLayer('user-accuracy-layer')) mapState.map.removeLayer('user-accuracy-layer');
+            mapState.map.removeSource('user-accuracy-source');
         }
         if (locateControlEl) locateControlEl.classList.remove("is-active");
-        checkUserLocationZone(null);
+        checkLocation(null);
     } else {
-        state.isLocating = true;
+        mapState.isLocating = true;
         if (locateControlEl) locateControlEl.classList.add("is-active");
         
-        if (!navigator.geolocation) {
-            showToast("Geolocation is not supported by your browser");
-            state.isLocating = false;
+        if (!geolocation) {
+            notify("Geolocation is not supported by your browser");
+            mapState.isLocating = false;
             if (locateControlEl) locateControlEl.classList.remove("is-active");
             return;
         }
 
-        watchId = navigator.geolocation.watchPosition(
+        activeGeolocation = geolocation;
+        watchId = geolocation.watchPosition(
             (position) => {
                 const lng = position.coords.longitude;
                 const lat = position.coords.latitude;
                 const accuracy = position.coords.accuracy;
-                updateUserLocationOnMap(lng, lat, accuracy);
+                updateUserLocationOnMap(lng, lat, accuracy, mapState, checkLocation);
             },
             (error) => {
                 console.error("Location error:", error);
-                state.isLocating = false;
+                mapState.isLocating = false;
+                watchId = null;
+                activeGeolocation = null;
                 if (locateControlEl) locateControlEl.classList.remove("is-active");
-                checkUserLocationZone(null);
-                showToast("Unable to access device location");
+                checkLocation(null);
+                notify("Unable to access device location");
             },
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     }
-}
-
-export function preloadGlobalLowResTiles() {
-    const tileUrls = [];
-    
-    // 1. Dark tiles (balanced across a, b, c, d subdomains)
-    const darkSubdomains = ['a', 'b', 'c', 'd'];
-    for (let z = 0; z <= 2; z++) {
-        const limit = Math.pow(2, z);
-        for (let x = 0; x < limit; x++) {
-            for (let y = 0; y < limit; y++) {
-                const subdomain = darkSubdomains[(x + y) % 4];
-                tileUrls.push(`https://${subdomain}.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png`);
-            }
-        }
-    }
-    
-    // 2. Satellite, Street, Topo tiles
-    const templates = [
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
-    ];
-    
-    templates.forEach(template => {
-        for (let z = 0; z <= 2; z++) {
-            const limit = Math.pow(2, z);
-            for (let x = 0; x < limit; x++) {
-                for (let y = 0; y < limit; y++) {
-                    tileUrls.push(template.replace("{z}", z).replace("{y}", y).replace("{x}", x));
-                }
-            }
-        }
-    });
-
-    // Load all in parallel via browser cache preloading
-    tileUrls.forEach(url => {
-        const img = new Image();
-        img.src = url;
-    });
 }
