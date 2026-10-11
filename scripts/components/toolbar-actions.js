@@ -20,6 +20,50 @@ export function getActiveDownloadFilename(ext) {
     }, ext);
 }
 
+export function setupSpatialDownloadButtons({ shareFile = handleSpatialFileShare, notify = showToast } = {}) {
+    const geojsonBtn = document.getElementById("download-geojson");
+    if (geojsonBtn) {
+        geojsonBtn.addEventListener("click", async (event) => {
+            const geojson = getSelectedGeoJSONData();
+            const filename = getActiveDownloadFilename("geojson");
+            const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
+            await shareFile(event, blob, filename, geojsonBtn);
+            notify(`Exported ${filename}`);
+        });
+    }
+
+    const kmzBtn = document.getElementById("download-kmz");
+    if (kmzBtn) {
+        kmzBtn.addEventListener("click", async (event) => {
+            const geojson = getSelectedGeoJSONData();
+            const filename = getActiveDownloadFilename("kmz");
+            const kmlStr = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
+            let blob;
+            if (typeof JSZip !== "undefined") {
+                const zip = new JSZip();
+                zip.file("doc.kml", kmlStr);
+                blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
+            } else {
+                blob = new Blob([kmlStr], { type: "application/vnd.google-earth.kml+xml" });
+            }
+            await shareFile(event, blob, filename, kmzBtn);
+            notify(`Exported ${filename}`);
+        });
+    }
+
+    const gpxBtn = document.getElementById("download-gpx");
+    if (gpxBtn) {
+        gpxBtn.addEventListener("click", async (event) => {
+            const geojson = getSelectedGeoJSONData();
+            const filename = getActiveDownloadFilename("gpx");
+            const gpxStr = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
+            const blob = new Blob([gpxStr], { type: "application/gpx+xml" });
+            await shareFile(event, blob, filename, gpxBtn);
+            notify(`Exported ${filename}`);
+        });
+    }
+}
+
 export async function generateAppSpatialBlob(formatKey) {
   const geojson = getSelectedGeoJSONData();
   const filename = getActiveDownloadFilename(formatKey === "geopdf" ? "pdf" : formatKey);
@@ -870,47 +914,7 @@ export function setupActionButtons() {
             });
         });
 
-        const geojsonBtn = document.getElementById("download-geojson");
-        if (geojsonBtn) {
-            geojsonBtn.addEventListener("click", async (e) => {
-                const geojson = getSelectedGeoJSONData();
-                const filename = getActiveDownloadFilename("geojson");
-                const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
-                await handleSpatialFileShare(e, blob, filename, geojsonBtn);
-                showToast(`Exported ${filename}`);
-            });
-        }
-
-        const kmzBtn = document.getElementById("download-kmz");
-        if (kmzBtn) {
-            kmzBtn.addEventListener("click", async (e) => {
-                const geojson = getSelectedGeoJSONData();
-                const filename = getActiveDownloadFilename("kmz");
-                const kmlStr = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
-                let blob;
-                if (typeof JSZip !== "undefined") {
-                    const zip = new JSZip();
-                    zip.file("doc.kml", kmlStr);
-                    blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
-                } else {
-                    blob = new Blob([kmlStr], { type: "application/vnd.google-earth.kml+xml" });
-                }
-                await handleSpatialFileShare(e, blob, filename, kmzBtn);
-                showToast(`Exported ${filename}`);
-            });
-        }
-
-        const gpxBtn = document.getElementById("download-gpx");
-        if (gpxBtn) {
-            gpxBtn.addEventListener("click", async (e) => {
-                const geojson = getSelectedGeoJSONData();
-                const filename = getActiveDownloadFilename("gpx");
-                const gpxStr = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
-                const blob = new Blob([gpxStr], { type: "application/gpx+xml" });
-                await handleSpatialFileShare(e, blob, filename, gpxBtn);
-                showToast(`Exported ${filename}`);
-            });
-        }
+        setupSpatialDownloadButtons();
 
         const geopdfBtn = document.getElementById("download-geopdf");
         if (geopdfBtn) {
