@@ -20,3 +20,11 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.match(source, /state\.allFeatures = await loadFeaturesForMapView\(initialFeature\);/);
     assert.match(source, /targetFeatures = await loadFeaturesForMapView\(featureName\);/);
 });
+
+test('the map application uses the shared suggested-app configuration', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+
+    assert.match(source, /import \{ APP_INSTRUCTION_CONFIGS, CIRCLE_ID \} from '\.\/config\/app-config\.js';/);
+    assert.doesNotMatch(source, /const APP_FORMAT_PREFERENCES =/);
+    assert.doesNotMatch(source, /const APP_INSTRUCTION_CONFIGS =/);
+});
