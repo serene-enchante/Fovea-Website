@@ -1,7 +1,7 @@
 import { state } from '../state.js';
 import { canvasToTiffBlob } from '../services/format-converters.js';
 import { handleSpatialFileShare } from '../services/file-download-service.js';
-import { FALLBACK_IMAGE, displayZoneId } from '../utils/format-utils.js';
+import { FALLBACK_IMAGE, displayZoneId, normalizeZoneId } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { showToast } from '../components/toast-view.js';
 import { updateControlPositions } from '../components/mobile-view.js';
@@ -24,25 +24,6 @@ const OFFSCREEN_MAP_HEIGHT = 2500;
 const LAYOUT_WIDTH = 4000;
 const LAYOUT_HEIGHT = 3000;
 
-/**
- * Compute bounding box from GeoJSON features.
- * Returns [[minLng, minLat], [maxLng, maxLat]].
- */
-/**
- * Normalize a zone ID for comparison (strips leading zeroes).
- */
-function normalizeZoneIdLocal(value) {
-    if (!value) return "";
-    const upper = String(value).toUpperCase().trim();
-    const match = upper.match(/^0*(\d+)([A-Z]?)$/);
-    if (!match) return upper;
-    return `${Number(match[1])}${match[2]}`;
-}
-
-/**
- * Calculate a scale bar from geographic bounds and layout pixel width.
- * Pure math — no dependency on any map instance.
- */
 /**
  * Fast & exact Pole of Inaccessibility (Polylabel) algorithm.
  * Finds the most distant internal point from the polygon outline (maximum clearance from all borders).
@@ -404,7 +385,7 @@ export async function renderMapLayoutCanvas({
     if (!isCircle) {
         targetFeature = allFeatures.find(f => {
             const zid = f.properties?.zid;
-            return zid && (zid.toLowerCase() === featureId.toLowerCase() || normalizeZoneIdLocal(zid) === normalizeZoneIdLocal(featureId));
+            return zid && (zid.toLowerCase() === featureId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(featureId));
         });
     }
 
