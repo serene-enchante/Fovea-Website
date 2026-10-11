@@ -254,6 +254,10 @@ export function setupSwipeNavigation() {
     });
 }
 
+export function canSwipeBack(button) {
+    return Boolean(button && !button.disabled && !button.classList.contains("is-disabled"));
+}
+
 export function setupListSwipeBack() {
     const listContainer = document.getElementById("sidebar-zone-list");
     if (!listContainer) return;
@@ -268,7 +272,7 @@ export function setupListSwipeBack() {
         if (window.innerWidth > 768) return;
         
         const backBtn = document.getElementById("btn-capsule-back");
-        if (!backBtn || !backBtn.classList.contains("is-visible")) {
+        if (!canSwipeBack(backBtn)) {
             isTracking = false;
             return;
         }
@@ -297,7 +301,7 @@ export function setupListSwipeBack() {
 
         if (!isTracking) {
             const backBtn = document.getElementById("btn-capsule-back");
-            const canGoBack = backBtn && backBtn.classList.contains("is-visible");
+            const canGoBack = canSwipeBack(backBtn);
             
             if (canGoBack && diffX > 10 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
                 isTracking = true;
@@ -572,4 +576,3 @@ export function setupMobileResizeBar() {
         setMobileSnapState("default", false);
     }
 }
-
