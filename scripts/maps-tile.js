@@ -36,7 +36,7 @@ import { openImageLightbox, setupImageLightbox } from './components/image-lightb
 import { setupHelpModeSystem } from './components/map-modals.js';
 import { setupMobileBottomNav } from './components/bottom-nav-view.js';
 import { showToast } from './components/toast-view.js';
-import { setupViewToggleMenu, updateAllAppsModalHeaderTitle, updateShareModalDescription, toggleFullscreen, getActiveDownloadFilename, setupDownloadAppSearch } from './components/toolbar-actions.js';
+import { setupViewToggleMenu, updateAllAppsModalHeaderTitle, updateShareModalDescription, toggleFullscreen, getActiveDownloadFilename, generateAppSpatialBlob, setupDownloadAppSearch } from './components/toolbar-actions.js';
 import { closeAvenzaModal, closeAllAppsModal, closeAllModals as closeModalsView } from './components/modal-view.js';
 import { handleAppDirectOpen } from './components/avenza-modal-view.js';
 import { setMobileSnapState, setupListSwipeBack, setupMobileResizeBar, setupSwipeNavigation, updateControlPositions } from './components/mobile-view.js';
@@ -226,63 +226,6 @@ function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton = nul
     (message, isError) => showToast(message, isError),
     { compatibilityProfile: 'legacy-map' }
   );
-}
-
-/**
- * Generates/retrieves the active spatial dataset as a Blob for a given format key.
- */
-async function generateAppSpatialBlob(formatKey) {
-  const geojson = getSelectedGeoJSONData();
-  const filename = getActiveDownloadFilename(formatKey === "geopdf" ? "pdf" : formatKey);
-
-  if (formatKey === "geopdf") {
-    const canvas = await getOrRenderLayoutCanvas();
-    if (window.jspdf && window.jspdf.jsPDF) {
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4"
-      });
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
-      pdf.setProperties({
-        title: filename.replace(/\.pdf$/, ""),
-        subject: "GeoPDF Map Layout Export - Esri Topo Basemap",
-        creator: "Fovea Web Map Layout Engine"
-      });
-      return { blob: pdf.output("blob"), filename };
-    } else {
-      return new Promise((resolve) => {
-        canvas.toBlob((blob) => {
-          resolve({ blob, filename: filename.replace(/\.pdf$/, "-layout.png") });
-        }, "image/png");
-      });
-    }
-  } else if (formatKey === "geotiff" || formatKey === "tif") {
-    const canvas = await getOrRenderLayoutCanvas();
-    const tiffBlob = canvasToTiffBlob(canvas);
-    return { blob: tiffBlob, filename: getActiveDownloadFilename("tif") };
-  } else if (formatKey === "gpx") {
-    const gpxStr = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
-    const blob = new Blob([gpxStr], { type: "application/gpx+xml" });
-    return { blob, filename: filename.endsWith(".gpx") ? filename : `${filename}.gpx` };
-  } else if (formatKey === "kmz") {
-    const kmlStr = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
-    if (typeof JSZip !== "undefined") {
-      const zip = new JSZip();
-      zip.file("doc.kml", kmlStr);
-      const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
-      return { blob, filename };
-    } else {
-      const blob = new Blob([kmlStr], { type: "application/vnd.google-earth.kml+xml" });
-      return { blob, filename: filename.replace(/\.kmz$/i, ".kml") };
-    }
-  } else {
-    // Default GeoJSON
-    const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
-    return { blob, filename };
-  }
 }
 
 /**
