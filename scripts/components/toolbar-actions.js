@@ -10,6 +10,7 @@ import { renderSidebarList } from './sidebar-list.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { handleSpatialFileShare } from '../services/file-download-service.js';
 import { getDownloadFilename } from '../services/download-file-names.js';
+import { setupAllAppsLiveSearch } from '../map/map-search.js';
 
 export function getActiveDownloadFilename(ext) {
     return getDownloadFilename({
