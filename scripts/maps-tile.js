@@ -6,7 +6,7 @@ import { handleSpatialFileShare as shareSpatialFile } from './services/file-down
 import { launchAppWithStoreFallback } from './services/app-launch-service.js';
 import { canvasToTiffBlob, geojsonToGpx, geojsonToKml } from './services/format-converters.js';
 import { findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry } from './utils/geometry-math.js';
-import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath, getZoneDescription } from './utils/format-utils.js';
+import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
 import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
 import {
     checkUserLocationZone as updateLocationZone,
@@ -1226,16 +1226,13 @@ function renderOverviewTab(listContainer, isCirclesFeature, isCircle, targetFeat
         // --- 3. SPECIFIC ZONE OVERVIEW (Zone 04, etc.) ---
         const props = targetFeature.properties || {};
         const zid = displayZoneId(props.zid);
-        const isFlorence = state.currentFeature === "florence";
         imgSrc = zoneImagePath(props.zid);
         imgAlt = `Zone ${zid} Image`;
-        descText = getZoneDescription(targetFeature, isFlorence);
     }
 
     overviewEl.innerHTML = `
         <div class="sidebar-about-content">
-            <!-- Description at Top -->
-            <p class="sidebar-about-text">${descText}</p>
+            ${descText ? `<p class="sidebar-about-text">${descText}</p>` : ""}
 
             <!-- Image Right Below Description -->
             ${imgSrc ? `

@@ -1,6 +1,6 @@
 import { getBbox } from '../utils/geometry-math.js';
 import { state } from '../state.js';
-import { displayZoneId, zoneImagePath, normalizeZoneId, getZoneDescription, FALLBACK_IMAGE } from '../utils/format-utils.js';
+import { displayZoneId, zoneImagePath, normalizeZoneId, FALLBACK_IMAGE } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { switchToFeature, selectSubject } from '../map/map-selection.js';
 import { openImageLightbox } from './image-lightbox.js';
@@ -144,7 +144,6 @@ export function renderSidebarList() {
         } else {
             const props = targetFeature.properties || {};
             const zid = displayZoneId(props.zid);
-            descText = props.description || getZoneDescription(targetFeature, state.currentFeature === "florence") || "Zone description not available.";
             imgSrc = zoneImagePath(props.zid);
             imgAlt = `Zone ${zid} Image`;
         }
@@ -156,7 +155,7 @@ export function renderSidebarList() {
                         <img src="${imgSrc}" alt="${imgAlt}" loading="lazy" />
                     </div>
                 ` : ""}
-                <p class="sidebar-about-text">${descText}</p>
+                ${descText ? `<p class="sidebar-about-text">${descText}</p>` : ""}
             </div>
         `;
 
