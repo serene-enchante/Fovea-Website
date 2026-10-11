@@ -8,6 +8,7 @@ import { updateControlPositions } from '../components/mobile-view.js';
 import { adjustHeaderFontSize } from '../components/header-view.js';
 import { getLayoutScaleBar } from '../utils/map-print-math.js';
 import { getBbox } from '../utils/geometry-math.js';
+import { loadQrCodeImage } from '../services/qr-image-service.js';
 
 // ──────────────────────────────────────────────────────────────
 // Headless offscreen MapLibre renderer for PDF / TIFF export
@@ -42,20 +43,6 @@ function normalizeZoneIdLocal(value) {
  * Calculate a scale bar from geographic bounds and layout pixel width.
  * Pure math — no dependency on any map instance.
  */
-/**
- * Load a QR code image from the qrserver.com API (fallback if QRCode lib not available).
- */
-function loadQrCodeImage(url) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&format=png&data=${encodeURIComponent(url)}`;
-        setTimeout(() => resolve(null), 3000);
-    });
-}
-
 /**
  * Fast & exact Pole of Inaccessibility (Polylabel) algorithm.
  * Finds the most distant internal point from the polygon outline (maximum clearance from all borders).

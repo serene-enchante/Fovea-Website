@@ -7,6 +7,7 @@ import { handleSpatialFileShare as shareSpatialFile } from './services/file-down
 import { launchAppWithStoreFallback } from './services/app-launch-service.js';
 import { resolveAppInstructionConfig } from './services/app-instruction-config.js';
 import { canvasToTiffBlob, geojsonToGpx, geojsonToKml } from './services/format-converters.js';
+import { loadQrCodeImage } from './services/qr-image-service.js';
 import { getAppSelectionTitle, getSelectionThumbnail } from './map/app-selection-presentation.js';
 import { findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry } from './utils/geometry-math.js';
 import { getLayoutScaleBar } from './utils/map-print-math.js';
@@ -702,20 +703,6 @@ const OFFSCREEN_MAP_WIDTH = 3800;
 const OFFSCREEN_MAP_HEIGHT = 2500;
 const LAYOUT_WIDTH = 4000;
 const LAYOUT_HEIGHT = 3000;
-
-/**
- * Compute bounding box from GeoJSON features (self-contained, no imports).
- */
-function loadQrCodeImage(dataUrl) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&format=png&data=${encodeURIComponent(dataUrl)}`;
-        setTimeout(() => resolve(null), 3000);
-    });
-}
 
 /**
  * Fast & exact Pole of Inaccessibility (Polylabel) algorithm.
