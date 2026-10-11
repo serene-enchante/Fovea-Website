@@ -7,6 +7,7 @@ import { handleSpatialFileShare as shareSpatialFile } from './services/file-down
 import { launchAppWithStoreFallback } from './services/app-launch-service.js';
 import { resolveAppInstructionConfig } from './services/app-instruction-config.js';
 import { getAppSelectionTitle, getSelectionThumbnail } from './map/app-selection-presentation.js';
+import { getBbox } from './utils/geometry-math.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -89,33 +90,6 @@ const MAP_STYLES = {
     }
 };
 
-
-function getBbox(features) {
-    let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
-    const processCoord = (coord) => {
-        if (coord[0] < minLng) minLng = coord[0];
-        if (coord[1] < minLat) minLat = coord[1];
-        if (coord[0] > maxLng) maxLng = coord[0];
-        if (coord[1] > maxLat) maxLat = coord[1];
-    };
-    const processGeom = (geom) => {
-        if (!geom) return;
-        if (geom.type === "Polygon") {
-            geom.coordinates[0].forEach(processCoord);
-        } else if (geom.type === "MultiPolygon") {
-            geom.coordinates.forEach(poly => poly[0].forEach(processCoord));
-        } else if (geom.type === "Point") {
-            processCoord(geom.coordinates);
-        }
-    };
-    if (Array.isArray(features)) {
-        features.forEach(f => processGeom(f.geometry));
-    } else {
-        processGeom(features.geometry);
-    }
-    if (minLng === Infinity) return [[-123.3, 43.9], [-122.9, 44.2]];
-    return [[minLng, minLat], [maxLng, maxLat]];
-}
 
 function findPointInsidePolygon(geom) {
     if (!geom) return null;
