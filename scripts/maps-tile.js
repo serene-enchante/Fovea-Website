@@ -1,5 +1,6 @@
 import { CIRCLE_ID } from './config/app-config.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
+import { getEbirdUrl } from './services/ebird-links.js';
 import { getInitialIdFromUrl, getSelectedGeoJSONData } from './services/bird-data-service.js';
 import { handleSpatialFileShare as shareSpatialFile } from './services/file-download-service.js';
 import { launchAppWithStoreFallback } from './services/app-launch-service.js';
@@ -451,112 +452,6 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
         scheduleSelectionPreload: scheduleDownloadViewPreload,
         clearBirdObservations
     });
-}
-
-const EBIRD_SPECIES_CODES = {
-    "Black Oystercatcher": "blkoys",
-    "American Dipper": "amedip",
-    "Peregrine Falcon": "perfal",
-    "Northern Pygmy-Owl": "nopowl",
-    "Surfbird": "surfbi",
-    "Black Turnstone": "blkturn",
-    "Alcids (Murres, Guillemots, Murrelets)": "comorc",
-    "Alcids (Murres, Guillemots, Auklets)": "comorc",
-    "Canada Jay": "gryjay",
-    "Hutton's Vireo": "hutvir",
-    "Townsend's Warbler": "towwar",
-    "Swamp Sparrow": "swaspa",
-    "Lincoln's Sparrow": "linspa",
-    "Greater / Lesser Scaup": "scaup1",
-    "Greater & Lesser Scaup": "scaup1",
-    "Greater Scaup": "gresca",
-    "Lesser Scaup": "lessca",
-    "Snowy Plover": "snoplo5",
-    "Lapland Longspur": "laplon",
-    "Snow Bunting": "snobun",
-    "Virginia Rail": "virrai",
-    "Sora": "sora",
-    "Virginia Rail & Sora": "virrai",
-    "Mountain Quail": "mouqua",
-    "Ruffed Grouse": "rufgro",
-    "Northern Shrike": "norshr4",
-    "Red-shouldered Hawk": "reshaw",
-    "Merlin": "merlin",
-    "American Pipit": "amepip",
-    "Western Bluebird": "wesblu",
-    "Townsend's Solitaire": "towsol",
-    "Evening Grosbeak": "evegro",
-    "Red Crossbill": "redcro",
-    "Brown Creeper": "brocre",
-    "Marsh Wren": "marwre",
-    "Geese": "cangoo",
-    "Canvasback": "canvas",
-    "Redhead": "redhea",
-    "Ruddy Duck": "rudduc",
-    "Eurasian Wigeon": "eurwig",
-    "Greater Yellowlegs": "greyel",
-    "Long-billed Dowitcher": "lobdow",
-    "American Kestrel": "amekes",
-    "Black Scoter": "blksco2",
-    "Surf Scoter": "sursco",
-    "White-winged Scoter": "whwsco2",
-    "Harlequin Duck": "harduc",
-    "Long-tailed Duck": "lotduc",
-    "Sanderling": "sander",
-    "Red Phalarope": "redpha1",
-    "Black-legged Kittiwake": "bklkit",
-    "Northern Fulmar": "norful",
-    "Bonaparte's Gull": "bongul",
-    "Shearwaters": "shtshe",
-    "Horned Grebe": "horgre",
-    "Red-breasted Merganser": "rebmer",
-    "Herring Gull": "hergul",
-    "Iceland (Thayer's) Gull": "thagul",
-    "California Gull": "calgul",
-    "Mourning Dove": "moudov",
-    "Eurasian Collared-Dove": "eucdov",
-    "Palm Warbler": "palwar",
-    "Killdeer": "killde",
-    "California Scrub-Jay": "casjay",
-    "Western Meadowlark": "wesmea",
-    "Red-breasted Sapsucker": "rebsap",
-    "Accipiters (Sharp-shinned / Cooper's)": "coohaw",
-    "White-throated Sparrow": "whtspa",
-    "Purple Finch": "purfin",
-    "Pine Siskin": "pinsis",
-    "Common Merganser": "commer",
-    "Wood Duck": "wooduc",
-    "Wilson's Snipe": "wilsni1",
-    "White-tailed Kite": "whtkit",
-    "Bald Eagle": "baleag",
-    "Barn Owl": "brnowl",
-    "Black Phoebe": "blkpho",
-    "American Wigeon": "amewig",
-    "Anna's Hummingbird": "annhum",
-    "Orange-crowned Warbler": "orcwar",
-    "Cedar Waxwing": "cedwax",
-    "Lesser Goldfinch": "lesgol",
-    "American Bittern": "amebit",
-    "Savannah Sparrow": "savspa",
-    "Pileated Woodpecker": "pilwoo",
-    "Least Sandpiper": "leasan",
-    "Spotted Sandpiper": "sposan",
-    "Western Sandpiper": "wessan",
-    "Great Egret": "greegr",
-    "Tundra Swan": "tunswa",
-    "Small Songbird Flocks": "pinsis",
-    "Short-eared Owl": "sheowl",
-    "Cackling Goose": "cacgoo1",
-    "Ring-billed Gull": "ribgul"
-};
-
-function getEbirdUrl(birdName) {
-    if (!birdName) return "https://ebird.org/explore";
-    const code = EBIRD_SPECIES_CODES[birdName] || EBIRD_SPECIES_CODES[birdName.trim()];
-    if (code) {
-        return `https://ebird.org/species/${code}`;
-    }
-    return `https://ebird.org/species/${encodeURIComponent(birdName.toLowerCase().replace(/[^a-z0-9]/g, ""))}`;
 }
 
 const FLORENCE_ZONE_BIRDS = {
