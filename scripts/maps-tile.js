@@ -9,6 +9,7 @@ import { resolveAppInstructionConfig } from './services/app-instruction-config.j
 import { canvasToTiffBlob, geojsonToGpx, geojsonToKml } from './services/format-converters.js';
 import { getAppSelectionTitle, getSelectionThumbnail } from './map/app-selection-presentation.js';
 import { findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry } from './utils/geometry-math.js';
+import { getLayoutScaleBar } from './utils/map-print-math.js';
 import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
 import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
 
@@ -730,41 +731,6 @@ function computeBboxForPrint(features) {
     }
     if (minLng === Infinity) return [[-123.3, 43.9], [-122.9, 44.2]];
     return [[minLng, minLat], [maxLng, maxLat]];
-}
-
-/**
- * Calculate a scale bar from geographic bounds and layout pixel width.
- * Pure math — no dependency on any map instance.
- */
-function getLayoutScaleBar(bounds, layoutMapWidth) {
-    if (!bounds || !bounds[0] || !bounds[1]) return { miles: 1, pxWidth: 250 };
-
-    const [[minLng, minLat], [maxLng, maxLat]] = bounds;
-    const centerLat = (minLat + maxLat) / 2;
-
-    const lat1Rad = centerLat * Math.PI / 180;
-    const dLon = (maxLng - minLng) * Math.PI / 180;
-    const a = Math.cos(lat1Rad) * Math.cos(lat1Rad) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const totalMiles = 3958.8 * c;
-
-    const milesPerPx = totalMiles / layoutMapWidth;
-    const targetPx = 330;
-    const approxMiles = targetPx * milesPerPx;
-
-    const niceIncrements = [0.1, 0.25, 0.5, 1, 2, 3, 5, 10, 15, 20, 25, 50, 100];
-    let chosenMiles = niceIncrements[0];
-    let minDiff = Math.abs(approxMiles - chosenMiles);
-    for (let i = 1; i < niceIncrements.length; i++) {
-        const diff = Math.abs(approxMiles - niceIncrements[i]);
-        if (diff < minDiff) {
-            minDiff = diff;
-            chosenMiles = niceIncrements[i];
-        }
-    }
-
-    const scaleBarPx = Math.max(160, Math.min(750, chosenMiles / milesPerPx));
-    return { miles: chosenMiles, pxWidth: scaleBarPx };
 }
 
 function loadQrCodeImage(dataUrl) {

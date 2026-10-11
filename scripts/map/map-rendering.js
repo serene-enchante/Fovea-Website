@@ -6,6 +6,7 @@ import { CIRCLE_ID } from '../config/app-config.js';
 import { showToast } from '../components/toast-view.js';
 import { updateControlPositions } from '../components/mobile-view.js';
 import { adjustHeaderFontSize } from '../components/header-view.js';
+import { getLayoutScaleBar } from '../utils/map-print-math.js';
 
 // ──────────────────────────────────────────────────────────────
 // Headless offscreen MapLibre renderer for PDF / TIFF export
@@ -67,38 +68,6 @@ function normalizeZoneIdLocal(value) {
  * Calculate a scale bar from geographic bounds and layout pixel width.
  * Pure math — no dependency on any map instance.
  */
-export function getLayoutScaleBar(bounds, layoutMapWidth) {
-    if (!bounds || !bounds[0] || !bounds[1]) return { miles: 1, pxWidth: 250 };
-
-    const [[minLng, minLat], [maxLng, maxLat]] = bounds;
-    const centerLat = (minLat + maxLat) / 2;
-
-    // Haversine distance across the full visible longitude span at center latitude
-    const lat1Rad = centerLat * Math.PI / 180;
-    const dLon = (maxLng - minLng) * Math.PI / 180;
-    const a = Math.cos(lat1Rad) * Math.cos(lat1Rad) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const totalMiles = 3958.8 * c; // Earth radius in miles
-
-    const milesPerPx = totalMiles / layoutMapWidth;
-    const targetPx = 330;
-    const approxMiles = targetPx * milesPerPx;
-
-    const niceIncrements = [0.1, 0.25, 0.5, 1, 2, 3, 5, 10, 15, 20, 25, 50, 100];
-    let chosenMiles = niceIncrements[0];
-    let minDiff = Math.abs(approxMiles - chosenMiles);
-    for (let i = 1; i < niceIncrements.length; i++) {
-        const diff = Math.abs(approxMiles - niceIncrements[i]);
-        if (diff < minDiff) {
-            minDiff = diff;
-            chosenMiles = niceIncrements[i];
-        }
-    }
-
-    const scaleBarPx = Math.max(160, Math.min(750, chosenMiles / milesPerPx));
-    return { miles: chosenMiles, pxWidth: scaleBarPx };
-}
-
 /**
  * Load a QR code image from the qrserver.com API (fallback if QRCode lib not available).
  */
@@ -1064,5 +1033,4 @@ function triggerDirectDownload(blob, filename) {
         URL.revokeObjectURL(url);
     }, 100);
 }
-
 
