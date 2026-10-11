@@ -1,35 +1,9 @@
 import { state } from '../state.js';
+import { updateMapControlPositions } from '../map/map-control-layout.js';
 
 export function updateControlPositions() {
     if (!state.map) return;
-    const isMobile = window.innerWidth <= 768;
-    const topLeft = document.querySelector(".map-ctrl-container .map-ctrl-panel.map-ctrl-panel--left");
-    const topRight = document.querySelector(".map-ctrl-container .map-ctrl-panel.map-ctrl-panel--right");
-    const zoomCtrl = document.querySelector(".map-ctrl-zoom");
-    const locateCtrl = document.querySelector(".map-ctrl-locate");
-    const fsCtrl = document.querySelector(".map-ctrl-fullscreen");
-    const layersCtrl = document.querySelector(".map-ctrl-styles");
-
-    if (isMobile) {
-        // Zoom → top-right panel
-        if (topRight && zoomCtrl) topRight.appendChild(zoomCtrl);
-        // Mobile bottom-right row, left-to-right: map styles → location → fullscreen
-        if (topLeft) {
-            if (layersCtrl) topLeft.appendChild(layersCtrl);
-            if (locateCtrl) topLeft.appendChild(locateCtrl);
-            if (fsCtrl) topLeft.appendChild(fsCtrl);
-        }
-    } else {
-        // All → bottom-left, stacked vertically. flex-direction:column-reverse means
-        // first appended = visually at bottom. Order from bottom to top:
-        // zoom (bottom) → fullscreen → locate → map styles (top)
-        if (topLeft) {
-            if (zoomCtrl) topLeft.appendChild(zoomCtrl);
-            if (fsCtrl) topLeft.appendChild(fsCtrl);
-            if (locateCtrl) topLeft.appendChild(locateCtrl);
-            if (layersCtrl) topLeft.appendChild(layersCtrl);
-        }
-    }
+    updateMapControlPositions({ isMobile: window.innerWidth <= 768 });
 }
 
 export function updateBottomNavVisibilityForSnapState(snapState) {
