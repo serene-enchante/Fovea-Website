@@ -618,24 +618,28 @@ export function setupMapLayers(state) {
     });
 }
 
-export function selectMapStyleByIndex(index) {
-    if (!state.baseMapsList || state.baseMapsList.length === 0 || !state.map) return;
-    if (index < 0 || index >= state.baseMapsList.length) return;
+export function selectMapStyleByIndex(index, {
+    state: mapState = state,
+    documentObject = globalThis.document,
+    notify = showToast
+} = {}) {
+    if (!mapState.baseMapsList || mapState.baseMapsList.length === 0 || !mapState.map) return;
+    if (index < 0 || index >= mapState.baseMapsList.length) return;
 
-    const targetItem = state.baseMapsList[index];
-    state.baseMapsList.forEach(item => {
+    const targetItem = mapState.baseMapsList[index];
+    mapState.baseMapsList.forEach(item => {
         if (item === targetItem) {
-            if (!state.map.hasLayer(item.layer)) {
-                state.map.addLayer(item.layer);
+            if (!mapState.map.hasLayer(item.layer)) {
+                mapState.map.addLayer(item.layer);
             }
         } else {
-            if (state.map.hasLayer(item.layer)) {
-                state.map.removeLayer(item.layer);
+            if (mapState.map.hasLayer(item.layer)) {
+                mapState.map.removeLayer(item.layer);
             }
         }
     });
 
-    const layersControlEl = document.querySelector('.map-ctrl-styles');
+    const layersControlEl = documentObject?.querySelector('.map-ctrl-styles');
     if (layersControlEl) {
         const inputs = layersControlEl.querySelectorAll('input[type="radio"]');
         if (inputs && inputs[index]) {
@@ -643,7 +647,7 @@ export function selectMapStyleByIndex(index) {
         }
     }
 
-    showToast(`Map Style: ${targetItem.name}`);
+    notify(`Map Style: ${targetItem.name}`);
 }
 
 

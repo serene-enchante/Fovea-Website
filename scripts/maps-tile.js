@@ -19,7 +19,7 @@ import {
     switchBaseMap as applyBaseMap,
     toggleLocationTracking as trackUserLocation
 } from './map/map-init.js';
-import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData } from './map/map-layers.js';
+import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapStyleByIndex } from './map/map-layers.js';
 import { setupMapCanvasEvents, setupMapHoverEvents } from './map/map-events.js';
 import { setupMapViewportEffects } from './map/map-viewport.js';
 import { updateMapControlPositions } from './map/map-control-layout.js';
@@ -2958,34 +2958,6 @@ function renderSidebarList() {
         state.focusedTileIndex = -1;
         updateKeyboardTileFocus(-1);
     }
-}
-
-function selectMapStyleByIndex(index) {
-    if (!state.baseMapsList || state.baseMapsList.length === 0 || !state.map) return;
-    if (index < 0 || index >= state.baseMapsList.length) return;
-
-    const targetItem = state.baseMapsList[index];
-    state.baseMapsList.forEach(item => {
-        if (item === targetItem) {
-            if (!state.map.hasLayer(item.layer)) {
-                state.map.addLayer(item.layer);
-            }
-        } else {
-            if (state.map.hasLayer(item.layer)) {
-                state.map.removeLayer(item.layer);
-            }
-        }
-    });
-
-    const layersControlEl = document.querySelector('.map-ctrl-styles');
-    if (layersControlEl) {
-        const inputs = layersControlEl.querySelectorAll('input[type="radio"]');
-        if (inputs && inputs[index]) {
-            inputs[index].checked = true;
-        }
-    }
-
-    showToast(`Map Style: ${targetItem.name}`);
 }
 
 function setupMapEffectsAndFullscreen(mapWrapper) {

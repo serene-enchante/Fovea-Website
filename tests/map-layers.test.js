@@ -1,6 +1,35 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { addRasterBaseLayers, addZoneFeatureLayers, buildZoneFeatureData } from '../scripts/map/map-layers.js';
+import { addRasterBaseLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapStyleByIndex } from '../scripts/map/map-layers.js';
+
+test('selects a map style, updates its radio control, and notifies the user', () => {
+    const visible = new Set(['layer-dark']);
+    const operations = [];
+    const inputs = [{ checked: false }, { checked: false }];
+    const state = {
+        map: {
+            hasLayer: layer => visible.has(layer),
+            addLayer(layer) { visible.add(layer); operations.push(['add', layer]); },
+            removeLayer(layer) { visible.delete(layer); operations.push(['remove', layer]); }
+        },
+        baseMapsList: [
+            { name: 'Dark', layer: 'layer-dark' },
+            { name: 'Satellite', layer: 'layer-satellite' }
+        ]
+    };
+    const messages = [];
+
+    selectMapStyleByIndex(1, {
+        state,
+        documentObject: { querySelector: () => ({ querySelectorAll: () => inputs }) },
+        notify: message => messages.push(message)
+    });
+
+    assert.deepEqual(operations, [['remove', 'layer-dark'], ['add', 'layer-satellite']]);
+    assert.deepEqual([...visible], ['layer-satellite']);
+    assert.equal(inputs[1].checked, true);
+    assert.deepEqual(messages, ['Map Style: Satellite']);
+});
 
 test('registers all raster sources and makes only the selected base layer visible', () => {
     const sources = new Map();
