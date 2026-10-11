@@ -1,10 +1,11 @@
-import { APP_INSTRUCTION_CONFIGS, CIRCLE_ID } from './config/app-config.js';
+import { CIRCLE_ID } from './config/app-config.js';
 import { parseMapRoute, serializeMapRoute } from './map/map-route-state.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
 import { findFeatureByZoneId, getSelectedGeoJSONData as createSelectedGeoJSONData } from './services/geo-selection.js';
 import { getDownloadFilename } from './services/download-file-names.js';
 import { handleSpatialFileShare as shareSpatialFile } from './services/file-download-service.js';
 import { launchAppWithStoreFallback } from './services/app-launch-service.js';
+import { resolveAppInstructionConfig } from './services/app-instruction-config.js';
 import { getAppSelectionTitle, getSelectionThumbnail } from './map/app-selection-presentation.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
@@ -861,28 +862,7 @@ function getActiveSelectionThumbnail() {
  * Opens the blackout instruction modal dynamically configured for any app (Avenza, Gaia GPS, CalTopo, OsmAnd).
  */
 async function openAppInstructionModal(appKeyOrName, mapFileUrlOrBlob = null, filename = null, triggerCard = null) {
-  const normKey = String(appKeyOrName).toLowerCase().replace(/[^a-z]/g, "");
-  let config = null;
-
-  if (normKey.includes("avenza")) config = APP_INSTRUCTION_CONFIGS.avenza;
-  else if (normKey.includes("gaia")) config = APP_INSTRUCTION_CONFIGS.gaia;
-  else if (normKey.includes("caltopo")) config = APP_INSTRUCTION_CONFIGS.caltopo;
-  else if (normKey.includes("osmand")) config = APP_INSTRUCTION_CONFIGS.osmand;
-  else {
-    config = {
-      appName: appKeyOrName,
-      scheme: `${normKey}://`,
-      formatKey: "gpx",
-      ext: "gpx",
-      iconSrc: "../images/app_icons/gaia.webp",
-      step1Heading: "Download the Map File",
-      step2Heading: `Launch ${appKeyOrName}`,
-      step2Text: `Tap <strong>Continue to ${appKeyOrName}</strong> below to open the app.`,
-      step3Heading: "Import Map",
-      step3Text: `Inside ${appKeyOrName}, select your downloaded map file from the <strong>Downloads</strong> folder.`,
-      continueBtnText: `Continue to ${appKeyOrName}`
-    };
-  }
+  const { config, normalizedKey: normKey } = resolveAppInstructionConfig(appKeyOrName);
 
   let blobPromise = null;
   if (mapFileUrlOrBlob instanceof Blob) {
