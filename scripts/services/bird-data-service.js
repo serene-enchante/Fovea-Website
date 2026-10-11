@@ -1,6 +1,7 @@
 import { state } from '../state.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { normalizeZoneId } from '../utils/format-utils.js';
+import { parseMapRoute } from '../map/map-route-state.js';
 import { loadGeoDatasets } from './geo-data-repository.js';
 
 export function getSelectedGeoJSONData() {
@@ -21,45 +22,10 @@ export function getSelectedGeoJSONData() {
 }
 
 export function getInitialIdFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const circleParam = params.get("circle") || params.get("cid");
-    if (circleParam) {
-        const cName = circleParam.trim();
-        const lowerName = cName.toLowerCase();
-        if (lowerName === "eugene") {
-            state.currentFeature = "eugene";
-            state.isCirclesFeature = false;
-            return CIRCLE_ID;
-        } else if (lowerName === "florence") {
-            state.currentFeature = "florence";
-            state.isCirclesFeature = false;
-            return CIRCLE_ID;
-        } else {
-            state.currentFeature = "circles";
-            state.isCirclesFeature = true;
-            return cName;
-        }
-    }
-
-    const feature = (params.get("feature") || "").toLowerCase();
-    if (feature === "circles") {
-        state.currentFeature = "circles";
-        state.isCirclesFeature = true;
-    } else if (feature === "florence") {
-        state.currentFeature = "florence";
-        state.isCirclesFeature = false;
-    } else if (feature === "eugene") {
-        state.currentFeature = "eugene";
-        state.isCirclesFeature = false;
-    } else {
-        state.currentFeature = "circles";
-        state.isCirclesFeature = true;
-    }
-
-    const zone = params.get("zone");
-    if (zone) return zone.trim();
-    const id = params.get("id");
-    return id ? id.trim() : CIRCLE_ID;
+    const route = parseMapRoute(window.location.search, CIRCLE_ID);
+    state.currentFeature = route.currentFeature;
+    state.isCirclesFeature = route.isCirclesFeature;
+    return route.initialId;
 }
 
 export async function loadBirdData() {

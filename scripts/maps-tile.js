@@ -1,4 +1,5 @@
 import { CIRCLE_ID } from './config/app-config.js';
+import { parseMapRoute, serializeMapRoute } from './map/map-route-state.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
@@ -2465,70 +2466,26 @@ async function downloadGeoTiff(triggerButton = null) {
 }
 
 function getInitialIdFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const circleParam = params.get("circle") || params.get("cid");
-    if (circleParam) {
-        const cName = circleParam.trim();
-        const lowerName = cName.toLowerCase();
-        if (lowerName === "eugene") {
-            state.currentFeature = "eugene";
-            state.isCirclesFeature = false;
-            return CIRCLE_ID;
-        } else if (lowerName === "florence") {
-            state.currentFeature = "florence";
-            state.isCirclesFeature = false;
-            return CIRCLE_ID;
-        } else {
-            state.currentFeature = "circles";
-            state.isCirclesFeature = true;
-            return cName;
-        }
-    }
-
-    const feature = (params.get("feature") || "").toLowerCase();
-    if (feature === "circles") {
-        state.currentFeature = "circles";
-        state.isCirclesFeature = true;
-    } else if (feature === "florence") {
-        state.currentFeature = "florence";
-        state.isCirclesFeature = false;
-    } else if (feature === "eugene") {
-        state.currentFeature = "eugene";
-        state.isCirclesFeature = false;
-    } else {
-        state.currentFeature = "circles";
-        state.isCirclesFeature = true;
-    }
-
-    const zone = params.get("zone");
-    if (zone) return zone.trim();
-    const id = params.get("id");
-    return id ? id.trim() : CIRCLE_ID;
+    const route = parseMapRoute(window.location.search, CIRCLE_ID);
+    state.currentFeature = route.currentFeature;
+    state.isCirclesFeature = route.isCirclesFeature;
+    return route.initialId;
 }
 
 function updateUrl(id) {
     const url = new URL(window.location.href);
-    url.searchParams.delete("id");
-
-    if (state.isCirclesFeature) {
-        url.searchParams.set("feature", "circles");
-        url.searchParams.delete("zone");
-    } else {
-        url.searchParams.set("feature", state.currentFeature);
-        if (id && id !== CIRCLE_ID) {
-            let zid = id;
-            const targetFeature = state.allFeatures.find(f => {
-                const fzid = f.properties?.zid;
-                return fzid && (fzid.toLowerCase() === id.toLowerCase() || normalizeZoneId(fzid) === normalizeZoneId(id));
-            });
-            if (targetFeature && targetFeature.properties?.zid) {
-                zid = displayZoneId(targetFeature.properties.zid);
-            }
-            url.searchParams.set("zone", zid);
-        } else {
-            url.searchParams.delete("zone");
-        }
-    }
+    const targetFeature = state.allFeatures.find(f => {
+        const zid = f.properties?.zid;
+        return zid && (zid.toLowerCase() === id?.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(id));
+    });
+    const selectedId = targetFeature?.properties?.zid || id;
+    url.search = serializeMapRoute(url.search, {
+        currentFeature: state.currentFeature,
+        isCirclesFeature: state.isCirclesFeature,
+        id: selectedId,
+        circleId: CIRCLE_ID,
+        displayZoneId
+    });
     window.history.replaceState({}, "", url.toString());
 }
 

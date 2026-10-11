@@ -8,31 +8,23 @@ import { getBbox } from '../utils/geometry-math.js';
 import { disposeRasterCache, scheduleSelectionPreload } from './map-rendering.js';
 import { getSuggestSelectionLabel } from '../components/feedback-form.js';
 import { showToast } from '../components/toast-view.js';
+import { serializeMapRoute } from './map-route-state.js';
 
 export function updateUrl(id) {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
-    url.searchParams.delete("id");
-
-    if (state.isCirclesFeature) {
-        url.searchParams.set("feature", "circles");
-        url.searchParams.delete("zone");
-    } else {
-        url.searchParams.set("feature", state.currentFeature);
-        if (id && id !== CIRCLE_ID) {
-            let zid = id;
-            const targetFeature = state.allFeatures.find(f => {
-                const fzid = f.properties?.zid;
-                return fzid && (fzid.toLowerCase() === id.toLowerCase() || normalizeZoneId(fzid) === normalizeZoneId(id));
-            });
-            if (targetFeature && targetFeature.properties?.zid) {
-                zid = displayZoneId(targetFeature.properties.zid);
-            }
-            url.searchParams.set("zone", zid);
-        } else {
-            url.searchParams.delete("zone");
-        }
-    }
+    const targetFeature = state.allFeatures.find(f => {
+        const zid = f.properties?.zid;
+        return zid && (zid.toLowerCase() === id?.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(id));
+    });
+    const selectedId = targetFeature?.properties?.zid || id;
+    url.search = serializeMapRoute(url.search, {
+        currentFeature: state.currentFeature,
+        isCirclesFeature: state.isCirclesFeature,
+        id: selectedId,
+        circleId: CIRCLE_ID,
+        displayZoneId
+    });
     window.history.replaceState({}, "", url.toString());
 }
 
@@ -280,4 +272,3 @@ export function selectSubject(id, triggerMapZoom = true, animate = true) {
         performSelection();
     }
 }
-
