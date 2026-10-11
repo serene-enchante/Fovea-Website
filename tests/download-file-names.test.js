@@ -15,7 +15,7 @@ test('names an overview export after the circles dataset', () => {
 test('names circle and selected-zone exports for each local count', () => {
     assert.equal(
         getDownloadFilename({ currentFeature: 'eugene', currentId: circleId, circleId }, 'pdf'),
-        'Eugene-04-wgs84.pdf'
+        'Eugene-05-wgs84.pdf'
     );
     assert.equal(
         getDownloadFilename({ currentFeature: 'eugene', currentId: '04', circleId }, 'kmz'),

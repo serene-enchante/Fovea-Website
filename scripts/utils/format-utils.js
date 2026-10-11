@@ -52,7 +52,8 @@ export const EUGENE_ZONE_DESCRIPTIONS = {
     "16": "Features extensive restored wet prairie and seasonal swales, providing open foraging expanses and hunting perches for wintering northern harriers and owls.",
     "17": "Dominates open agricultural flatlands and grass seed fields, featuring drainage ditches and fencerows where wintering raptors and open-country flocks gather.",
     "18": "Covers rural-urban transition flats, blending agricultural fields, brushy roadside hedgerows, and drainage ditches favored by wintering sparrow flocks.",
-    "19": "Spans urban residential neighborhoods and community parklands, featuring neighborhood tree canopy, drainage swales, and garden habitats for wintering suburban birds.",
+    "19A": "Spans urban residential neighborhoods and community parklands, featuring neighborhood tree canopy, drainage swales, and garden habitats for wintering suburban birds.",
+    "19B": "Spans urban residential neighborhoods and community parklands, featuring neighborhood tree canopy, drainage swales, and garden habitats for wintering suburban birds.",
     "20A": "Features river tailraces, open water spillways, and dense riparian gallery, providing sheltered foraging and roosting waters for wintering diving ducks.",
     "20B": "Encompasses braided river channels and floodplain gravel bars, flanked by mature riparian forest that provides winter roosts for bald eagles.",
     "21": "Covers eastern reservoir embayments and agricultural fringes, combining sheltered marshy coves and oak woodlands that host wintering ducks and raptors."

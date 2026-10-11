@@ -12,7 +12,7 @@ export const MAP_DATASETS = Object.freeze({
     eugene: Object.freeze({
         id: 'eugene',
         label: 'Eugene Christmas Bird Count',
-        path: '../geojson/Eugene-04-wgs84.geojson'
+        path: '../geojson/Eugene-05-wgs84.geojson'
     }),
     florence: Object.freeze({
         id: 'florence',

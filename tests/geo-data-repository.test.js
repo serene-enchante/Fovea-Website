@@ -32,7 +32,7 @@ function jsonResponse(data, status = 200) {
 
 test('returns the canonical path for every map dataset', () => {
     assert.equal(getGeoDatasetPath('circles'), '../geojson/circles-wgs84.geojson');
-    assert.equal(getGeoDatasetPath('eugene'), '../geojson/Eugene-04-wgs84.geojson');
+    assert.equal(getGeoDatasetPath('eugene'), '../geojson/Eugene-05-wgs84.geojson');
     assert.equal(getGeoDatasetPath('florence'), '../geojson/Florence-00-wgs84.geojson');
     assert.throws(() => getGeoDatasetPath('unknown'), /Unknown map dataset/);
 });

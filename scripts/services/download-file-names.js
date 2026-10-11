@@ -18,7 +18,7 @@ export function getDownloadFilename({ currentFeature, currentId, circleId }, ext
     } else {
         base = hasZoneSelection
             ? `Eugene-Zone-${displayZoneId(currentId)}`
-            : 'Eugene-04-wgs84';
+            : 'Eugene-05-wgs84';
     }
 
     return `${base}.${extension}`;

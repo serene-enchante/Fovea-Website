@@ -8,7 +8,9 @@ Updated: 2026-10-11
 - Active branch: `refactor`
 - Latest refactor commit before this handoff: `d2c0c02 share raster download button bindings`
 - The user has asked to continue the refactor incrementally, run tests, and commit to `refactor` after each step.
-- Do not stage or commit the current GeoJSON changes unless the user separately asks: `geojson/Eugene-04-wgs84.geojson` is modified and `geojson/Eugene-04-wgs84-10m.topojson` is untracked. These files were present as unrelated work during the latest refactor slices and were intentionally left untouched.
+- Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
+- Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts/descriptions must preserve the alphanumeric suffixes.
+- Preserve the separate, pre-existing edits to `geojson/Eugene-04-wgs84.geojson` and `geojson/Eugene-04-wgs84-10m.topojson`; do not stage them as part of unrelated work.
 
 ## Recent work
 
