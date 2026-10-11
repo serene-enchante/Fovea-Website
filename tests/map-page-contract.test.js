@@ -28,7 +28,7 @@ test('the map application uses the shared GeoJSON repository', async () => {
     const selectionController = await readFile(new URL('../scripts/map/map-selection.js', import.meta.url), 'utf8');
     assert.match(selectionController, /targetFeatures = await loadFeatures\(featureName\);/);
     assert.match(source, /import \{ findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry \} from '\.\/utils\/geometry-math\.js';/);
-    assert.match(source, /import \{ displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath \} from '\.\/utils\/format-utils\.js';/);
+    assert.match(source, /import \{ displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath, getZoneDescription \} from '\.\/utils\/format-utils\.js';/);
     assert.match(source, /import \{ getThemeAccent, getThemeAccentLight \} from '\.\/utils\/color-utils\.js';/);
     assert.match(source, /import \{ canvasToTiffBlob, geojsonToGpx, geojsonToKml \} from '\.\/services\/format-converters\.js';/);
     assert.doesNotMatch(source, /function generateZoneGeometrySVG\(/);
