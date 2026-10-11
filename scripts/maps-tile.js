@@ -3196,32 +3196,6 @@ function toggleFullscreen() {
     }
 }
 
-function highlightTileItem(key) {
-    if (key == null) return;
-    key = String(key);
-    const listContainer = document.getElementById("sidebar-zone-list");
-    if (!listContainer) return;
-    const items = listContainer.querySelectorAll(".tile-zone-item");
-    items.forEach(item => {
-        const dataId = item.getAttribute("data-id") || "";
-        const matches = dataId.toLowerCase() === key.toLowerCase() || (normalizeZoneId(dataId) === normalizeZoneId(key) && key !== CIRCLE_ID);
-        if (matches) {
-            item.classList.add("is-hovered");
-        } else {
-            item.classList.remove("is-hovered");
-        }
-    });
-}
-
-function unhighlightTileItem() {
-    const listContainer = document.getElementById("sidebar-zone-list");
-    if (!listContainer) return;
-    const items = listContainer.querySelectorAll(".tile-zone-item");
-    items.forEach(item => {
-        item.classList.remove("is-hovered");
-    });
-}
-
 // Cursor proximity glow: set feature-state 'proximity' (0–1) based on
 // screen-space distance from cursor to each zone center point
 function setupProximityTracking() {
