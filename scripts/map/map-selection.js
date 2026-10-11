@@ -11,6 +11,90 @@ import { showToast } from '../components/toast-view.js';
 import { serializeMapRoute } from './map-route-state.js';
 import { findFeatureByZoneId } from '../services/geo-selection.js';
 
+export function createFeatureTransitionController({
+    state: appState,
+    loadFeatures,
+    rebuildFeatures,
+    selectSubject,
+    disposeRasterCache,
+    getFitPadding,
+    showToast,
+    isSuggestLocked = () => document.body.classList.contains('is-suggest-locked')
+}) {
+    let latestTransitionId = 0;
+
+    async function switchToFeature(featureName, circleLayer) {
+        if (isSuggestLocked() && (featureName !== appState.currentFeature || appState.isCirclesFeature)) return;
+        if (!appState.map) return;
+        disposeRasterCache();
+        const transitionId = ++latestTransitionId;
+
+        let targetFeatures;
+        try {
+            targetFeatures = await loadFeatures(featureName);
+        } catch (error) {
+            if (transitionId === latestTransitionId) {
+                console.error(`Unable to load ${featureName} map data:`, error);
+                showToast(`Unable to load ${featureName} map data`, true);
+            }
+            return;
+        }
+        if (transitionId !== latestTransitionId) return;
+
+        let transitionFinished = false;
+        const performSwap = () => {
+            if (transitionFinished) return;
+            transitionFinished = true;
+            appState.currentFeature = featureName;
+            appState.isCirclesFeature = false;
+            appState.allFeatures = targetFeatures;
+            appState.currentId = CIRCLE_ID;
+            rebuildFeatures();
+            selectSubject(CIRCLE_ID, false);
+        };
+
+        if (circleLayer) {
+            appState.map.once('moveend', performSwap);
+            appState.map.fitBounds(circleLayer, {
+                speed: 0.8,
+                curve: 1.4,
+                padding: getFitPadding()
+            });
+            setTimeout(performSwap, 1000);
+        } else {
+            performSwap();
+        }
+    }
+
+    async function switchToCirclesFeature() {
+        if (isSuggestLocked() && !appState.isCirclesFeature) return;
+        if (!appState.map) return;
+        disposeRasterCache();
+        const transitionId = ++latestTransitionId;
+
+        let circlesFeatures;
+        try {
+            circlesFeatures = await loadFeatures('circles');
+        } catch (error) {
+            if (transitionId === latestTransitionId) {
+                console.error('Unable to load circles map data:', error);
+                showToast('Unable to load circle map data', true);
+            }
+            return;
+        }
+        if (transitionId !== latestTransitionId) return;
+
+        appState.currentFeature = 'circles';
+        appState.isCirclesFeature = true;
+        appState.allFeatures = circlesFeatures;
+        appState.currentId = CIRCLE_ID;
+        rebuildFeatures();
+        selectSubject(CIRCLE_ID, true);
+    }
+
+    return { switchToFeature, switchToCirclesFeature };
+}
+
 export function updateUrl(id) {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);

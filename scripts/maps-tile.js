@@ -16,6 +16,7 @@ import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
 import { createMapInstance, updateUserLocationOnMap as renderUserLocation } from './map/map-init.js';
 import { addRasterBaseLayers, addZoneFeatureLayers, buildZoneFeatureData } from './map/map-layers.js';
 import { setupMapHoverEvents } from './map/map-events.js';
+import { createFeatureTransitionController } from './map/map-selection.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -1692,8 +1693,6 @@ function getSuggestSelectionLabel() {
     return `Zone ${displayZoneId(state.currentId)}`;
 }
 
-let latestMapDatasetTransition = 0;
-
 async function loadFeaturesForMapView(featureName) {
     const datasetId = featureName === 'florence' ? 'florence'
         : featureName === 'eugene' ? 'eugene'
@@ -1712,85 +1711,17 @@ async function loadFeaturesForMapView(featureName) {
     return features;
 }
 
-async function switchToFeature(featureName, circleLayer) {
-    if (document.body.classList.contains("is-suggest-locked") && (featureName !== state.currentFeature || state.isCirclesFeature)) {
-        return;
-    }
-
-    if (!state.map) return;
-    disposeRasterCache();
-    const transitionId = ++latestMapDatasetTransition;
-
-    let targetFeatures;
-    try {
-        targetFeatures = await loadFeaturesForMapView(featureName);
-    } catch (error) {
-        if (transitionId === latestMapDatasetTransition) {
-            console.error(`Unable to load ${featureName} map data:`, error);
-            showToast(`Unable to load ${featureName} map data`, true);
-        }
-        return;
-    }
-
-    if (transitionId !== latestMapDatasetTransition) return;
-
-    let transitionFinished = false;
-
-    const performSwap = () => {
-        if (transitionFinished) return;
-        transitionFinished = true;
-
-        state.currentFeature = featureName;
-        state.isCirclesFeature = false;
-        state.allFeatures = targetFeatures;
-        state.currentId = CIRCLE_ID;
-
-        rebuildGeoJsonLayer();
-        selectSubject(CIRCLE_ID, false);
-    };
-
-    if (circleLayer) {
-        state.map.once("moveend", performSwap);
-        state.map.fitBounds(circleLayer, {
-            speed: 0.8,
-            curve: 1.4,
-            padding: getFitPadding()
-        });
-        setTimeout(performSwap, 1000);
-    } else {
-        performSwap();
-    }
-}
-
-async function switchToCirclesFeature() {
-    if (document.body.classList.contains("is-suggest-locked") && !state.isCirclesFeature) {
-        return;
-    }
-
-    if (!state.map) return;
-    disposeRasterCache();
-    const transitionId = ++latestMapDatasetTransition;
-
-    let circlesFeatures;
-    try {
-        circlesFeatures = await loadFeaturesForMapView('circles');
-    } catch (error) {
-        if (transitionId === latestMapDatasetTransition) {
-            console.error('Unable to load circles map data:', error);
-            showToast('Unable to load circle map data', true);
-        }
-        return;
-    }
-
-    if (transitionId !== latestMapDatasetTransition) return;
-
-    state.currentFeature = "circles";
-    state.isCirclesFeature = true;
-    state.allFeatures = circlesFeatures;
-    state.currentId = CIRCLE_ID;
-    rebuildGeoJsonLayer();
-    selectSubject(CIRCLE_ID, true);
-}
+const featureTransitionController = createFeatureTransitionController({
+    state,
+    loadFeatures: loadFeaturesForMapView,
+    rebuildFeatures: rebuildGeoJsonLayer,
+    selectSubject,
+    disposeRasterCache,
+    getFitPadding,
+    showToast,
+    isSuggestLocked: () => document.body.classList.contains('is-suggest-locked')
+});
+const { switchToFeature, switchToCirclesFeature } = featureTransitionController;
 
 let _currentHierarchyLevel = 0;
 
