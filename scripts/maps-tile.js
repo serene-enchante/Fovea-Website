@@ -32,7 +32,7 @@ import { setupSidebarScrollListener, updateKeyboardTileFocus } from './component
 import { openImageLightbox, setupImageLightbox } from './components/image-lightbox.js';
 import { setupHelpModeSystem } from './components/map-modals.js';
 import { setupMobileBottomNav } from './components/bottom-nav-view.js';
-import { setupViewToggleMenu } from './components/toolbar-actions.js';
+import { setupViewToggleMenu, updateAllAppsModalHeaderTitle, updateShareModalDescription } from './components/toolbar-actions.js';
 import { closeAvenzaModal, closeAllAppsModal, closeAllModals as closeModalsView } from './components/modal-view.js';
 import { setMobileSnapState, setupListSwipeBack, setupMobileResizeBar, setupSwipeNavigation } from './components/mobile-view.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
@@ -3963,63 +3963,9 @@ function closeAllModals() {
 
 
 
-function updateAllAppsModalHeaderTitle() {
-  const modalTitleEl = document.getElementById("all-apps-modal-title");
-  if (!modalTitleEl) return;
 
-  const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
-  const circleName = state.currentFeature === "florence" ? "Florence Count Circle" : "Eugene Count Circle";
 
-  if (state.isCirclesFeature) {
-    modalTitleEl.innerHTML = `Download the <span class="avenza-target-name">Coast to Cascades Bird Alliance</span> to compatible apps`;
-    return;
-  }
 
-  if (isCircle) {
-    modalTitleEl.innerHTML = `Download the <span class="avenza-target-name">${circleName}</span> to compatible apps`;
-    return;
-  }
-
-  const targetFeature = (state.allFeatures || []).find(f => {
-    const zid = f.properties?.zid;
-    return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || (typeof normalizeZoneId === "function" && normalizeZoneId(zid) === normalizeZoneId(state.currentId)));
-  });
-
-  const zoneName = (targetFeature && targetFeature.properties?.zid) 
-    ? `Zone ${displayZoneId(targetFeature.properties.zid)}`
-    : "Zone";
-
-  modalTitleEl.innerHTML = `Download <span class="avenza-target-name">${zoneName}</span> of the <span class="avenza-target-name">${circleName}</span> to compatible apps`;
-}
-
-function updateShareModalDescription() {
-    const descEl = document.querySelector(".maps-tile-copy-desc");
-    if (!descEl) return;
-
-    const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
-    const circleName = state.currentFeature === "florence" ? "Florence Count Circle" : "Eugene Count Circle";
-
-    if (state.isCirclesFeature) {
-        descEl.innerHTML = `Copy the link to the <span class="avenza-target-name">Coast to Cascades Bird Alliance</span> map:`;
-        return;
-    }
-
-    if (isCircle) {
-        descEl.innerHTML = `Copy the link to the <span class="avenza-target-name">${circleName}</span>:`;
-        return;
-    }
-
-    const targetFeature = (state.allFeatures || []).find(f => {
-        const zid = f.properties?.zid;
-        return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || (typeof normalizeZoneId === "function" && normalizeZoneId(zid) === normalizeZoneId(state.currentId)));
-    });
-
-    const zoneName = (targetFeature && targetFeature.properties?.zid) 
-        ? `Zone ${displayZoneId(targetFeature.properties.zid)}`
-        : "Zone";
-
-    descEl.innerHTML = `Copy the link to <span class="avenza-target-name">${zoneName}</span> of the <span class="avenza-target-name">${circleName}</span>:`;
-}
 
 function setupSuggestedAppCards() {
     setupAllAppsLiveSearch();
