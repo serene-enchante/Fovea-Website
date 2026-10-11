@@ -1,8 +1,8 @@
 import { state } from '../state.js';
 import { generateAppSpatialBlob } from './toolbar-actions.js';
-import { normalizeZoneId, displayZoneId } from '../utils/format-utils.js';
 import { APP_INSTRUCTION_CONFIGS, CIRCLE_ID } from '../config/app-config.js';
 import { getAppStoreUrl, launchAppWithStoreFallback } from '../services/app-launch-service.js';
+import { getAppSelectionTitle, getSelectionThumbnail } from '../map/app-selection-presentation.js';
 
 export { getAppStoreUrl, launchAppWithStoreFallback };
 
@@ -13,31 +13,10 @@ export { getAppStoreUrl, launchAppWithStoreFallback };
 export function updateAvenzaModalHeaderTitle(targetAppName = "Avenza Maps") {
   const modalTitleEl = document.getElementById("avenza-modal-title");
   if (!modalTitleEl) return;
-
-  const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
-  const circleName = state.currentFeature === "florence" ? "Florence Count Circle" : "Eugene Count Circle";
-
-  if (state.isCirclesFeature) {
-    modalTitleEl.innerHTML = `Import the <span class="avenza-target-name">Coast to Cascades Bird Alliance</span> into ${targetAppName}`;
-    return;
-  }
-
-  if (isCircle) {
-    modalTitleEl.innerHTML = `Import the <span class="avenza-target-name">${circleName}</span> into ${targetAppName}`;
-    return;
-  }
-
-  // Zone specific selection
-  const targetFeature = (state.allFeatures || []).find(f => {
-    const zid = f.properties?.zid;
-    return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || (typeof normalizeZoneId === "function" && normalizeZoneId(zid) === normalizeZoneId(state.currentId)));
-  });
-
-  const zoneName = (targetFeature && targetFeature.properties?.zid) 
-    ? `Zone ${displayZoneId(targetFeature.properties.zid)}`
-    : "Zone";
-
-  modalTitleEl.innerHTML = `Import <span class="avenza-target-name">${zoneName}</span> of the <span class="avenza-target-name">${circleName}</span> into ${targetAppName}`;
+  const title = getAppSelectionTitle({ ...state, features: state.allFeatures, circleId: CIRCLE_ID });
+  modalTitleEl.innerHTML = title.circleName
+    ? `Import <span class="avenza-target-name">${title.targetName}</span> of the <span class="avenza-target-name">${title.circleName}</span> into ${targetAppName}`
+    : `Import the <span class="avenza-target-name">${title.targetName}</span> into ${targetAppName}`;
 }
 
 
@@ -45,13 +24,7 @@ export function updateAvenzaModalHeaderTitle(targetAppName = "Avenza Maps") {
  * Returns count circle thumbnail/logo for the current selection (matching top-left header logo).
  */
 export function getActiveSelectionThumbnail() {
-  if (state.isCirclesFeature || state.currentFeature === "circles") {
-    return "../images/whiteLane-Audubon-favicon-152.png";
-  }
-  if (state.currentFeature === "florence") {
-    return "../images/florence.png";
-  }
-  return "../images/logo-small.png";
+  return getSelectionThumbnail(state);
 }
 
 
