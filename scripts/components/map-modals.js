@@ -27,7 +27,7 @@ export function setupImageLightbox() {
     });
 }
 
-export function setupHelpModeSystem() {
+export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
     const toggleInput = document.getElementById("toggle-help-mode");
     const tooltip = document.getElementById("help-mode-tooltip");
     const highlight = document.getElementById("help-mode-highlight");
@@ -152,8 +152,10 @@ export function setupHelpModeSystem() {
         // About Information (` key)
         if (e.key === "`" || e.key === "~") {
             state.lastNavSource = "keyboard";
-            const aboutTab = document.querySelector('.sidebar-capsule[data-tab="about"]');
-            if (aboutTab) aboutTab.click();
+            const capsules = document.querySelectorAll(".sidebar-capsule");
+            capsules.forEach(capsule => capsule.classList.remove("is-active"));
+            state.activeTab = "overview";
+            renderSidebarList();
             return;
         }
 
@@ -269,7 +271,7 @@ export function setupHelpModeSystem() {
         { selector: "#btn-suggest", title: "Suggest Edit", desc: "Submit suggestions, feedback, or pin map annotations.", shortcut: "Shift + Z" },
         { selector: "#btn-help", title: "Help & Guide", desc: "Opens user documentation and toggles Interactive Tooltip Mode.", shortcut: "Shift + H" },
         { selector: "#btn-capsule-back", title: "Back Navigation", desc: "Return to the previous higher-level overview (circle or list).", shortcut: "Esc or A / Left Arrow" },
-        { selector: '[data-tab="about"]', title: "About Tab", desc: "View detailed descriptions, spatial summaries, and photographs.", shortcut: "` (Backtick)" },
+        { selector: '[data-tab="overview"], [data-tab="about"]', title: "Overview Tab", desc: "View feature list preview, detailed descriptions, spatial summaries, and photographs.", shortcut: "` (Backtick)" },
         { selector: '.sidebar-capsule:not(.sidebar-capsule--icon)', title: "Class Tab", desc: "Class tabs filter the subfeatures of the current selection by type, which is reflected in the feature tiles column.", shortcut: "1 - 9" },
         { selector: "#btn-search-toggle", title: "Search Tool", desc: "Expand full-row search bar to filter count circles and survey zones.", shortcut: "F" },
         { selector: "#mobile-resize-bar", title: "Resize Handle", desc: "Drag vertically to adjust split screen map and list proportions." },
