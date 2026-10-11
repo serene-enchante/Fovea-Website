@@ -27,7 +27,7 @@ import { adjustHeaderFontSize, getFitPadding, updateHeader } from './components/
 import { syncSidebarTabs } from './components/sidebar-tabs.js';
 import { activateSidebarTab, setupSidebarCapsuleEvents } from './components/sidebar-capsule-events.js';
 import { getSuggestSelectionLabel } from './components/feedback-form.js';
-import { setupSidebarScrollListener } from './components/sidebar-list.js';
+import { setupSidebarScrollListener, updateKeyboardTileFocus } from './components/sidebar-list.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
 import { state } from './state.js';
 
@@ -2955,30 +2955,6 @@ function renderSidebarList() {
         state.focusedTileIndex = -1;
         updateKeyboardTileFocus(-1);
     }
-}
-
-function updateKeyboardTileFocus(newIndex) {
-    const tiles = document.querySelectorAll("#sidebar-zone-list .tile-zone-item");
-    if (!tiles || tiles.length === 0) return;
-    if (newIndex < -1) newIndex = -1;
-    if (newIndex >= tiles.length) newIndex = tiles.length - 1;
-    state.focusedTileIndex = newIndex;
-    tiles.forEach((tile, idx) => {
-        const cid = tile.getAttribute("data-id");
-        const isSelected = state.currentId !== CIRCLE_ID && (cid === state.currentId || (typeof normalizeZoneId === "function" && normalizeZoneId(cid) === normalizeZoneId(state.currentId)));
-
-        if (newIndex >= 0 && idx === newIndex) {
-            tile.classList.add("is-hovered");
-            if (!isSelected && state.map && state.map.getSource('zones')) {
-                state.map.setFeatureState({ source: 'zones', id: cid }, { hover: true });
-            }
-        } else {
-            tile.classList.remove("is-hovered");
-            if (!isSelected && state.map && state.map.getSource('zones')) {
-                state.map.setFeatureState({ source: 'zones', id: cid }, { hover: false });
-            }
-        }
-    });
 }
 
 function selectMapStyleByIndex(index) {

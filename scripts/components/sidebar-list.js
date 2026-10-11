@@ -257,28 +257,29 @@ export function renderSidebarList() {
     }
 }
 
-export function updateKeyboardTileFocus(newIndex) {
-    const tiles = document.querySelectorAll("#sidebar-zone-list .tile-zone-item");
+export function updateKeyboardTileFocus(newIndex, { state: mapState = state, documentObject = globalThis.document } = {}) {
+    if (!documentObject) return;
+    const tiles = documentObject.querySelectorAll("#sidebar-zone-list .tile-zone-item");
     if (!tiles || tiles.length === 0) return;
     if (newIndex < -1) newIndex = -1;
     if (newIndex >= tiles.length) newIndex = tiles.length - 1;
-    state.focusedTileIndex = newIndex;
+    mapState.focusedTileIndex = newIndex;
     tiles.forEach((tile, idx) => {
         const cid = tile.getAttribute("data-id");
-        const isSelected = state.currentId !== CIRCLE_ID && (cid === state.currentId || (typeof normalizeZoneId === "function" && normalizeZoneId(cid) === normalizeZoneId(state.currentId)));
+        const isSelected = mapState.currentId !== CIRCLE_ID && (cid === mapState.currentId || (typeof normalizeZoneId === "function" && normalizeZoneId(cid) === normalizeZoneId(mapState.currentId)));
 
         if (newIndex >= 0 && idx === newIndex) {
             tile.classList.add("is-hovered");
-            if (!isSelected && state.map && state.map.getSource('zones')) {
+            if (!isSelected && mapState.map && mapState.map.getSource('zones')) {
                 try {
-                    state.map.setFeatureState({ source: 'zones', id: cid }, { hover: true });
+                    mapState.map.setFeatureState({ source: 'zones', id: cid }, { hover: true });
                 } catch (e) {}
             }
         } else {
             tile.classList.remove("is-hovered");
-            if (!isSelected && state.map && state.map.getSource('zones')) {
+            if (!isSelected && mapState.map && mapState.map.getSource('zones')) {
                 try {
-                    state.map.setFeatureState({ source: 'zones', id: cid }, { hover: false });
+                    mapState.map.setFeatureState({ source: 'zones', id: cid }, { hover: false });
                 } catch (e) {}
             }
         }
