@@ -1,7 +1,6 @@
 import { CIRCLE_ID } from './config/app-config.js';
-import { parseMapRoute } from './map/map-route-state.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
-import { getSelectedGeoJSONData as createSelectedGeoJSONData } from './services/geo-selection.js';
+import { getInitialIdFromUrl, getSelectedGeoJSONData } from './services/bird-data-service.js';
 import { getDownloadFilename } from './services/download-file-names.js';
 import { handleSpatialFileShare as shareSpatialFile } from './services/file-download-service.js';
 import { launchAppWithStoreFallback } from './services/app-launch-service.js';
@@ -327,15 +326,6 @@ function getActiveDownloadFilename(ext) {
         currentId: state.currentId,
         circleId: CIRCLE_ID
     }, ext);
-}
-
-function getSelectedGeoJSONData() {
-    return createSelectedGeoJSONData({
-        features: state.allFeatures,
-        currentId: state.currentId,
-        isCirclesFeature: state.isCirclesFeature,
-        circleId: CIRCLE_ID
-    });
 }
 
 function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton = null) {
@@ -1309,13 +1299,6 @@ async function downloadGeoTiff(triggerButton = null) {
     const tiffBlob = canvasToTiffBlob(canvas);
     await handleSpatialFileShare(null, tiffBlob, filename, triggerButton);
     showToast(`Exported ${filename}`);
-}
-
-function getInitialIdFromUrl() {
-    const route = parseMapRoute(window.location.search, CIRCLE_ID);
-    state.currentFeature = route.currentFeature;
-    state.isCirclesFeature = route.isCirclesFeature;
-    return route.initialId;
 }
 
 function updateControlPositions() {
