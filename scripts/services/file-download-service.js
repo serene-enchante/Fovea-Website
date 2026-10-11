@@ -1,24 +1,39 @@
 import { SPATIAL_MIME_TYPES } from '../config/app-config.js';
 
-export function createIosCompatibleFile(blob, fileName) {
+export function getIosShareFileMetadata(fileName, fallbackMimeType, compatibilityProfile = 'standard') {
   const ext = fileName.split('.').pop().toLowerCase();
-  let mimeType = SPATIAL_MIME_TYPES[ext] || blob.type || 'application/octet-stream';
+  let mimeType = SPATIAL_MIME_TYPES[ext] || fallbackMimeType || 'application/octet-stream';
   let shareName = fileName;
 
-  // iOS Safari canShare() requires iOS system-recognized MIME types & extensions
-  // PDF, KML, JSON, and standard images usually work well, but GPX can fail silently.
-  if (ext === 'gpx') {
+  if (compatibilityProfile === 'legacy-map') {
+    if (ext === 'geojson') {
+      mimeType = 'application/json';
+      shareName = fileName.replace(/\.geojson$/i, '.json');
+    } else if (ext === 'gpx' || ext === 'kml') {
+      mimeType = 'text/plain';
+    } else if (ext === 'kmz') {
+      mimeType = 'application/zip';
+    } else if (ext === 'tif' || ext === 'tiff') {
+      mimeType = 'image/png';
+    }
+  } else if (ext === 'gpx') {
     mimeType = 'application/xml';
   } else if (ext === 'geojson') {
     mimeType = 'application/json';
   }
+
+  return { mimeType, shareName };
+}
+
+export function createIosCompatibleFile(blob, fileName, compatibilityProfile = 'standard') {
+  const { mimeType, shareName } = getIosShareFileMetadata(fileName, blob.type, compatibilityProfile);
 
   // Create an explicit File object which allows navigator.share() to read the file correctly
   // on iOS rather than returning an invalid argument error.
   return new File([blob], shareName, { type: mimeType });
 }
 
-export async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton = null, showToastCallback = null) {
+export async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton = null, showToastCallback = null, { compatibilityProfile = 'standard' } = {}) {
   if (event && event.preventDefault) event.preventDefault();
 
   let originalButtonText = "";
@@ -64,7 +79,7 @@ export async function handleSpatialFileShare(event, fileOrBlob, fileName, trigge
 
     // If browser supports Web Share API (iOS Safari, Mobile Chrome, Mac Safari), trigger native OS Share Sheet
     if (navigator.share) {
-      const file = createIosCompatibleFile(blob, fileName);
+      const file = createIosCompatibleFile(blob, fileName, compatibilityProfile);
 
       // Check if browser can share file, or execute direct share for mobile OS
       const canShare = navigator.canShare ? navigator.canShare({ files: [file] }) : true;

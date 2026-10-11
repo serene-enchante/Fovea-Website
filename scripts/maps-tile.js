@@ -3,6 +3,7 @@ import { parseMapRoute, serializeMapRoute } from './map/map-route-state.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
 import { findFeatureByZoneId, getSelectedGeoJSONData as createSelectedGeoJSONData } from './services/geo-selection.js';
 import { getDownloadFilename } from './services/download-file-names.js';
+import { handleSpatialFileShare as shareSpatialFile } from './services/file-download-service.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -767,149 +768,15 @@ function getSelectedGeoJSONData() {
     });
 }
 
-const SPATIAL_MIME_TYPES = {
-  gpx: 'application/gpx+xml',
-  kml: 'application/vnd.google-earth.kml+xml',
-  kmz: 'application/vnd.google-earth.kmz',
-  geojson: 'application/geo+json',
-  json: 'application/json',
-  pdf: 'application/pdf',
-  zip: 'application/zip',
-  tif: 'image/tiff',
-  tiff: 'image/tiff'
-};
-
-function createIosCompatibleFile(blob, fileName) {
-  const ext = fileName.split('.').pop().toLowerCase();
-  let mimeType = SPATIAL_MIME_TYPES[ext] || blob.type || 'application/octet-stream';
-  let shareName = fileName;
-
-  // iOS Safari canShare() requires iOS system-recognized MIME types & extensions
-  if (ext === 'geojson') {
-    mimeType = 'application/json';
-    shareName = fileName.replace(/\.geojson$/i, '.json');
-  } else if (ext === 'gpx' || ext === 'kml') {
-    mimeType = 'text/plain';
-  } else if (ext === 'kmz') {
-    mimeType = 'application/zip';
-  } else if (ext === 'pdf') {
-    mimeType = 'application/pdf';
-  } else if (ext === 'tif' || ext === 'tiff') {
-    mimeType = 'image/png';
-  }
-
-  return new File([blob], shareName, { type: mimeType });
-}
-
-async function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton = null) {
-  if (event && event.preventDefault) event.preventDefault();
-
-  let originalButtonText = "";
-  let originalButtonHtml = "";
-
-  if (triggerButton) {
-    triggerButton.disabled = true;
-    triggerButton.classList.add("is-preparing");
-    const span = triggerButton.querySelector("span");
-    if (span) {
-      originalButtonText = span.textContent;
-      span.textContent = "Preparing...";
-    } else {
-      originalButtonHtml = triggerButton.innerHTML;
-      triggerButton.textContent = "Preparing...";
-    }
-  }
-
-  const resetBtnState = () => {
-    if (triggerButton) {
-      triggerButton.disabled = false;
-      triggerButton.classList.remove("is-preparing");
-      const span = triggerButton.querySelector("span");
-      if (span && originalButtonText) {
-        span.textContent = originalButtonText;
-      } else if (originalButtonHtml) {
-        triggerButton.innerHTML = originalButtonHtml;
-      }
-    }
-  };
-
-  try {
-    let blob;
-    if (fileOrBlob instanceof Blob) {
-      blob = fileOrBlob;
-    } else if (typeof fileOrBlob === 'string') {
-      const response = await fetch(fileOrBlob);
-      if (!response.ok) throw new Error('File download failed');
-      blob = await response.blob();
-    } else {
-      throw new Error('Invalid file format');
-    }
-
-    // If browser supports Web Share API (iOS Safari, Mobile Chrome, Mac Safari), trigger native OS Share Sheet
-    if (navigator.share) {
-      const file = createIosCompatibleFile(blob, fileName);
-
-      // Check if browser can share file, or execute direct share for mobile OS
-      const canShare = navigator.canShare ? navigator.canShare({ files: [file] }) : true;
-      if (canShare) {
-        await navigator.share({
-          files: [file],
-          title: fileName,
-          text: 'Open with your mapping app'
-        });
-        resetBtnState();
-        return;
-      } else {
-        // Fallback share with plain text for strict WebKit environments
-        const fallbackFile = new File([blob], fileName, { type: 'text/plain' });
-        await navigator.share({
-          files: [fallbackFile],
-          title: fileName,
-          text: 'Open with your mapping app'
-        });
-        resetBtnState();
-        return;
-      }
-    } else if (location.protocol === "http:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-      if (typeof showToast === "function") {
-        showToast("Notice: Apple requires HTTPS for iOS Share Sheet (accessing via HTTP 10.0.0.194).", true);
-      }
-    }
-  } catch (err) {
-    if (err.name === 'AbortError' || err.name === 'NotAllowedError') {
-      resetBtnState();
-      return;
-    }
-  } finally {
-    resetBtnState();
-  }
-
-  // Fallback for Desktop / Unsupported Browsers
-  if (fileOrBlob instanceof Blob) {
-    const url = URL.createObjectURL(fileOrBlob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = fileName;
-    a.addEventListener('click', (e) => e.stopPropagation());
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 100);
-  } else if (typeof fileOrBlob === 'string') {
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = fileOrBlob;
-    a.download = fileName;
-    a.addEventListener('click', (e) => e.stopPropagation());
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-    }, 100);
-  }
+function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton = null) {
+  return shareSpatialFile(
+    event,
+    fileOrBlob,
+    fileName,
+    triggerButton,
+    (message, isError) => showToast(message, isError),
+    { compatibilityProfile: 'legacy-map' }
+  );
 }
 
 /**
