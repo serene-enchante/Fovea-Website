@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { findPointInsidePolygon, getBbox } from '../scripts/utils/geometry-math.js';
+import { findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry } from '../scripts/utils/geometry-math.js';
 
 test('calculates bounds for polygons, multi-polygons, and points', () => {
     const features = [
@@ -26,4 +26,13 @@ test('finds a usable interior point for supported geometries', () => {
     assert.deepEqual(findPointInsidePolygon({ type: 'Point', coordinates: [1, 2] }), [1, 2]);
     assert.deepEqual(findPointInsidePolygon(polygon), [2, 2]);
     assert.equal(findPointInsidePolygon({ type: 'LineString', coordinates: [] }), null);
+});
+
+test('tests points against polygon and multi-polygon geometries', () => {
+    const polygon = { type: 'Polygon', coordinates: [[[0, 0], [4, 0], [4, 4], [0, 4], [0, 0]]] };
+    const multiPolygon = { type: 'MultiPolygon', coordinates: [[[[10, 10], [12, 10], [12, 12], [10, 12], [10, 10]]]] };
+
+    assert.equal(isPointInGeoJSONGeometry(2, 2, polygon), true);
+    assert.equal(isPointInGeoJSONGeometry(5, 5, polygon), false);
+    assert.equal(isPointInGeoJSONGeometry(11, 11, multiPolygon), true);
 });

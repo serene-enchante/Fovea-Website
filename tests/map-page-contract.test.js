@@ -19,7 +19,7 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.match(source, /import \{ loadGeoDataset \} from '\.\/services\/geo-data-repository\.js';/);
     assert.match(source, /state\.allFeatures = await loadFeaturesForMapView\(initialFeature\);/);
     assert.match(source, /targetFeatures = await loadFeaturesForMapView\(featureName\);/);
-    assert.match(source, /import \{ findPointInsidePolygon, getBbox \} from '\.\/utils\/geometry-math\.js';/);
+    assert.match(source, /import \{ findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry \} from '\.\/utils\/geometry-math\.js';/);
     assert.match(source, /import \{ displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath \} from '\.\/utils\/format-utils\.js';/);
     assert.match(source, /import \{ getThemeAccent, getThemeAccentLight \} from '\.\/utils\/color-utils\.js';/);
     assert.match(source, /import \{ canvasToTiffBlob, geojsonToGpx, geojsonToKml \} from '\.\/services\/format-converters\.js';/);
@@ -27,6 +27,7 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.doesNotMatch(source, /function geojsonToKml\(/);
     assert.doesNotMatch(source, /function geojsonToGpx\(/);
     assert.doesNotMatch(source, /function canvasToTiffBlob\(/);
+    assert.doesNotMatch(source, /function isPointInGeoJSONGeometry\(/);
     assert.doesNotMatch(source, /function getDefaultStyle\(/);
 });
 

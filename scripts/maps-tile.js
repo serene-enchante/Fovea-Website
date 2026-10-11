@@ -8,7 +8,7 @@ import { launchAppWithStoreFallback } from './services/app-launch-service.js';
 import { resolveAppInstructionConfig } from './services/app-instruction-config.js';
 import { canvasToTiffBlob, geojsonToGpx, geojsonToKml } from './services/format-converters.js';
 import { getAppSelectionTitle, getSelectionThumbnail } from './map/app-selection-presentation.js';
-import { findPointInsidePolygon, getBbox } from './utils/geometry-math.js';
+import { findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry } from './utils/geometry-math.js';
 import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
 import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
 
@@ -4459,30 +4459,6 @@ function rebuildGeoJsonLayer() {
     }
 
     updateAllFeatureStyles();
-}
-
-function isPointInRing(lng, lat, ring) {
-    let inside = false;
-    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-        const xi = ring[i][0], yi = ring[i][1];
-        const xj = ring[j][0], yj = ring[j][1];
-        const intersect = ((yi > lat) !== (yj > lat)) &&
-            (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
-        if (intersect) inside = !inside;
-    }
-    return inside;
-}
-
-function isPointInGeoJSONGeometry(lng, lat, geometry) {
-    if (!geometry) return false;
-    if (geometry.type === "Polygon") {
-        return isPointInRing(lng, lat, geometry.coordinates[0]);
-    } else if (geometry.type === "MultiPolygon") {
-        for (let poly of geometry.coordinates) {
-            if (isPointInRing(lng, lat, poly[0])) return true;
-        }
-    }
-    return false;
 }
 
 function checkUserLocationZone(latlng) {
