@@ -1,11 +1,8 @@
 import { state } from '../state.js';
 import { canvasToTiffBlob } from '../services/format-converters.js';
-import { handleSpatialFileShare } from '../services/file-download-service.js';
 import { FALLBACK_IMAGE, displayZoneId, normalizeZoneId } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { showToast } from '../components/toast-view.js';
-import { updateControlPositions } from '../components/mobile-view.js';
-import { adjustHeaderFontSize } from '../components/header-view.js';
 import { getLayoutScaleBar } from '../utils/map-print-math.js';
 import { getBbox } from '../utils/geometry-math.js';
 import { loadQrCodeImage } from '../services/qr-image-service.js';
@@ -663,60 +660,6 @@ export async function renderMapLayoutCanvas({
     ctx.fillText("Printed with Fovea | Esri World Topographic Basemap © Esri, DeLorme, NAVTEQ", mapMargin, footY + 86);
 
     return layoutCanvas;
-}
-
-export function setupMapEffectsAndFullscreen(mapWrapper) {
-    if (!mapWrapper) return;
-
-    mapWrapper.onmousemove = e => {
-        if (window.innerWidth <= 768) return;
-        const rect = mapWrapper.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        mapWrapper.style.setProperty("--mouse-x", `${x}px`);
-        mapWrapper.style.setProperty("--mouse-y", `${y}px`);
-    };
-
-    mapWrapper.onmouseleave = () => {
-        mapWrapper.style.setProperty("--mouse-x", `-1000px`);
-        mapWrapper.style.setProperty("--mouse-y", `-1000px`);
-    };
-
-    const triggerMobileHomeAnimation = () => {
-        if (window.innerWidth <= 768) {
-            const targets = document.querySelectorAll(".intro-header, .maps-tile-header, .maps-tile-sidebar");
-            targets.forEach(el => {
-                el.classList.remove("animate-mobile-slide-down");
-                void el.offsetWidth;
-                el.classList.add("animate-mobile-slide-down");
-            });
-        }
-    };
-
-    const handleResize = () => {
-        updateControlPositions();
-        adjustHeaderFontSize();
-        if (state.map) {
-            state.map.invalidateSize();
-            setTimeout(() => state.map.invalidateSize(), 50);
-            setTimeout(() => state.map.invalidateSize(), 200);
-            setTimeout(() => state.map.invalidateSize(), 400);
-        }
-        updateLabelZoomVisibility();
-    };
-
-    document.addEventListener("fullscreenchange", () => {
-        if (!document.fullscreenElement) {
-            mapWrapper.classList.remove("is-fullscreen");
-            triggerMobileHomeAnimation();
-        } else {
-            mapWrapper.classList.add("is-fullscreen");
-        }
-        handleResize();
-    });
-
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("orientationchange", handleResize);
 }
 
 // ──────────────────────────────────────────────────────────────
