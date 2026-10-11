@@ -68,9 +68,89 @@ export function switchBaseMap(baseMapId) {
 
 let watchId = null;
 
-// Stub for missing function from original code
-function updateUserLocationOnMap(lng, lat, accuracy) {
-    console.warn("updateUserLocationOnMap called but not fully implemented.", lng, lat, accuracy);
+function createAccuracyCircle(lng, lat, radiusMeters, pointCount = 64) {
+    const coordinates = [];
+    const earthRadius = 6371008.8;
+    const angularRadius = Math.max(0, radiusMeters) / earthRadius;
+    const latitude = lat * Math.PI / 180;
+    const longitude = lng * Math.PI / 180;
+
+    for (let index = 0; index <= pointCount; index += 1) {
+        const bearing = index / pointCount * Math.PI * 2;
+        const destinationLatitude = Math.asin(
+            Math.sin(latitude) * Math.cos(angularRadius) +
+            Math.cos(latitude) * Math.sin(angularRadius) * Math.cos(bearing)
+        );
+        const destinationLongitude = longitude + Math.atan2(
+            Math.sin(bearing) * Math.sin(angularRadius) * Math.cos(latitude),
+            Math.cos(angularRadius) - Math.sin(latitude) * Math.sin(destinationLatitude)
+        );
+        coordinates.push([destinationLongitude * 180 / Math.PI, destinationLatitude * 180 / Math.PI]);
+    }
+
+    return {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Polygon', coordinates: [coordinates] }
+    };
+}
+
+export function updateUserLocationOnMap(lng, lat, accuracy, mapState = state, onLocationUpdated = checkUserLocationZone) {
+    if (!mapState.map || !Number.isFinite(lng) || !Number.isFinite(lat)) return;
+
+    if (!mapState.userLocationMarker) {
+        const markerElement = document.createElement('div');
+        markerElement.className = 'user-location-marker';
+        markerElement.setAttribute('aria-label', 'Your location');
+        markerElement.innerHTML = '<span class="user-location-dot"></span>';
+        mapState.userLocationMarker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
+            .setLngLat([lng, lat])
+            .addTo(mapState.map);
+    } else {
+        mapState.userLocationMarker.setLngLat([lng, lat]);
+    }
+
+    const circleFeature = createAccuracyCircle(lng, lat, Number.isFinite(accuracy) ? accuracy : 0);
+    const accuracySource = mapState.map.getSource('user-accuracy-source');
+    if (accuracySource) {
+        accuracySource.setData(circleFeature);
+    } else if (mapState.map.isStyleLoaded()) {
+        mapState.map.addSource('user-accuracy-source', {
+            type: 'geojson',
+            data: circleFeature
+        });
+        mapState.map.addLayer({
+            id: 'user-accuracy-layer',
+            type: 'fill',
+            source: 'user-accuracy-source',
+            paint: {
+                'fill-color': '#64b5f6',
+                'fill-opacity': 0.16,
+                'fill-outline-color': '#64b5f6'
+            }
+        });
+    } else {
+        mapState.map.once('load', () => {
+            if (!mapState.isLocating || !mapState.map || mapState.map.getSource('user-accuracy-source')) return;
+            mapState.map.addSource('user-accuracy-source', {
+                type: 'geojson',
+                data: circleFeature
+            });
+            mapState.map.addLayer({
+                id: 'user-accuracy-layer',
+                type: 'fill',
+                source: 'user-accuracy-source',
+                paint: {
+                    'fill-color': '#64b5f6',
+                    'fill-opacity': 0.16,
+                    'fill-outline-color': '#64b5f6'
+                }
+            });
+        });
+    }
+
+    mapState.userLocationAccuracy = accuracy;
+    onLocationUpdated(mapState.userLocationMarker.getLngLat());
 }
 
 export function checkUserLocationZone(latlng) {

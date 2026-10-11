@@ -3,12 +3,15 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const mapPagePath = new URL('../maps/index.html', import.meta.url);
+const mapEntryPath = new URL('../scripts/maps/entry.js', import.meta.url);
 const mapScriptPath = new URL('../scripts/maps-tile.js', import.meta.url);
 
 test('the map page loads the map application as an ES module', async () => {
     const page = await readFile(mapPagePath, 'utf8');
 
-    assert.match(page, /<script type="module" src="\.\.\/scripts\/maps-tile\.js\?v=247"><\/script>/);
+    assert.match(page, /<script type="module" src="\.\.\/scripts\/maps\/entry\.js\?v=247"><\/script>/);
+    const entry = await readFile(mapEntryPath, 'utf8');
+    assert.match(entry, /import '\.\.\/maps-tile\.js';/);
     assert.match(page, /maplibre-gl\.js/);
     assert.match(page, /turf\.min\.js/);
 });

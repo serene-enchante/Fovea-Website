@@ -13,6 +13,7 @@ import { findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry } from './uti
 import { getLayoutScaleBar } from './utils/map-print-math.js';
 import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
 import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
+import { updateUserLocationOnMap as renderUserLocation } from './map/map-init.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -4462,7 +4463,7 @@ function toggleLocationTracking() {
                 const lng = position.coords.longitude;
                 const lat = position.coords.latitude;
                 const accuracy = position.coords.accuracy;
-                updateUserLocationOnMap(lng, lat, accuracy);
+                renderUserLocation(lng, lat, accuracy, state, checkUserLocationZone);
             },
             (error) => {
                 console.error("Location error:", error);
@@ -4473,67 +4474,6 @@ function toggleLocationTracking() {
             },
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
-    }
-}
-
-let lowResTilePreloadScheduled = false;
-
-function preloadGlobalLowResTiles() {
-    const tileUrls = [];
-    
-    // 1. Dark tiles (balanced across a, b, c, d subdomains)
-    const darkSubdomains = ['a', 'b', 'c', 'd'];
-    for (let z = 0; z <= 2; z++) {
-        const limit = Math.pow(2, z);
-        for (let x = 0; x < limit; x++) {
-            for (let y = 0; y < limit; y++) {
-                const subdomain = darkSubdomains[(x + y) % 4];
-                tileUrls.push(`https://${subdomain}.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png`);
-            }
-        }
-    }
-    
-    // 2. Satellite, Street, Topo tiles
-    const templates = [
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
-    ];
-    
-    templates.forEach(template => {
-        for (let z = 0; z <= 2; z++) {
-            const limit = Math.pow(2, z);
-            for (let x = 0; x < limit; x++) {
-                for (let y = 0; y < limit; y++) {
-                    tileUrls.push(template.replace("{z}", z).replace("{y}", y).replace("{x}", x));
-                }
-            }
-        }
-    });
-
-    // Load all in parallel via browser cache preloading
-    tileUrls.forEach(url => {
-        const img = new Image();
-        img.src = url;
-    });
-}
-
-function scheduleGlobalLowResTilesPreload() {
-    if (lowResTilePreloadScheduled) return;
-    lowResTilePreloadScheduled = true;
-
-    const preload = () => {
-        try {
-            preloadGlobalLowResTiles();
-        } catch (error) {
-            console.warn("Tile preloading failed:", error);
-        }
-    };
-
-    if (typeof window.requestIdleCallback === "function") {
-        window.requestIdleCallback(preload, { timeout: 5000 });
-    } else {
-        window.setTimeout(preload, 1500);
     }
 }
 
@@ -4564,9 +4504,6 @@ function initializeMap() {
         zoom: 11,
         attributionControl: false
     });
-
-    // Keep optional cache warming off the critical path for the first map render.
-    state.map.once('idle', scheduleGlobalLowResTilesPreload);
 
     // Set initial background color
     const initialTileMapEl = document.getElementById("tile-map");
