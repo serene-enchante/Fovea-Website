@@ -14,6 +14,7 @@ import { getLayoutScaleBar } from './utils/map-print-math.js';
 import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
 import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
 import { createMapInstance, updateUserLocationOnMap as renderUserLocation } from './map/map-init.js';
+import { addRasterBaseLayers } from './map/map-layers.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -4522,105 +4523,8 @@ function initializeMap() {
     state.map.on('style.load', () => {
         state.map.setProjection({ type: 'globe' });
 
-        // 1. Add raster sources programmatically
-        try {
-            state.map.addSource('satellite-tiles', {
-                type: 'raster',
-                tiles: [
-                    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                ],
-                tileSize: 128,
-                maxzoom: 18
-            });
-        } catch(e) { console.warn("Error adding satellite-tiles source:", e); }
-
-        try {
-            state.map.addSource('esri-street-tiles', {
-                type: 'raster',
-                tiles: [
-                    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
-                ],
-                tileSize: 256,
-                maxzoom: 18
-            });
-        } catch(e) { console.warn("Error adding esri-street-tiles source:", e); }
-
-        try {
-            state.map.addSource('esri-topo-tiles', {
-                type: 'raster',
-                tiles: [
-                    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
-                ],
-                tileSize: 256,
-                maxzoom: 18
-            });
-        } catch(e) { console.warn("Error adding esri-topo-tiles source:", e); }
-
-        try {
-            state.map.addSource('dark-tiles', {
-                type: 'raster',
-                tiles: [
-                    "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-                    "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-                    "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-                    "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
-                ],
-                tileSize: 128,
-                maxzoom: 19
-            });
-        } catch(e) { console.warn("Error adding dark-tiles source:", e); }
-
-        // 2. Add raster layers on top of vector layers (initially hidden unless active)
-        const activeLayerId = state.currentBaseLayer || "dark";
-
-        // Insert satellite layer below road network/labels so street lines and labels render as an overlay on top of satellite imagery
-        const beforeId = state.map.getLayer('tunnel_service_case') ? 'tunnel_service_case' :
-                         (state.map.getLayer('road_service_case') ? 'road_service_case' :
-                         (state.map.getLayer('waterway_label') ? 'waterway_label' : undefined));
-
-        try {
-            state.map.addLayer({
-                id: 'base-satellite',
-                type: 'raster',
-                source: 'satellite-tiles',
-                minzoom: 0,
-                maxzoom: 22,
-                layout: { visibility: activeLayerId === 'satellite' ? 'visible' : 'none' }
-            }, beforeId);
-        } catch(e) { console.warn("Error adding base-satellite layer:", e); }
-
-        try {
-            state.map.addLayer({
-                id: 'base-esri-street',
-                type: 'raster',
-                source: 'esri-street-tiles',
-                minzoom: 0,
-                maxzoom: 22,
-                layout: { visibility: activeLayerId === 'esri-street' ? 'visible' : 'none' }
-            });
-        } catch(e) { console.warn("Error adding base-esri-street layer:", e); }
-
-        try {
-            state.map.addLayer({
-                id: 'base-esri-topo',
-                type: 'raster',
-                source: 'esri-topo-tiles',
-                minzoom: 0,
-                maxzoom: 22,
-                layout: { visibility: activeLayerId === 'esri-topo' ? 'visible' : 'none' }
-            });
-        } catch(e) { console.warn("Error adding base-esri-topo layer:", e); }
-
-        try {
-            state.map.addLayer({
-                id: 'base-dark-raster',
-                type: 'raster',
-                source: 'dark-tiles',
-                minzoom: 0,
-                maxzoom: 22,
-                layout: { visibility: activeLayerId === 'dark-raster' ? 'visible' : 'none' }
-            });
-        } catch(e) { console.warn("Error adding base-dark-raster layer:", e); }
+        // Add the raster base-map sources and overlays through the map layer boundary.
+        addRasterBaseLayers(state.map, state.currentBaseLayer || "dark");
 
         // 3. Tweak vector styles to brighten land, forest green parks, and enlarge road/label names
         try {
