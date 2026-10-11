@@ -19,7 +19,7 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.match(source, /import \{ loadGeoDataset \} from '\.\/services\/geo-data-repository\.js';/);
     assert.match(source, /state\.allFeatures = await loadFeaturesForMapView\(initialFeature\);/);
     assert.match(source, /targetFeatures = await loadFeaturesForMapView\(featureName\);/);
-    assert.match(source, /import \{ getBbox \} from '\.\/utils\/geometry-math\.js';/);
+    assert.match(source, /import \{ findPointInsidePolygon, getBbox \} from '\.\/utils\/geometry-math\.js';/);
     assert.match(source, /import \{ displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath \} from '\.\/utils\/format-utils\.js';/);
 });
 

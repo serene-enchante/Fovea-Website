@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { getBbox } from '../scripts/utils/geometry-math.js';
+import { findPointInsidePolygon, getBbox } from '../scripts/utils/geometry-math.js';
 
 test('calculates bounds for polygons, multi-polygons, and points', () => {
     const features = [
@@ -15,4 +15,15 @@ test('calculates bounds for polygons, multi-polygons, and points', () => {
 
 test('returns the historical fallback bounds when no geometry is available', () => {
     assert.deepEqual(getBbox([]), [[-123.3, 43.9], [-122.9, 44.2]]);
+});
+
+test('finds a usable interior point for supported geometries', () => {
+    const polygon = {
+        type: 'Polygon',
+        coordinates: [[[0, 0], [4, 0], [4, 4], [0, 4], [0, 0]]]
+    };
+
+    assert.deepEqual(findPointInsidePolygon({ type: 'Point', coordinates: [1, 2] }), [1, 2]);
+    assert.deepEqual(findPointInsidePolygon(polygon), [2, 2]);
+    assert.equal(findPointInsidePolygon({ type: 'LineString', coordinates: [] }), null);
 });
