@@ -39,10 +39,10 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.doesNotMatch(source, /function getDefaultStyle\(/);
 });
 
-test('the map application uses the shared suggested-app configuration', async () => {
+test('the map application uses the shared suggested-app and Avenza modal components', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
 
-    assert.match(source, /import \{ resolveAppInstructionConfig \} from '\.\/services\/app-instruction-config\.js';/);
+    assert.match(source, /import \{ handleAppDirectOpen \} from '\.\/components\/avenza-modal-view\.js';/);
     assert.doesNotMatch(source, /const APP_FORMAT_PREFERENCES =/);
     assert.doesNotMatch(source, /const APP_INSTRUCTION_CONFIGS =/);
 });
