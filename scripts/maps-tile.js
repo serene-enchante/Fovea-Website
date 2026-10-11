@@ -25,7 +25,7 @@ import { setupMapViewportEffects } from './map/map-viewport.js';
 import { updateMapControlPositions } from './map/map-control-layout.js';
 import { adjustHeaderFontSize, getFitPadding, updateHeader } from './components/header-view.js';
 import { syncSidebarTabs } from './components/sidebar-tabs.js';
-import { setupSidebarCapsuleEvents } from './components/sidebar-capsule-events.js';
+import { activateSidebarTab, setupSidebarCapsuleEvents } from './components/sidebar-capsule-events.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
 import { state } from './state.js';
 
@@ -2345,6 +2345,11 @@ function updateSidebarBirdPanel(birdName, features, featuredPhotoUrl, photoCredi
 }
 
 function renderOverviewTab(listContainer, isCirclesFeature, isCircle, targetFeature) {
+    const activateTab = tab => activateSidebarTab(tab, {
+        state,
+        documentObject: document,
+        onRender: renderSidebarList
+    });
     const overviewEl = document.createElement("div");
     overviewEl.className = "sidebar-about-wrapper";
 
@@ -2556,76 +2561,31 @@ function renderOverviewTab(listContainer, isCirclesFeature, isCircle, targetFeat
     // Click handlers for Birds preview footer & header
     const birdsFooterBtn = overviewEl.querySelector(".sidebar-overview-preview__footer--birds");
     if (birdsFooterBtn) {
-        birdsFooterBtn.addEventListener("click", () => {
-            const birdsTab = document.querySelector('.sidebar-capsule[data-tab="birds"]');
-            state.activeTab = "birds";
-            if (birdsTab) {
-                const capsules = document.querySelectorAll(".sidebar-capsule");
-                capsules.forEach(c => c.classList.remove("is-active"));
-                birdsTab.classList.add("is-active");
-            }
-            renderSidebarList();
-        });
+        birdsFooterBtn.addEventListener("click", () => activateTab("birds"));
     }
 
     const birdsHeader = overviewEl.querySelector(".sidebar-overview-preview__header--birds");
     if (birdsHeader) {
         birdsHeader.style.cursor = "pointer";
-        birdsHeader.addEventListener("click", () => {
-            const birdsTab = document.querySelector('.sidebar-capsule[data-tab="birds"]');
-            state.activeTab = "birds";
-            if (birdsTab) {
-                const capsules = document.querySelectorAll(".sidebar-capsule");
-                capsules.forEach(c => c.classList.remove("is-active"));
-                birdsTab.classList.add("is-active");
-            }
-            renderSidebarList();
-        });
+        birdsHeader.addEventListener("click", () => activateTab("birds"));
     }
 
     // Click handler for preview footer button (switches to list tab)
     const footerBtn = overviewEl.querySelector(".sidebar-overview-preview:not(.sidebar-overview-preview--birds) .sidebar-overview-preview__footer");
     if (footerBtn) {
-        footerBtn.addEventListener("click", () => {
-            const itemsTab = document.querySelector('.sidebar-capsule[data-tab="items"]');
-            state.activeTab = "items";
-            if (itemsTab) {
-                const capsules = document.querySelectorAll(".sidebar-capsule");
-                capsules.forEach(c => c.classList.remove("is-active"));
-                itemsTab.classList.add("is-active");
-            }
-            renderSidebarList();
-        });
+        footerBtn.addEventListener("click", () => activateTab("items"));
     }
 
     const orgHeader = overviewEl.querySelector(".sidebar-overview-people__header");
     if (orgHeader) {
         orgHeader.style.cursor = "pointer";
-        orgHeader.addEventListener("click", () => {
-            const orgTab = document.querySelector('.sidebar-capsule[data-tab="organizers"]');
-            state.activeTab = "organizers";
-            if (orgTab) {
-                const capsules = document.querySelectorAll(".sidebar-capsule");
-                capsules.forEach(c => c.classList.remove("is-active"));
-                orgTab.classList.add("is-active");
-            }
-            renderSidebarList();
-        });
+        orgHeader.addEventListener("click", () => activateTab("organizers"));
     }
 
     const resHeader = overviewEl.querySelector(".sidebar-overview-resources__header");
     if (resHeader) {
         resHeader.style.cursor = "pointer";
-        resHeader.addEventListener("click", () => {
-            const resTab = document.querySelector('.sidebar-capsule[data-tab="resources"]');
-            state.activeTab = "resources";
-            if (resTab) {
-                const capsules = document.querySelectorAll(".sidebar-capsule");
-                capsules.forEach(c => c.classList.remove("is-active"));
-                resTab.classList.add("is-active");
-            }
-            renderSidebarList();
-        });
+        resHeader.addEventListener("click", () => activateTab("resources"));
     }
 
     // Click & hover handlers for preview tiles

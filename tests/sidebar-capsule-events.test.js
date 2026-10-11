@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { setupSidebarCapsuleEvents } from '../scripts/components/sidebar-capsule-events.js';
+import { activateSidebarTab, setupSidebarCapsuleEvents } from '../scripts/components/sidebar-capsule-events.js';
 
 function createCapsule(tab, active = false) {
     let clickHandler;
@@ -27,7 +27,10 @@ test('switches capsules and returns an active capsule to overview', () => {
     let renders = 0;
     setupSidebarCapsuleEvents({
         state,
-        documentObject: { querySelectorAll: () => capsules },
+        documentObject: {
+            querySelectorAll: () => capsules,
+            querySelector: selector => selector.includes('organizers') ? organizers : items
+        },
         onRender: () => renders++
     });
     const event = { prevented: false, stopped: false, preventDefault() { this.prevented = true; }, stopPropagation() { this.stopped = true; } };
@@ -60,4 +63,26 @@ test('reports unsupported capsule views without changing active state', () => {
     assert.deepEqual(messages, ['Settings view is not available (coming soon)']);
     assert.equal(state.activeTab, 'overview');
     assert.equal(renders, 0);
+});
+
+test('activates overview shortcut tabs through the shared handler', () => {
+    const birds = createCapsule('birds');
+    const organizers = createCapsule('organizers', true);
+    const capsules = [birds, organizers];
+    const state = { activeTab: 'organizers' };
+    let renders = 0;
+
+    activateSidebarTab('birds', {
+        state,
+        documentObject: {
+            querySelectorAll: () => capsules,
+            querySelector: selector => selector.includes('birds') ? birds : organizers
+        },
+        onRender: () => renders++
+    });
+
+    assert.equal(state.activeTab, 'birds');
+    assert.equal(birds.isActive(), true);
+    assert.equal(organizers.isActive(), false);
+    assert.equal(renders, 1);
 });
