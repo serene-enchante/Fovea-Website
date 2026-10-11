@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { getSelectedGeoJSONData } from '../scripts/services/geo-selection.js';
+import { findFeatureByZoneId, getSelectedGeoJSONData, zoneIdsMatch } from '../scripts/services/geo-selection.js';
 
 const CIRCLE_ID = 'ecbc-circle';
 const features = [
@@ -25,6 +25,13 @@ test('exports one selected zone using normalized zone IDs', () => {
     });
 
     assert.deepEqual(result.features.map(feature => feature.properties.zid), ['04']);
+});
+
+test('finds zone features with case-insensitive normalized IDs', () => {
+    assert.equal(findFeatureByZoneId(features, '05a'), features[1]);
+    assert.equal(findFeatureByZoneId(features, '4'), features[0]);
+    assert.equal(findFeatureByZoneId(features, '99'), undefined);
+    assert.equal(zoneIdsMatch(null, '04'), false);
 });
 
 test('exports the active feature set when a selected zone has no matching feature', () => {

@@ -9,14 +9,12 @@ import { disposeRasterCache, scheduleSelectionPreload } from './map-rendering.js
 import { getSuggestSelectionLabel } from '../components/feedback-form.js';
 import { showToast } from '../components/toast-view.js';
 import { serializeMapRoute } from './map-route-state.js';
+import { findFeatureByZoneId } from '../services/geo-selection.js';
 
 export function updateUrl(id) {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
-    const targetFeature = state.allFeatures.find(f => {
-        const zid = f.properties?.zid;
-        return zid && (zid.toLowerCase() === id?.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(id));
-    });
+    const targetFeature = findFeatureByZoneId(state.allFeatures, id);
     const selectedId = targetFeature?.properties?.zid || id;
     url.search = serializeMapRoute(url.search, {
         currentFeature: state.currentFeature,

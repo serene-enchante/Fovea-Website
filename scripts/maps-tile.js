@@ -1,7 +1,7 @@
 import { CIRCLE_ID } from './config/app-config.js';
 import { parseMapRoute, serializeMapRoute } from './map/map-route-state.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
-import { getSelectedGeoJSONData as createSelectedGeoJSONData } from './services/geo-selection.js';
+import { findFeatureByZoneId, getSelectedGeoJSONData as createSelectedGeoJSONData } from './services/geo-selection.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -2467,10 +2467,7 @@ function getInitialIdFromUrl() {
 
 function updateUrl(id) {
     const url = new URL(window.location.href);
-    const targetFeature = state.allFeatures.find(f => {
-        const zid = f.properties?.zid;
-        return zid && (zid.toLowerCase() === id?.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(id));
-    });
+    const targetFeature = findFeatureByZoneId(state.allFeatures, id);
     const selectedId = targetFeature?.properties?.zid || id;
     url.search = serializeMapRoute(url.search, {
         currentFeature: state.currentFeature,

@@ -1,9 +1,13 @@
 import { normalizeZoneId } from '../utils/format-utils.js';
 
-function idsMatch(left, right) {
+export function zoneIdsMatch(left, right) {
     if (left == null || right == null) return false;
     return String(left).toLowerCase() === String(right).toLowerCase()
         || normalizeZoneId(left) === normalizeZoneId(right);
+}
+
+export function findFeatureByZoneId(features, zoneId) {
+    return features.find(feature => zoneIdsMatch(feature.properties?.zid, zoneId));
 }
 
 /**
@@ -16,7 +20,7 @@ export function getSelectedGeoJSONData({ features = [], currentId, isCirclesFeat
     let selectedFeatures = features;
 
     if (!isCirclesFeature && currentId && currentId !== circleId) {
-        const target = features.find(feature => idsMatch(feature.properties?.zid, currentId));
+        const target = findFeatureByZoneId(features, currentId);
         if (target) selectedFeatures = [target];
     }
 
