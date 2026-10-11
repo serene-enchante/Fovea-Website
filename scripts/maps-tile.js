@@ -20,7 +20,7 @@ import {
     toggleLocationTracking as trackUserLocation
 } from './map/map-init.js';
 import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData } from './map/map-layers.js';
-import { setupMapHoverEvents } from './map/map-events.js';
+import { setupMapCanvasEvents, setupMapHoverEvents } from './map/map-events.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
 import { state } from './state.js';
 
@@ -4276,28 +4276,12 @@ function initializeMap() {
 
     updateControlPositions();
 
-    state.map.on("click", (e) => {
-        if (Date.now() - state.lastZoneClickTime < 250) {
-            return;
-        }
-        
-        const features = state.map.queryRenderedFeatures(e.point, { layers: ['zones-fill'] });
-        if (features.length === 0) {
-            if (!state.isCirclesFeature && state.currentId === CIRCLE_ID) {
-                switchToCirclesFeature();
-            } else {
-                selectSubject(CIRCLE_ID);
-            }
-        }
-    });
-
-    state.map.on("load", () => {
-        state.map.setProjection({ type: 'globe' });
-        state.map.dragPan.enable({
-            linearity: 0.15,
-            deceleration: 1000
-        });
-        rebuildGeoJsonLayer();
+    setupMapCanvasEvents({
+        map: state.map,
+        state,
+        onSelectCircles: () => selectSubject(CIRCLE_ID),
+        onSwitchToCircles: switchToCirclesFeature,
+        onLoad: rebuildGeoJsonLayer
     });
 
     setupMapEffectsAndFullscreen(mapWrapper);

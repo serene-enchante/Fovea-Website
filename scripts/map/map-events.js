@@ -1,4 +1,28 @@
 import { highlightTileItem, unhighlightTileItem } from '../components/sidebar-list.js';
+import { CIRCLE_ID } from '../config/app-config.js';
+
+export function setupMapCanvasEvents({ map, state, onSelectCircles, onSwitchToCircles, onLoad }) {
+    if (!map) return;
+
+    map.on('click', event => {
+        if (Date.now() - state.lastZoneClickTime < 250) return;
+
+        const features = map.queryRenderedFeatures(event.point, { layers: ['zones-fill'] });
+        if (features.length !== 0) return;
+
+        if (!state.isCirclesFeature && state.currentId === CIRCLE_ID) {
+            onSwitchToCircles?.();
+        } else {
+            onSelectCircles?.();
+        }
+    });
+
+    map.on('load', () => {
+        map.setProjection({ type: 'globe' });
+        map.dragPan.enable({ linearity: 0.15, deceleration: 1000 });
+        onLoad?.();
+    });
+}
 
 export function setupMapHoverEvents({ map, state, onFeatureClick }) {
     if (!map || state._zoneEventsAttached) return;
