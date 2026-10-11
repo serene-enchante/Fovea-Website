@@ -9,21 +9,14 @@ import { setupSuggestFormAndDrawing } from './feedback-form.js';
 import { renderSidebarList } from './sidebar-list.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { handleSpatialFileShare } from '../services/file-download-service.js';
+import { getDownloadFilename } from '../services/download-file-names.js';
 
 export function getActiveDownloadFilename(ext) {
-    let base = "map-data";
-    if (state.currentFeature === "circles") {
-        base = "circles-wgs84";
-    } else if (state.currentFeature === "florence") {
-        base = (state.currentId && state.currentId !== CIRCLE_ID) 
-            ? `Florence-Zone-${displayZoneId(state.currentId)}` 
-            : "Florence-00-wgs84";
-    } else {
-        base = (state.currentId && state.currentId !== CIRCLE_ID) 
-            ? `Eugene-Zone-${displayZoneId(state.currentId)}` 
-            : "Eugene-04-wgs84";
-    }
-    return `${base}.${ext}`;
+    return getDownloadFilename({
+        currentFeature: state.currentFeature,
+        currentId: state.currentId,
+        circleId: CIRCLE_ID
+    }, ext);
 }
 
 export async function generateAppSpatialBlob(formatKey) {

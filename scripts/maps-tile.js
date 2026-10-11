@@ -2,6 +2,7 @@ import { CIRCLE_ID } from './config/app-config.js';
 import { parseMapRoute, serializeMapRoute } from './map/map-route-state.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
 import { findFeatureByZoneId, getSelectedGeoJSONData as createSelectedGeoJSONData } from './services/geo-selection.js';
+import { getDownloadFilename } from './services/download-file-names.js';
 
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
@@ -750,19 +751,11 @@ function showToast(message, isError = false) {
 
 // --- Client-Side Exporter Helpers (GeoJSON, KMZ, GPX) ---
 function getActiveDownloadFilename(ext) {
-    let base = "map-data";
-    if (state.currentFeature === "circles") {
-        base = "circles-wgs84";
-    } else if (state.currentFeature === "florence") {
-        base = (state.currentId && state.currentId !== CIRCLE_ID) 
-            ? `Florence-Zone-${displayZoneId(state.currentId)}` 
-            : "Florence-00-wgs84";
-    } else {
-        base = (state.currentId && state.currentId !== CIRCLE_ID) 
-            ? `Eugene-Zone-${displayZoneId(state.currentId)}` 
-            : "Eugene-04-wgs84";
-    }
-    return `${base}.${ext}`;
+    return getDownloadFilename({
+        currentFeature: state.currentFeature,
+        currentId: state.currentId,
+        circleId: CIRCLE_ID
+    }, ext);
 }
 
 function getSelectedGeoJSONData() {
