@@ -1,6 +1,7 @@
 import { state } from '../state.js';
-import { EUGENE_GEOJSON_PATH, FLORENCE_GEOJSON_PATH, CIRCLES_GEOJSON_PATH, CIRCLE_ID } from '../config/app-config.js';
+import { CIRCLE_ID } from '../config/app-config.js';
 import { normalizeZoneId } from '../utils/format-utils.js';
+import { loadGeoDatasets } from './geo-data-repository.js';
 
 export function getSelectedGeoJSONData() {
     let features = state.allFeatures || [];
@@ -62,18 +63,7 @@ export function getInitialIdFromUrl() {
 }
 
 export async function loadBirdData() {
-        const [circlesRes, eugeneRes, florenceRes] = await Promise.all([
-            fetch(CIRCLES_GEOJSON_PATH),
-            fetch(EUGENE_GEOJSON_PATH),
-            fetch(FLORENCE_GEOJSON_PATH)
-        ]);
-        if (!circlesRes.ok) throw new Error(`Circles fetch failed (${circlesRes.status})`);
-        if (!eugeneRes.ok) throw new Error(`Eugene fetch failed (${eugeneRes.status})`);
-        if (!florenceRes.ok) throw new Error(`Florence fetch failed (${florenceRes.status})`);
-
-        const circlesData = await circlesRes.json();
-        const eugeneData = await eugeneRes.json();
-        const florenceData = await florenceRes.json();
+        const { circles: circlesData, eugene: eugeneData, florence: florenceData } = await loadGeoDatasets();
 
         state.circlesFeatures = Array.isArray(circlesData.features) ? circlesData.features : [];
         state.eugeneFeatures = Array.isArray(eugeneData.features) ? eugeneData.features : [];

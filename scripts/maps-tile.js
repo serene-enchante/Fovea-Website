@@ -1,7 +1,6 @@
-const EUGENE_GEOJSON_PATH = "../geojson/Eugene-04-wgs84.geojson";
-const FLORENCE_GEOJSON_PATH = "../geojson/Florence-00-wgs84.geojson";
-const CIRCLES_GEOJSON_PATH = "../geojson/circles-wgs84.geojson";
-const CIRCLE_ID = "ecbc-circle";
+import { CIRCLE_ID } from './config/app-config.js';
+import { loadGeoDatasets } from './services/geo-data-repository.js';
+
 const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
 // MapLibre prototype polyfill for Leaflet legacy compatibility
@@ -5500,6 +5499,8 @@ function toggleLocationTracking() {
     }
 }
 
+let lowResTilePreloadScheduled = false;
+
 function preloadGlobalLowResTiles() {
     const tileUrls = [];
     
@@ -5540,14 +5541,26 @@ function preloadGlobalLowResTiles() {
     });
 }
 
-function initializeMap() {
-    // Start preloading global low-resolution tiles in background
-    try {
-        preloadGlobalLowResTiles();
-    } catch (e) {
-        console.warn("Tile preloading failed:", e);
-    }
+function scheduleGlobalLowResTilesPreload() {
+    if (lowResTilePreloadScheduled) return;
+    lowResTilePreloadScheduled = true;
 
+    const preload = () => {
+        try {
+            preloadGlobalLowResTiles();
+        } catch (error) {
+            console.warn("Tile preloading failed:", error);
+        }
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(preload, { timeout: 5000 });
+    } else {
+        window.setTimeout(preload, 1500);
+    }
+}
+
+function initializeMap() {
     const mapContainer = document.getElementById("tile-map");
     const mapWrapper = document.getElementById("map-wrapper");
     if (!mapContainer) return;
@@ -5574,6 +5587,9 @@ function initializeMap() {
         zoom: 11,
         attributionControl: false
     });
+
+    // Keep optional cache warming off the critical path for the first map render.
+    state.map.once('idle', scheduleGlobalLowResTilesPreload);
 
     // Set initial background color
     const initialTileMapEl = document.getElementById("tile-map");
@@ -9414,18 +9430,7 @@ async function init() {
             state.currentBaseLayer = "default";
         }
 
-        const [circlesRes, eugeneRes, florenceRes] = await Promise.all([
-            fetch(CIRCLES_GEOJSON_PATH),
-            fetch(EUGENE_GEOJSON_PATH),
-            fetch(FLORENCE_GEOJSON_PATH)
-        ]);
-        if (!circlesRes.ok) throw new Error(`Circles fetch failed (${circlesRes.status})`);
-        if (!eugeneRes.ok) throw new Error(`Eugene fetch failed (${eugeneRes.status})`);
-        if (!florenceRes.ok) throw new Error(`Florence fetch failed (${florenceRes.status})`);
-
-        const circlesData = await circlesRes.json();
-        const eugeneData = await eugeneRes.json();
-        const florenceData = await florenceRes.json();
+        const { circles: circlesData, eugene: eugeneData, florence: florenceData } = await loadGeoDatasets();
 
         state.circlesFeatures = Array.isArray(circlesData.features) ? circlesData.features : [];
         state.eugeneFeatures = Array.isArray(eugeneData.features) ? eugeneData.features : [];
@@ -9892,6 +9897,4 @@ function setupMobileBottomNav() {
         }
     });
 }
-
-
 
