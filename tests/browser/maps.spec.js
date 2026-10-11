@@ -32,7 +32,8 @@ test('clears legacy deep-link parameters while selecting Eugene, circles, and Fl
     await expect(page).not.toHaveURL(/(?:\?|&)circle=/);
     await expect(page.locator('#header-title')).toContainText(/Coast to Cascades\s*Bird Alliance/);
 
-    await page.locator('.overview-preview-item[data-cid="Florence"]').click();
+    await page.locator('.sidebar-overview-preview__footer').click();
+    await page.locator('.tile-zone-item[data-id="Florence"]').click();
     await expect(page).toHaveURL(/feature=florence/);
     await expect(page).not.toHaveURL(/(?:\?|&)circle=/);
     await expect(page.locator('#header-title')).toContainText(/Florence Christmas Bird\s*Count Circle/);
