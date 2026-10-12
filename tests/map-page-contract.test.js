@@ -90,9 +90,10 @@ test('toolbar actions leave sidebar capsule events to the sidebar component', as
 
 test('the map application uses the shared cursor proximity tracker', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
+    const lifecycle = await readFile(new URL('../scripts/map/map-layer-lifecycle.js', import.meta.url), 'utf8');
 
-    assert.match(source, /import \{ setupProximityGlowCanvas, setupProximityTracking \} from '\.\/map\/map-proximity\.js';/);
-    assert.doesNotMatch(source, /function setupProximityTracking\(/);
+    assert.match(lifecycle, /import \{ setupProximityGlowCanvas, setupProximityTracking \} from '\.\/map-proximity\.js';/);
+    assert.match(source, /createMapLayerLifecycle\(\{/);
 });
 
 test('map resize and fullscreen behavior is owned by the viewport module', async () => {
@@ -102,6 +103,16 @@ test('map resize and fullscreen behavior is owned by the viewport module', async
     assert.match(source, /import \{ setupMapEffectsAndFullscreen \} from '\.\/map\/map-viewport\.js';/);
     assert.doesNotMatch(source, /function setupMapEffectsAndFullscreen\(/);
     assert.match(viewport, /export function setupMapEffectsAndFullscreen\(/);
+});
+
+test('map layer rebuild lifecycle is owned by a shared map controller', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const lifecycle = await readFile(new URL('../scripts/map/map-layer-lifecycle.js', import.meta.url), 'utf8');
+
+    assert.match(source, /createMapLayerLifecycle\(\{/);
+    assert.doesNotMatch(source, /function rebuildGeoJsonLayer\(/);
+    assert.match(lifecycle, /export function createMapLayerLifecycle\(/);
+    assert.match(lifecycle, /setupHoverEvents\(\{ map: state\.map, state, onFeatureClick \}\)/);
 });
 
 test('the map entry wires shared sidebar capsule events directly', async () => {

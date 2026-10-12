@@ -13,9 +13,9 @@ import {
     switchBaseMap as applyBaseMap,
     toggleLocationTracking as trackUserLocation
 } from './map/map-init.js';
-import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapStyleByIndex, updateAllFeatureStyles as updateMapFeatureStyles, updateLabelZoomVisibility, rebuildHtmlLabels as rebuildMapHtmlLabels } from './map/map-layers.js';
-import { setupMapCanvasEvents, setupMapHoverEvents } from './map/map-events.js';
-import { setupProximityGlowCanvas, setupProximityTracking } from './map/map-proximity.js';
+import { setupMapLayers, selectMapStyleByIndex, updateAllFeatureStyles as updateMapFeatureStyles, updateLabelZoomVisibility } from './map/map-layers.js';
+import { setupMapCanvasEvents } from './map/map-events.js';
+import { createMapLayerLifecycle } from './map/map-layer-lifecycle.js';
 import { setupMapEffectsAndFullscreen } from './map/map-viewport.js';
 import {
     cancelDownloadViewPreload,
@@ -231,7 +231,7 @@ async function loadFeaturesForMapView(featureName) {
 const featureTransitionController = createFeatureTransitionController({
     state,
     loadFeatures: loadFeaturesForMapView,
-    rebuildFeatures: rebuildGeoJsonLayer,
+    rebuildFeatures: (...args) => mapLayerLifecycle.rebuildGeoJsonLayer(...args),
     selectSubject,
     disposeRasterCache,
     getFitPadding,
@@ -239,6 +239,28 @@ const featureTransitionController = createFeatureTransitionController({
     isSuggestLocked: () => document.body.classList.contains('is-suggest-locked')
 });
 const { switchToFeature, switchToCirclesFeature } = featureTransitionController;
+const mapLayerLifecycle = createMapLayerLifecycle({
+    state,
+    updateLabelZoomVisibility,
+    updateFeatureStyles: updateAllFeatureStyles,
+    updateLocationZone,
+    onFeatureClick: ({ feature, featureId }) => {
+        const props = feature.properties || {};
+        if (state.isCirclesFeature) {
+            if (props.cid === "Eugene") {
+                switchToFeature("eugene", getBbox([feature]));
+            } else if (props.cid === "Florence") {
+                switchToFeature("florence", getBbox([feature]));
+            } else if (props.cid === "Oakridge" || props.cid === "Cottage Grove") {
+                showToast("There is no data for this count circle");
+            }
+        } else if (state.currentId === featureId) {
+            selectSubject(CIRCLE_ID);
+        } else {
+            selectSubject(featureId, true);
+        }
+    }
+});
 
 function selectSubject(id, triggerMapZoom = true, animate = true) {
     return selectMapSubject(id, triggerMapZoom, animate, {
@@ -302,59 +324,6 @@ selectBirdHandler = createBirdSelectionController({
 
 // HTML label overlay — repositions div labels on every map render
 
-
-function rebuildGeoJsonLayer() {
-    if (!state.map) return;
-    const { geojsonData, labelData } = buildZoneFeatureData(state.allFeatures, state.isCirclesFeature);
-    state.labelData = labelData;
-
-    if (state.map.getSource('zones')) {
-        state.map.getSource('zones').setData(geojsonData);
-        updateLabelZoomVisibility();
-        updateAllFeatureStyles();
-    } else {
-        addZoneFeatureLayers(state.map, geojsonData);
-
-        // Register map move/zoom listeners for HTML label repositioning (once)
-        if (!state._labelListenersAttached) {
-            state._labelListenersAttached = true;
-            state.map.on('move', rebuildMapHtmlLabels);
-            state.map.on('zoom', rebuildMapHtmlLabels);
-            state.map.on('render', rebuildMapHtmlLabels);
-        }
-        setupProximityTracking();
-        setupProximityGlowCanvas();
-        updateLabelZoomVisibility();
-        updateAllFeatureStyles();
-        
-        setupMapHoverEvents({
-            map: state.map,
-            state,
-            onFeatureClick: ({ feature, featureId }) => {
-                const props = feature.properties || {};
-                if (state.isCirclesFeature) {
-                    if (props.cid === "Eugene") {
-                        switchToFeature("eugene", getBbox([feature]));
-                    } else if (props.cid === "Florence") {
-                        switchToFeature("florence", getBbox([feature]));
-                    } else if (props.cid === "Oakridge" || props.cid === "Cottage Grove") {
-                        showToast("There is no data for this count circle");
-                    }
-                } else if (state.currentId === featureId) {
-                    selectSubject(CIRCLE_ID);
-                } else {
-                    selectSubject(featureId, true);
-                }
-            }
-        });
-    }
-
-    if (state.isLocating && state.userLocationMarker) {
-        updateLocationZone(state.userLocationMarker.getLngLat());
-    }
-
-    updateAllFeatureStyles();
-}
 
 function initializeMap() {
     const mapContainer = document.getElementById("tile-map");
@@ -815,7 +784,7 @@ function initializeMap() {
         state,
         onSelectCircles: () => selectSubject(CIRCLE_ID),
         onSwitchToCircles: switchToCirclesFeature,
-        onLoad: rebuildGeoJsonLayer
+        onLoad: mapLayerLifecycle.rebuildGeoJsonLayer
     });
 
     setupMapEffectsAndFullscreen(mapWrapper, {
