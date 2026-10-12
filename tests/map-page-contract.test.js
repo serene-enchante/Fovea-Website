@@ -46,3 +46,15 @@ test('the map application uses the shared suggested-app and Avenza modal compone
     assert.doesNotMatch(source, /const APP_FORMAT_PREFERENCES =/);
     assert.doesNotMatch(source, /const APP_INSTRUCTION_CONFIGS =/);
 });
+
+test('the map application uses shared toolbar setup with legacy map callbacks', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+
+    assert.match(source, /setupActionButtons as setupToolbarActionButtons/);
+    assert.match(source, /setupToolbarActionButtons\(\{/);
+    assert.match(source, /shareFile: handleSpatialFileShare/);
+    assert.match(source, /downloadPdf: button => downloadGeoPdf\(button\)/);
+    assert.match(source, /downloadTiff: button => downloadGeoTiff\(button\)/);
+    assert.match(source, /closeModals: closeAllModals/);
+    assert.doesNotMatch(source, /function setupActionButtons\(/);
+});

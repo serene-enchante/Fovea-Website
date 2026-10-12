@@ -607,7 +607,14 @@ export function setupDownloadAppSearch() {
     });
 }
 
-export function setupActionButtons() {
+export function setupActionButtons({
+    shareFile = handleSpatialFileShare,
+    notify = showToast,
+    downloadPdf = button => downloadGeoPdf(getActiveDownloadFilename("pdf"), button),
+    downloadTiff = button => downloadGeoTiff(getActiveDownloadFilename("tif"), button),
+    closeModals = closeAllModals
+} = {}) {
+    const closeAllModals = closeModals;
     const downloadModal = document.getElementById("downloads-modal");
     const copyModal = document.getElementById("copy-link-modal");
     const helpModal = document.getElementById("help-modal");
@@ -646,6 +653,19 @@ export function setupActionButtons() {
     };
     handleModalReparenting();
     window.addEventListener("resize", handleModalReparenting);
+
+    window.transitionToPage = function(dest) {
+        const overlay = document.getElementById("page-transition-overlay");
+        if (overlay) {
+            overlay.classList.remove("is-loaded");
+            overlay.classList.add("is-active");
+            setTimeout(() => {
+                window.location.href = dest;
+            }, 500);
+        } else {
+            window.location.href = dest;
+        }
+    };
 
     const toolbar = document.querySelector(".maps-tile-header__actions");
     if (toolbar) {
@@ -867,7 +887,9 @@ export function setupActionButtons() {
                         if (qrWrapper) qrWrapper.classList.remove("loading");
                         qrImg.style.opacity = "0.3";
                     };
-                    qrImg.src = `https://quickchart.io/qr?text=${encodeURIComponent(currentUrl)}&light=00000000&dark=b8b8b8&size=500&margin=0`;
+                    const isLightMode = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
+                    const qrColor = isLightMode ? "000000" : "b8b8b8";
+                    qrImg.src = `https://quickchart.io/qr?text=${encodeURIComponent(currentUrl)}&light=00000000&dark=${qrColor}&size=500&margin=0`;
                 }
                 copyModal.setAttribute("aria-hidden", "false");
                 copyModal.classList.add("is-open");
@@ -929,7 +951,7 @@ export function setupActionButtons() {
             });
         });
 
-        setupSpatialDownloadButtons();
+        setupSpatialDownloadButtons({ shareFile, notify, downloadPdf, downloadTiff });
 
     }
 
