@@ -1,6 +1,7 @@
 import { CIRCLE_ID } from './config/app-config.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
 import { getEbirdUrl } from './services/ebird-links.js';
+import { fetchBirdObservations, fetchTaxonDefaultPhoto } from './services/observations-client.js';
 import { getInitialIdFromUrl, getSelectedGeoJSONData } from './services/bird-data-service.js';
 import { handleSpatialFileShare as shareSpatialFile } from './services/file-download-service.js';
 import { launchAppWithStoreFallback } from './services/app-launch-service.js';
@@ -753,15 +754,6 @@ function setupBirdObservationsLayer() {
     }
 }
 
-function getCleanTaxonName(birdName) {
-    if (!birdName) return "";
-    let clean = birdName.trim();
-    if (clean.includes("(")) clean = clean.split("(")[0].trim();
-    if (clean.includes("&")) clean = clean.split("&")[0].trim();
-    if (clean.includes("/")) clean = clean.split("/")[0].trim();
-    return clean || birdName;
-}
-
 async function selectBird(birdName) {
     state.selectedBird = birdName;
     updateHeader(birdName);
@@ -789,26 +781,7 @@ async function selectBird(birdName) {
 
     try {
         const bbox = getBbox(targetFeature);
-        const [[swlng, swlat], [nelng, nelat]] = bbox;
-        const cleanName = getCleanTaxonName(birdName);
-        const encodedName = encodeURIComponent(cleanName);
-        let url = `https://api.inaturalist.org/v1/observations?taxon_name=${encodedName}&nelat=${nelat}&nelng=${nelng}&swlat=${swlat}&swlng=${swlng}&per_page=100&order=desc&order_by=observed_on`;
-
-        let resp = await fetch(url);
-        let data = resp.ok ? await resp.json() : null;
-
-        if (!data || !data.results || data.results.length === 0) {
-            url = `https://api.inaturalist.org/v1/observations?q=${encodedName}&nelat=${nelat}&nelng=${nelng}&swlat=${swlat}&swlng=${swlng}&per_page=100&order=desc&order_by=observed_on`;
-            const fallbackResp = await fetch(url);
-            if (fallbackResp.ok) {
-                const fallbackData = await fallbackResp.json();
-                if (fallbackData && fallbackData.results && fallbackData.results.length > 0) {
-                    data = fallbackData;
-                }
-            }
-        }
-
-        if (!data) throw new Error("Failed to fetch observations");
+        const data = await fetchBirdObservations(birdName, bbox);
 
         if (state.selectedBird !== birdName) return;
 
@@ -886,19 +859,11 @@ async function selectBird(birdName) {
         }
 
         if (!featuredPhotoUrl) {
-            try {
-                const taxonResp = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodedName}`);
-                if (taxonResp.ok) {
-                    const taxonData = await taxonResp.json();
-                    if (taxonData && taxonData.results && taxonData.results.length > 0) {
-                        const defaultPhoto = taxonData.results[0].default_photo;
-                        if (defaultPhoto) {
-                            featuredPhotoUrl = (defaultPhoto.medium_url || defaultPhoto.url || "").replace("square", "large").replace("medium", "large");
-                            photoCredit = defaultPhoto.attribution || "Photo via iNaturalist";
-                        }
-                    }
-                }
-            } catch (e) {}
+            const defaultPhoto = await fetchTaxonDefaultPhoto(birdName);
+            if (defaultPhoto) {
+                featuredPhotoUrl = (defaultPhoto.medium_url || defaultPhoto.url || "").replace("square", "large").replace("medium", "large");
+                photoCredit = defaultPhoto.attribution || "Photo via iNaturalist";
+            }
         }
 
         state.selectedBirdPhotoUrl = featuredPhotoUrl;
