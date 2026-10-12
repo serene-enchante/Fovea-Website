@@ -129,6 +129,16 @@ test('bird observations tab rendering and selection cleanup live in shared modul
     assert.match(selectionController, /export function clearBirdObservations\(/);
 });
 
+test('bird species guide rendering lives in its shared sidebar component', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const component = await readFile(new URL('../scripts/components/bird-species-list.js', import.meta.url), 'utf8');
+
+    assert.match(source, /renderBirdSpeciesList\(listContainer, \{ state, onSelectBird: selectBird/);
+    assert.doesNotMatch(source, /function renderBirdsList\(/);
+    assert.match(component, /export function renderBirdSpeciesList\(/);
+    assert.match(component, /onSelectBird\(bird\.name\)/);
+});
+
 test('bird selection and observation loading are owned by the shared map controller', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
     const controller = await readFile(new URL('../scripts/map/bird-selection-controller.js', import.meta.url), 'utf8');
