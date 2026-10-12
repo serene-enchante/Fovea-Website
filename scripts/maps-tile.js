@@ -15,6 +15,7 @@ import {
 } from './map/map-init.js';
 import { setupMapLayers, selectMapStyleByIndex, updateAllFeatureStyles as updateMapFeatureStyles, updateLabelZoomVisibility } from './map/map-layers.js';
 import { setupMapCanvasEvents } from './map/map-events.js';
+import { setupMapNavigationControls } from './map/map-controls.js';
 import { createMapLayerLifecycle } from './map/map-layer-lifecycle.js';
 import { setupMapEffectsAndFullscreen } from './map/map-viewport.js';
 import {
@@ -387,109 +388,13 @@ function initializeMap() {
         { id: "esri-topo", name: "Topo Map", layerId: "base-esri-topo" }
     ];
 
-    // Create custom controls container
-    let controlContainer = document.querySelector(".map-ctrl-container");
-    if (!controlContainer) {
-        controlContainer = document.createElement("div");
-        controlContainer.className = "map-ctrl-container";
-
-        const topLeft = document.createElement("div");
-        topLeft.className = "map-ctrl-panel map-ctrl-panel--left";
-        controlContainer.appendChild(topLeft);
-
-        const topRight = document.createElement("div");
-        topRight.className = "map-ctrl-panel map-ctrl-panel--right";
-        controlContainer.appendChild(topRight);
-
-        mapWrapper.appendChild(controlContainer);
-    }
-
-    const topLeft = controlContainer.querySelector(".map-ctrl-panel.map-ctrl-panel--left");
-
-    // 1. Zoom Control
-    const zoomDiv = document.createElement("div");
-    zoomDiv.className = "map-ctrl-zoom map-ctrl-bar map-ctrl";
-    
-    const zoomInBtn = document.createElement("a");
-    zoomInBtn.className = "map-ctrl-zoom-in";
-    zoomInBtn.href = "#";
-    zoomInBtn.title = "Zoom in";
-    zoomInBtn.role = "button";
-    zoomInBtn.setAttribute("aria-label", "Zoom in");
-    zoomInBtn.textContent = "+";
-    zoomInBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (state.map) state.map.zoomIn();
+    const { topLeft } = setupMapNavigationControls({
+        mapWrapper,
+        state,
+        documentObject: document,
+        onLocate: trackUserLocation,
+        onToggleFullscreen: toggleFullscreen
     });
-    
-    const zoomOutBtn = document.createElement("a");
-    zoomOutBtn.className = "map-ctrl-zoom-out";
-    zoomOutBtn.href = "#";
-    zoomOutBtn.title = "Zoom out";
-    zoomOutBtn.role = "button";
-    zoomOutBtn.setAttribute("aria-label", "Zoom out");
-    zoomOutBtn.innerHTML = "&#x2212;";
-    zoomOutBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (state.map) state.map.zoomOut();
-    });
-
-    zoomDiv.appendChild(zoomInBtn);
-    zoomDiv.appendChild(zoomOutBtn);
-    topLeft.appendChild(zoomDiv);
-
-    // 2. Locate Control
-    const locateDiv = document.createElement("div");
-    locateDiv.className = "map-ctrl-bar map-ctrl map-ctrl-locate";
-    
-    const locateBtn = document.createElement("a");
-    locateBtn.className = "map-ctrl-locate-btn";
-    locateBtn.href = "#";
-    locateBtn.title = "Show My Location";
-    locateBtn.role = "button";
-    locateBtn.setAttribute("aria-label", "Show My Location");
-    locateBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="8"></circle>
-            <line x1="12" y1="2" x2="12" y2="4"></line>
-            <line x1="12" y1="20" x2="12" y2="22"></line>
-            <line x1="2" y1="12" x2="4" y2="12"></line>
-            <line x1="20" y1="12" x2="22" y2="12"></line>
-            <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
-        </svg>
-    `;
-    locateBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        trackUserLocation(state);
-    });
-    locateDiv.appendChild(locateBtn);
-    topLeft.appendChild(locateDiv);
-
-    // 3. Fullscreen Control
-    const fsDiv = document.createElement("div");
-    fsDiv.className = "map-ctrl-bar map-ctrl map-ctrl-fullscreen";
-    
-    const fsBtn = document.createElement("a");
-    fsBtn.className = "map-ctrl-fullscreen-btn";
-    fsBtn.href = "#";
-    fsBtn.title = "Toggle Fullscreen";
-    fsBtn.role = "button";
-    fsBtn.setAttribute("aria-label", "Toggle Fullscreen");
-    fsBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-        </svg>
-    `;
-    fsBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleFullscreen();
-    });
-    fsDiv.appendChild(fsBtn);
-    topLeft.appendChild(fsDiv);
 
     // 4. Map Style Control (Custom Reimplementation)
     const layersDiv = document.createElement("div");

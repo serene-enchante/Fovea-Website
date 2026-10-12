@@ -115,6 +115,15 @@ test('map layer rebuild lifecycle is owned by a shared map controller', async ()
     assert.match(lifecycle, /setupHoverEvents\(\{ map: state\.map, state, onFeatureClick \}\)/);
 });
 
+test('navigation controls are created by the shared map controls module', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const controls = await readFile(new URL('../scripts/map/map-controls.js', import.meta.url), 'utf8');
+
+    assert.match(source, /setupMapNavigationControls\(\{/);
+    assert.doesNotMatch(source, /map-ctrl-zoom-in/);
+    assert.match(controls, /export function setupMapNavigationControls\(/);
+});
+
 test('the map entry wires shared sidebar capsule events directly', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
 
