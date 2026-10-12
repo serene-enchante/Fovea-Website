@@ -181,6 +181,16 @@ test('help mode delegates map keyboard shortcuts to a separate controller', asyn
     assert.match(shortcuts, /updateKeyboardFocus\(/);
 });
 
+test('map help tooltip copy is stored in the shared configuration module', async () => {
+    const helpMode = await readFile(new URL('../scripts/components/map-modals.js', import.meta.url), 'utf8');
+    const content = await readFile(new URL('../scripts/config/map-help-content.js', import.meta.url), 'utf8');
+
+    assert.match(helpMode, /import \{ MAP_HELP_CONTENT \} from '\.\.\/config\/map-help-content\.js';/);
+    assert.match(helpMode, /const helpDictionary = MAP_HELP_CONTENT/);
+    assert.doesNotMatch(helpMode, /const helpDictionary = \[/);
+    assert.match(content, /export const MAP_HELP_CONTENT = \[/);
+});
+
 test('the map entry wires shared sidebar capsule events directly', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
 
