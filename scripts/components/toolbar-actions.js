@@ -1049,31 +1049,6 @@ export async function performDirectCopyLink() {
     }
 }
 
-export function setupCapsules() {
-    const capsules = document.querySelectorAll(".sidebar-capsule");
-    capsules.forEach(cap => {
-        cap.addEventListener("click", (e) => {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            const tab = cap.getAttribute("data-tab");
-            if (tab === "tools") {
-                showToast("Tools view is not available (coming soon)");
-                return;
-            }
-            if (tab === "settings") {
-                showToast("Settings view is not available (coming soon)");
-                return;
-            }
-            capsules.forEach(c => c.classList.remove("is-active"));
-            cap.classList.add("is-active");
-            state.activeTab = tab || "items";
-            renderSidebarList();
-        });
-    });
-}
-
 export function setupViewToggleMenu() {
     const toggleBtn = document.getElementById("header-view-toggle");
     const menuEl = document.getElementById("header-view-menu");

@@ -76,3 +76,11 @@ test('map modals leave image lightbox behavior to the shared lightbox component'
     assert.doesNotMatch(mapModals, /function setupImageLightbox\(/);
     assert.match(imageLightbox, /export function setupImageLightbox\(/);
 });
+
+test('toolbar actions leave sidebar capsule events to the sidebar component', async () => {
+    const toolbarActions = await readFile(new URL('../scripts/components/toolbar-actions.js', import.meta.url), 'utf8');
+    const capsuleEvents = await readFile(new URL('../scripts/components/sidebar-capsule-events.js', import.meta.url), 'utf8');
+
+    assert.doesNotMatch(toolbarActions, /function setupCapsules\(/);
+    assert.match(capsuleEvents, /export function setupSidebarCapsuleEvents\(/);
+});
