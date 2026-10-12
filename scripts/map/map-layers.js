@@ -275,7 +275,10 @@ export function rebuildHtmlLabels() {
         circleCutoff = 7.5;
         zoneCutoff = 9.0;
     }
-    const isLightBasemap = state.currentBaseLayer === 'esri-street' || state.currentBaseLayer === 'esri-topo';
+    const isLightModeTheme = document.body.classList.contains('theme-light') ||
+        document.documentElement.getAttribute('data-theme') === 'light';
+    const isLightBasemap = state.currentBaseLayer === 'esri-street' || state.currentBaseLayer === 'esri-topo' ||
+        (state.currentBaseLayer === 'default' && isLightModeTheme);
 
     // Remove labels that no longer match current feature set
     const currentIds = new Set(state.labelData.map(d => d.id));
@@ -339,9 +342,9 @@ export function rebuildHtmlLabels() {
         el.style.fontSize = `${fontSize}px`;
         el.style.opacity = fontSize > 0 ? '1' : '0';
         el.style.pointerEvents = 'none';
-        el.style.color = isLightBasemap ? '#111' : '#c8c8c8';
+        el.style.color = isLightBasemap ? '#000000' : '#c8c8c8';
         el.style.textShadow = isLightBasemap
-            ? '0 0 4px rgba(255,255,255,0.95), 0 0 6px rgba(255,255,255,0.9)'
+            ? 'none'
             : '0 0 4px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)';
     });
 }

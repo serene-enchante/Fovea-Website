@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { addRasterBaseLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapStyleByIndex, updateAllFeatureStyles } from '../scripts/map/map-layers.js';
+import { addRasterBaseLayers, addZoneFeatureLayers, buildZoneFeatureData, rebuildHtmlLabels, selectMapStyleByIndex, updateAllFeatureStyles } from '../scripts/map/map-layers.js';
 import { state } from '../scripts/state.js';
 
 test('selects a map style, updates its radio control, and notifies the user', () => {
@@ -152,5 +152,48 @@ test('applies the production light-theme feature colors and updates supplemental
         }
         if (originalDocument) Object.defineProperty(globalThis, 'document', originalDocument);
         else delete globalThis.document;
+    }
+});
+
+test('renders HTML labels with the production light-theme default-basemap colors', () => {
+    const originals = ['document', 'window'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
+    const stateKeys = ['map', 'labelData', 'isCirclesFeature', 'currentFeature', 'currentBaseLayer'];
+    const originalState = Object.fromEntries(stateKeys.map(key => [key, state[key]]));
+    const label = { style: {}, dataset: { labelId: '04' } };
+    const overlay = {
+        querySelectorAll: () => [],
+        querySelector: () => label,
+        appendChild: () => {}
+    };
+
+    try {
+        globalThis.document = {
+            body: { classList: { contains: () => false } },
+            documentElement: { getAttribute: name => name === 'data-theme' ? 'light' : null },
+            getElementById: () => overlay,
+            createElement: () => label
+        };
+        globalThis.window = { innerWidth: 1024 };
+        Object.assign(state, {
+            map: { getZoom: () => 10, project: () => ({ x: 20, y: 30 }), getCanvas: () => ({}) },
+            labelData: [{ id: '04', lng: 0, lat: 0, text: '04', degWidth: 1, textLen: 2, isCircle: false }],
+            isCirclesFeature: false,
+            currentFeature: 'eugene',
+            currentBaseLayer: 'default'
+        });
+
+        rebuildHtmlLabels();
+
+        assert.equal(label.style.color, '#000000');
+        assert.equal(label.style.textShadow, 'none');
+    } finally {
+        for (const key of stateKeys) {
+            if (originalState[key] === undefined) delete state[key];
+            else state[key] = originalState[key];
+        }
+        for (const [key, descriptor] of originals) {
+            if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+            else delete globalThis[key];
+        }
     }
 });
