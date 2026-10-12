@@ -98,9 +98,10 @@ test('the map application uses the shared cursor proximity tracker', async () =>
 
 test('map resize and fullscreen behavior is owned by the viewport module', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
+    const runtime = await readFile(new URL('../scripts/map/map-runtime.js', import.meta.url), 'utf8');
     const viewport = await readFile(new URL('../scripts/map/map-viewport.js', import.meta.url), 'utf8');
 
-    assert.match(source, /import \{ setupMapEffectsAndFullscreen \} from '\.\/map\/map-viewport\.js';/);
+    assert.match(runtime, /import \{ setupMapEffectsAndFullscreen \} from '\.\/map-viewport\.js';/);
     assert.doesNotMatch(source, /function setupMapEffectsAndFullscreen\(/);
     assert.match(viewport, /export function setupMapEffectsAndFullscreen\(/);
 });
@@ -119,17 +120,32 @@ test('navigation controls are created by the shared map controls module', async 
     const source = await readFile(mapScriptPath, 'utf8');
     const controls = await readFile(new URL('../scripts/map/map-controls.js', import.meta.url), 'utf8');
 
-    assert.match(source, /setupMapNavigationControls\(\{/);
+    assert.match(source, /initializeMapRuntime\(\{/);
+    assert.match(source, /onToggleFullscreen: toggleFullscreen/);
     assert.doesNotMatch(source, /map-ctrl-zoom-in/);
     assert.match(controls, /export function setupMapNavigationControls\(/);
+});
+
+test('map runtime owns map construction and passes page actions into map setup', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const runtime = await readFile(new URL('../scripts/map/map-runtime.js', import.meta.url), 'utf8');
+
+    assert.match(source, /initializeMapRuntime\(\{[\s\S]*onSelectCircles: \(\) => selectSubject\(CIRCLE_ID\)/);
+    assert.match(runtime, /export function initializeMapRuntime\(\{/);
+    assert.match(runtime, /createMapInstance\(maplibregl/);
+    assert.match(runtime, /setupMapCanvasEvents\(/);
+    assert.match(runtime, /setupMapStyleControl\(/);
+    assert.match(runtime, /documentObject = globalThis\.document/);
 });
 
 test('map style picker behavior is owned by a shared map control module', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
     const styleControl = await readFile(new URL('../scripts/map/map-style-control.js', import.meta.url), 'utf8');
 
-    assert.match(source, /setupMapStyleControl\(\{/);
+    const runtime = await readFile(new URL('../scripts/map/map-runtime.js', import.meta.url), 'utf8');
+    assert.match(source, /initializeMapRuntime\(\{/);
     assert.doesNotMatch(source, /map-ctrl-styles__toggle/);
+    assert.match(runtime, /setupMapStyleControl\(\{/);
     assert.match(styleControl, /export function setupMapStyleControl\(/);
     assert.match(styleControl, /onSwitchBaseMap\(b\.id\)/);
     assert.match(styleControl, /onSelectSubject\(state\.currentId, true\)/);

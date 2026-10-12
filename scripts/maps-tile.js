@@ -9,18 +9,14 @@ import { findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry } from './uti
 import { formatArea, formatDate, normalizeZoneId } from './utils/format-utils.js';
 import {
     checkUserLocationZone as updateLocationZone,
-    createMapInstance,
     switchBaseMap as applyBaseMap,
     toggleLocationTracking as trackUserLocation
 } from './map/map-init.js';
-import { setupMapLayers, selectMapStyleByIndex, updateAllFeatureStyles as updateMapFeatureStyles, updateLabelZoomVisibility } from './map/map-layers.js';
-import { setupMapCanvasEvents } from './map/map-events.js';
-import { setupMapNavigationControls } from './map/map-controls.js';
-import { setupMapStyleControl } from './map/map-style-control.js';
+import { selectMapStyleByIndex, updateAllFeatureStyles as updateMapFeatureStyles, updateLabelZoomVisibility } from './map/map-layers.js';
+import { initializeMapRuntime } from './map/map-runtime.js';
 import { setupMapPageNavigation } from './map/map-page-navigation.js';
 import { setupPageTransitionEvents } from './components/page-transition-events.js';
 import { createMapLayerLifecycle } from './map/map-layer-lifecycle.js';
-import { setupMapEffectsAndFullscreen } from './map/map-viewport.js';
 import {
     cancelDownloadViewPreload,
     disposeRasterCache,
@@ -330,98 +326,18 @@ selectBirdHandler = createBirdSelectionController({
 
 
 function initializeMap() {
-    const mapContainer = document.getElementById("tile-map");
-    const mapWrapper = document.getElementById("map-wrapper");
-    if (!mapContainer) return;
-
-    const isLightMode = document.body.classList.contains("theme-light") || state.currentBaseLayer === "esri-street" || (document.documentElement.getAttribute("data-theme") === "light");
-    const defaultVectorStyle = isLightMode
-        ? "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
-        : "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
-
-    state.map = createMapInstance(maplibregl, {
-        container: 'tile-map',
-        preserveDrawingBuffer: true,
-        maxZoom: 20,
-        minZoom: 0,
-        maxTileCacheSize: 2500,
-        prefetchZoomDelta: 8,
-        projection: { type: 'globe' },
-        dragPan: {
-            linearity: 0.15,
-            deceleration: 1000
-        },
-        style: defaultVectorStyle,
-        center: [-123.11, 44.05],
-        zoom: 11,
-        attributionControl: false
-    });
-
-    // Set initial background color
-    const initialTileMapEl = document.getElementById("tile-map");
-    if (initialTileMapEl) {
-        const bg = isLightMode ? "#f8f9fa" : "#000000";
-        initialTileMapEl.style.setProperty("background-color", bg, "important");
-        initialTileMapEl.style.setProperty("background", bg, "important");
-    }
-
-    // Configure smooth inertial scroll zoom rates for trackpad and mouse wheel (Google Earth style)
-    if (state.map.scrollZoom) {
-        state.map.scrollZoom.setWheelZoomRate(1 / 750);
-        state.map.scrollZoom.setZoomRate(1 / 150);
-    }
-    
-    setupMapLayers(state);
-
-    try {
-        state.map.setProjection({ type: 'globe' });
-    } catch(e) {
-        console.warn("Immediate setProjection not supported yet:", e);
-    }
-
-    // Disable rotation on mobile (touch devices) – preserve pinch-to-zoom only
-    if (/Mobi|Android|iPhone|iPad|iPod|Touch/i.test(navigator.userAgent) || window.innerWidth <= 768) {
-        state.map.touchZoomRotate.disableRotation();
-    }
-
-    state.baseMapsList = [
-        { id: "default", name: "Default", layerId: "base-dark-vector" },
-        { id: "satellite", name: "Satellite Map", layerId: "base-satellite" },
-        { id: "esri-street", name: "Street Map", layerId: "base-esri-street" },
-        { id: "esri-topo", name: "Topo Map", layerId: "base-esri-topo" }
-    ];
-
-    const { topLeft } = setupMapNavigationControls({
-        mapWrapper,
+    return initializeMapRuntime({
+        maplibregl,
         state,
-        documentObject: document,
-        onLocate: trackUserLocation,
-        onToggleFullscreen: toggleFullscreen
-    });
-
-    setupMapStyleControl({
-        topLeft,
-        state,
-        documentObject: document,
+        mapLayerLifecycle,
         onSelectSubject: selectSubject,
-        onSwitchBaseMap: switchBaseMap,
-        notify: showToast,
-        fallbackImage: FALLBACK_IMAGE
-    });
-
-    updateControlPositions();
-
-    setupMapCanvasEvents({
-        map: state.map,
-        state,
         onSelectCircles: () => selectSubject(CIRCLE_ID),
         onSwitchToCircles: switchToCirclesFeature,
-        onLoad: mapLayerLifecycle.rebuildGeoJsonLayer
-    });
-
-    setupMapEffectsAndFullscreen(mapWrapper, {
-        state,
+        onSwitchBaseMap: switchBaseMap,
+        onLocate: trackUserLocation,
+        onToggleFullscreen: toggleFullscreen,
         updateControlPositions,
+        notify: showToast,
         adjustHeaderFontSize,
         updateLabelZoomVisibility
     });
