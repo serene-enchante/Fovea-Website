@@ -29,7 +29,9 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.match(selectionController, /targetFeatures = await loadFeatures\(featureName\);/);
     assert.match(source, /import \{ findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry \} from '\.\/utils\/geometry-math\.js';/);
     assert.match(source, /import \{ displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath \} from '\.\/utils\/format-utils\.js';/);
-    assert.match(source, /import \{ getThemeAccent, getThemeAccentLight \} from '\.\/utils\/color-utils\.js';/);
+    assert.match(source, /updateAllFeatureStyles as updateMapFeatureStyles/);
+    const mapLayers = await readFile(new URL('../scripts/map/map-layers.js', import.meta.url), 'utf8');
+    assert.match(mapLayers, /getThemeAccent\(\)/);
     assert.match(source, /import \{ canvasToTiffBlob, geojsonToGpx, geojsonToKml \} from '\.\/services\/format-converters\.js';/);
     assert.doesNotMatch(source, /function generateZoneGeometrySVG\(/);
     assert.doesNotMatch(source, /function geojsonToKml\(/);

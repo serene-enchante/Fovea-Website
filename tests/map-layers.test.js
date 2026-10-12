@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { addRasterBaseLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapStyleByIndex } from '../scripts/map/map-layers.js';
+import { addRasterBaseLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapStyleByIndex, updateAllFeatureStyles } from '../scripts/map/map-layers.js';
+import { state } from '../scripts/state.js';
 
 test('selects a map style, updates its radio control, and notifies the user', () => {
     const visible = new Set(['layer-dark']);
@@ -102,4 +103,54 @@ test('groups features by their active ID and builds matching HTML label data', (
     ]);
     assert.ok(labelData.every(({ lng, lat, degWidth, textLen }) =>
         Number.isFinite(lng) && Number.isFinite(lat) && degWidth > 0 && textLen === 2));
+});
+
+test('applies the production light-theme feature colors and updates supplemental layers', () => {
+    const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+    const stateKeys = ['map', 'allFeatures', 'isCirclesFeature', 'currentFeature', 'currentId', 'currentBaseLayer', '_originalPlaceFilters', '_lastHiddenCircleNames', 'labelData'];
+    const originalState = Object.fromEntries(stateKeys.map(key => [key, state[key]]));
+    const paints = new Map();
+    const featureStates = [];
+    const classes = new Set();
+    let supplementalUpdateCount = 0;
+
+    try {
+        globalThis.document = {
+            body: { classList: { add: value => classes.add(value), remove: value => classes.delete(value), contains: () => false } },
+            documentElement: { getAttribute: name => name === 'data-theme' ? 'light' : null },
+            querySelector: () => null,
+            getElementById: () => null
+        };
+        Object.assign(state, {
+            map: {
+                getSource: id => id === 'zones' ? {} : null,
+                getLayer: id => ['zones-fill', 'zones-outline', 'zones-outline-highlight'].includes(id) ? { id } : null,
+                setFeatureState: (...args) => featureStates.push(args),
+                setPaintProperty: (layer, property, value) => paints.set(`${layer}:${property}`, value)
+            },
+            allFeatures: [{ properties: { zid: '04' } }],
+            isCirclesFeature: false,
+            currentFeature: 'eugene',
+            currentId: '04',
+            currentBaseLayer: 'default',
+            _originalPlaceFilters: undefined,
+            _lastHiddenCircleNames: undefined,
+            labelData: []
+        });
+
+        updateAllFeatureStyles({ updateAdditionalLayers: () => supplementalUpdateCount++ });
+
+        assert.equal(supplementalUpdateCount, 1);
+        assert.deepEqual(featureStates, [[{ source: 'zones', id: '04' }, { selected: true }]]);
+        assert.equal(classes.has('is-light-basemap'), true);
+        assert.ok(JSON.stringify(paints.get('zones-fill:fill-opacity')).includes('0.15'));
+        assert.equal(paints.get('zones-outline:line-color')[2], '#64b5f6');
+    } finally {
+        for (const key of stateKeys) {
+            if (originalState[key] === undefined) delete state[key];
+            else state[key] = originalState[key];
+        }
+        if (originalDocument) Object.defineProperty(globalThis, 'document', originalDocument);
+        else delete globalThis.document;
+    }
 });

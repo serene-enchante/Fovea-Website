@@ -116,32 +116,34 @@ export function updatePlaceLabelsFilter() {
     });
 }
 
-export function updateAllFeatureStyles() {
+export function updateAllFeatureStyles({ updateAdditionalLayers = () => {} } = {}) {
     if (!state.map || !state.map.getSource('zones')) return;
     
     // Dynamically filter circle place names from basemap on circles overview view
     try {
         updatePlaceLabelsFilter();
-    } catch(e) { console.warn("Error updating place labels filter:", e); }
+        updateAdditionalLayers();
+    } catch(e) { console.warn("Error updating map layer styles:", e); }
     
     // We update all features state based on currentId
     (state.allFeatures || []).forEach(feature => {
         const props = feature.properties || {};
         const key = state.isCirclesFeature ? String(props.cid || "") : String(props.zid || "");
         if (!key) return;
-        const isSelected = state.currentId !== CIRCLE_ID && (key === state.currentId || (typeof normalizeZoneId === "function" && normalizeZoneId(key) === normalizeZoneId(state.currentId)));
+        const isSelected = state.currentId !== CIRCLE_ID && (key === state.currentId || normalizeZoneId(key) === normalizeZoneId(state.currentId));
         try {
             state.map.setFeatureState(
                 { source: 'zones', id: key },
                 { selected: isSelected }
             );
         } catch (e) {
-            // Silently ignore if source tiles are not indexed yet
+            // Feature state can be unavailable while vector tiles are loading.
         }
     });
 
-    // Determine geometry styling based on active basemap (thick black outline & transparent deep blue fill for Esri Street/Topo, white for Dark/Satellite)
-    const isLightBasemap = state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo";
+    // Determine geometry styling based on active basemap (thick black outline & transparent deep blue fill for Light Mode/Esri Street/Topo, white for Dark/Satellite)
+    const isLightModeTheme = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
+    const isLightBasemap = state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo" || (state.currentBaseLayer === "default" && isLightModeTheme);
     const isSatelliteBasemap = state.currentBaseLayer === "satellite";
     const mapWrapper = document.getElementById("map-wrapper");
     const mapArea = document.querySelector(".maps-tile-map-area");
@@ -159,29 +161,29 @@ export function updateAllFeatureStyles() {
     let defaultFillOpacity = 0.07;
 
     if (isLightBasemap) {
-        defaultFillColor = '#0d47a1';
-        defaultFillOpacity = 0.22;
+        defaultFillColor = '#000000';
+        defaultFillOpacity = 0.04;
     } else if (isSatelliteBasemap) {
         defaultFillColor = '#000000'; // black fill for satellite only
         defaultFillOpacity = 0.75; // unselected black fill opacity increased significantly for satellite
     }
 
     const defaultLineColor = isLightBasemap ? '#000000' : '#ffffff';
-    const dimLineColor = isLightBasemap ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.25)';
-    const defaultLineWidth = isLightBasemap ? 2.8 : 1.0;
+    const dimLineColor = isLightBasemap ? '#000000' : 'rgba(255, 255, 255, 0.25)';
+    const defaultLineWidth = isLightBasemap ? 1.8 : 1.0;
 
-    const noDataFillColor = isLightBasemap ? '#8e8e93' : defaultFillColor;
-    const noDataFillOpacity = isLightBasemap ? 0.30 : (isSatelliteBasemap ? 0.60 : 0.02);
-    const noDataLineColor = isLightBasemap ? 'rgba(80, 80, 80, 0.60)' : dimLineColor;
+    const noDataFillColor = isLightBasemap ? '#000000' : defaultFillColor;
+    const noDataFillOpacity = isLightBasemap ? 0.04 : (isSatelliteBasemap ? 0.60 : 0.02);
+    const noDataLineColor = isLightBasemap ? '#000000' : dimLineColor;
 
-    const hoverFillColor = isLightBasemap ? '#1e293b' : '#3f3f46';
+    const hoverFillColor = isLightBasemap ? '#000000' : '#3f3f46';
     const hoverFillOpacity = isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.88 : 0.05);
-    const noDataHoverFillOpacity = isLightBasemap ? 0.06 : (isSatelliteBasemap ? 0.75 : 0.02);
+    const noDataHoverFillOpacity = isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.75 : 0.02);
 
     const selectedFillColor = getThemeAccent();
-    const selectedFillOpacity = 0.0;
-    const selectedLineColor = getThemeAccentLight();
-    const unselectedOutlineOpacity = isSatelliteBasemap ? 0.70 : 0.18; // significantly increased unselected outline opacity for satellite
+    const selectedFillOpacity = isLightBasemap ? 0.15 : 0.0;
+    const selectedLineColor = isLightBasemap ? getThemeAccent() : getThemeAccentLight();
+    const unselectedOutlineOpacity = isLightBasemap ? 1.0 : (isSatelliteBasemap ? 0.70 : 0.18);
 
     if (state.map.getLayer('zones-fill')) {
         state.map.setPaintProperty('zones-fill', 'fill-color', [

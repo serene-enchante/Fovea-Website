@@ -9,14 +9,13 @@ import { launchAppWithStoreFallback } from './services/app-launch-service.js';
 import { canvasToTiffBlob, geojsonToGpx, geojsonToKml } from './services/format-converters.js';
 import { findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry } from './utils/geometry-math.js';
 import { displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath } from './utils/format-utils.js';
-import { getThemeAccent, getThemeAccentLight } from './utils/color-utils.js';
 import {
     checkUserLocationZone as updateLocationZone,
     createMapInstance,
     switchBaseMap as applyBaseMap,
     toggleLocationTracking as trackUserLocation
 } from './map/map-init.js';
-import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapStyleByIndex, updatePlaceLabelsFilter, updateLabelZoomVisibility } from './map/map-layers.js';
+import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapStyleByIndex, updateAllFeatureStyles as updateMapFeatureStyles, updateLabelZoomVisibility } from './map/map-layers.js';
 import { setupMapCanvasEvents, setupMapHoverEvents } from './map/map-events.js';
 import { setupProximityGlowCanvas } from './map/map-proximity.js';
 import { setupMapViewportEffects } from './map/map-viewport.js';
@@ -55,134 +54,7 @@ if (typeof maplibregl !== 'undefined' && maplibregl.Map) {
 }
 
 function updateAllFeatureStyles() {
-    if (!state.map || !state.map.getSource('zones')) return;
-    
-    // Dynamically filter circle place names from basemap on circles overview view
-    try {
-        updatePlaceLabelsFilter();
-        updateBirdObservationsLayerStyles();
-    } catch(e) { console.warn("Error updating map layer styles:", e); }
-    
-    // We update all features state based on currentId
-    state.allFeatures.forEach(feature => {
-        const props = feature.properties || {};
-        const key = state.isCirclesFeature ? String(props.cid || "") : String(props.zid || "");
-        const isSelected = state.currentId !== CIRCLE_ID && (key === state.currentId || normalizeZoneId(key) === normalizeZoneId(state.currentId));
-        state.map.setFeatureState(
-            { source: 'zones', id: key },
-            { selected: isSelected }
-        );
-    });
-
-    // Determine geometry styling based on active basemap (thick black outline & transparent deep blue fill for Light Mode/Esri Street/Topo, white for Dark/Satellite)
-    const isLightModeTheme = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
-    const isLightBasemap = state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo" || (state.currentBaseLayer === "default" && isLightModeTheme);
-    const isSatelliteBasemap = state.currentBaseLayer === "satellite";
-    const mapWrapper = document.getElementById("map-wrapper");
-    const mapArea = document.querySelector(".maps-tile-map-area");
-    [document.body, mapArea, mapWrapper].forEach(el => {
-        if (el) {
-            if (isLightBasemap) {
-                el.classList.add("is-light-basemap");
-            } else {
-                el.classList.remove("is-light-basemap");
-            }
-        }
-    });
-
-    let defaultFillColor = '#ffffff';
-    let defaultFillOpacity = 0.07;
-
-    if (isLightBasemap) {
-        defaultFillColor = '#000000';
-        defaultFillOpacity = 0.04;
-    } else if (isSatelliteBasemap) {
-        defaultFillColor = '#000000'; // black fill for satellite only
-        defaultFillOpacity = 0.75; // unselected black fill opacity increased significantly for satellite
-    }
-
-    const defaultLineColor = isLightBasemap ? '#000000' : '#ffffff';
-    const dimLineColor = isLightBasemap ? '#000000' : 'rgba(255, 255, 255, 0.25)';
-    const defaultLineWidth = isLightBasemap ? 1.8 : 1.0;
-
-    const noDataFillColor = isLightBasemap ? '#000000' : defaultFillColor;
-    const noDataFillOpacity = isLightBasemap ? 0.04 : (isSatelliteBasemap ? 0.60 : 0.02);
-    const noDataLineColor = isLightBasemap ? '#000000' : dimLineColor;
-
-    const hoverFillColor = isLightBasemap ? '#000000' : '#3f3f46';
-    const hoverFillOpacity = isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.88 : 0.05);
-    const noDataHoverFillOpacity = isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.75 : 0.02);
-
-    const selectedFillColor = getThemeAccent();
-    const selectedFillOpacity = isLightBasemap ? 0.15 : 0.0;
-    const selectedLineColor = isLightBasemap ? getThemeAccent() : getThemeAccentLight();
-    const unselectedOutlineOpacity = isLightBasemap ? 1.0 : (isSatelliteBasemap ? 0.70 : 0.18);
-
-    if (state.map.getLayer('zones-fill')) {
-        state.map.setPaintProperty('zones-fill', 'fill-color', [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false], selectedFillColor,
-            ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
-                0, ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], noDataFillColor, defaultFillColor],
-                1, hoverFillColor
-            ]
-        ]);
-        const dimFillOpacity = defaultFillOpacity * 0.25;
-        const dimNoDataFillOpacity = noDataFillOpacity * 0.25;
-        state.map.setPaintProperty('zones-fill', 'fill-opacity', [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false], selectedFillOpacity,
-            ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
-                0, ['interpolate', ['linear'], ['coalesce', ['feature-state', 'proximity'], 0],
-                    0, ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], dimNoDataFillOpacity, dimFillOpacity],
-                    1, ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], noDataFillOpacity, defaultFillOpacity]
-                ],
-                1, ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], noDataHoverFillOpacity, hoverFillOpacity]
-            ]
-        ]);
-        state.map.setPaintProperty('zones-fill', 'fill-color-transition', { duration: 0 });
-        state.map.setPaintProperty('zones-fill', 'fill-opacity-transition', { duration: 0 });
-    }
-
-    if (state.map.getLayer('zones-outline')) {
-        state.map.setPaintProperty('zones-outline', 'line-color', [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false], selectedLineColor,
-            ['match', ['get', 'cid'], 'Oakridge', true, 'Cottage Grove', true, false], noDataLineColor,
-            defaultLineColor
-        ]);
-        state.map.setPaintProperty('zones-outline', 'line-width', [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false], (isLightBasemap ? 4.5 : 3.2),
-            defaultLineWidth
-        ]);
-        state.map.setPaintProperty('zones-outline', 'line-opacity', [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false], 1.0,
-            unselectedOutlineOpacity  // dynamic outline opacity based on basemap
-        ]);
-        state.map.setPaintProperty('zones-outline', 'line-color-transition', { duration: 0 });
-        state.map.setPaintProperty('zones-outline', 'line-width-transition', { duration: 0 });
-        state.map.setPaintProperty('zones-outline', 'line-opacity-transition', { duration: 0 });
-    }
-
-    if (state.map.getLayer('zones-outline-highlight')) {
-        state.map.setPaintProperty('zones-outline-highlight', 'line-color', [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false], selectedLineColor,
-            'transparent'
-        ]);
-        state.map.setPaintProperty('zones-outline-highlight', 'line-width', [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false], (isLightBasemap ? 4.5 : 3.2),
-            0.0
-        ]);
-        state.map.setPaintProperty('zones-outline-highlight', 'line-color-transition', { duration: 250 });
-        state.map.setPaintProperty('zones-outline-highlight', 'line-width-transition', { duration: 250 });
-    }
-
-    // Refresh HTML label colors for basemap change
-    rebuildHtmlLabels();
+    updateMapFeatureStyles({ updateAdditionalLayers: updateBirdObservationsLayerStyles });
 }
 
 Object.assign(state, {
