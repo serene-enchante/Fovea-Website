@@ -6,7 +6,7 @@ Updated: 2026-10-11
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `2e33cba inject map search dependencies`
+- Latest refactor commit: `e3b815a extract map page transition events`
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -47,6 +47,7 @@ Recent commits, newest first:
 | `69d6ba3` | Move the Map Elements tabs, search, layer list, and basemap picker into `map-style-control.js`, with selection and map actions injected from initialization. |
 | `e0932e8` | Move editor and capsule-back event wiring, including mobile back animation, into `map-page-navigation.js`; inject selection and circle-switch callbacks. |
 | `2e33cba` | Inject DOM, map state, viewport, snap-state, and timers into the sidebar and suggested-app search setup; add isolated filter and keyboard/mobile interaction coverage. |
+| `e3b815a` | Extract home-link transition wiring and back-forward-cache reset into `page-transition-events.js`, with browser dependencies injected. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
 | `54c5a22` | Remove unused duplicate `MAP_STYLES` objects and unused `scripts/config/map-styles.js`. |
@@ -231,6 +232,12 @@ After making search setup dependency-injected:
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
+After extracting page transition events:
+
+- `npm test` passed: 137 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
 The browser suite starts a server on `127.0.0.1:4173`. In this environment it needs the sandbox permission that allows Playwright's local web server to bind that address. Warnings about `NO_COLOR` versus `FORCE_COLOR` are benign.
 
 ## Next steps for the next agent
@@ -252,6 +259,7 @@ The browser suite starts a server on `127.0.0.1:4173`. In this environment it ne
 - `scripts/map/map-style-control.js` owns the Map Elements tabs, layer search and rows, and basemap picker; the map entry injects subject selection, basemap switching, and notifications.
 - `scripts/map/map-page-navigation.js` owns the map page's editor action and capsule-back event wiring, including its mobile transition classes; the map entry injects bird cleanup and selection transitions.
 - `scripts/map/map-search.js` owns sidebar and suggested-app filtering; production callers supply the DOM, sidebar state, viewport, snap-state callback, and timer dependencies.
+- `scripts/components/page-transition-events.js` owns the map page's home-link animation fallback and back-forward-cache overlay reset; the page entry injects `document`, `window`, and timers.
 - `scripts/map/map-proximity.js` owns cursor proximity tracking and the glow canvas; the live map entry calls both shared setup functions.
 - `scripts/map/map-viewport.js` owns pointer effects, resize invalidation, fullscreen classes, and mobile home animation; the map entry injects layout and map callbacks.
 - `scripts/components/image-lightbox.js` owns lightbox opening and close-event setup. `map-modals.js` owns help-mode shortcuts and interactions.

@@ -18,6 +18,7 @@ import { setupMapCanvasEvents } from './map/map-events.js';
 import { setupMapNavigationControls } from './map/map-controls.js';
 import { setupMapStyleControl } from './map/map-style-control.js';
 import { setupMapPageNavigation } from './map/map-page-navigation.js';
+import { setupPageTransitionEvents } from './components/page-transition-events.js';
 import { createMapLayerLifecycle } from './map/map-layer-lifecycle.js';
 import { setupMapEffectsAndFullscreen } from './map/map-viewport.js';
 import {
@@ -550,43 +551,4 @@ if (document.readyState === "loading") {
     init();
 }
 
-// Desktop & mobile back home transition listener
-(function () {
-    const bars = [
-        document.getElementById("desktop-nav-tab-home"),
-        document.getElementById("mobile-nav-tab-home"),
-        document.querySelector(".header-logo-container a")
-    ].filter(Boolean);
-    const overlay = document.getElementById("page-transition-overlay");
-    if (bars.length === 0) return;
-
-    bars.forEach(bar => {
-        bar.addEventListener("click", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const dest = bar.getAttribute("href") || "../";
-            if (window.transitionToPage) {
-                window.transitionToPage(dest);
-            } else if (overlay) {
-                overlay.classList.remove("is-loaded");
-                overlay.classList.add("is-active");
-                setTimeout(function () {
-                    window.location.href = dest;
-                }, 500);
-            } else {
-                window.location.href = dest;
-            }
-        });
-    });
-
-    // Reset page states if user navigates back using browser Back button (bfcache reset)
-    window.addEventListener("pageshow", function (event) {
-        if (event.persisted) {
-            document.body.classList.remove("is-transitioning");
-            if (overlay) {
-                overlay.classList.add("is-loaded");
-                overlay.classList.remove("is-active");
-            }
-        }
-    });
-})();
+setupPageTransitionEvents({ documentObject: document, windowObject: window });

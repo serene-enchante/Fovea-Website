@@ -158,6 +158,16 @@ test('map and suggested-app search receive their browser dependencies explicitly
     assert.doesNotMatch(search, /document\.getElementById|window\.innerWidth/);
 });
 
+test('map home-link transition events are owned by the shared page transition component', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const transitions = await readFile(new URL('../scripts/components/page-transition-events.js', import.meta.url), 'utf8');
+
+    assert.match(source, /setupPageTransitionEvents\(\{ documentObject: document, windowObject: window \}\)/);
+    assert.doesNotMatch(source, /desktop-nav-tab-home/);
+    assert.match(transitions, /windowObject\.transitionToPage\(destination\)/);
+    assert.match(transitions, /event\.persisted/);
+});
+
 test('the map entry wires shared sidebar capsule events directly', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
 
