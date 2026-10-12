@@ -103,9 +103,11 @@ test('the map entry wires shared sidebar capsule events directly', async () => {
 test('bird observation list items and map popups share one view component', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
     const observationView = await readFile(new URL('../scripts/components/bird-observation-view.js', import.meta.url), 'utf8');
+    const observationLayers = await readFile(new URL('../scripts/map/bird-observation-layers.js', import.meta.url), 'utf8');
 
     assert.match(source, /createBirdObservationItem\(feature\)/);
-    assert.match(source, /openBirdObservationPopup\(e\.features\[0\]\)/);
+    assert.match(observationLayers, /onOpenPopup = openBirdObservationPopup/);
+    assert.match(observationLayers, /if \(event\.features\?\.\[0\]\) onOpenPopup\(event\.features\[0\]\)/);
     assert.doesNotMatch(source, /new maplibregl\.Popup/);
     assert.match(observationView, /export function createBirdObservationItem\(/);
     assert.match(observationView, /export function openBirdObservationPopup\(/);
@@ -121,4 +123,15 @@ test('bird selection and observation loading are owned by the shared map control
     assert.match(source, /createBirdSelectionController\(\{/);
     assert.doesNotMatch(source, /async function selectBird\(/);
     assert.match(controller, /export function createBirdSelectionController\(/);
+});
+
+test('bird observation map layers are configured outside the map entry', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const layers = await readFile(new URL('../scripts/map/bird-observation-layers.js', import.meta.url), 'utf8');
+
+    assert.match(source, /import \{ setupBirdObservationsLayer, updateBirdObservationsLayerStyles \} from '\.\/map\/bird-observation-layers\.js';/);
+    assert.doesNotMatch(source, /function setupBirdObservationsLayer\(/);
+    assert.doesNotMatch(source, /function updateBirdObservationsLayerStyles\(/);
+    assert.match(layers, /export function setupBirdObservationsLayer\(/);
+    assert.match(layers, /export function updateBirdObservationsLayerStyles\(/);
 });

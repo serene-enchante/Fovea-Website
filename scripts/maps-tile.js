@@ -34,8 +34,9 @@ import { activateSidebarTab, setupSidebarCapsuleEvents } from './components/side
 import { getSuggestSelectionLabel, setupSuggestFormAndDrawing } from './components/feedback-form.js';
 import { setupSidebarScrollListener, updateKeyboardTileFocus } from './components/sidebar-list.js';
 import { openImageLightbox, setupImageLightbox } from './components/image-lightbox.js';
-import { clearBirdObservationPopup, createBirdObservationItem, openBirdObservationPopup, renderSidebarBirdPanel as renderBirdSidebarPanel } from './components/bird-observation-view.js';
+import { clearBirdObservationPopup, createBirdObservationItem, renderSidebarBirdPanel as renderBirdSidebarPanel } from './components/bird-observation-view.js';
 import { createBirdSelectionController } from './map/bird-selection-controller.js';
+import { setupBirdObservationsLayer, updateBirdObservationsLayerStyles } from './map/bird-observation-layers.js';
 import { setupHelpModeSystem } from './components/map-modals.js';
 import { setupMobileBottomNav } from './components/bottom-nav-view.js';
 import { showToast } from './components/toast-view.js';
@@ -257,84 +258,6 @@ function clearBirdObservations() {
         state.map.getSource('bird-observations').setData({
             type: 'FeatureCollection',
             features: []
-        });
-    }
-}
-
-function updateBirdObservationsLayerStyles() {
-    if (!state.map) return;
-    const isLightMode = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
-    const color = isLightMode ? "#000000" : "#ffffff";
-
-    if (state.map.getLayer('bird-observations-points')) {
-        state.map.setPaintProperty('bird-observations-points', 'circle-color', color);
-        state.map.setPaintProperty('bird-observations-points', 'circle-stroke-width', 0);
-        state.map.setPaintProperty('bird-observations-points', 'circle-stroke-color', 'transparent');
-        state.map.setPaintProperty('bird-observations-points', 'circle-radius', 5);
-        state.map.setPaintProperty('bird-observations-points', 'circle-opacity', 0.95);
-    }
-    if (state.map.getLayer('bird-observations-glow')) {
-        state.map.setPaintProperty('bird-observations-glow', 'circle-color', color);
-        state.map.setPaintProperty('bird-observations-glow', 'circle-opacity', isLightMode ? 0.15 : 0.25);
-    }
-}
-
-function setupBirdObservationsLayer() {
-    if (!state.map) return;
-
-    if (!state.map.getSource('bird-observations')) {
-        state.map.addSource('bird-observations', {
-            type: 'geojson',
-            data: {
-                type: 'FeatureCollection',
-                features: []
-            }
-        });
-    }
-
-    const isLightMode = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
-    const color = isLightMode ? "#000000" : "#ffffff";
-
-    if (!state.map.getLayer('bird-observations-glow')) {
-        state.map.addLayer({
-            id: 'bird-observations-glow',
-            type: 'circle',
-            source: 'bird-observations',
-            paint: {
-                'circle-radius': 11,
-                'circle-color': color,
-                'circle-opacity': isLightMode ? 0.15 : 0.25,
-                'circle-blur': 0.6
-            }
-        });
-    }
-
-    if (!state.map.getLayer('bird-observations-points')) {
-        state.map.addLayer({
-            id: 'bird-observations-points',
-            type: 'circle',
-            source: 'bird-observations',
-            paint: {
-                'circle-radius': 5,
-                'circle-color': color,
-                'circle-stroke-width': 0,
-                'circle-stroke-color': 'transparent',
-                'circle-opacity': 0.95
-            }
-        });
-
-        // Hover cursor
-        state.map.on('mouseenter', 'bird-observations-points', () => {
-            state.map.getCanvas().style.cursor = 'pointer';
-        });
-        state.map.on('mouseleave', 'bird-observations-points', () => {
-            state.map.getCanvas().style.cursor = '';
-        });
-
-        // Click popup
-        state.map.on('click', 'bird-observations-points', (e) => {
-            if (!e.features || !e.features[0]) return;
-            openBirdObservationPopup(e.features[0]);
         });
     }
 }
