@@ -17,6 +17,7 @@ import { setupMapLayers, selectMapStyleByIndex, updateAllFeatureStyles as update
 import { setupMapCanvasEvents } from './map/map-events.js';
 import { setupMapNavigationControls } from './map/map-controls.js';
 import { setupMapStyleControl } from './map/map-style-control.js';
+import { setupMapPageNavigation } from './map/map-page-navigation.js';
 import { createMapLayerLifecycle } from './map/map-layer-lifecycle.js';
 import { setupMapEffectsAndFullscreen } from './map/map-viewport.js';
 import {
@@ -437,78 +438,14 @@ function initializeMap() {
 
 
 
-    function checkGitHubAuth() {
-        // Check GitHub auth session state (placeholder for future GitHub OAuth integration)
-        const isGitHubLoggedIn = Boolean(
-            localStorage.getItem("github_token") ||
-            sessionStorage.getItem("github_token") ||
-            localStorage.getItem("gh_user")
-        );
-        const editBtn = document.getElementById("btn-edit-item");
-        if (editBtn) {
-            editBtn.style.display = isGitHubLoggedIn ? "" : "none";
-        }
-    }
-    checkGitHubAuth();
-
-    const editBtn = document.getElementById("btn-edit-item");
-    if (editBtn) {
-        editBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            let target = state.currentId;
-            if (target && target !== CIRCLE_ID) {
-                target = normalizeZoneId(target);
-            } else {
-                target = CIRCLE_ID;
-            }
-            window.location.href = `/editor/?id=${encodeURIComponent(target)}`;
-        });
-    }
-
-    const capsuleBackBtn = document.getElementById("btn-capsule-back");
-    if (capsuleBackBtn) {
-        capsuleBackBtn.addEventListener("click", (e) => {
-            const list = document.getElementById("sidebar-zone-list");
-            
-            // On mobile, if we have the list container and aren't already animating, trigger the transition
-            if (window.innerWidth <= 768 && list && !list.classList.contains("fly-out-right") && !list.classList.contains("fly-in-left-active")) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                list.classList.add("fly-out-right");
-                
-                setTimeout(() => {
-                    executeBackNavigation();
-                    
-                    // Reset class and trigger fly-in from left
-                    list.classList.remove("fly-out-right");
-                    list.classList.add("fly-in-left-start");
-                    list.offsetHeight; // Force reflow
-                    list.classList.add("fly-in-left-active");
-                    
-                    setTimeout(() => {
-                        list.classList.remove("fly-in-left-start", "fly-in-left-active");
-                    }, 250);
-                }, 200);
-            } else {
-                executeBackNavigation();
-            }
-        });
-    }
-
-    function executeBackNavigation() {
-        if (state.selectedBird) {
-            clearBirdObservations();
-            selectSubject(state.currentId, true, true);
-            return;
-        }
-
-        if (!state.isCirclesFeature && (state.currentId === CIRCLE_ID || !state.currentId)) {
-            switchToCirclesFeature();
-        } else {
-            selectSubject(CIRCLE_ID);
-        }
-    }
+setupMapPageNavigation({
+    state,
+    circleId: CIRCLE_ID,
+    normalizeZoneId,
+    clearBirdObservations,
+    selectSubject,
+    switchToCirclesFeature
+});
 
 
 async function init() {

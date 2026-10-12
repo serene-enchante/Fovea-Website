@@ -135,6 +135,17 @@ test('map style picker behavior is owned by a shared map control module', async 
     assert.match(styleControl, /onSelectSubject\(state\.currentId, true\)/);
 });
 
+test('map page editor and back actions are owned by a shared navigation module', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const navigation = await readFile(new URL('../scripts/map/map-page-navigation.js', import.meta.url), 'utf8');
+
+    assert.match(source, /setupMapPageNavigation\(\{/);
+    assert.doesNotMatch(source, /btn-capsule-back/);
+    assert.match(navigation, /export function setupMapPageNavigation\(/);
+    assert.match(navigation, /switchToCirclesFeature\(\)/);
+    assert.match(navigation, /normalizeZoneId\(state\.currentId\)/);
+});
+
 test('the map entry wires shared sidebar capsule events directly', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
 
