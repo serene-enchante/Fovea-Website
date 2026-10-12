@@ -1,6 +1,25 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createBirdSelectionController } from '../scripts/map/bird-selection-controller.js';
+import { clearBirdObservations, createBirdSelectionController } from '../scripts/map/bird-selection-controller.js';
+
+test('clears selected bird state, popup, and observation source data', () => {
+    const sourceUpdates = [];
+    const state = {
+        selectedBird: 'Osprey',
+        selectedBirdObservations: [{ properties: { species: 'Osprey' } }],
+        selectedBirdPhotoUrl: '/osprey.jpg',
+        selectedBirdPhotoCredit: 'Credit',
+        map: { getSource: name => name === 'bird-observations' ? { setData: data => sourceUpdates.push(data) } : null }
+    };
+
+    clearBirdObservations(state);
+
+    assert.equal(state.selectedBird, null);
+    assert.deepEqual(state.selectedBirdObservations, []);
+    assert.equal(state.selectedBirdPhotoUrl, '');
+    assert.equal(state.selectedBirdPhotoCredit, '');
+    assert.deepEqual(sourceUpdates, [{ type: 'FeatureCollection', features: [] }]);
+});
 
 test('loads and maps observations for the selected zone and updates the active sidebar view', async () => {
     const backButton = {

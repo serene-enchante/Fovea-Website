@@ -34,8 +34,8 @@ import { activateSidebarTab, setupSidebarCapsuleEvents } from './components/side
 import { getSuggestSelectionLabel, setupSuggestFormAndDrawing } from './components/feedback-form.js';
 import { setupSidebarScrollListener, updateKeyboardTileFocus } from './components/sidebar-list.js';
 import { openImageLightbox, setupImageLightbox } from './components/image-lightbox.js';
-import { clearBirdObservationPopup, createBirdObservationItem, renderSidebarBirdPanel as renderBirdSidebarPanel } from './components/bird-observation-view.js';
-import { createBirdSelectionController } from './map/bird-selection-controller.js';
+import { renderBirdObservationsList, renderSidebarBirdPanel as renderBirdSidebarPanel } from './components/bird-observation-view.js';
+import { clearBirdObservations, createBirdSelectionController } from './map/bird-selection-controller.js';
 import { setupBirdObservationsLayer, updateBirdObservationsLayerStyles } from './map/bird-observation-layers.js';
 import { setupHelpModeSystem } from './components/map-modals.js';
 import { setupMobileBottomNav } from './components/bottom-nav-view.js';
@@ -248,53 +248,13 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
     });
 }
 
-function clearBirdObservations() {
-    state.selectedBird = null;
-    state.selectedBirdObservations = [];
-    state.selectedBirdPhotoUrl = "";
-    state.selectedBirdPhotoCredit = "";
-    clearBirdObservationPopup();
-    if (state.map && state.map.getSource('bird-observations')) {
-        state.map.getSource('bird-observations').setData({
-            type: 'FeatureCollection',
-            features: []
-        });
-    }
-}
-
-function renderObservationsList(listContainer) {
-    const observations = state.selectedBirdObservations || [];
-    if (observations.length === 0) {
-        const emptyEl = document.createElement("div");
-        emptyEl.className = "sidebar-empty-state";
-        emptyEl.innerHTML = `
-            <svg class="sidebar-empty-state__icon" width="34" height="34" viewBox="0 0 512 512" fill="currentColor">
-                <path d="M128 32h32c17.7 0 32 14.3 32 32V96H96V64c0-17.7 14.3-32 32-32zm64 96V448c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32V388.9c0-34.6 9.4-68.6 27.2-98.3C40.9 267.8 49.7 242.4 53 216L60.5 156c2-16 15.6-28 31.8-28H192zm227.8 0c16.1 0 29.8 12 31.8 28L459 216c3.3 26.4 12.1 51.8 25.8 74.6c17.8 29.7 27.2 63.7 27.2 98.3V448c0 17.7-14.3 32-32 32H352c-17.7 0-32-14.3-32-32V128h99.8zM320 64c0-17.7 14.3-32 32-32h32c17.7 0 32 14.3 32 32V96H320V64zm-32 64V288H224V128h64z"/>
-            </svg>
-            <div class="sidebar-empty-state__text">no items found</div>
-        `;
-        listContainer.appendChild(emptyEl);
-        return;
-    }
-
-    const introEl = document.createElement("div");
-    introEl.className = "sidebar-birds-intro";
-    introEl.textContent = `All recorded iNaturalist observations of ${state.selectedBird} in this zone area.`;
-    listContainer.appendChild(introEl);
-
-    observations.forEach(feature => {
-        const item = createBirdObservationItem(feature);
-        if (item) listContainer.appendChild(item);
-    });
-}
-
 function updateSidebarBirdPanel(birdName, features, featuredPhotoUrl, photoCredit) {
     const listContainer = document.getElementById("sidebar-zone-list");
     if (!listContainer) return;
     if (state.selectedBird !== birdName) return;
 
     if (state.activeTab === "observations") {
-        renderObservationsList(listContainer);
+        renderBirdObservationsList(listContainer);
         return;
     }
 
@@ -744,7 +704,7 @@ function renderSidebarList() {
 
     if (state.selectedBird) {
         if (state.activeTab === "observations") {
-            renderObservationsList(listContainer);
+            renderBirdObservationsList(listContainer);
         } else {
             renderBirdSidebarPanel(listContainer, state.selectedBird, { onRenderObservations: renderSidebarList });
         }

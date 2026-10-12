@@ -1,4 +1,15 @@
 import { normalizeZoneId } from '../utils/format-utils.js';
+import { state as sharedState } from '../state.js';
+import { clearBirdObservationPopup } from '../components/bird-observation-view.js';
+
+export function clearBirdObservations(state = sharedState) {
+    state.selectedBird = null;
+    state.selectedBirdObservations = [];
+    state.selectedBirdPhotoUrl = '';
+    state.selectedBirdPhotoCredit = '';
+    clearBirdObservationPopup();
+    state.map?.getSource('bird-observations')?.setData({ type: 'FeatureCollection', features: [] });
+}
 
 export function createBirdSelectionController({
     state,

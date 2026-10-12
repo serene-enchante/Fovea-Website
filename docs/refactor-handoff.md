@@ -6,7 +6,7 @@ Updated: 2026-10-11
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit before this slice: `dc94d91 extract bird selection controller`
+- Latest refactor commit before this slice: `29b2141 extract bird observation map layers`
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -33,7 +33,8 @@ Recent commits, newest first:
 | `ab784b2` | Share bird-observation list cards, map popups, and popup cleanup through `bird-observation-view.js`. |
 | `e2ddb0b` | Move the bird sidebar summary panel into `bird-observation-view.js`, keeping navigation as a render callback. |
 | `dc94d91` | Move bird selection and observation loading into `bird-selection-controller.js`; retain rendering through injected callbacks. |
-| `HEAD` | Move bird observation source, layers, and theme styling to `bird-observation-layers.js`. |
+| `29b2141` | Move bird observation source, layers, and theme styling to `bird-observation-layers.js`. |
+| `HEAD` | Move the complete observations-tab list renderer and bird-selection cleanup into the shared bird view and selection modules. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
 | `54c5a22` | Remove unused duplicate `MAP_STYLES` objects and unused `scripts/config/map-styles.js`. |
@@ -146,6 +147,12 @@ After extracting bird observation map layers:
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
+After moving the complete observations-tab renderer and selection cleanup into shared modules:
+
+- `npm test` passed: 101 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
 The browser suite starts a server on `127.0.0.1:4173`. In this environment it needs the sandbox permission that allows Playwright's local web server to bind that address. Warnings about `NO_COLOR` versus `FORCE_COLOR` are benign.
 
 ## Next steps for the next agent
@@ -164,8 +171,8 @@ The browser suite starts a server on `127.0.0.1:4173`. In this environment it ne
 - `scripts/map/map-layers.js` owns production feature styling and the HTML zone/circle label renderer. The map entry injects bird-observation layer styling through the `updateAdditionalLayers` callback.
 - `scripts/map/map-proximity.js` owns cursor proximity tracking and the glow canvas; the live map entry calls both shared setup functions.
 - `scripts/components/image-lightbox.js` owns lightbox opening and close-event setup. `map-modals.js` owns help-mode shortcuts and interactions.
-- `scripts/components/bird-observation-view.js` owns bird summary panels, observation cards, map popup content, and the popup lifecycle used by map clicks and sidebar cards; the map entry injects the callback that renders the full observation tab.
-- `scripts/map/bird-selection-controller.js` owns selected-bird loading, observation-to-GeoJSON mapping, photo fallback, and stale-response handling. The map entry injects layer setup and sidebar/header rendering callbacks.
+- `scripts/components/bird-observation-view.js` owns bird summary panels, the full observations-tab list, observation cards, map popup content, and the popup lifecycle used by map clicks and sidebar cards.
+- `scripts/map/bird-selection-controller.js` owns selected-bird loading, observation-to-GeoJSON mapping, photo fallback, stale-response handling, and clearing bird selection state and source data. The map entry injects layer setup and sidebar/header rendering callbacks.
 - `scripts/map/bird-observation-layers.js` owns the bird-observation GeoJSON source, map layers, theme-aware paint properties, and map hover/click bindings.
 - `scripts/services/ebird-links.js` owns eBird link lookup. Species IDs and fallback URL normalization were moved without changing behavior.
 - Preserve public map URLs and query parameters (`circle`, `cid`, `feature`, `zone`, `id`) and keep desktop/mobile smoke flows working.

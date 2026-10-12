@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { clearBirdObservationPopup, createBirdObservationItem, openBirdObservationPopup, renderSidebarBirdPanel } from '../scripts/components/bird-observation-view.js';
+import { clearBirdObservationPopup, createBirdObservationItem, openBirdObservationPopup, renderBirdObservationsList, renderSidebarBirdPanel } from '../scripts/components/bird-observation-view.js';
 import { state } from '../scripts/state.js';
 
 test('shares observation cards and popup lifecycle between list and map clicks', () => {
@@ -97,4 +97,31 @@ test('renders the bird summary panel and delegates observation navigation', () =
             else state[key] = originalState[key];
         }
     }
+});
+
+test('renders the observations tab empty state and shared observation cards', () => {
+    const created = [];
+    const documentObject = {
+        createElement: () => {
+            const element = { addEventListener() {} };
+            created.push(element);
+            return element;
+        }
+    };
+    const appended = [];
+    const container = { appendChild: element => appended.push(element) };
+
+    renderBirdObservationsList(container, { selectedBird: 'Osprey', selectedBirdObservations: [] }, documentObject);
+    assert.equal(appended[0].className, 'sidebar-empty-state');
+    assert.match(appended[0].innerHTML, /no items found/);
+
+    appended.length = 0;
+    renderBirdObservationsList(container, {
+        selectedBird: 'Osprey',
+        selectedBirdObservations: [{ properties: { user: 'Ada', date: '2026-01-01', species: 'Osprey' } }]
+    }, documentObject);
+    assert.equal(appended.length, 2);
+    assert.equal(appended[0].className, 'sidebar-birds-intro');
+    assert.match(appended[0].textContent, /Osprey/);
+    assert.equal(appended[1].className, 'sidebar-bird-obs-item');
 });

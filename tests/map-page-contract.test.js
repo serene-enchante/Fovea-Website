@@ -105,15 +105,28 @@ test('bird observation list items and map popups share one view component', asyn
     const observationView = await readFile(new URL('../scripts/components/bird-observation-view.js', import.meta.url), 'utf8');
     const observationLayers = await readFile(new URL('../scripts/map/bird-observation-layers.js', import.meta.url), 'utf8');
 
-    assert.match(source, /createBirdObservationItem\(feature\)/);
+    assert.match(source, /renderBirdObservationsList/);
     assert.match(observationLayers, /onOpenPopup = openBirdObservationPopup/);
     assert.match(observationLayers, /if \(event\.features\?\.\[0\]\) onOpenPopup\(event\.features\[0\]\)/);
     assert.doesNotMatch(source, /new maplibregl\.Popup/);
     assert.match(observationView, /export function createBirdObservationItem\(/);
+    assert.match(observationView, /createBirdObservationItem\(feature, documentObject\)/);
     assert.match(observationView, /export function openBirdObservationPopup\(/);
     assert.match(source, /renderSidebarBirdPanel as renderBirdSidebarPanel/);
     assert.doesNotMatch(source, /function renderSidebarBirdPanel\(/);
     assert.match(observationView, /export function renderSidebarBirdPanel\(/);
+});
+
+test('bird observations tab rendering and selection cleanup live in shared modules', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const observationView = await readFile(new URL('../scripts/components/bird-observation-view.js', import.meta.url), 'utf8');
+    const selectionController = await readFile(new URL('../scripts/map/bird-selection-controller.js', import.meta.url), 'utf8');
+
+    assert.match(source, /renderBirdObservationsList/);
+    assert.doesNotMatch(source, /function renderObservationsList\(/);
+    assert.doesNotMatch(source, /function clearBirdObservations\(/);
+    assert.match(observationView, /export function renderBirdObservationsList\(/);
+    assert.match(selectionController, /export function clearBirdObservations\(/);
 });
 
 test('bird selection and observation loading are owned by the shared map controller', async () => {
