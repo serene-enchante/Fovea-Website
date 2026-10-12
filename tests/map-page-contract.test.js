@@ -95,6 +95,15 @@ test('the map application uses the shared cursor proximity tracker', async () =>
     assert.doesNotMatch(source, /function setupProximityTracking\(/);
 });
 
+test('map resize and fullscreen behavior is owned by the viewport module', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const viewport = await readFile(new URL('../scripts/map/map-viewport.js', import.meta.url), 'utf8');
+
+    assert.match(source, /import \{ setupMapEffectsAndFullscreen \} from '\.\/map\/map-viewport\.js';/);
+    assert.doesNotMatch(source, /function setupMapEffectsAndFullscreen\(/);
+    assert.match(viewport, /export function setupMapEffectsAndFullscreen\(/);
+});
+
 test('the map entry wires shared sidebar capsule events directly', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
 

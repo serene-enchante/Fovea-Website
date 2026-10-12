@@ -16,7 +16,7 @@ import {
 import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapStyleByIndex, updateAllFeatureStyles as updateMapFeatureStyles, updateLabelZoomVisibility, rebuildHtmlLabels as rebuildMapHtmlLabels } from './map/map-layers.js';
 import { setupMapCanvasEvents, setupMapHoverEvents } from './map/map-events.js';
 import { setupProximityGlowCanvas, setupProximityTracking } from './map/map-proximity.js';
-import { setupMapViewportEffects } from './map/map-viewport.js';
+import { setupMapEffectsAndFullscreen } from './map/map-viewport.js';
 import {
     cancelDownloadViewPreload,
     disposeRasterCache,
@@ -292,40 +292,6 @@ selectBirdHandler = createBirdSelectionController({
     updateSidebarBirdPanel: sidebarController.updateBirdPanel,
     setupObservationsLayer: setupBirdObservationsLayer
 }).selectBird;
-
-function setupMapEffectsAndFullscreen(mapWrapper) {
-    if (!mapWrapper) return;
-
-    const triggerMobileHomeAnimation = () => {
-        if (window.innerWidth <= 768) {
-            const targets = document.querySelectorAll(".intro-header, .maps-tile-header, .maps-tile-sidebar");
-            targets.forEach(el => {
-                el.classList.remove("animate-mobile-slide-down");
-                void el.offsetWidth;
-                el.classList.add("animate-mobile-slide-down");
-            });
-        }
-    };
-
-    const handleResize = () => {
-        updateControlPositions();
-        adjustHeaderFontSize();
-        if (state.map) {
-            state.map.invalidateSize();
-            setTimeout(() => state.map.invalidateSize(), 50);
-            setTimeout(() => state.map.invalidateSize(), 200);
-            setTimeout(() => state.map.invalidateSize(), 400);
-        }
-        updateLabelZoomVisibility();
-    };
-
-    setupMapViewportEffects(mapWrapper, {
-        onResize: handleResize,
-        onMobileHomeAnimation: triggerMobileHomeAnimation
-    });
-}
-
-
 
 // Cursor proximity glow: set feature-state 'proximity' (0–1) based on
 // screen-space distance from cursor to each zone center point
@@ -852,7 +818,12 @@ function initializeMap() {
         onLoad: rebuildGeoJsonLayer
     });
 
-    setupMapEffectsAndFullscreen(mapWrapper);
+    setupMapEffectsAndFullscreen(mapWrapper, {
+        state,
+        updateControlPositions,
+        adjustHeaderFontSize,
+        updateLabelZoomVisibility
+    });
 }
 
 

@@ -31,3 +31,42 @@ export function setupMapViewportEffects(mapWrapper, {
     windowObject.addEventListener('resize', onResize);
     windowObject.addEventListener('orientationchange', onResize);
 }
+
+export function setupMapEffectsAndFullscreen(mapWrapper, {
+    state,
+    updateControlPositions = () => {},
+    adjustHeaderFontSize = () => {},
+    updateLabelZoomVisibility = () => {},
+    windowObject = globalThis.window,
+    documentObject = globalThis.document,
+    schedule = globalThis.setTimeout
+} = {}) {
+    const triggerMobileHomeAnimation = () => {
+        if (windowObject.innerWidth > 768) return;
+        const targets = documentObject.querySelectorAll('.intro-header, .maps-tile-header, .maps-tile-sidebar');
+        targets.forEach(element => {
+            element.classList.remove('animate-mobile-slide-down');
+            void element.offsetWidth;
+            element.classList.add('animate-mobile-slide-down');
+        });
+    };
+
+    const handleResize = () => {
+        updateControlPositions();
+        adjustHeaderFontSize();
+        if (state.map) {
+            state.map.invalidateSize();
+            schedule(() => state.map.invalidateSize(), 50);
+            schedule(() => state.map.invalidateSize(), 200);
+            schedule(() => state.map.invalidateSize(), 400);
+        }
+        updateLabelZoomVisibility();
+    };
+
+    setupMapViewportEffects(mapWrapper, {
+        windowObject,
+        documentObject,
+        onResize: handleResize,
+        onMobileHomeAnimation: triggerMobileHomeAnimation
+    });
+}
