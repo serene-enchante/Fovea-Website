@@ -6,7 +6,7 @@ Updated: 2026-10-11
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `e3b815a extract map page transition events`
+- Latest refactor commit: `23e304c remove duplicate home transition binder`
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -47,7 +47,8 @@ Recent commits, newest first:
 | `69d6ba3` | Move the Map Elements tabs, search, layer list, and basemap picker into `map-style-control.js`, with selection and map actions injected from initialization. |
 | `e0932e8` | Move editor and capsule-back event wiring, including mobile back animation, into `map-page-navigation.js`; inject selection and circle-switch callbacks. |
 | `2e33cba` | Inject DOM, map state, viewport, snap-state, and timers into the sidebar and suggested-app search setup; add isolated filter and keyboard/mobile interaction coverage. |
-| `e3b815a` | Extract home-link transition wiring and back-forward-cache reset into `page-transition-events.js`, with browser dependencies injected. |
+| `bf5b220` | Extract home-link transition wiring and back-forward-cache reset into `page-transition-events.js`, with browser dependencies injected. |
+| `23e304c` | Remove the unused duplicate home-transition binder from `toolbar-actions.js`; the shared page-transition component is the only remaining owner. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
 | `54c5a22` | Remove unused duplicate `MAP_STYLES` objects and unused `scripts/config/map-styles.js`. |
@@ -233,6 +234,12 @@ After making search setup dependency-injected:
 - `git diff --check` passed.
 
 After extracting page transition events:
+
+- `npm test` passed: 137 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After removing the duplicate home-transition binder:
 
 - `npm test` passed: 137 tests.
 - `npm run test:browser` passed: 5 Playwright tests.

@@ -1139,37 +1139,3 @@ export function setupViewToggleMenu() {
         }
     });
 }
-
-// Desktop & mobile back home transition listener
-export function setupBackHomeTransition() {
-    const bars = [
-        document.getElementById("desktop-nav-tab-home"),
-        document.getElementById("mobile-nav-tab-home")
-    ].filter(Boolean);
-    const overlay = document.getElementById("page-transition-overlay");
-    if (bars.length === 0 || !overlay) return;
-
-    bars.forEach(bar => {
-        bar.addEventListener("click", function (e) {
-            e.preventDefault();
-            const dest = bar.getAttribute("href") || "../";
-
-            // Step 1: Simultaneously trigger grey bar pull down and whole screen fade to black
-            document.body.classList.add("is-transitioning");
-            overlay.classList.add("is-active");
-
-            // Step 2: Navigate after the combined 500ms transitions finish
-            setTimeout(function () {
-                window.location.href = dest;
-            }, 500);
-        });
-    });
-
-    // Reset page states if user navigates back using browser Back button (bfcache reset)
-    window.addEventListener("pageshow", function (event) {
-        if (event.persisted) {
-            document.body.classList.remove("is-transitioning");
-            overlay.classList.remove("is-active");
-        }
-    });
-}
