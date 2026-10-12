@@ -170,6 +170,17 @@ test('map home-link transition events are owned by the shared page transition co
     assert.match(transitions, /event\.persisted/);
 });
 
+test('help mode delegates map keyboard shortcuts to a separate controller', async () => {
+    const helpMode = await readFile(new URL('../scripts/components/map-modals.js', import.meta.url), 'utf8');
+    const shortcuts = await readFile(new URL('../scripts/components/map-keyboard-shortcuts.js', import.meta.url), 'utf8');
+
+    assert.match(helpMode, /setupMapKeyboardShortcuts\(\{/);
+    assert.doesNotMatch(helpMode, /addEventListener\("keydown"/);
+    assert.match(shortcuts, /export function setupMapKeyboardShortcuts\(/);
+    assert.match(shortcuts, /onSelectMapStyle\(digitNum - 1\)/);
+    assert.match(shortcuts, /updateKeyboardFocus\(/);
+});
+
 test('the map entry wires shared sidebar capsule events directly', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
 
