@@ -186,9 +186,19 @@ test('map help tooltip copy is stored in the shared configuration module', async
     const content = await readFile(new URL('../scripts/config/map-help-content.js', import.meta.url), 'utf8');
 
     assert.match(helpMode, /import \{ MAP_HELP_CONTENT \} from '\.\.\/config\/map-help-content\.js';/);
-    assert.match(helpMode, /const helpDictionary = MAP_HELP_CONTENT/);
-    assert.doesNotMatch(helpMode, /const helpDictionary = \[/);
+    assert.doesNotMatch(helpMode, /const helpDictionary/);
     assert.match(content, /export const MAP_HELP_CONTENT = \[/);
+});
+
+test('help tooltip targets are tagged and resolved by a separate view helper', async () => {
+    const helpMode = await readFile(new URL('../scripts/components/map-modals.js', import.meta.url), 'utf8');
+    const targets = await readFile(new URL('../scripts/components/map-help-targets.js', import.meta.url), 'utf8');
+
+    assert.match(helpMode, /tagHelpElements\(MAP_HELP_CONTENT, document\)/);
+    assert.match(helpMode, /resolveHelpTarget\(e\.target, MAP_HELP_CONTENT\)/);
+    assert.doesNotMatch(helpMode, /const resolveHelpTarget/);
+    assert.match(targets, /export function tagHelpElements\(/);
+    assert.match(targets, /export function resolveHelpTarget\(/);
 });
 
 test('the map entry wires shared sidebar capsule events directly', async () => {

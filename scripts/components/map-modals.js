@@ -5,6 +5,7 @@ import { state } from '../state.js';
 import { toggleFullscreen, performDirectCopyLink } from './toolbar-actions.js';
 import { selectMapStyleByIndex } from '../map/map-layers.js';
 import { setupMapKeyboardShortcuts } from './map-keyboard-shortcuts.js';
+import { resolveHelpTarget, tagHelpElements } from './map-help-targets.js';
 
 export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
     const toggleInput = document.getElementById("toggle-help-mode");
@@ -16,7 +17,7 @@ export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
         if (toggleInput) toggleInput.checked = active;
         if (active) {
             document.body.classList.add("is-help-mode-active");
-            tagElements();
+            tagHelpElements(MAP_HELP_CONTENT, document);
             if (isFromKey) showToast("Interactive Help Mode: Enabled");
         } else {
             document.body.classList.remove("is-help-mode-active");
@@ -52,61 +53,14 @@ export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
         onSelectMapStyle: selectMapStyleByIndex
     });
 
-    const helpDictionary = MAP_HELP_CONTENT;
-
-    const tagElements = () => {
-        helpDictionary.forEach(item => {
-            const els = document.querySelectorAll(item.selector);
-            els.forEach(el => {
-                el.setAttribute("data-help-title", item.title);
-                el.setAttribute("data-help-desc", item.desc);
-                if (item.shortcut) {
-                    el.setAttribute("data-help-shortcut", item.shortcut);
-                } else {
-                    el.removeAttribute("data-help-shortcut");
-                }
-            });
-        });
-    };
-
-    tagElements();
+    tagHelpElements(MAP_HELP_CONTENT, document);
 
     const observer = new MutationObserver(() => {
         if (state.isHelpModeActive) {
-            tagElements();
+            tagHelpElements(MAP_HELP_CONTENT, document);
         }
     });
     observer.observe(document.body, { childList: true, subtree: true });
-
-    const resolveHelpTarget = (eventTarget) => {
-        let target = eventTarget.closest("[data-help-title]");
-        let title = target ? target.getAttribute("data-help-title") : null;
-        let desc = target ? target.getAttribute("data-help-desc") : null;
-        let shortcut = target ? target.getAttribute("data-help-shortcut") : null;
-
-        if (!target) {
-            for (const item of helpDictionary) {
-                const matched = eventTarget.closest(item.selector);
-                if (matched) {
-                    target = matched;
-                    title = item.title;
-                    desc = item.desc;
-                    shortcut = item.shortcut || null;
-                    target.setAttribute("data-help-title", title);
-                    target.setAttribute("data-help-desc", desc);
-                    if (shortcut) target.setAttribute("data-help-shortcut", shortcut);
-                    break;
-                }
-            }
-        }
-        if (target && (target.id === "tile-map" || target.id === "map-wrapper" || title === "Map Frame")) {
-            if (eventTarget.closest(".map-ctrl-container, .map-ctrl-panel")) {
-                return { target: null, title: null, desc: null, shortcut: null };
-            }
-        }
-
-        return { target, title, desc, shortcut };
-    };
 
     const isTouchDevice = () => {
         return window.matchMedia("(pointer: coarse)").matches || ('ontouchstart' in window && navigator.maxTouchPoints > 0) || window.innerWidth <= 768;
@@ -115,7 +69,7 @@ export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
     document.addEventListener("mousemove", (e) => {
         if (!state.isHelpModeActive || isTouchDevice()) return;
 
-        const { target, title, desc, shortcut } = resolveHelpTarget(e.target);
+        const { target, title, desc, shortcut } = resolveHelpTarget(e.target, MAP_HELP_CONTENT);
         if (target) {
             if (tooltip) {
                 tooltip.innerHTML = `
@@ -183,7 +137,7 @@ export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
         if (helpModal && helpModal.contains(e.target)) return;
         if (mobileExitBtn && mobileExitBtn.contains(e.target)) return;
 
-        const { target, title, desc, shortcut } = resolveHelpTarget(e.target);
+        const { target, title, desc, shortcut } = resolveHelpTarget(e.target, MAP_HELP_CONTENT);
         if (target) {
             e.preventDefault();
             e.stopPropagation();
