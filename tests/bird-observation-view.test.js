@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { clearBirdObservationPopup, createBirdObservationItem, openBirdObservationPopup } from '../scripts/components/bird-observation-view.js';
+import { clearBirdObservationPopup, createBirdObservationItem, openBirdObservationPopup, renderSidebarBirdPanel } from '../scripts/components/bird-observation-view.js';
 import { state } from '../scripts/state.js';
 
 test('shares observation cards and popup lifecycle between list and map clicks', () => {
@@ -51,5 +51,50 @@ test('shares observation cards and popup lifecycle between list and map clicks',
         state.map = originalMap;
         if (originalMaplibre) Object.defineProperty(globalThis, 'maplibregl', originalMaplibre);
         else delete globalThis.maplibregl;
+    }
+});
+
+test('renders the bird summary panel and delegates observation navigation', () => {
+    const stateKeys = ['selectedBirdObservations', 'selectedBirdPhotoUrl', 'selectedBirdPhotoCredit', 'activeTab'];
+    const originalState = Object.fromEntries(stateKeys.map(key => [key, state[key]]));
+    const header = {};
+    const footer = {};
+    const selectors = new Map([
+        ['.sidebar-bird-media', null],
+        ['.sidebar-bird-panel__list', { appendChild() {} }],
+        ['.sidebar-overview-preview__footer--obs', footer],
+        ['.sidebar-overview-preview__title', header]
+    ]);
+    const panel = { querySelector: selector => selectors.get(selector) || null };
+    let appendedPanel = null;
+    const container = { appendChild: node => { appendedPanel = node; } };
+    const documentObject = { createElement: () => panel };
+    let renderCount = 0;
+
+    Object.assign(state, {
+        selectedBirdObservations: [],
+        selectedBirdPhotoUrl: '',
+        selectedBirdPhotoCredit: '',
+        activeTab: 'birds'
+    });
+
+    try {
+        renderSidebarBirdPanel(container, 'Osprey', {
+            documentObject,
+            onRenderObservations: () => { renderCount += 1; }
+        });
+
+        assert.equal(appendedPanel, panel);
+        assert.match(panel.innerHTML, /View species on eBird/);
+        assert.match(panel.innerHTML, /No recent observations recorded/);
+        footer.onclick();
+        header.onclick();
+        assert.equal(state.activeTab, 'observations');
+        assert.equal(renderCount, 2);
+    } finally {
+        for (const key of stateKeys) {
+            if (originalState[key] === undefined) delete state[key];
+            else state[key] = originalState[key];
+        }
     }
 });

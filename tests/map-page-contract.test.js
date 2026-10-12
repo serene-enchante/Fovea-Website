@@ -109,4 +109,7 @@ test('bird observation list items and map popups share one view component', asyn
     assert.doesNotMatch(source, /new maplibregl\.Popup/);
     assert.match(observationView, /export function createBirdObservationItem\(/);
     assert.match(observationView, /export function openBirdObservationPopup\(/);
+    assert.match(source, /renderSidebarBirdPanel as renderBirdSidebarPanel/);
+    assert.doesNotMatch(source, /function renderSidebarBirdPanel\(/);
+    assert.match(observationView, /export function renderSidebarBirdPanel\(/);
 });

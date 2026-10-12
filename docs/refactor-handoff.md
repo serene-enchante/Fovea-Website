@@ -6,7 +6,7 @@ Updated: 2026-10-11
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit before this slice: `2888803 wire shared map components directly`
+- Latest refactor commit before this slice: `ab784b2 share bird observation cards and popups`
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -30,7 +30,8 @@ Recent commits, newest first:
 | `6d72828` | Remove the unused capsule setup duplicate; production binding remains in `sidebar-capsule-events.js`. |
 | `ca91cf5` | Use the shared map proximity tracker in production and remove its duplicate implementation. |
 | `2888803` | Wire modal cleanup and capsule events directly from map initialization to their shared components, removing pass-through wrappers. |
-| `HEAD` | Share bird-observation list cards, map popups, and popup cleanup through `bird-observation-view.js`. |
+| `ab784b2` | Share bird-observation list cards, map popups, and popup cleanup through `bird-observation-view.js`. |
+| `HEAD` | Move the bird sidebar summary panel into `bird-observation-view.js`, keeping navigation as a render callback. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
 | `54c5a22` | Remove unused duplicate `MAP_STYLES` objects and unused `scripts/config/map-styles.js`. |
@@ -125,6 +126,12 @@ After extracting the shared bird-observation view:
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
+After moving the bird summary panel into the shared view:
+
+- `npm test` passed: 92 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
 The browser suite starts a server on `127.0.0.1:4173`. In this environment it needs the sandbox permission that allows Playwright's local web server to bind that address. Warnings about `NO_COLOR` versus `FORCE_COLOR` are benign.
 
 ## Next steps for the next agent
@@ -143,6 +150,6 @@ The browser suite starts a server on `127.0.0.1:4173`. In this environment it ne
 - `scripts/map/map-layers.js` owns production feature styling and the HTML zone/circle label renderer. The map entry injects bird-observation layer styling through the `updateAdditionalLayers` callback.
 - `scripts/map/map-proximity.js` owns cursor proximity tracking and the glow canvas; the live map entry calls both shared setup functions.
 - `scripts/components/image-lightbox.js` owns lightbox opening and close-event setup. `map-modals.js` owns help-mode shortcuts and interactions.
-- `scripts/components/bird-observation-view.js` owns rendering observation cards, map popup content, and the shared popup lifecycle used by map clicks and sidebar cards.
+- `scripts/components/bird-observation-view.js` owns bird summary panels, observation cards, map popup content, and the popup lifecycle used by map clicks and sidebar cards; the map entry injects the callback that renders the full observation tab.
 - `scripts/services/ebird-links.js` owns eBird link lookup. Species IDs and fallback URL normalization were moved without changing behavior.
 - Preserve public map URLs and query parameters (`circle`, `cid`, `feature`, `zone`, `id`) and keep desktop/mobile smoke flows working.

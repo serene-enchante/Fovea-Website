@@ -1,4 +1,6 @@
 import { state } from '../state.js';
+import { getEbirdUrl } from '../services/ebird-links.js';
+import { openImageLightbox } from './image-lightbox.js';
 
 let currentPopup = null;
 
@@ -59,4 +61,81 @@ export function createBirdObservationItem(feature, documentObject = globalThis.d
 export function clearBirdObservationPopup() {
     currentPopup?.remove();
     currentPopup = null;
+}
+
+
+export function renderSidebarBirdPanel(listContainer, birdName, { onRenderObservations = () => {}, documentObject = globalThis.document } = {}) {
+    const ebirdUrl = getEbirdUrl(birdName);
+    const observations = state.selectedBirdObservations || [];
+    const featuredPhotoUrl = state.selectedBirdPhotoUrl || "";
+    const photoCredit = state.selectedBirdPhotoCredit || "";
+
+    const panel = documentObject.createElement("div");
+    panel.className = "sidebar-bird-panel";
+    panel.innerHTML = `
+        <!-- Big Media Image Container (populated from observation or species photo) -->
+        <div class="sidebar-about-media sidebar-bird-media" style="${featuredPhotoUrl ? 'display: block;' : 'display: none;'} cursor: pointer;">
+            <img src="${featuredPhotoUrl}" alt="${birdName}" loading="eager" decoding="async" />
+        </div>
+
+        <a href="${ebirdUrl}" target="_blank" rel="noopener noreferrer" class="sidebar-bird-panel__ebird-btn" title="View species on eBird">
+            <span>View species on eBird</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+        </a>
+
+        <div class="sidebar-overview-preview sidebar-overview-preview--birds" style="margin-top: 0.25rem;">
+            <div class="sidebar-overview-preview__header sidebar-overview-preview__header--birds">
+                <span class="sidebar-overview-preview__title">Observations</span>
+                <span class="sidebar-bird-panel__count-badge">${observations.length > 0 ? `${observations.length} found` : ''}</span>
+            </div>
+
+            <div class="sidebar-bird-panel__status" style="${observations.length > 0 ? 'display: none;' : 'display: block;'} font-size: 0.85rem; color: var(--subtext-color, #94a3b8); padding: 0.25rem 0.5rem;">
+                ${observations.length === 0 ? 'No recent observations recorded in this zone area.' : ''}
+            </div>
+
+            <div class="sidebar-bird-panel__list"></div>
+
+            <button type="button" class="sidebar-overview-preview__footer sidebar-overview-preview__footer--obs" style="${observations.length > 0 ? 'display: flex;' : 'display: none;'}" title="View all observations">
+                <span class="sidebar-overview-preview__action">View all (${observations.length}) &rarr;</span>
+            </button>
+        </div>
+    `;
+
+    const mediaDiv = panel.querySelector(".sidebar-bird-media");
+    if (mediaDiv && featuredPhotoUrl) {
+        mediaDiv.onclick = () => {
+            openImageLightbox(featuredPhotoUrl, birdName, `${birdName} (observed in Area)`, photoCredit || "Photo via iNaturalist");
+        };
+    }
+
+    const obsListEl = panel.querySelector(".sidebar-bird-panel__list");
+    if (obsListEl && observations.length > 0) {
+        const previewObs = observations.slice(0, 5);
+        previewObs.forEach(feature => {
+            const item = createBirdObservationItem(feature, documentObject);
+            if (item) obsListEl.appendChild(item);
+        });
+    }
+
+    const viewAllBtn = panel.querySelector(".sidebar-overview-preview__footer--obs");
+    if (viewAllBtn) {
+        viewAllBtn.onclick = () => {
+            state.activeTab = "observations";
+            onRenderObservations();
+        };
+    }
+
+    const headerTitle = panel.querySelector(".sidebar-overview-preview__title");
+    if (headerTitle) {
+        headerTitle.onclick = () => {
+            state.activeTab = "observations";
+            onRenderObservations();
+        };
+    }
+
+    listContainer.appendChild(panel);
 }
