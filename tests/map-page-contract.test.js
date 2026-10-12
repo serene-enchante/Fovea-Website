@@ -84,3 +84,10 @@ test('toolbar actions leave sidebar capsule events to the sidebar component', as
     assert.doesNotMatch(toolbarActions, /function setupCapsules\(/);
     assert.match(capsuleEvents, /export function setupSidebarCapsuleEvents\(/);
 });
+
+test('the map application uses the shared cursor proximity tracker', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+
+    assert.match(source, /import \{ setupProximityGlowCanvas, setupProximityTracking \} from '\.\/map\/map-proximity\.js';/);
+    assert.doesNotMatch(source, /function setupProximityTracking\(/);
+});

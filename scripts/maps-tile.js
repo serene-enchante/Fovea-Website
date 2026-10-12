@@ -17,7 +17,7 @@ import {
 } from './map/map-init.js';
 import { setupMapLayers, addZoneFeatureLayers, buildZoneFeatureData, selectMapStyleByIndex, updateAllFeatureStyles as updateMapFeatureStyles, updateLabelZoomVisibility, rebuildHtmlLabels as rebuildMapHtmlLabels } from './map/map-layers.js';
 import { setupMapCanvasEvents, setupMapHoverEvents } from './map/map-events.js';
-import { setupProximityGlowCanvas } from './map/map-proximity.js';
+import { setupProximityGlowCanvas, setupProximityTracking } from './map/map-proximity.js';
 import { setupMapViewportEffects } from './map/map-viewport.js';
 import {
     cancelDownloadViewPreload,
@@ -1353,52 +1353,6 @@ function setupMapEffectsAndFullscreen(mapWrapper) {
 
 // Cursor proximity glow: set feature-state 'proximity' (0–1) based on
 // screen-space distance from cursor to each zone center point
-function setupProximityTracking() {
-    if (state._proximityListenerAttached) return;
-    state._proximityListenerAttached = true;
-
-    const RADIUS = 280;   // px — radial gradient falloff distance
-    let rafPending = false;
-    let lastCx = -9999, lastCy = -9999;
-
-    const canvas = state.map.getCanvas();
-
-    canvas.addEventListener('mousemove', (e) => {
-        if (window.innerWidth <= 768) return;
-        if (state.map && state.map.getZoom() >= 14.0) return;
-        const rect = canvas.getBoundingClientRect();
-        const cx = e.clientX - rect.left;
-        const cy = e.clientY - rect.top;
-
-        // Skip tiny micro-movements to avoid thrashing feature state
-        if (Math.abs(cx - lastCx) < 3 && Math.abs(cy - lastCy) < 3) return;
-        lastCx = cx; lastCy = cy;
-
-        if (rafPending) return;
-        rafPending = true;
-        requestAnimationFrame(() => {
-            rafPending = false;
-            if (!state.labelData || !state.map) return;
-            state.labelData.forEach(d => {
-                const pt = state.map.project([d.lng, d.lat]);
-                const dist = Math.hypot(cx - pt.x, cy - pt.y);
-                // Smooth quadratic falloff for more natural gradient feel
-                const linear = Math.max(0, 1 - dist / RADIUS);
-                const proximity = linear * linear * (3 - 2 * linear); // smoothstep
-                state.map.setFeatureState({ source: 'zones', id: d.id }, { proximity });
-            });
-        });
-    });
-
-    canvas.addEventListener('mouseleave', () => {
-        lastCx = -9999; lastCy = -9999;
-        if (!state.labelData || !state.map) return;
-        state.labelData.forEach(d => {
-            state.map.setFeatureState({ source: 'zones', id: d.id }, { proximity: 0 });
-        });
-    });
-}
-
 // Canvas overlay: draws zone outlines bright, masked by radial gradient at cursor.
 // This gives true per-segment glow — only the line pixels within the gradient radius
 // are revealed, rather than MapLibre's per-feature opacity which affects whole zones.
