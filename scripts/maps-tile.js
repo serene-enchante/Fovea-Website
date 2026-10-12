@@ -37,6 +37,7 @@ import { openImageLightbox, setupImageLightbox } from './components/image-lightb
 import { renderBirdObservationsList, renderSidebarBirdPanel as renderBirdSidebarPanel } from './components/bird-observation-view.js';
 import { renderBirdSpeciesList } from './components/bird-species-list.js';
 import { renderOrganizersList, renderResourcesList } from './components/sidebar-static-views.js';
+import { renderMapFeatureList } from './components/map-feature-list.js';
 import { clearBirdObservations, createBirdSelectionController } from './map/bird-selection-controller.js';
 import { setupBirdObservationsLayer, updateBirdObservationsLayerStyles } from './map/bird-observation-layers.js';
 import { setupHelpModeSystem } from './components/map-modals.js';
@@ -628,76 +629,11 @@ function renderSidebarList() {
             return;
         }
 
-        const NO_DATA_CIRCLES = new Set(["Oakridge", "Cottage Grove"]);
-        const sortedCircles = [...state.circlesFeatures].sort((a, b) => {
-            const cidA = String(a.properties?.cid || "");
-            const cidB = String(b.properties?.cid || "");
-            const noDataA = NO_DATA_CIRCLES.has(cidA) ? 1 : 0;
-            const noDataB = NO_DATA_CIRCLES.has(cidB) ? 1 : 0;
-            if (noDataA !== noDataB) return noDataA - noDataB;
-            return cidA.localeCompare(cidB, undefined, { sensitivity: "base" });
-        });
-
-        sortedCircles.forEach(feature => {
-            const props = feature.properties || {};
-            const cid = props.cid || "Circle";
-            const item = document.createElement("div");
-            item.className = "tile-zone-item";
-            item.setAttribute("data-id", cid);
-
-            let thumbImg = "";
-            let isLogo = false;
-            let isNotAvailable = false;
-            if (cid === "Eugene") {
-                thumbImg = "../images/logo-small.png";
-                isLogo = true;
-            } else if (cid === "Florence") {
-                thumbImg = "../images/florence.png";
-                isLogo = true;
-            } else if (cid === "Oakridge" || cid === "Cottage Grove") {
-                isNotAvailable = true;
-            } else {
-                thumbImg = "../images/wetlands.jpg";
-            }
-
-            let thumbHtml = "";
-            if (isNotAvailable) {
-                thumbHtml = `
-                    <div class="tile-zone-item__thumb-placeholder" title="No data available">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-                        </svg>
-                    </div>
-                `;
-            } else {
-                thumbHtml = `
-                    <div class="tile-zone-item__thumb ${isLogo ? "tile-zone-item__thumb--logo" : ""}">
-                        <img src="${thumbImg}" alt="${cid}" loading="eager">
-                    </div>
-                `;
-            }
-
-            item.innerHTML = `
-                ${thumbHtml}
-                <div class="tile-zone-item__info">
-                    <div class="tile-zone-item__title">${cid}</div>
-                </div>
-            `;
-
-            item.addEventListener("mouseenter", () => {
-                if (state.map && state.map.getSource('zones')) {
-                    state.map.setFeatureState({ source: 'zones', id: cid }, { hover: true });
-                }
-            });
-            item.addEventListener("mouseleave", () => {
-                if (state.map && state.map.getSource('zones')) {
-                    state.map.setFeatureState({ source: 'zones', id: cid }, { hover: false });
-                }
-            });
-
-            item.addEventListener("click", () => {
-                const feature = state.circlesFeatures.find(f => f.properties.cid === cid);
+        renderMapFeatureList(listContainer, {
+            features: state.circlesFeatures,
+            isCirclesFeature: true,
+            map: state.map,
+            onSelectCircle: (cid, feature) => {
                 const bbox = feature ? getBbox(feature) : null;
                 if (cid === "Eugene") {
                     switchToFeature("eugene", bbox);
@@ -706,8 +642,8 @@ function renderSidebarList() {
                 } else if (cid === "Oakridge" || cid === "Cottage Grove") {
                     showToast("There is no data for this count circle");
                 }
-            });
-            listContainer.appendChild(item);
+            },
+            documentObject: document
         });
         return;
     }
@@ -738,53 +674,12 @@ function renderSidebarList() {
         return;
     }
 
-    const sortedFeatures = [...state.allFeatures].sort((a, b) => {
-        const zidA = String(a.properties?.zid || "");
-        const zidB = String(b.properties?.zid || "");
-        return zidA.localeCompare(zidB, undefined, { numeric: true, sensitivity: "base" });
-    });
-
-    sortedFeatures.forEach(feature => {
-        const props = feature.properties || {};
-        const zid = displayZoneId(props.zid);
-        const item = document.createElement("div");
-        item.className = "tile-zone-item";
-        item.setAttribute("data-id", String(props.zid));
-
-        const imgPath = zoneImagePath(props.zid);
-        item.innerHTML = `
-            <div class="tile-zone-item__thumb">
-                <img src="${imgPath}" alt="Zone ${zid}" loading="eager">
-            </div>
-            <div class="tile-zone-item__info">
-                <div class="tile-zone-item__title">Zone ${zid}</div>
-            </div>
-        `;
-
-        const img = item.querySelector("img");
-        if (img) {
-            img.addEventListener("error", () => {
-                img.src = FALLBACK_IMAGE;
-            });
-        }
-
-        item.addEventListener("mouseenter", () => {
-            const featureId = String(props.zid || "");
-            const isSelected = state.currentId !== CIRCLE_ID && (featureId === state.currentId || normalizeZoneId(featureId) === normalizeZoneId(state.currentId));
-            if (!isSelected && state.map && state.map.getSource('zones')) {
-                state.map.setFeatureState({ source: 'zones', id: featureId }, { hover: true });
-            }
-        });
-        item.addEventListener("mouseleave", () => {
-            const featureId = String(props.zid || "");
-            const isSelected = state.currentId !== CIRCLE_ID && (featureId === state.currentId || normalizeZoneId(featureId) === normalizeZoneId(state.currentId));
-            if (!isSelected && state.map && state.map.getSource('zones')) {
-                state.map.setFeatureState({ source: 'zones', id: featureId }, { hover: false });
-            }
-        });
-
-        item.addEventListener("click", () => selectSubject(String(props.zid)));
-        listContainer.appendChild(item);
+    renderMapFeatureList(listContainer, {
+        features: state.allFeatures,
+        currentId: state.currentId,
+        map: state.map,
+        onSelectZone: id => selectSubject(id),
+        documentObject: document
     });
 
     if (state.lastNavSource === "keyboard") {

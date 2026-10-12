@@ -150,6 +150,19 @@ test('organizer and resource sidebar views are shared components', async () => {
     assert.match(component, /export function renderResourcesList\(/);
 });
 
+test('circle and zone sidebar rows are rendered by the shared map feature list', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const component = await readFile(new URL('../scripts/components/map-feature-list.js', import.meta.url), 'utf8');
+    const sidebarList = source.slice(source.indexOf('function renderSidebarList() {'), source.indexOf('function setupMapEffectsAndFullscreen'));
+
+    assert.match(source, /import \{ renderMapFeatureList \} from '\.\/components\/map-feature-list\.js';/);
+    assert.match(sidebarList, /onSelectCircle: \(cid, feature\)/);
+    assert.match(sidebarList, /onSelectZone: id => selectSubject\(id\)/);
+    assert.doesNotMatch(sidebarList, /const sortedCircles =/);
+    assert.doesNotMatch(sidebarList, /const sortedFeatures =/);
+    assert.match(component, /export function renderMapFeatureList\(/);
+});
+
 test('bird selection and observation loading are owned by the shared map controller', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
     const controller = await readFile(new URL('../scripts/map/bird-selection-controller.js', import.meta.url), 'utf8');
