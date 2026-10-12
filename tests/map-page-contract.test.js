@@ -113,3 +113,12 @@ test('bird observation list items and map popups share one view component', asyn
     assert.doesNotMatch(source, /function renderSidebarBirdPanel\(/);
     assert.match(observationView, /export function renderSidebarBirdPanel\(/);
 });
+
+test('bird selection and observation loading are owned by the shared map controller', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const controller = await readFile(new URL('../scripts/map/bird-selection-controller.js', import.meta.url), 'utf8');
+
+    assert.match(source, /createBirdSelectionController\(\{/);
+    assert.doesNotMatch(source, /async function selectBird\(/);
+    assert.match(controller, /export function createBirdSelectionController\(/);
+});

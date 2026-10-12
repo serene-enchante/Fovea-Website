@@ -35,6 +35,7 @@ import { getSuggestSelectionLabel, setupSuggestFormAndDrawing } from './componen
 import { setupSidebarScrollListener, updateKeyboardTileFocus } from './components/sidebar-list.js';
 import { openImageLightbox, setupImageLightbox } from './components/image-lightbox.js';
 import { clearBirdObservationPopup, createBirdObservationItem, openBirdObservationPopup, renderSidebarBirdPanel as renderBirdSidebarPanel } from './components/bird-observation-view.js';
+import { createBirdSelectionController } from './map/bird-selection-controller.js';
 import { setupHelpModeSystem } from './components/map-modals.js';
 import { setupMobileBottomNav } from './components/bottom-nav-view.js';
 import { showToast } from './components/toast-view.js';
@@ -338,137 +339,6 @@ function setupBirdObservationsLayer() {
     }
 }
 
-async function selectBird(birdName) {
-    state.selectedBird = birdName;
-    updateHeader(birdName);
-
-    const backBtn = document.getElementById("btn-capsule-back");
-    if (backBtn) {
-        backBtn.disabled = false;
-        backBtn.classList.remove("is-disabled");
-        backBtn.setAttribute("aria-label", "Back to Zone");
-        backBtn.setAttribute("title", "Back to Zone");
-    }
-
-    renderSidebarList();
-
-    if (!state.map) return;
-
-    const targetFeature = state.allFeatures.find(f => {
-        const zid = f.properties?.zid;
-        return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
-    });
-
-    if (!targetFeature) return;
-
-    setupBirdObservationsLayer();
-
-    try {
-        const bbox = getBbox(targetFeature);
-        const data = await fetchBirdObservations(birdName, bbox);
-
-        if (state.selectedBird !== birdName) return;
-
-        const results = data.results || [];
-        const features = [];
-
-        results.forEach(obs => {
-            if (!obs.location) return;
-            const [lat, lng] = obs.location.split(',').map(Number);
-            if (isNaN(lat) || isNaN(lng)) return;
-
-            let isInside = true;
-            try {
-                if (typeof turf !== "undefined" && turf.booleanPointInPolygon && turf.point) {
-                    const pt = turf.point([lng, lat]);
-                    isInside = turf.booleanPointInPolygon(pt, targetFeature);
-                }
-            } catch (e) {
-                isInside = true;
-            }
-
-            if (isInside) {
-                const photo = (obs.photos && obs.photos.length > 0) ? (obs.photos[0].url || "").replace("square", "medium") : "";
-                features.push({
-                    type: "Feature",
-                    geometry: {
-                        type: "Point",
-                        coordinates: [lng, lat]
-                    },
-                    properties: {
-                        id: obs.id,
-                        user: obs.user?.login || "Observer",
-                        date: obs.observed_on || obs.created_at_details?.date || "Recent",
-                        place: obs.place_guess || "",
-                        photoUrl: photo,
-                        uri: obs.uri || `https://www.inaturalist.org/observations/${obs.id}`,
-                        species: birdName
-                    }
-                });
-            }
-        });
-
-        const geojson = {
-            type: "FeatureCollection",
-            features: features
-        };
-
-        state.selectedBirdObservations = features;
-
-        if (state.map.getSource('bird-observations')) {
-            state.map.getSource('bird-observations').setData(geojson);
-        }
-
-        let featuredPhotoUrl = "";
-        let photoCredit = "";
-
-        // First check if any zone observation has a photo
-        for (const feat of features) {
-            if (feat.properties.photoUrl) {
-                featuredPhotoUrl = feat.properties.photoUrl.replace("square", "large").replace("medium", "large");
-                photoCredit = `Photo by ${feat.properties.user} via iNaturalist`;
-                break;
-            }
-        }
-
-        // If no observation in zone has a photo, check if any returned observation in wider query had a photo or fetch default taxon photo
-        if (!featuredPhotoUrl) {
-            for (const r of results) {
-                if (r.photos && r.photos.length > 0) {
-                    featuredPhotoUrl = (r.photos[0].url || "").replace("square", "large").replace("medium", "large");
-                    photoCredit = `Photo by ${r.user?.login || "iNaturalist user"} via iNaturalist`;
-                    break;
-                }
-            }
-        }
-
-        if (!featuredPhotoUrl) {
-            const defaultPhoto = await fetchTaxonDefaultPhoto(birdName);
-            if (defaultPhoto) {
-                featuredPhotoUrl = (defaultPhoto.medium_url || defaultPhoto.url || "").replace("square", "large").replace("medium", "large");
-                photoCredit = defaultPhoto.attribution || "Photo via iNaturalist";
-            }
-        }
-
-        state.selectedBirdPhotoUrl = featuredPhotoUrl;
-        state.selectedBirdPhotoCredit = photoCredit;
-
-        if (state.activeTab === "observations") {
-            renderSidebarList();
-        } else {
-            updateSidebarBirdPanel(birdName, features, featuredPhotoUrl, photoCredit);
-        }
-
-    } catch (err) {
-        console.error("iNaturalist error:", err);
-        const listContainer = document.getElementById("sidebar-zone-list");
-        const statusEl = listContainer ? listContainer.querySelector(".sidebar-bird-panel__status") : null;
-        if (statusEl) {
-            statusEl.textContent = "Could not load observations from iNaturalist.";
-        }
-    }
-}
-
 function renderObservationsList(listContainer) {
     const observations = state.selectedBirdObservations || [];
     if (observations.length === 0) {
@@ -508,6 +378,17 @@ function updateSidebarBirdPanel(birdName, features, featuredPhotoUrl, photoCredi
     listContainer.innerHTML = "";
     renderBirdSidebarPanel(listContainer, birdName, { onRenderObservations: renderSidebarList });
 }
+
+const { selectBird } = createBirdSelectionController({
+    state,
+    fetchObservations: fetchBirdObservations,
+    fetchDefaultPhoto: fetchTaxonDefaultPhoto,
+    getBbox,
+    updateHeader,
+    renderSidebarList,
+    updateSidebarBirdPanel,
+    setupObservationsLayer: setupBirdObservationsLayer
+});
 
 function renderOverviewTab(listContainer, isCirclesFeature, isCircle, targetFeature) {
     const activateTab = tab => activateSidebarTab(tab, {
