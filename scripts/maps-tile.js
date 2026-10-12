@@ -1879,9 +1879,7 @@ function initializeMap() {
     setupMapEffectsAndFullscreen(mapWrapper);
 }
 
-function closeAllModals() {
-    closeModalsView({ onBeforeClose: cancelDownloadViewPreload });
-}
+
 
 
 
@@ -1966,14 +1964,6 @@ function closeAllModals() {
         }
     }
 
-function setupCapsules() {
-    setupSidebarCapsuleEvents({
-        state,
-        documentObject: document,
-        onRender: renderSidebarList,
-        notify: showToast
-    });
-}
 
 async function init() {
     const triggerEntrance = () => {
@@ -2020,10 +2010,15 @@ async function init() {
             notify: showToast,
             downloadPdf: button => downloadGeoPdf(button),
             downloadTiff: button => downloadGeoTiff(button),
-            closeModals: closeAllModals
+            closeModals: () => closeModalsView({ onBeforeClose: cancelDownloadViewPreload })
         });
         setupSearch();
-        setupCapsules();
+        setupSidebarCapsuleEvents({
+            state,
+            documentObject: document,
+            onRender: renderSidebarList,
+            notify: showToast
+        });
         setupSwipeNavigation();
         setupListSwipeBack();
         setupImageLightbox();

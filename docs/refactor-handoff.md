@@ -6,7 +6,7 @@ Updated: 2026-10-11
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit before this handoff: `8e0874f reuse shared map proximity tracker`
+- Latest refactor commit before this slice: `ca91cf5 reuse shared map proximity tracker`
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -28,7 +28,8 @@ Recent commits, newest first:
 | `e4eae70` | Reuse the shared HTML map label renderer and preserve the live map's light-theme label colors. |
 | `9c36abe` | Remove the unused lightbox setup duplicate; keep lightbox behavior in `image-lightbox.js`. |
 | `6d72828` | Remove the unused capsule setup duplicate; production binding remains in `sidebar-capsule-events.js`. |
-| `8e0874f` | Use the shared map proximity tracker in production and remove its duplicate implementation. |
+| `ca91cf5` | Use the shared map proximity tracker in production and remove its duplicate implementation. |
+| `HEAD` | Wire modal cleanup and capsule events directly from map initialization to their shared components, removing pass-through wrappers. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
 | `54c5a22` | Remove unused duplicate `MAP_STYLES` objects and unused `scripts/config/map-styles.js`. |
@@ -108,6 +109,12 @@ After removing the duplicate capsule binding:
 After wiring production to the shared map proximity tracker:
 
 - `npm test` passed: 88 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After wiring shared modal and capsule components directly from initialization:
+
+- `npm test` passed: 89 tests.
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 

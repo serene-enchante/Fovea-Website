@@ -57,7 +57,8 @@ test('the map application uses shared toolbar setup with legacy map callbacks', 
     assert.match(source, /shareFile: handleSpatialFileShare/);
     assert.match(source, /downloadPdf: button => downloadGeoPdf\(button\)/);
     assert.match(source, /downloadTiff: button => downloadGeoTiff\(button\)/);
-    assert.match(source, /closeModals: closeAllModals/);
+    assert.match(source, /closeModals: \(\) => closeModalsView\(\{ onBeforeClose: cancelDownloadViewPreload \}\)/);
+    assert.doesNotMatch(source, /function closeAllModals\(/);
     assert.doesNotMatch(source, /function setupActionButtons\(/);
 });
 
@@ -90,4 +91,11 @@ test('the map application uses the shared cursor proximity tracker', async () =>
 
     assert.match(source, /import \{ setupProximityGlowCanvas, setupProximityTracking \} from '\.\/map\/map-proximity\.js';/);
     assert.doesNotMatch(source, /function setupProximityTracking\(/);
+});
+
+test('the map entry wires shared sidebar capsule events directly', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+
+    assert.match(source, /setupSidebarCapsuleEvents\(\{\s+state,\s+documentObject: document,\s+onRender: renderSidebarList,\s+notify: showToast/);
+    assert.doesNotMatch(source, /function setupCapsules\(/);
 });
