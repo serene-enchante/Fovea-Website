@@ -139,6 +139,17 @@ test('bird species guide rendering lives in its shared sidebar component', async
     assert.match(component, /onSelectBird\(bird\.name\)/);
 });
 
+test('organizer and resource sidebar views are shared components', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const component = await readFile(new URL('../scripts/components/sidebar-static-views.js', import.meta.url), 'utf8');
+
+    assert.match(source, /import \{ renderOrganizersList, renderResourcesList \} from '\.\/components\/sidebar-static-views\.js';/);
+    assert.doesNotMatch(source, /function renderOrganizersList\(/);
+    assert.doesNotMatch(source, /function renderResourcesList\(/);
+    assert.match(component, /export function renderOrganizersList\(/);
+    assert.match(component, /export function renderResourcesList\(/);
+});
+
 test('bird selection and observation loading are owned by the shared map controller', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
     const controller = await readFile(new URL('../scripts/map/bird-selection-controller.js', import.meta.url), 'utf8');
