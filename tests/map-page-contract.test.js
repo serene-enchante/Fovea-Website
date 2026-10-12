@@ -201,6 +201,17 @@ test('help tooltip targets are tagged and resolved by a separate view helper', a
     assert.match(targets, /export function resolveHelpTarget\(/);
 });
 
+test('help tooltip rendering and placement are owned by a shared view module', async () => {
+    const helpMode = await readFile(new URL('../scripts/components/map-modals.js', import.meta.url), 'utf8');
+    const tooltipView = await readFile(new URL('../scripts/components/map-help-tooltip-view.js', import.meta.url), 'utf8');
+
+    assert.match(helpMode, /renderHelpTooltip\(tooltip/);
+    assert.match(helpMode, /positionHelpTooltipAtPointer\(tooltip/);
+    assert.match(helpMode, /positionHelpTooltipAtTarget\(tooltip/);
+    assert.doesNotMatch(helpMode, /help-mode-tooltip__shortcut-val/);
+    assert.match(tooltipView, /export function renderHelpTooltip\(/);
+});
+
 test('the map entry wires shared sidebar capsule events directly', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
 

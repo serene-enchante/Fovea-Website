@@ -6,6 +6,7 @@ import { toggleFullscreen, performDirectCopyLink } from './toolbar-actions.js';
 import { selectMapStyleByIndex } from '../map/map-layers.js';
 import { setupMapKeyboardShortcuts } from './map-keyboard-shortcuts.js';
 import { resolveHelpTarget, tagHelpElements } from './map-help-targets.js';
+import { hideHelpTooltip, highlightHelpTarget, positionHelpTooltipAtPointer, positionHelpTooltipAtTarget, renderHelpTooltip } from './map-help-tooltip-view.js';
 
 export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
     const toggleInput = document.getElementById("toggle-help-mode");
@@ -21,8 +22,7 @@ export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
             if (isFromKey) showToast("Interactive Help Mode: Enabled");
         } else {
             document.body.classList.remove("is-help-mode-active");
-            if (tooltip) tooltip.setAttribute("aria-hidden", "true");
-            if (highlight) highlight.setAttribute("aria-hidden", "true");
+            hideHelpTooltip(tooltip, highlight);
             if (isFromKey) showToast("Interactive Help Mode: Disabled");
         }
         if (window.updateActionButtonsState) window.updateActionButtonsState();
@@ -71,53 +71,12 @@ export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
 
         const { target, title, desc, shortcut } = resolveHelpTarget(e.target, MAP_HELP_CONTENT);
         if (target) {
-            if (tooltip) {
-                tooltip.innerHTML = `
-                    <div class="help-mode-tooltip__title">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                        <span>${title}</span>
-                    </div>
-                    <p class="help-mode-tooltip__desc">${desc}</p>
-                    ${shortcut ? `
-                        <div class="help-mode-tooltip__shortcut">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M18 12h.01M8 16h8"></path></svg>
-                            <span class="help-mode-tooltip__shortcut-label">Shortcut:</span>
-                            <span class="help-mode-tooltip__shortcut-val">${shortcut}</span>
-                        </div>
-                    ` : ""}
-                `;
+            renderHelpTooltip(tooltip, { title, desc, shortcut });
+            positionHelpTooltipAtPointer(tooltip, e, window);
 
-                tooltip.setAttribute("aria-hidden", "false");
-
-                const tooltipWidth = tooltip.offsetWidth || 240;
-                const tooltipHeight = tooltip.offsetHeight || 80;
-
-                let posX = e.clientX + 15;
-                let posY = e.clientY + 15;
-
-                if (posX + tooltipWidth > window.innerWidth - 10) {
-                    posX = e.clientX - tooltipWidth - 15;
-                }
-                if (posY + tooltipHeight > window.innerHeight - 10) {
-                    posY = e.clientY - tooltipHeight - 15;
-                }
-
-                tooltip.style.left = `${posX}px`;
-                tooltip.style.top = `${posY}px`;
-            }
-
-            if (highlight) {
-                const rect = target.getBoundingClientRect();
-                const pad = 3;
-                highlight.style.left = `${rect.left - pad}px`;
-                highlight.style.top = `${rect.top - pad}px`;
-                highlight.style.width = `${rect.width + pad * 2}px`;
-                highlight.style.height = `${rect.height + pad * 2}px`;
-                highlight.setAttribute("aria-hidden", "false");
-            }
+            highlightHelpTarget(highlight, target);
         } else {
-            if (tooltip) tooltip.setAttribute("aria-hidden", "true");
-            if (highlight) highlight.setAttribute("aria-hidden", "true");
+            hideHelpTooltip(tooltip, highlight);
         }
     });
 
@@ -143,48 +102,10 @@ export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
             e.stopPropagation();
             e.stopImmediatePropagation();
 
-            if (tooltip) {
-                tooltip.innerHTML = `
-                    <div class="help-mode-tooltip__title">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                        <span>${title}</span>
-                    </div>
-                    <p class="help-mode-tooltip__desc">${desc}</p>
-                    ${shortcut ? `
-                        <div class="help-mode-tooltip__shortcut">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M18 12h.01M8 16h8"></path></svg>
-                            <span class="help-mode-tooltip__shortcut-label">Shortcut:</span>
-                            <span class="help-mode-tooltip__shortcut-val">${shortcut}</span>
-                        </div>
-                    ` : ""}
-                `;
-                tooltip.setAttribute("aria-hidden", "false");
+            renderHelpTooltip(tooltip, { title, desc, shortcut });
+            positionHelpTooltipAtTarget(tooltip, target, window);
 
-                const rect = target.getBoundingClientRect();
-                const tooltipWidth = tooltip.offsetWidth || 240;
-                const tooltipHeight = tooltip.offsetHeight || 80;
-
-                let posX = rect.left + (rect.width / 2) - (tooltipWidth / 2);
-                let posY = rect.bottom + 10;
-
-                if (posX < 10) posX = 10;
-                if (posX + tooltipWidth > window.innerWidth - 10) posX = window.innerWidth - tooltipWidth - 10;
-                if (posY + tooltipHeight > window.innerHeight - 10) posY = rect.top - tooltipHeight - 10;
-                if (posY < 10) posY = 10;
-
-                tooltip.style.left = `${posX}px`;
-                tooltip.style.top = `${posY}px`;
-            }
-
-            if (highlight) {
-                const rect = target.getBoundingClientRect();
-                const pad = 3;
-                highlight.style.left = `${rect.left - pad}px`;
-                highlight.style.top = `${rect.top - pad}px`;
-                highlight.style.width = `${rect.width + pad * 2}px`;
-                highlight.style.height = `${rect.height + pad * 2}px`;
-                highlight.setAttribute("aria-hidden", "false");
-            }
+            highlightHelpTarget(highlight, target);
         }
     };
 
