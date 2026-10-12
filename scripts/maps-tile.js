@@ -15,6 +15,7 @@ import {
 import { selectMapStyleByIndex, updateAllFeatureStyles as updateMapFeatureStyles, updateLabelZoomVisibility } from './map/map-layers.js';
 import { initializeMapRuntime } from './map/map-runtime.js';
 import { createMapLayoutDownloadActions } from './map/map-layout-downloads.js';
+import { createMapFeatureRepository } from './map/map-feature-repository.js';
 import { setupMapPageNavigation } from './map/map-page-navigation.js';
 import { setupPageTransitionEvents } from './components/page-transition-events.js';
 import { createMapLayerLifecycle } from './map/map-layer-lifecycle.js';
@@ -169,23 +170,8 @@ const { downloadGeoPdf, downloadGeoTiff } = createMapLayoutDownloadActions({
     notify: showToast
 });
 
-async function loadFeaturesForMapView(featureName) {
-    const datasetId = featureName === 'florence' ? 'florence'
-        : featureName === 'eugene' ? 'eugene'
-            : 'circles';
-    const dataset = await loadGeoDataset(datasetId);
-    const features = dataset.features;
-
-    if (datasetId === 'circles') {
-        state.circlesFeatures = features;
-    } else if (datasetId === 'florence') {
-        state.florenceFeatures = features;
-    } else {
-        state.eugeneFeatures = features;
-    }
-
-    return features;
-}
+const mapFeatureRepository = createMapFeatureRepository({ state, loadGeoDataset });
+const { loadFeaturesForMapView } = mapFeatureRepository;
 
 const featureTransitionController = createFeatureTransitionController({
     state,

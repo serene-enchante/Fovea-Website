@@ -23,6 +23,7 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.match(source, /Object\.assign\(state, \{/);
     assert.doesNotMatch(source, /const state = \{/);
     assert.match(source, /import \{ loadGeoDataset \} from '\.\/services\/geo-data-repository\.js';/);
+    assert.match(source, /createMapFeatureRepository\(\{ state, loadGeoDataset \}\)/);
     assert.match(source, /state\.allFeatures = await loadFeaturesForMapView\(initialFeature\);/);
     assert.match(source, /loadFeatures: loadFeaturesForMapView,/);
     const selectionController = await readFile(new URL('../scripts/map/map-selection.js', import.meta.url), 'utf8');
@@ -39,6 +40,17 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.doesNotMatch(source, /function canvasToTiffBlob\(/);
     assert.doesNotMatch(source, /function isPointInGeoJSONGeometry\(/);
     assert.doesNotMatch(source, /function getDefaultStyle\(/);
+});
+
+test('map feature repository maps view names to datasets and caches feature arrays in state', async () => {
+    const repository = await readFile(new URL('../scripts/map/map-feature-repository.js', import.meta.url), 'utf8');
+
+    assert.match(repository, /export function createMapFeatureRepository\(\{ state, loadGeoDataset \}\)/);
+    assert.match(repository, /featureName === 'florence' \? 'florence'/);
+    assert.match(repository, /featureName === 'eugene' \? 'eugene'/);
+    assert.match(repository, /state\.circlesFeatures = features/);
+    assert.match(repository, /state\.florenceFeatures = features/);
+    assert.match(repository, /state\.eugeneFeatures = features/);
 });
 
 test('the map application uses the shared suggested-app and Avenza modal components', async () => {
