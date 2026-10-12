@@ -1,31 +1,38 @@
 import { MAP_HELP_CONTENT } from '../config/map-help-content.js';
-import { updateKeyboardTileFocus } from './sidebar-list.js';
-import { showToast } from './toast-view.js';
-import { state } from '../state.js';
-import { toggleFullscreen, performDirectCopyLink } from './toolbar-actions.js';
-import { selectMapStyleByIndex } from '../map/map-layers.js';
 import { setupMapKeyboardShortcuts } from './map-keyboard-shortcuts.js';
 import { resolveHelpTarget, tagHelpElements } from './map-help-targets.js';
 import { hideHelpTooltip, highlightHelpTarget, positionHelpTooltipAtPointer, positionHelpTooltipAtTarget, renderHelpTooltip } from './map-help-tooltip-view.js';
 
-export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
-    const toggleInput = document.getElementById("toggle-help-mode");
-    const tooltip = document.getElementById("help-mode-tooltip");
-    const highlight = document.getElementById("help-mode-highlight");
+export function setupHelpModeSystem({
+    state,
+    renderSidebarList = () => {},
+    updateKeyboardFocus = () => {},
+    onToggleFullscreen = () => {},
+    onCopyLink = () => {},
+    onSelectMapStyle = () => {},
+    notify = () => {},
+    documentObject = globalThis.document,
+    windowObject = globalThis.window,
+    navigatorObject = globalThis.navigator,
+    MutationObserverClass = globalThis.MutationObserver
+} = {}) {
+    const toggleInput = documentObject.getElementById("toggle-help-mode");
+    const tooltip = documentObject.getElementById("help-mode-tooltip");
+    const highlight = documentObject.getElementById("help-mode-highlight");
 
     const setHelpMode = (active, isFromKey = false) => {
         state.isHelpModeActive = active;
         if (toggleInput) toggleInput.checked = active;
         if (active) {
-            document.body.classList.add("is-help-mode-active");
-            tagHelpElements(MAP_HELP_CONTENT, document);
-            if (isFromKey) showToast("Interactive Help Mode: Enabled");
+            documentObject.body.classList.add("is-help-mode-active");
+            tagHelpElements(MAP_HELP_CONTENT, documentObject);
+            if (isFromKey) notify("Interactive Help Mode: Enabled");
         } else {
-            document.body.classList.remove("is-help-mode-active");
+            documentObject.body.classList.remove("is-help-mode-active");
             hideHelpTooltip(tooltip, highlight);
-            if (isFromKey) showToast("Interactive Help Mode: Disabled");
+            if (isFromKey) notify("Interactive Help Mode: Disabled");
         }
-        if (window.updateActionButtonsState) window.updateActionButtonsState();
+        if (windowObject.updateActionButtonsState) windowObject.updateActionButtonsState();
     };
 
     if (toggleInput) {
@@ -34,45 +41,45 @@ export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
         });
     }
 
-    const docLink = document.querySelector(".help-doc-link");
+    const docLink = documentObject.querySelector(".help-doc-link");
     if (docLink) {
         docLink.addEventListener("click", (e) => {
             e.preventDefault();
-            showToast("Documentation not available (coming soon)");
+            notify("Documentation not available (coming soon)");
         });
     }
 
     setupMapKeyboardShortcuts({
         state,
-        documentObject: document,
+        documentObject,
         renderSidebarList,
         setHelpMode,
-        updateKeyboardFocus: updateKeyboardTileFocus,
-        onToggleFullscreen: toggleFullscreen,
-        onCopyLink: performDirectCopyLink,
-        onSelectMapStyle: selectMapStyleByIndex
+        updateKeyboardFocus,
+        onToggleFullscreen,
+        onCopyLink,
+        onSelectMapStyle
     });
 
-    tagHelpElements(MAP_HELP_CONTENT, document);
+    tagHelpElements(MAP_HELP_CONTENT, documentObject);
 
-    const observer = new MutationObserver(() => {
+    const observer = new MutationObserverClass(() => {
         if (state.isHelpModeActive) {
-            tagHelpElements(MAP_HELP_CONTENT, document);
+            tagHelpElements(MAP_HELP_CONTENT, documentObject);
         }
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(documentObject.body, { childList: true, subtree: true });
 
     const isTouchDevice = () => {
-        return window.matchMedia("(pointer: coarse)").matches || ('ontouchstart' in window && navigator.maxTouchPoints > 0) || window.innerWidth <= 768;
+        return windowObject.matchMedia("(pointer: coarse)").matches || ('ontouchstart' in windowObject && navigatorObject.maxTouchPoints > 0) || windowObject.innerWidth <= 768;
     };
 
-    document.addEventListener("mousemove", (e) => {
+    documentObject.addEventListener("mousemove", (e) => {
         if (!state.isHelpModeActive || isTouchDevice()) return;
 
         const { target, title, desc, shortcut } = resolveHelpTarget(e.target, MAP_HELP_CONTENT);
         if (target) {
             renderHelpTooltip(tooltip, { title, desc, shortcut });
-            positionHelpTooltipAtPointer(tooltip, e, window);
+            positionHelpTooltipAtPointer(tooltip, e, windowObject);
 
             highlightHelpTarget(highlight, target);
         } else {
@@ -80,7 +87,7 @@ export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
         }
     });
 
-    const mobileExitBtn = document.getElementById("mobile-help-exit-btn");
+    const mobileExitBtn = documentObject.getElementById("mobile-help-exit-btn");
     if (mobileExitBtn) {
         mobileExitBtn.addEventListener("click", (e) => {
             e.preventDefault();
@@ -92,7 +99,7 @@ export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
     const handleHelpClick = (e) => {
         if (!state.isHelpModeActive || !isTouchDevice()) return;
 
-        const helpModal = document.getElementById("help-modal");
+        const helpModal = documentObject.getElementById("help-modal");
         if (helpModal && helpModal.contains(e.target)) return;
         if (mobileExitBtn && mobileExitBtn.contains(e.target)) return;
 
@@ -103,11 +110,11 @@ export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
             e.stopImmediatePropagation();
 
             renderHelpTooltip(tooltip, { title, desc, shortcut });
-            positionHelpTooltipAtTarget(tooltip, target, window);
+            positionHelpTooltipAtTarget(tooltip, target, windowObject);
 
             highlightHelpTarget(highlight, target);
         }
     };
 
-    document.addEventListener("click", handleHelpClick, true);
+    documentObject.addEventListener("click", handleHelpClick, true);
 }

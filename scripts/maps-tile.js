@@ -47,7 +47,7 @@ import { setupBirdObservationsLayer, updateBirdObservationsLayerStyles } from '.
 import { setupHelpModeSystem } from './components/map-modals.js';
 import { setupMobileBottomNav } from './components/bottom-nav-view.js';
 import { showToast } from './components/toast-view.js';
-import { setupActionButtons as setupToolbarActionButtons, setupViewToggleMenu, updateAllAppsModalHeaderTitle, updateShareModalDescription, toggleFullscreen, getActiveDownloadFilename, generateAppSpatialBlob } from './components/toolbar-actions.js';
+import { setupActionButtons as setupToolbarActionButtons, setupViewToggleMenu, updateAllAppsModalHeaderTitle, updateShareModalDescription, toggleFullscreen, performDirectCopyLink, getActiveDownloadFilename, generateAppSpatialBlob } from './components/toolbar-actions.js';
 import { closeAvenzaModal, closeAllAppsModal, closeAllModals as closeModalsView } from './components/modal-view.js';
 import { handleAppDirectOpen } from './components/avenza-modal-view.js';
 import { setMobileSnapState, setupListSwipeBack, setupMobileResizeBar, setupSwipeNavigation, updateControlPositions } from './components/mobile-view.js';
@@ -507,7 +507,19 @@ async function init() {
         setupListSwipeBack();
         setupImageLightbox();
         setupMobileResizeBar();
-        setupHelpModeSystem({ renderSidebarList });
+        setupHelpModeSystem({
+            state,
+            renderSidebarList,
+            updateKeyboardFocus: updateKeyboardTileFocus,
+            onToggleFullscreen: toggleFullscreen,
+            onCopyLink: performDirectCopyLink,
+            onSelectMapStyle: selectMapStyleByIndex,
+            notify: showToast,
+            documentObject: document,
+            windowObject: window,
+            navigatorObject: navigator,
+            MutationObserverClass: MutationObserver
+        });
         setupSidebarScrollListener();
         setupMobileBottomNav();
         setupViewToggleMenu();

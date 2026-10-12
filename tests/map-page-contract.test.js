@@ -194,7 +194,7 @@ test('help tooltip targets are tagged and resolved by a separate view helper', a
     const helpMode = await readFile(new URL('../scripts/components/map-modals.js', import.meta.url), 'utf8');
     const targets = await readFile(new URL('../scripts/components/map-help-targets.js', import.meta.url), 'utf8');
 
-    assert.match(helpMode, /tagHelpElements\(MAP_HELP_CONTENT, document\)/);
+    assert.match(helpMode, /tagHelpElements\(MAP_HELP_CONTENT, documentObject\)/);
     assert.match(helpMode, /resolveHelpTarget\(e\.target, MAP_HELP_CONTENT\)/);
     assert.doesNotMatch(helpMode, /const resolveHelpTarget/);
     assert.match(targets, /export function tagHelpElements\(/);
@@ -210,6 +210,17 @@ test('help tooltip rendering and placement are owned by a shared view module', a
     assert.match(helpMode, /positionHelpTooltipAtTarget\(tooltip/);
     assert.doesNotMatch(helpMode, /help-mode-tooltip__shortcut-val/);
     assert.match(tooltipView, /export function renderHelpTooltip\(/);
+});
+
+test('help mode receives map state, browser objects, and action callbacks explicitly', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const helpMode = await readFile(new URL('../scripts/components/map-modals.js', import.meta.url), 'utf8');
+
+    assert.match(source, /setupHelpModeSystem\(\{\s*state,/);
+    assert.match(source, /onCopyLink: performDirectCopyLink/);
+    assert.match(source, /MutationObserverClass: MutationObserver/);
+    assert.match(helpMode, /documentObject = globalThis\.document/);
+    assert.doesNotMatch(helpMode, /from '\.\/toolbar-actions\.js'|from '\.\.\/state\.js'/);
 });
 
 test('the map entry wires shared sidebar capsule events directly', async () => {

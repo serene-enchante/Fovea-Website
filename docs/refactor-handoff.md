@@ -6,7 +6,7 @@ Updated: 2026-10-11
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `744573d extract map help tooltip view`
+- Latest refactor commit: `dd3a5f4 extract map help tooltip view`
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -52,7 +52,8 @@ Recent commits, newest first:
 | `e81ab38` | Move map keyboard shortcut routing into `map-keyboard-shortcuts.js`; inject sidebar, fullscreen, copy-link, style-selection, and help-mode actions. |
 | `f97a35c` | Move help tooltip descriptions into `config/map-help-content.js`; keep help rendering and interaction logic in `map-modals.js`. |
 | `cc90717` | Move help selector tagging, lazy target matching, and map-control exclusions into `map-help-targets.js`. |
-| `744573d` | Consolidate help tooltip content, mouse/touch positioning, highlighting, and dismissal in `map-help-tooltip-view.js`. |
+| `dd3a5f4` | Consolidate help tooltip content, mouse/touch positioning, highlighting, and dismissal in `map-help-tooltip-view.js`. |
+| `8e50213` | Inject app state, browser objects, toast, keyboard-focus, fullscreen, copy-link, and map-style actions into help-mode setup. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
 | `54c5a22` | Remove unused duplicate `MAP_STYLES` objects and unused `scripts/config/map-styles.js`. |
@@ -273,6 +274,12 @@ After extracting the help tooltip view:
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
+After injecting help-mode dependencies:
+
+- `npm test` passed: 154 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
 The browser suite starts a server on `127.0.0.1:4173`. In this environment it needs the sandbox permission that allows Playwright's local web server to bind that address. Warnings about `NO_COLOR` versus `FORCE_COLOR` are benign.
 
 ## Next steps for the next agent
@@ -299,6 +306,7 @@ The browser suite starts a server on `127.0.0.1:4173`. In this environment it ne
 - `scripts/config/map-help-content.js` stores the help-mode selector, title, description, and optional shortcut records consumed by `map-modals.js`.
 - `scripts/components/map-help-targets.js` owns applying help attributes and resolving hovered or touched targets, including suppressing tooltip hits on map controls.
 - `scripts/components/map-help-tooltip-view.js` owns tooltip markup, mouse/touch placement, target highlighting, and dismissal.
+- `scripts/components/map-modals.js` accepts app state, browser APIs, notifications, and shortcut actions through `setupHelpModeSystem`; production wiring lives in `maps-tile.js`.
 - `scripts/map/map-proximity.js` owns cursor proximity tracking and the glow canvas; the live map entry calls both shared setup functions.
 - `scripts/map/map-viewport.js` owns pointer effects, resize invalidation, fullscreen classes, and mobile home animation; the map entry injects layout and map callbacks.
 - `scripts/components/image-lightbox.js` owns lightbox opening and close-event setup. `map-modals.js` owns help-mode shortcuts and interactions.
