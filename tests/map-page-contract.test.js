@@ -28,7 +28,7 @@ test('the map application uses the shared GeoJSON repository', async () => {
     const selectionController = await readFile(new URL('../scripts/map/map-selection.js', import.meta.url), 'utf8');
     assert.match(selectionController, /targetFeatures = await loadFeatures\(featureName\);/);
     assert.match(source, /import \{ findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry \} from '\.\/utils\/geometry-math\.js';/);
-    assert.match(source, /import \{ displayZoneId, formatArea, formatDate, normalizeZoneId, zoneImagePath \} from '\.\/utils\/format-utils\.js';/);
+    assert.match(source, /import \{ formatArea, formatDate, normalizeZoneId \} from '\.\/utils\/format-utils\.js';/);
     assert.match(source, /updateAllFeatureStyles as updateMapFeatureStyles/);
     const mapLayers = await readFile(new URL('../scripts/map/map-layers.js', import.meta.url), 'utf8');
     assert.match(mapLayers, /getThemeAccent\(\)/);
@@ -122,6 +122,17 @@ test('navigation controls are created by the shared map controls module', async 
     assert.match(source, /setupMapNavigationControls\(\{/);
     assert.doesNotMatch(source, /map-ctrl-zoom-in/);
     assert.match(controls, /export function setupMapNavigationControls\(/);
+});
+
+test('map style picker behavior is owned by a shared map control module', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const styleControl = await readFile(new URL('../scripts/map/map-style-control.js', import.meta.url), 'utf8');
+
+    assert.match(source, /setupMapStyleControl\(\{/);
+    assert.doesNotMatch(source, /map-ctrl-styles__toggle/);
+    assert.match(styleControl, /export function setupMapStyleControl\(/);
+    assert.match(styleControl, /onSwitchBaseMap\(b\.id\)/);
+    assert.match(styleControl, /onSelectSubject\(state\.currentId, true\)/);
 });
 
 test('the map entry wires shared sidebar capsule events directly', async () => {
