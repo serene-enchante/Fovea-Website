@@ -64,10 +64,12 @@ test('the map application uses shared toolbar setup with legacy map callbacks', 
 
 test('the map application reads Florence zone guide content from config', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
+    const overview = await readFile(new URL('../scripts/components/sidebar-overview-view.js', import.meta.url), 'utf8');
 
-    assert.match(source, /import \{ FLORENCE_ZONE_BIRDS \} from '\.\/config\/florence-zone-guide\.js';/);
-    assert.doesNotMatch(source, /const FLORENCE_ZONE_BIRDS =/);
-    assert.match(source, /FLORENCE_ZONE_BIRDS\[zid\]/);
+    assert.match(source, /import \{ renderSidebarOverview \} from '\.\/components\/sidebar-overview-view\.js';/);
+    assert.match(overview, /FLORENCE_ZONE_BIRDS\[zid\]/);
+    assert.match(overview, /export function renderSidebarOverview\(/);
+    assert.doesNotMatch(source, /function renderOverviewTab\(/);
 });
 
 test('map modals leave image lightbox behavior to the shared lightbox component', async () => {
