@@ -135,7 +135,7 @@ test('bird species guide rendering lives in its shared sidebar component', async
     const source = await readFile(mapScriptPath, 'utf8');
     const component = await readFile(new URL('../scripts/components/bird-species-list.js', import.meta.url), 'utf8');
 
-    assert.match(source, /renderBirdSpeciesList\(listContainer, \{ state, onSelectBird: selectBird/);
+    assert.match(source, /renderBirdSpecies: renderBirdSpeciesList/);
     assert.doesNotMatch(source, /function renderBirdsList\(/);
     assert.match(component, /export function renderBirdSpeciesList\(/);
     assert.match(component, /onSelectBird\(bird\.name\)/);
@@ -155,14 +155,26 @@ test('organizer and resource sidebar views are shared components', async () => {
 test('circle and zone sidebar rows are rendered by the shared map feature list', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
     const component = await readFile(new URL('../scripts/components/map-feature-list.js', import.meta.url), 'utf8');
-    const sidebarList = source.slice(source.indexOf('function renderSidebarList() {'), source.indexOf('function setupMapEffectsAndFullscreen'));
+    const sidebarController = await readFile(new URL('../scripts/components/sidebar-controller.js', import.meta.url), 'utf8');
 
     assert.match(source, /import \{ renderMapFeatureList \} from '\.\/components\/map-feature-list\.js';/);
-    assert.match(sidebarList, /onSelectCircle: \(cid, feature\)/);
-    assert.match(sidebarList, /onSelectZone: id => selectSubject\(id\)/);
-    assert.doesNotMatch(sidebarList, /const sortedCircles =/);
-    assert.doesNotMatch(sidebarList, /const sortedFeatures =/);
+    assert.match(source, /onSelectCircle: \(cid, feature = null\)/);
+    assert.match(source, /onSelectZone: id => selectSubject\(id\)/);
+    assert.match(sidebarController, /renderMapFeatureList\(listContainer/);
+    assert.doesNotMatch(sidebarController, /const sortedCircles =/);
+    assert.doesNotMatch(sidebarController, /const sortedFeatures =/);
     assert.match(component, /export function renderMapFeatureList\(/);
+});
+
+test('map sidebar routing is owned by the shared sidebar controller', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const controller = await readFile(new URL('../scripts/components/sidebar-controller.js', import.meta.url), 'utf8');
+
+    assert.match(source, /createSidebarController\(\{/);
+    assert.doesNotMatch(source, /function renderSidebarList\(/);
+    assert.match(controller, /export function createSidebarController\(/);
+    assert.match(controller, /if \(state\.selectedBird\)/);
+    assert.match(controller, /if \(state\.isCirclesFeature\)/);
 });
 
 test('bird selection and observation loading are owned by the shared map controller', async () => {

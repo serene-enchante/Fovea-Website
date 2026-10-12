@@ -37,6 +37,7 @@ import { renderBirdSpeciesList } from './components/bird-species-list.js';
 import { renderOrganizersList, renderResourcesList } from './components/sidebar-static-views.js';
 import { renderMapFeatureList } from './components/map-feature-list.js';
 import { renderSidebarOverview } from './components/sidebar-overview-view.js';
+import { createSidebarController } from './components/sidebar-controller.js';
 import { clearBirdObservations, createBirdSelectionController } from './map/bird-selection-controller.js';
 import { setupBirdObservationsLayer, updateBirdObservationsLayerStyles } from './map/bird-observation-layers.js';
 import { setupHelpModeSystem } from './components/map-modals.js';
@@ -250,152 +251,47 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
     });
 }
 
-function updateSidebarBirdPanel(birdName, features, featuredPhotoUrl, photoCredit) {
-    const listContainer = document.getElementById("sidebar-zone-list");
-    if (!listContainer) return;
-    if (state.selectedBird !== birdName) return;
+let selectBirdHandler;
+const selectBird = (...args) => selectBirdHandler(...args);
+const sidebarController = createSidebarController({
+    state,
+    documentObject: document,
+    syncTabs: syncSidebarTabs,
+    renderBirdObservations: renderBirdObservationsList,
+    renderBirdPanel: renderBirdSidebarPanel,
+    renderBirdSpecies: renderBirdSpeciesList,
+    renderOrganizers: renderOrganizersList,
+    renderResources: renderResourcesList,
+    renderOverview: renderSidebarOverview,
+    renderMapFeatureList,
+    onSelectBird: birdName => selectBird(birdName),
+    onSelectCircle: (cid, feature = null) => {
+        const circle = feature || state.circlesFeatures.find(item => item.properties?.cid === cid);
+        const bbox = circle ? getBbox(circle) : null;
+        if (cid === "Eugene") switchToFeature("eugene", bbox);
+        else if (cid === "Florence") switchToFeature("florence", bbox);
+        else if (cid === "Oakridge" || cid === "Cottage Grove") showToast("There is no data for this count circle");
+    },
+    onSelectZone: id => selectSubject(id),
+    onActivateTab: tab => activateSidebarTab(tab, { state, documentObject: document, onRender: renderSidebarList }),
+    onFeatureHover: (id, hover) => {
+        if (state.map?.getSource('zones')) state.map.setFeatureState({ source: 'zones', id }, { hover });
+    },
+    onOpenImageLightbox: openImageLightbox,
+    onUpdateKeyboardFocus: updateKeyboardTileFocus
+});
+const { renderSidebarList } = sidebarController;
 
-    if (state.activeTab === "observations") {
-        renderBirdObservationsList(listContainer);
-        return;
-    }
-
-    listContainer.innerHTML = "";
-    renderBirdSidebarPanel(listContainer, birdName, { onRenderObservations: renderSidebarList });
-}
-
-const { selectBird } = createBirdSelectionController({
+selectBirdHandler = createBirdSelectionController({
     state,
     fetchObservations: fetchBirdObservations,
     fetchDefaultPhoto: fetchTaxonDefaultPhoto,
     getBbox,
     updateHeader,
     renderSidebarList,
-    updateSidebarBirdPanel,
+    updateSidebarBirdPanel: sidebarController.updateBirdPanel,
     setupObservationsLayer: setupBirdObservationsLayer
-});
-
-function activateSidebarTabFromOverview(tab) {
-    activateSidebarTab(tab, { state, documentObject: document, onRender: renderSidebarList });
-}
-
-function setOverviewFeatureHover(id, hover) {
-    if (state.map?.getSource('zones')) state.map.setFeatureState({ source: 'zones', id }, { hover });
-}
-
-function selectOverviewCircle(cid) {
-    const feature = state.circlesFeatures.find(item => item.properties?.cid === cid);
-    const bbox = feature ? getBbox(feature) : null;
-    if (cid === "Eugene") switchToFeature("eugene", bbox);
-    else if (cid === "Florence") switchToFeature("florence", bbox);
-    else if (cid === "Oakridge" || cid === "Cottage Grove") showToast("There is no data for this count circle");
-}
-
-function renderSidebarList() {
-    const isOverview = syncSidebarTabs(state, document);
-    const isCircle = !state.currentId || state.currentId === CIRCLE_ID;
-
-    const listContainer = document.getElementById("sidebar-zone-list");
-    if (!listContainer) return;
-    listContainer.innerHTML = "";
-
-    if (state.selectedBird) {
-        if (state.activeTab === "observations") {
-            renderBirdObservationsList(listContainer);
-        } else {
-            renderBirdSidebarPanel(listContainer, state.selectedBird, { onRenderObservations: renderSidebarList });
-        }
-        return;
-    }
-
-    if (state.activeTab === "birds") {
-        renderBirdSpeciesList(listContainer, { state, onSelectBird: selectBird, documentObject: document });
-        return;
-    }
-
-    if (state.activeTab === "organizers") {
-        renderOrganizersList(listContainer);
-        return;
-    }
-
-    if (state.activeTab === "resources") {
-        renderResourcesList(listContainer);
-        return;
-    }
-
-    if (state.isCirclesFeature) {
-        if (isOverview) {
-            renderSidebarOverview(listContainer, { state, isCirclesFeature: true, isCircle: false, targetFeature: null,
-                onActivateTab: activateSidebarTabFromOverview, onSelectBird: selectBird, onSelectCircle: selectOverviewCircle,
-                onSelectZone: id => selectSubject(id), onFeatureHover: setOverviewFeatureHover,
-                onOpenImageLightbox: openImageLightbox, documentObject: document });
-            return;
-        }
-
-        renderMapFeatureList(listContainer, {
-            features: state.circlesFeatures,
-            isCirclesFeature: true,
-            map: state.map,
-            onSelectCircle: (cid, feature) => {
-                const bbox = feature ? getBbox(feature) : null;
-                if (cid === "Eugene") {
-                    switchToFeature("eugene", bbox);
-                } else if (cid === "Florence") {
-                    switchToFeature("florence", bbox);
-                } else if (cid === "Oakridge" || cid === "Cottage Grove") {
-                    showToast("There is no data for this count circle");
-                }
-            },
-            documentObject: document
-        });
-        return;
-    }
-
-    let targetFeature = null;
-    if (!isCircle) {
-        targetFeature = state.allFeatures.find(f => {
-            const zid = f.properties?.zid;
-            return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
-        });
-    }
-
-    if (isOverview) {
-        renderSidebarOverview(listContainer, { state, isCirclesFeature: false, isCircle, targetFeature,
-            onActivateTab: activateSidebarTabFromOverview, onSelectBird: selectBird, onSelectCircle: selectOverviewCircle,
-            onSelectZone: id => selectSubject(id), onFeatureHover: setOverviewFeatureHover,
-            onOpenImageLightbox: openImageLightbox, documentObject: document });
-        return;
-    }
-
-    if (!isCircle && targetFeature) {
-        const emptyEl = document.createElement("div");
-        emptyEl.className = "sidebar-empty-state";
-        emptyEl.innerHTML = `
-            <svg class="sidebar-empty-state__icon" width="34" height="34" viewBox="0 0 512 512" fill="currentColor">
-                <path d="M128 32h32c17.7 0 32 14.3 32 32V96H96V64c0-17.7 14.3-32 32-32zm64 96V448c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32V388.9c0-34.6 9.4-68.6 27.2-98.3C40.9 267.8 49.7 242.4 53 216L60.5 156c2-16 15.6-28 31.8-28H192zm227.8 0c16.1 0 29.8 12 31.8 28L459 216c3.3 26.4 12.1 51.8 25.8 74.6c17.8 29.7 27.2 63.7 27.2 98.3V448c0 17.7-14.3 32-32 32H352c-17.7 0-32-14.3-32-32V128h99.8zM320 64c0-17.7 14.3-32 32-32h32c17.7 0 32 14.3 32 32V96H320V64zm-32 64V288H224V128h64z"/>
-            </svg>
-            <div class="sidebar-empty-state__text">no items found</div>
-        `;
-        listContainer.appendChild(emptyEl);
-        return;
-    }
-
-    renderMapFeatureList(listContainer, {
-        features: state.allFeatures,
-        currentId: state.currentId,
-        map: state.map,
-        onSelectZone: id => selectSubject(id),
-        documentObject: document
-    });
-
-    if (state.lastNavSource === "keyboard") {
-        state.focusedTileIndex = 0;
-        updateKeyboardTileFocus(0);
-    } else {
-        state.focusedTileIndex = -1;
-        updateKeyboardTileFocus(-1);
-    }
-}
+}).selectBird;
 
 function setupMapEffectsAndFullscreen(mapWrapper) {
     if (!mapWrapper) return;
