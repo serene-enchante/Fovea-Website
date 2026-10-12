@@ -62,6 +62,17 @@ test('the map application uses shared toolbar setup with legacy map callbacks', 
     assert.doesNotMatch(source, /function setupActionButtons\(/);
 });
 
+test('PDF and TIFF layout exports use the shared download action controller', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const downloads = await readFile(new URL('../scripts/map/map-layout-downloads.js', import.meta.url), 'utf8');
+
+    assert.match(source, /createMapLayoutDownloadActions\(\{/);
+    assert.match(source, /shareFile: handleSpatialFileShare/);
+    assert.match(downloads, /export function createMapLayoutDownloadActions\(/);
+    assert.match(downloads, /convertCanvasToTiff\(canvas\)/);
+    assert.match(downloads, /windowObject\.jspdf\?\.jsPDF/);
+});
+
 test('the map application reads Florence zone guide content from config', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
     const overview = await readFile(new URL('../scripts/components/sidebar-overview-view.js', import.meta.url), 'utf8');

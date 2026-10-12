@@ -14,6 +14,7 @@ import {
 } from './map/map-init.js';
 import { selectMapStyleByIndex, updateAllFeatureStyles as updateMapFeatureStyles, updateLabelZoomVisibility } from './map/map-layers.js';
 import { initializeMapRuntime } from './map/map-runtime.js';
+import { createMapLayoutDownloadActions } from './map/map-layout-downloads.js';
 import { setupMapPageNavigation } from './map/map-page-navigation.js';
 import { setupPageTransitionEvents } from './components/page-transition-events.js';
 import { createMapLayerLifecycle } from './map/map-layer-lifecycle.js';
@@ -159,56 +160,14 @@ function switchBaseMap(baseMapId) {
  */
 
 
-async function downloadGeoPdf(triggerButton = null) {
-    const isReady = hasCachedLayoutCanvas();
-    if (!isReady) {
-        showToast("Rendering map layout...");
-    }
-
-    const canvas = await getOrRenderLayoutCanvas();
-    const filename = getActiveDownloadFilename("pdf");
-    
-    if (window.jspdf && window.jspdf.jsPDF) {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-            orientation: "landscape",
-            unit: "mm",
-            format: "a4"
-        });
-        
-        const imgData = canvas.toDataURL("image/jpeg", 0.92);
-        pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
-        
-        pdf.setProperties({
-            title: filename.replace(/\.pdf$/, ""),
-            subject: "GeoPDF Map Layout Export - Esri Topo Basemap",
-            keywords: "GeoPDF, GIS, Map, Esri Topo, Fovea",
-            creator: "Fovea Web Map Layout Engine"
-        });
-
-        const pdfBlob = pdf.output("blob");
-        await handleSpatialFileShare(null, pdfBlob, filename, triggerButton);
-        showToast(`Exported ${filename}`);
-    } else {
-        canvas.toBlob(async (blob) => {
-            await handleSpatialFileShare(null, blob, filename.replace(/\.pdf$/, "-layout.png"), triggerButton);
-            showToast(`Exported ${filename.replace(/\.pdf$/, "-layout.png")}`);
-        }, "image/png");
-    }
-}
-
-async function downloadGeoTiff(triggerButton = null) {
-    const isReady = hasCachedLayoutCanvas();
-    if (!isReady) {
-        showToast("Rendering map layout...");
-    }
-
-    const canvas = await getOrRenderLayoutCanvas();
-    const filename = getActiveDownloadFilename("tif");
-    const tiffBlob = canvasToTiffBlob(canvas);
-    await handleSpatialFileShare(null, tiffBlob, filename, triggerButton);
-    showToast(`Exported ${filename}`);
-}
+const { downloadGeoPdf, downloadGeoTiff } = createMapLayoutDownloadActions({
+    hasCachedLayout: hasCachedLayoutCanvas,
+    renderLayout: getOrRenderLayoutCanvas,
+    getFilename: getActiveDownloadFilename,
+    convertCanvasToTiff: canvasToTiffBlob,
+    shareFile: handleSpatialFileShare,
+    notify: showToast
+});
 
 async function loadFeaturesForMapView(featureName) {
     const datasetId = featureName === 'florence' ? 'florence'

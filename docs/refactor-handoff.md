@@ -55,6 +55,7 @@ Recent commits, newest first:
 | `dd3a5f4` | Consolidate help tooltip content, mouse/touch positioning, highlighting, and dismissal in `map-help-tooltip-view.js`. |
 | `af3361c` | Inject app state, browser objects, toast, keyboard-focus, fullscreen, copy-link, and map-style actions into help-mode setup. |
 | `5b219b9` | Move production map construction, base layer setup, map controls, and viewport setup behind `map-runtime.js`, injecting page-specific selection and action callbacks. |
+| `HEAD` | Move PDF/TIFF layout export orchestration behind `map-layout-downloads.js`, injecting the legacy map share callback and notification behavior. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
 | `54c5a22` | Remove unused duplicate `MAP_STYLES` objects and unused `scripts/config/map-styles.js`. |
@@ -287,6 +288,12 @@ After extracting production map runtime setup:
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
+After extracting layout download actions:
+
+- `npm test` passed: 160 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
 The browser suite starts a server on `127.0.0.1:4173`. In this environment it needs the sandbox permission that allows Playwright's local web server to bind that address. Warnings about `NO_COLOR` versus `FORCE_COLOR` are benign.
 
 ## Next steps for the next agent
@@ -317,6 +324,7 @@ The browser suite starts a server on `127.0.0.1:4173`. In this environment it ne
 - `scripts/map/map-proximity.js` owns cursor proximity tracking and the glow canvas; the live map entry calls both shared setup functions.
 - `scripts/map/map-viewport.js` owns pointer effects, resize invalidation, fullscreen classes, and mobile home animation; the map entry injects layout and map callbacks.
 - `scripts/map/map-runtime.js` owns production MapLibre construction and composes layer, control, canvas-event, and viewport setup; `maps-tile.js` supplies state and page-specific actions.
+- `scripts/map/map-layout-downloads.js` owns PDF/TIFF layout export orchestration and PNG fallback behavior; the map entry injects canvas rendering, conversion, notification, and its legacy file-share callback.
 - `scripts/components/image-lightbox.js` owns lightbox opening and close-event setup. `map-modals.js` owns help-mode shortcuts and interactions.
 - `scripts/components/bird-observation-view.js` owns bird summary panels, the full observations-tab list, observation cards, map popup content, and the popup lifecycle used by map clicks and sidebar cards.
 - `scripts/components/bird-species-list.js` owns the Florence zone bird-guide list UI and delegates bird selection through an injected callback.
