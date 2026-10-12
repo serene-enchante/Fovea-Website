@@ -68,3 +68,11 @@ test('the map application reads Florence zone guide content from config', async 
     assert.doesNotMatch(source, /const FLORENCE_ZONE_BIRDS =/);
     assert.match(source, /FLORENCE_ZONE_BIRDS\[zid\]/);
 });
+
+test('map modals leave image lightbox behavior to the shared lightbox component', async () => {
+    const mapModals = await readFile(new URL('../scripts/components/map-modals.js', import.meta.url), 'utf8');
+    const imageLightbox = await readFile(new URL('../scripts/components/image-lightbox.js', import.meta.url), 'utf8');
+
+    assert.doesNotMatch(mapModals, /function setupImageLightbox\(/);
+    assert.match(imageLightbox, /export function setupImageLightbox\(/);
+});

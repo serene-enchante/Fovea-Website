@@ -4,29 +4,6 @@ import { state } from '../state.js';
 import { toggleFullscreen, performDirectCopyLink } from './toolbar-actions.js';
 import { selectMapStyleByIndex } from '../map/map-layers.js';
 
-export function setupImageLightbox() {
-    const modal = document.getElementById("image-lightbox-modal");
-    if (!modal) return;
-
-    const closeModal = () => {
-        modal.setAttribute("aria-hidden", "true");
-        modal.classList.remove("is-open");
-    };
-
-    modal.querySelectorAll("[data-modal-close]").forEach(closeEl => {
-        closeEl.addEventListener("click", (e) => {
-            e.stopPropagation();
-            closeModal();
-        });
-    });
-
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && modal.getAttribute("aria-hidden") === "false") {
-            closeModal();
-        }
-    });
-}
-
 export function setupHelpModeSystem({ renderSidebarList = () => {} } = {}) {
     const toggleInput = document.getElementById("toggle-help-mode");
     const tooltip = document.getElementById("help-mode-tooltip");
