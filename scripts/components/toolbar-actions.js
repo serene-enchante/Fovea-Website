@@ -313,7 +313,7 @@ export function updateShareModalDescription() {
 }
 
 export function setupSuggestedAppCards() {
-    setupAllAppsLiveSearch();
+    setupAllAppsLiveSearch({ documentObject: document });
     const viewAllBtn = document.getElementById("btn-view-all-apps");
     const allAppsModal = document.getElementById("all-apps-modal");
 

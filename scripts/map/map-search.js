@@ -1,12 +1,18 @@
-import { state } from '../state.js';
-import { setMobileSnapState } from '../components/mobile-view.js';
+import { state as appState } from '../state.js';
+import { setMobileSnapState as updateMobileSnapState } from '../components/mobile-view.js';
 
-export function setupSearch() {
-    const header = document.getElementById("sidebar-header");
-    const toggleBtn = document.getElementById("btn-search-toggle");
-    const closeBtn = document.getElementById("btn-search-close");
-    const searchInput = document.getElementById("sidebar-search-input");
-    const listContainer = document.getElementById("sidebar-zone-list");
+export function setupSearch({
+    state = appState,
+    documentObject = globalThis.document,
+    windowObject = globalThis.window,
+    setMobileSnapState = updateMobileSnapState,
+    setTimeoutFn = globalThis.setTimeout
+} = {}) {
+    const header = documentObject.getElementById("sidebar-header");
+    const toggleBtn = documentObject.getElementById("btn-search-toggle");
+    const closeBtn = documentObject.getElementById("btn-search-close");
+    const searchInput = documentObject.getElementById("sidebar-search-input");
+    const listContainer = documentObject.getElementById("sidebar-zone-list");
 
     if (!header || !toggleBtn || !closeBtn || !searchInput || !listContainer) return;
 
@@ -15,7 +21,7 @@ export function setupSearch() {
     const openSearch = (e) => {
         if (e) e.preventDefault();
 
-        if (window.innerWidth <= 768) {
+        if (windowObject.innerWidth <= 768) {
             savedSnapState = state.snapState || "default";
             setMobileSnapState("selection-full", true);
         }
@@ -25,7 +31,7 @@ export function setupSearch() {
         searchInput.value = "";
         filterList("");
         searchInput.focus();
-        setTimeout(() => searchInput.focus(), 100);
+        setTimeoutFn(() => searchInput.focus(), 100);
     };
 
     const closeSearch = () => {
@@ -34,7 +40,7 @@ export function setupSearch() {
         searchInput.value = "";
         filterList("");
 
-        if (window.innerWidth <= 768 && savedSnapState) {
+        if (windowObject.innerWidth <= 768 && savedSnapState) {
             setMobileSnapState(savedSnapState, true);
             savedSnapState = null;
         }
@@ -72,25 +78,25 @@ export function setupSearch() {
     });
 
     searchInput.addEventListener("focus", () => {
-        if (window.innerWidth <= 768) {
-            window.scrollTo(0, 0);
-            document.body.scrollTop = 0;
+        if (windowObject.innerWidth <= 768) {
+            windowObject.scrollTo(0, 0);
+            documentObject.body.scrollTop = 0;
         }
     });
 
     searchInput.addEventListener("blur", () => {
-        if (window.innerWidth <= 768) {
-            window.scrollTo(0, 0);
-            document.body.scrollTop = 0;
+        if (windowObject.innerWidth <= 768) {
+            windowObject.scrollTo(0, 0);
+            documentObject.body.scrollTop = 0;
         }
     });
 }
 
-export function setupAllAppsLiveSearch() {
-    const searchInput = document.getElementById("all-apps-search-input");
-    const clearBtn = document.getElementById("all-apps-search-clear");
-    const grid = document.getElementById("all-apps-grid");
-    const noResults = document.getElementById("all-apps-no-results");
+export function setupAllAppsLiveSearch({ documentObject = globalThis.document } = {}) {
+    const searchInput = documentObject.getElementById("all-apps-search-input");
+    const clearBtn = documentObject.getElementById("all-apps-search-clear");
+    const grid = documentObject.getElementById("all-apps-grid");
+    const noResults = documentObject.getElementById("all-apps-no-results");
 
     if (!searchInput || !grid) return;
 

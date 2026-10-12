@@ -146,6 +146,18 @@ test('map page editor and back actions are owned by a shared navigation module',
     assert.match(navigation, /normalizeZoneId\(state\.currentId\)/);
 });
 
+test('map and suggested-app search receive their browser dependencies explicitly', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const search = await readFile(new URL('../scripts/map/map-search.js', import.meta.url), 'utf8');
+    const toolbar = await readFile(new URL('../scripts/components/toolbar-actions.js', import.meta.url), 'utf8');
+
+    assert.match(source, /setupSearch\(\{ state, documentObject: document, windowObject: window, setMobileSnapState \}\)/);
+    assert.match(search, /export function setupSearch\(\{/);
+    assert.match(search, /export function setupAllAppsLiveSearch\(\{ documentObject/);
+    assert.match(toolbar, /setupAllAppsLiveSearch\(\{ documentObject: document \}\)/);
+    assert.doesNotMatch(search, /document\.getElementById|window\.innerWidth/);
+});
+
 test('the map entry wires shared sidebar capsule events directly', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
 

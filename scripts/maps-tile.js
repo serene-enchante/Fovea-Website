@@ -495,7 +495,7 @@ async function init() {
             downloadTiff: button => downloadGeoTiff(button),
             closeModals: () => closeModalsView({ onBeforeClose: cancelDownloadViewPreload })
         });
-        setupSearch();
+        setupSearch({ state, documentObject: document, windowObject: window, setMobileSnapState });
         setupSidebarCapsuleEvents({
             state,
             documentObject: document,
