@@ -99,3 +99,14 @@ test('the map entry wires shared sidebar capsule events directly', async () => {
     assert.match(source, /setupSidebarCapsuleEvents\(\{\s+state,\s+documentObject: document,\s+onRender: renderSidebarList,\s+notify: showToast/);
     assert.doesNotMatch(source, /function setupCapsules\(/);
 });
+
+test('bird observation list items and map popups share one view component', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const observationView = await readFile(new URL('../scripts/components/bird-observation-view.js', import.meta.url), 'utf8');
+
+    assert.match(source, /createBirdObservationItem\(feature\)/);
+    assert.match(source, /openBirdObservationPopup\(e\.features\[0\]\)/);
+    assert.doesNotMatch(source, /new maplibregl\.Popup/);
+    assert.match(observationView, /export function createBirdObservationItem\(/);
+    assert.match(observationView, /export function openBirdObservationPopup\(/);
+});

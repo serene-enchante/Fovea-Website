@@ -34,6 +34,7 @@ import { activateSidebarTab, setupSidebarCapsuleEvents } from './components/side
 import { getSuggestSelectionLabel, setupSuggestFormAndDrawing } from './components/feedback-form.js';
 import { setupSidebarScrollListener, updateKeyboardTileFocus } from './components/sidebar-list.js';
 import { openImageLightbox, setupImageLightbox } from './components/image-lightbox.js';
+import { clearBirdObservationPopup, createBirdObservationItem, openBirdObservationPopup } from './components/bird-observation-view.js';
 import { setupHelpModeSystem } from './components/map-modals.js';
 import { setupMobileBottomNav } from './components/bottom-nav-view.js';
 import { showToast } from './components/toast-view.js';
@@ -245,17 +246,12 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
     });
 }
 
-let currentBirdPopup = null;
-
 function clearBirdObservations() {
     state.selectedBird = null;
     state.selectedBirdObservations = [];
     state.selectedBirdPhotoUrl = "";
     state.selectedBirdPhotoCredit = "";
-    if (currentBirdPopup) {
-        currentBirdPopup.remove();
-        currentBirdPopup = null;
-    }
+    clearBirdObservationPopup();
     if (state.map && state.map.getSource('bird-observations')) {
         state.map.getSource('bird-observations').setData({
             type: 'FeatureCollection',
@@ -337,29 +333,7 @@ function setupBirdObservationsLayer() {
         // Click popup
         state.map.on('click', 'bird-observations-points', (e) => {
             if (!e.features || !e.features[0]) return;
-            const feat = e.features[0];
-            const props = feat.properties;
-            const coords = feat.geometry.coordinates.slice();
-
-            if (currentBirdPopup) currentBirdPopup.remove();
-
-            currentBirdPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: true, className: 'bird-observation-popup' })
-                .setLngLat(coords)
-                .setHTML(`
-                    <div>
-                        ${props.photoUrl ? `<img src="${props.photoUrl}" alt="${props.species}" class="bird-obs-popup__img" />` : ""}
-                        <div class="bird-obs-popup__title">${props.species}</div>
-                        <div class="bird-obs-popup__meta">
-                            <div>Observed by <strong>${props.user}</strong></div>
-                            <div>Date: ${props.date}</div>
-                            ${props.place ? `<div>${props.place}</div>` : ""}
-                        </div>
-                        <a href="${props.uri}" target="_blank" rel="noopener noreferrer" class="bird-obs-popup__link">
-                            View on iNaturalist &rarr;
-                        </a>
-                    </div>
-                `)
-                .addTo(state.map);
+            openBirdObservationPopup(e.features[0]);
         });
     }
 }
@@ -515,46 +489,9 @@ function renderObservationsList(listContainer) {
     introEl.textContent = `All recorded iNaturalist observations of ${state.selectedBird} in this zone area.`;
     listContainer.appendChild(introEl);
 
-    observations.forEach(f => {
-        const props = f.properties;
-        const coords = f.geometry.coordinates;
-        const item = document.createElement("div");
-        item.className = "sidebar-bird-obs-item";
-        item.innerHTML = `
-            ${props.photoUrl ? `<img src="${props.photoUrl}" alt="${props.species}" class="sidebar-bird-obs-item__thumb" />` : `
-                <div class="sidebar-bird-obs-item__thumb" style="display:flex;align-items:center;justify-content:center;color:#64748b;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-                </div>
-            `}
-            <div class="sidebar-bird-obs-item__info">
-                <div class="sidebar-bird-obs-item__user">${props.user}</div>
-                <div class="sidebar-bird-obs-item__date">${props.date}</div>
-            </div>
-        `;
-        item.addEventListener("click", () => {
-            if (state.map) {
-                state.map.flyTo({ center: coords, zoom: Math.max(state.map.getZoom(), 13.5), speed: 1.2 });
-                if (currentBirdPopup) currentBirdPopup.remove();
-                currentBirdPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: true, className: 'bird-observation-popup' })
-                    .setLngLat(coords)
-                    .setHTML(`
-                        <div>
-                            ${props.photoUrl ? `<img src="${props.photoUrl}" alt="${props.species}" class="bird-obs-popup__img" />` : ""}
-                            <div class="bird-obs-popup__title">${props.species}</div>
-                            <div class="bird-obs-popup__meta">
-                                <div>Observed by <strong>${props.user}</strong></div>
-                                <div>Date: ${props.date}</div>
-                                ${props.place ? `<div>${props.place}</div>` : ""}
-                            </div>
-                            <a href="${props.uri}" target="_blank" rel="noopener noreferrer" class="bird-obs-popup__link">
-                                View on iNaturalist &rarr;
-                            </a>
-                        </div>
-                    `)
-                    .addTo(state.map);
-            }
-        });
-        listContainer.appendChild(item);
+    observations.forEach(feature => {
+        const item = createBirdObservationItem(feature);
+        if (item) listContainer.appendChild(item);
     });
 }
 
@@ -614,46 +551,9 @@ function renderSidebarBirdPanel(listContainer, birdName) {
     const obsListEl = panel.querySelector(".sidebar-bird-panel__list");
     if (obsListEl && observations.length > 0) {
         const previewObs = observations.slice(0, 5);
-        previewObs.forEach(f => {
-            const props = f.properties;
-            const coords = f.geometry.coordinates;
-            const item = document.createElement("div");
-            item.className = "sidebar-bird-obs-item";
-            item.innerHTML = `
-                ${props.photoUrl ? `<img src="${props.photoUrl}" alt="${props.species}" class="sidebar-bird-obs-item__thumb" />` : `
-                    <div class="sidebar-bird-obs-item__thumb" style="display:flex;align-items:center;justify-content:center;color:#64748b;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-                    </div>
-                `}
-                <div class="sidebar-bird-obs-item__info">
-                    <div class="sidebar-bird-obs-item__user">${props.user}</div>
-                    <div class="sidebar-bird-obs-item__date">${props.date}</div>
-                </div>
-            `;
-            item.addEventListener("click", () => {
-                if (state.map) {
-                    state.map.flyTo({ center: coords, zoom: Math.max(state.map.getZoom(), 13.5), speed: 1.2 });
-                    if (currentBirdPopup) currentBirdPopup.remove();
-                    currentBirdPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: true, className: 'bird-observation-popup' })
-                        .setLngLat(coords)
-                        .setHTML(`
-                            <div>
-                                ${props.photoUrl ? `<img src="${props.photoUrl}" alt="${props.species}" class="bird-obs-popup__img" />` : ""}
-                                <div class="bird-obs-popup__title">${props.species}</div>
-                                <div class="bird-obs-popup__meta">
-                                    <div>Observed by <strong>${props.user}</strong></div>
-                                    <div>Date: ${props.date}</div>
-                                    ${props.place ? `<div>${props.place}</div>` : ""}
-                                </div>
-                                <a href="${props.uri}" target="_blank" rel="noopener noreferrer" class="bird-obs-popup__link">
-                                    View on iNaturalist &rarr;
-                                </a>
-                            </div>
-                        `)
-                        .addTo(state.map);
-                }
-            });
-            obsListEl.appendChild(item);
+        previewObs.forEach(feature => {
+            const item = createBirdObservationItem(feature);
+            if (item) obsListEl.appendChild(item);
         });
     }
 
