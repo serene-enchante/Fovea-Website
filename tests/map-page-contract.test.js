@@ -58,3 +58,11 @@ test('the map application uses shared toolbar setup with legacy map callbacks', 
     assert.match(source, /closeModals: closeAllModals/);
     assert.doesNotMatch(source, /function setupActionButtons\(/);
 });
+
+test('the map application reads Florence zone guide content from config', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+
+    assert.match(source, /import \{ FLORENCE_ZONE_BIRDS \} from '\.\/config\/florence-zone-guide\.js';/);
+    assert.doesNotMatch(source, /const FLORENCE_ZONE_BIRDS =/);
+    assert.match(source, /FLORENCE_ZONE_BIRDS\[zid\]/);
+});
