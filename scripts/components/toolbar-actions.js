@@ -312,7 +312,7 @@ export function updateShareModalDescription() {
     descEl.innerHTML = `Copy the link to <span class="avenza-target-name">${zoneName}</span> of the <span class="avenza-target-name">${circleName}</span>:`;
 }
 
-export function setupSuggestedAppCards() {
+export function setupSuggestedAppCards({ onOpenApp = () => {} } = {}) {
     setupAllAppsLiveSearch({ documentObject: document });
     const viewAllBtn = document.getElementById("btn-view-all-apps");
     const allAppsModal = document.getElementById("all-apps-modal");
@@ -376,13 +376,13 @@ export function setupSuggestedAppCards() {
             if (!wasActive) {
                 card.classList.add("is-active");
             }
-            await handleAppDirectOpen(appName, card);
+            await onOpenApp(appName, card);
         });
     });
 }
 
-export function setupDownloadAppSearch() {
-    setupSuggestedAppCards();
+export function setupDownloadAppSearch({ onOpenApp = () => {} } = {}) {
+    setupSuggestedAppCards({ onOpenApp });
     const searchInput = document.getElementById("download-app-search");
     const clearBtn = document.getElementById("download-app-search-clear");
     const autocompleteBox = document.getElementById("download-app-autocomplete");
@@ -583,7 +583,7 @@ export function setupDownloadAppSearch() {
                 }
                 
                 // Execute direct app handshake workflow (Blob fetch -> Web Share -> Fallback Download)
-                await handleAppDirectOpen(appName, card);
+                await onOpenApp(appName, card);
             }
         });
     });
@@ -609,6 +609,7 @@ export function setupDownloadAppSearch() {
 
 export function setupActionButtons({
     shareFile = handleSpatialFileShare,
+    openSuggestedApp = () => {},
     notify = showToast,
     downloadPdf = button => downloadGeoPdf(getActiveDownloadFilename("pdf"), button),
     downloadTiff = button => downloadGeoTiff(getActiveDownloadFilename("tif"), button),
@@ -926,7 +927,7 @@ export function setupActionButtons({
     }
 
     if (downloadBtn && downloadModal) {
-        setupDownloadAppSearch();
+        setupDownloadAppSearch({ onOpenApp: openSuggestedApp });
         downloadBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             if (e.currentTarget) e.currentTarget.blur();

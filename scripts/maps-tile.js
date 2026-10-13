@@ -45,6 +45,7 @@ import { setupHelpModeSystem } from './components/map-modals.js';
 import { setupMobileBottomNav } from './components/bottom-nav-view.js';
 import { showToast } from './components/toast-view.js';
 import { setupActionButtons as setupToolbarActionButtons, setupViewToggleMenu, toggleFullscreen, performDirectCopyLink, getActiveDownloadFilename } from './components/toolbar-actions.js';
+import { handleAppDirectOpen } from './components/avenza-modal-view.js';
 import { closeAllModals as closeModalsView } from './components/modal-view.js';
 import { setMobileSnapState, setupListSwipeBack, setupMobileResizeBar, setupSwipeNavigation, updateControlPositions } from './components/mobile-view.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
@@ -306,6 +307,7 @@ async function init() {
         setupPageUi: () => {
             setupToolbarActionButtons({
                 shareFile: handleSpatialFileShare,
+                openSuggestedApp: handleAppDirectOpen,
                 notify: showToast,
                 downloadPdf: button => downloadGeoPdf(button),
                 downloadTiff: button => downloadGeoTiff(button),

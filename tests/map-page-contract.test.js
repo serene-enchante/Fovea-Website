@@ -60,9 +60,20 @@ test('map feature repository maps view names to datasets and caches feature arra
 test('suggested-app configuration stays out of the map entry', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
 
-    assert.doesNotMatch(source, /from '\.\/components\/avenza-modal-view\.js'/);
     assert.doesNotMatch(source, /const APP_FORMAT_PREFERENCES =/);
     assert.doesNotMatch(source, /const APP_INSTRUCTION_CONFIGS =/);
+});
+
+test('the map injects suggested-app opening into the shared toolbar', async () => {
+    const source = await readFile(mapScriptPath, 'utf8');
+    const toolbar = await readFile(new URL('../scripts/components/toolbar-actions.js', import.meta.url), 'utf8');
+
+    assert.match(source, /import \{ handleAppDirectOpen \} from '\.\/components\/avenza-modal-view\.js';/);
+    assert.match(source, /openSuggestedApp: handleAppDirectOpen/);
+    assert.match(toolbar, /openSuggestedApp = \(\) => \{\}/);
+    assert.match(toolbar, /setupDownloadAppSearch\(\{ onOpenApp: openSuggestedApp \}\)/);
+    assert.match(toolbar, /await onOpenApp\(appName, card\)/);
+    assert.doesNotMatch(toolbar, /await handleAppDirectOpen\(/);
 });
 
 test('the map application uses shared toolbar setup with legacy map callbacks', async () => {
