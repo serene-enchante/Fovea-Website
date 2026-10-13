@@ -324,10 +324,14 @@ test('circle and zone sidebar rows are rendered by the shared map feature list',
     const source = await readFile(mapScriptPath, 'utf8');
     const component = await readFile(new URL('../scripts/components/map-feature-list.js', import.meta.url), 'utf8');
     const sidebarController = await readFile(new URL('../scripts/components/sidebar-controller.js', import.meta.url), 'utf8');
+    const navigation = await readFile(new URL('../scripts/map/map-feature-navigation.js', import.meta.url), 'utf8');
 
     assert.match(source, /import \{ renderMapFeatureList \} from '\.\/components\/map-feature-list\.js';/);
-    assert.match(source, /onSelectCircle: \(cid, feature = null\)/);
+    assert.match(source, /onSelectCircle: featureNavigation\.selectCircle/);
+    assert.match(source, /onFeatureClick: featureNavigation\.handleMapFeatureClick/);
     assert.match(source, /onSelectZone: id => selectSubject\(id\)/);
+    assert.match(navigation, /export function createMapFeatureNavigation\(/);
+    assert.match(navigation, /return selectCircle\(properties\.cid, feature\)/);
     assert.match(sidebarController, /renderMapFeatureList\(listContainer/);
     assert.doesNotMatch(sidebarController, /const sortedCircles =/);
     assert.doesNotMatch(sidebarController, /const sortedFeatures =/);

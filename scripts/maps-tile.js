@@ -17,6 +17,7 @@ import { initializeMapRuntime } from './map/map-runtime.js';
 import { createMapLayoutDownloadActions } from './map/map-layout-downloads.js';
 import { createMapFeatureRepository } from './map/map-feature-repository.js';
 import { runMapPageStartup } from './map/map-page-startup.js';
+import { createMapFeatureNavigation } from './map/map-feature-navigation.js';
 import { setupMapPageNavigation } from './map/map-page-navigation.js';
 import { setupPageTransitionEvents } from './components/page-transition-events.js';
 import { createMapLayerLifecycle } from './map/map-layer-lifecycle.js';
@@ -185,27 +186,19 @@ const featureTransitionController = createFeatureTransitionController({
     isSuggestLocked: () => document.body.classList.contains('is-suggest-locked')
 });
 const { switchToFeature, switchToCirclesFeature } = featureTransitionController;
+const featureNavigation = createMapFeatureNavigation({
+    state,
+    switchToFeature,
+    selectSubject,
+    getBbox,
+    notify: showToast
+});
 const mapLayerLifecycle = createMapLayerLifecycle({
     state,
     updateLabelZoomVisibility,
     updateFeatureStyles: updateAllFeatureStyles,
     updateLocationZone,
-    onFeatureClick: ({ feature, featureId }) => {
-        const props = feature.properties || {};
-        if (state.isCirclesFeature) {
-            if (props.cid === "Eugene") {
-                switchToFeature("eugene", getBbox([feature]));
-            } else if (props.cid === "Florence") {
-                switchToFeature("florence", getBbox([feature]));
-            } else if (props.cid === "Oakridge" || props.cid === "Cottage Grove") {
-                showToast("There is no data for this count circle");
-            }
-        } else if (state.currentId === featureId) {
-            selectSubject(CIRCLE_ID);
-        } else {
-            selectSubject(featureId, true);
-        }
-    }
+    onFeatureClick: featureNavigation.handleMapFeatureClick
 });
 
 function selectSubject(id, triggerMapZoom = true, animate = true) {
@@ -233,13 +226,7 @@ const sidebarController = createSidebarController({
     renderOverview: renderSidebarOverview,
     renderMapFeatureList,
     onSelectBird: birdName => selectBird(birdName),
-    onSelectCircle: (cid, feature = null) => {
-        const circle = feature || state.circlesFeatures.find(item => item.properties?.cid === cid);
-        const bbox = circle ? getBbox(circle) : null;
-        if (cid === "Eugene") switchToFeature("eugene", bbox);
-        else if (cid === "Florence") switchToFeature("florence", bbox);
-        else if (cid === "Oakridge" || cid === "Cottage Grove") showToast("There is no data for this count circle");
-    },
+    onSelectCircle: featureNavigation.selectCircle,
     onSelectZone: id => selectSubject(id),
     onActivateTab: tab => activateSidebarTab(tab, { state, documentObject: document, onRender: renderSidebarList }),
     onFeatureHover: (id, hover) => {
