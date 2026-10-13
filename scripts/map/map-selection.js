@@ -1,8 +1,7 @@
 import { state } from '../state.js';
 import { CIRCLE_ID } from '../config/app-config.js';
-import { renderSidebarList } from '../components/sidebar-list.js';
 import { updateHeader, getFitPadding } from '../components/header-view.js';
-import { updateAllFeatureStyles, rebuildGeoJsonLayer } from './map-layers.js';
+import { updateAllFeatureStyles } from './map-layers.js';
 import { normalizeZoneId, displayZoneId } from '../utils/format-utils.js';
 import { getBbox } from '../utils/geometry-math.js';
 import { disposeRasterCache, scheduleSelectionPreload } from './map-rendering.js';
@@ -110,70 +109,6 @@ export function updateUrl(id) {
     window.history.replaceState({}, "", url.toString());
 }
 
-export function switchToFeature(featureName) {
-    if (document.body.classList.contains("is-suggest-locked") && (featureName !== state.currentFeature || state.isCirclesFeature)) {
-        return;
-    }
-
-    if (!state.map) return;
-    disposeRasterCache();
-    
-    let transitionFinished = false;
-    const targetFeatures = (featureName === "florence") ? state.florenceFeatures : state.eugeneFeatures;
-    const circleLayer = getBbox(targetFeatures);
-
-    const performSwap = () => {
-        if (transitionFinished) return;
-        transitionFinished = true;
-
-        state.currentFeature = featureName;
-        state.isCirclesFeature = false;
-        state.allFeatures = targetFeatures;
-        state.currentId = CIRCLE_ID;
-
-        rebuildGeoJsonLayer();
-        selectSubject(CIRCLE_ID, false, true);
-    };
-
-    if (circleLayer) {
-        state.map.once("moveend", performSwap);
-        state.map.fitBounds(circleLayer, {
-            speed: 0.8,
-            curve: 1.4,
-            padding: getFitPadding()
-        });
-        setTimeout(performSwap, 1500);
-    } else {
-        performSwap();
-    }
-}
-
-export function switchToCirclesFeature() {
-    if (document.body.classList.contains("is-suggest-locked") && !state.isCirclesFeature) {
-        return;
-    }
-
-    if (!state.map) return;
-    disposeRasterCache();
-    state.currentFeature = "circles";
-    state.isCirclesFeature = true;
-    state.allFeatures = state.circlesFeatures;
-    state.currentId = CIRCLE_ID;
-
-    rebuildGeoJsonLayer();
-    selectSubject(CIRCLE_ID, true);
-
-    const macroBbox = getBbox(state.circlesFeatures);
-    if (macroBbox) {
-        if (state.map.isMoving()) state.map.stop();
-        state.map.fitBounds(macroBbox, {
-            speed: 0.8,
-            curve: 1.4,
-            padding: typeof getFitPadding === 'function' ? getFitPadding() : 0
-        });
-    }
-}
-
 let _currentHierarchyLevel = 0;
 
 function _getHierarchyLevel(id) {
@@ -184,7 +119,7 @@ function _getHierarchyLevel(id) {
 
 export function selectSubject(id, triggerMapZoom = true, animate = true, callbacks = {}) {
     const renderHeader = callbacks.updateHeader || updateHeader;
-    const renderSidebar = callbacks.renderSidebarList || renderSidebarList;
+    const renderSidebar = callbacks.renderSidebarList || (() => {});
     const updateStyles = callbacks.updateAllFeatureStyles || updateAllFeatureStyles;
     const disposeCache = callbacks.disposeRasterCache || disposeRasterCache;
     const schedulePreload = callbacks.scheduleSelectionPreload || scheduleSelectionPreload;

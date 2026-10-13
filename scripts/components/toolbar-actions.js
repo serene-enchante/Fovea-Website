@@ -6,7 +6,6 @@ import { launchAppWithStoreFallback } from './avenza-modal-view.js';
 import { getSelectedGeoJSONData } from '../services/bird-data-service.js';
 import { renderMapLayoutCanvas, downloadGeoPdf, downloadGeoTiff, preloadMapLayout, getOrRenderLayoutCanvas, disposeRasterCache, scheduleDownloadViewPreload, cancelDownloadViewPreload } from '../map/map-rendering.js';
 import { setupSuggestFormAndDrawing } from './feedback-form.js';
-import { renderSidebarList } from './sidebar-list.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { handleSpatialFileShare } from '../services/file-download-service.js';
 import { getDownloadFilename } from '../services/download-file-names.js';
