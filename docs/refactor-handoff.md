@@ -1,6 +1,6 @@
 # Refactor handoff
 
-Updated: 2026-10-11
+Updated: 2026-10-12
 
 ## Current state
 
@@ -56,6 +56,7 @@ Recent commits, newest first:
 | `af3361c` | Inject app state, browser objects, toast, keyboard-focus, fullscreen, copy-link, and map-style actions into help-mode setup. |
 | `5b219b9` | Move production map construction, base layer setup, map controls, and viewport setup behind `map-runtime.js`, injecting page-specific selection and action callbacks. |
 | `d11b3a1` | Move view-to-dataset resolution and feature-array state caching behind `map-feature-repository.js`. |
+| `HEAD` | Move map theme application, initial feature loading, page setup, selection, and entrance handling behind `map-page-startup.js`. |
 | `cc71563` | Move PDF/TIFF layout export orchestration behind `map-layout-downloads.js`, injecting the legacy map share callback and notification behavior. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
@@ -301,6 +302,12 @@ After extracting map feature repository wiring:
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
+After extracting map page startup orchestration:
+
+- `npm test` passed: 164 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
 The browser suite starts a server on `127.0.0.1:4173`. In this environment it needs the sandbox permission that allows Playwright's local web server to bind that address. Warnings about `NO_COLOR` versus `FORCE_COLOR` are benign.
 
 ## Next steps for the next agent
@@ -315,7 +322,7 @@ The browser suite starts a server on `127.0.0.1:4173`. In this environment it ne
 
 - `scripts/maps-tile.js` remains the production map entry and is still large. Avoid broad rewrites or switching the live page wholesale to the partial modules.
 - `scripts/components/toolbar-actions.js` owns production action-button wiring. The map injects its legacy file-share, PDF/TIFF, and modal-close callbacks; `setupSpatialDownloadButtons` also accepts these callbacks for direct use.
-- `scripts/map/map-rendering.js` is the shared owner of the raster cache and layout canvas rendering. The map entry keeps local PDF/TIFF wrappers because their handoff behavior uses the legacy file-sharing service profile.
+- `scripts/map/map-rendering.js` is the shared owner of the raster cache and layout canvas rendering. `scripts/map/map-layout-downloads.js` owns PDF/TIFF layout export orchestration and injects the live map's legacy file-sharing callback.
 - `scripts/map/map-layers.js` owns production feature styling and the HTML zone/circle label renderer. The map entry injects bird-observation layer styling through the `updateAdditionalLayers` callback.
 - `scripts/map/map-layer-lifecycle.js` owns production zone-source rebuilds, one-time label listeners, proximity setup, and map hover/click binding; it receives the map entry's route and styling callbacks.
 - `scripts/map/map-controls.js` owns zoom, locate, and fullscreen button DOM and delegates the actions back to the map entry.
@@ -332,6 +339,7 @@ The browser suite starts a server on `127.0.0.1:4173`. In this environment it ne
 - `scripts/map/map-viewport.js` owns pointer effects, resize invalidation, fullscreen classes, and mobile home animation; the map entry injects layout and map callbacks.
 - `scripts/map/map-runtime.js` owns production MapLibre construction and composes layer, control, canvas-event, and viewport setup; `maps-tile.js` supplies state and page-specific actions.
 - `scripts/map/map-feature-repository.js` maps circles, Eugene, and Florence views to shared GeoJSON loads and stores each dataset's feature array in app state.
+- `scripts/map/map-page-startup.js` owns theme application, initial feature loading, map/sidebar setup sequencing, initial selection, and map entrance/error handling; the page entry supplies setup callbacks.
 - `scripts/map/map-layout-downloads.js` owns PDF/TIFF layout export orchestration and PNG fallback behavior; the map entry injects canvas rendering, conversion, notification, and its legacy file-share callback.
 - `scripts/components/image-lightbox.js` owns lightbox opening and close-event setup. `map-modals.js` owns help-mode shortcuts and interactions.
 - `scripts/components/bird-observation-view.js` owns bird summary panels, the full observations-tab list, observation cards, map popup content, and the popup lifecycle used by map clicks and sidebar cards.

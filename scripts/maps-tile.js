@@ -16,6 +16,7 @@ import { selectMapStyleByIndex, updateAllFeatureStyles as updateMapFeatureStyles
 import { initializeMapRuntime } from './map/map-runtime.js';
 import { createMapLayoutDownloadActions } from './map/map-layout-downloads.js';
 import { createMapFeatureRepository } from './map/map-feature-repository.js';
+import { runMapPageStartup } from './map/map-page-startup.js';
 import { setupMapPageNavigation } from './map/map-page-navigation.js';
 import { setupPageTransitionEvents } from './components/page-transition-events.js';
 import { createMapLayerLifecycle } from './map/map-layer-lifecycle.js';
@@ -311,109 +312,51 @@ setupMapPageNavigation({
 
 
 async function init() {
-    const triggerEntrance = () => {
-        document.body.classList.remove("is-transitioning");
-
-        if (state.map) {
-            state.map.resize();
-            selectSubject(state.currentId, true, false);
-        }
-
-        // Fade from white screen overlay once elements are loaded behind the scenes
-        const overlay = document.getElementById("page-transition-overlay");
-        if (overlay) {
-            overlay.classList.add("is-loaded");
-            overlay.classList.remove("is-active");
-        }
-    };
-
-    try {
-        const storedTheme = localStorage.getItem("fovea-theme") || "dark";
-        const isSystemLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
-        const isLight = storedTheme === "light" || (storedTheme === "auto" && isSystemLight);
-
-        if (isLight) {
-            document.documentElement.setAttribute("data-theme", "light");
-            document.documentElement.classList.add("theme-light");
-            document.body.classList.add("theme-light");
-            state.currentBaseLayer = "default";
-        } else {
-            document.documentElement.setAttribute("data-theme", "dark");
-            document.documentElement.classList.remove("theme-light");
-            document.body.classList.remove("theme-light");
-            state.currentBaseLayer = "default";
-        }
-
-        const initialId = getInitialIdFromUrl();
-        const initialFeature = state.isCirclesFeature ? 'circles' : state.currentFeature;
-        state.allFeatures = await loadFeaturesForMapView(initialFeature);
-
-        renderSidebarList();
-        initializeMap();
-        setupToolbarActionButtons({
-            shareFile: handleSpatialFileShare,
-            notify: showToast,
-            downloadPdf: button => downloadGeoPdf(button),
-            downloadTiff: button => downloadGeoTiff(button),
-            closeModals: () => closeModalsView({ onBeforeClose: cancelDownloadViewPreload })
-        });
-        setupSearch({ state, documentObject: document, windowObject: window, setMobileSnapState });
-        setupSidebarCapsuleEvents({
-            state,
-            documentObject: document,
-            onRender: renderSidebarList,
-            notify: showToast
-        });
-        setupSwipeNavigation();
-        setupListSwipeBack();
-        setupImageLightbox();
-        setupMobileResizeBar();
-        setupHelpModeSystem({
-            state,
-            renderSidebarList,
-            updateKeyboardFocus: updateKeyboardTileFocus,
-            onToggleFullscreen: toggleFullscreen,
-            onCopyLink: performDirectCopyLink,
-            onSelectMapStyle: selectMapStyleByIndex,
-            notify: showToast,
-            documentObject: document,
-            windowObject: window,
-            navigatorObject: navigator,
-            MutationObserverClass: MutationObserver
-        });
-        setupSidebarScrollListener();
-        setupMobileBottomNav();
-        setupViewToggleMenu();
-
-        selectSubject(initialId, true, false);
-
-        if (initialId === "Oakridge" || initialId === "Cottage Grove") {
-            setTimeout(() => {
-                showToast("There is no data for this count circle");
-            }, 800);
-        }
-
-        if (state.map) {
-            if (state.map.loaded && state.map.loaded()) {
-                setTimeout(triggerEntrance, 80);
-            } else {
-                state.map.once("load", () => {
-                    setTimeout(triggerEntrance, 80);
-                });
-                state.map.once("idle", () => {
-                    setTimeout(triggerEntrance, 80);
-                });
-                // Reliable safety timeout fallback
-                setTimeout(triggerEntrance, 400);
-            }
-        } else {
-            triggerEntrance();
-        }
-    } catch (err) {
-        console.error("Error initializing maps tile page:", err);
-        updateHeader("Error loading map data");
-        triggerEntrance();
-    }
+    return runMapPageStartup({
+        state,
+        storageObject: localStorage,
+        documentObject: document,
+        windowObject: window,
+        schedule: setTimeout,
+        getInitialId: getInitialIdFromUrl,
+        loadFeatures: loadFeaturesForMapView,
+        renderSidebarList,
+        initializeMap,
+        setupPageUi: () => {
+            setupToolbarActionButtons({
+                shareFile: handleSpatialFileShare,
+                notify: showToast,
+                downloadPdf: button => downloadGeoPdf(button),
+                downloadTiff: button => downloadGeoTiff(button),
+                closeModals: () => closeModalsView({ onBeforeClose: cancelDownloadViewPreload })
+            });
+            setupSearch({ state, documentObject: document, windowObject: window, setMobileSnapState });
+            setupSidebarCapsuleEvents({ state, documentObject: document, onRender: renderSidebarList, notify: showToast });
+            setupSwipeNavigation();
+            setupListSwipeBack();
+            setupImageLightbox();
+            setupMobileResizeBar();
+            setupHelpModeSystem({
+                state,
+                renderSidebarList,
+                updateKeyboardFocus: updateKeyboardTileFocus,
+                onToggleFullscreen: toggleFullscreen,
+                onCopyLink: performDirectCopyLink,
+                onSelectMapStyle: selectMapStyleByIndex,
+                notify: showToast,
+                documentObject: document,
+                windowObject: window,
+                navigatorObject: navigator,
+                MutationObserverClass: MutationObserver
+            });
+            setupSidebarScrollListener();
+            setupMobileBottomNav();
+            setupViewToggleMenu();
+        },
+        selectSubject,
+        notify: showToast,
+        updateHeader
+    });
 }
 
 

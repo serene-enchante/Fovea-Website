@@ -24,8 +24,9 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.doesNotMatch(source, /const state = \{/);
     assert.match(source, /import \{ loadGeoDataset \} from '\.\/services\/geo-data-repository\.js';/);
     assert.match(source, /createMapFeatureRepository\(\{ state, loadGeoDataset \}\)/);
-    assert.match(source, /state\.allFeatures = await loadFeaturesForMapView\(initialFeature\);/);
     assert.match(source, /loadFeatures: loadFeaturesForMapView,/);
+    const startup = await readFile(new URL('../scripts/map/map-page-startup.js', import.meta.url), 'utf8');
+    assert.match(startup, /state\.allFeatures = await loadFeatures\(initialFeature\)/);
     const selectionController = await readFile(new URL('../scripts/map/map-selection.js', import.meta.url), 'utf8');
     assert.match(selectionController, /targetFeatures = await loadFeatures\(featureName\);/);
     assert.match(source, /import \{ findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry \} from '\.\/utils\/geometry-math\.js';/);
