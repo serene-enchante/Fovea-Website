@@ -8,7 +8,7 @@ export const state = {
     currentFeature: "circles", // "circles", "eugene", "florence"
     isCirclesFeature: true,
     currentId: CIRCLE_ID,
-    activeTab: "items",
+    activeTab: "overview",
     isSwipeTransitionActive: false,
     map: null,
     geoJsonLayer: null,
@@ -23,6 +23,6 @@ export const state = {
     focusedTileIndex: -1,
     lastNavSource: "click",
     baseMapsList: [],
-    currentBaseLayer: "dark",
+    currentBaseLayer: "default",
     snapState: "default"
 };

@@ -57,37 +57,6 @@ function updateAllFeatureStyles() {
     updateMapFeatureStyles({ updateAdditionalLayers: updateBirdObservationsLayerStyles });
 }
 
-Object.assign(state, {
-    allFeatures: [],
-    circlesFeatures: [],
-    eugeneFeatures: [],
-    florenceFeatures: [],
-    currentFeature: "circles", // "circles", "eugene", "florence"
-    isCirclesFeature: true,
-    currentId: CIRCLE_ID,
-    activeTab: "overview",
-    isSwipeTransitionActive: false,
-    map: null,
-    geoJsonLayer: null,
-    featureLayersMap: new Map(), // maps zoneId/cid -> leaflet layer
-    lastZoneClickTime: 0,
-    userLocationMarker: null,
-    userLocationAccuracy: null,
-    isLocating: false,
-    locateControl: null,
-    fullscreenControl: null,
-    layersControl: null,
-    focusedTileIndex: -1,
-    lastNavSource: "click",
-    baseMapsList: [],
-    currentBaseLayer: "default",
-    snapState: "default"
-});
-
-
-
-
-
 // --- Client-Side Exporter Helpers (GeoJSON, KMZ, GPX) ---
 
 
