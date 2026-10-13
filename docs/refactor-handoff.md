@@ -6,7 +6,7 @@ Updated: 2026-10-12
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `ebe41b7 inject suggested app opening action`
+- Latest refactor commit: `a316ecb extract map page UI setup`
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -60,7 +60,7 @@ Recent commits, newest first:
 | `7d5e958` | Share circle routing for map and sidebar clicks through `map-feature-navigation.js`. |
 | `0a968f3` | Remove imports from `maps-tile.js` that are unused there; shared toolbar modules remain the owners of export and suggested-app integration code. |
 | `ebe41b7` | Inject the direct suggested-app opening action into toolbar card and search-result handlers. |
-| `HEAD` | Move map search, toolbar, help-mode, capsule, lightbox, and mobile setup composition into `map-page-ui.js`. |
+| `a316ecb` | Move map search, toolbar, help-mode, capsule, lightbox, and mobile setup composition into `map-page-ui.js`. |
 | `cc71563` | Move PDF/TIFF layout export orchestration behind `map-layout-downloads.js`, injecting the legacy map share callback and notification behavior. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
