@@ -66,10 +66,11 @@ test('suggested-app configuration stays out of the map entry', async () => {
 
 test('the map injects suggested-app opening into the shared toolbar', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
+    const pageUi = await readFile(new URL('../scripts/map/map-page-ui.js', import.meta.url), 'utf8');
     const toolbar = await readFile(new URL('../scripts/components/toolbar-actions.js', import.meta.url), 'utf8');
 
-    assert.match(source, /import \{ handleAppDirectOpen \} from '\.\/components\/avenza-modal-view\.js';/);
-    assert.match(source, /openSuggestedApp: handleAppDirectOpen/);
+    assert.match(pageUi, /import \{ handleAppDirectOpen \} from '\.\.\/components\/avenza-modal-view\.js';/);
+    assert.match(pageUi, /openSuggestedApp: handleAppDirectOpen/);
     assert.match(toolbar, /openSuggestedApp = \(\) => \{\}/);
     assert.match(toolbar, /setupDownloadAppSearch\(\{ onOpenApp: openSuggestedApp \}\)/);
     assert.match(toolbar, /await onOpenApp\(appName, card\)/);
@@ -78,15 +79,27 @@ test('the map injects suggested-app opening into the shared toolbar', async () =
 
 test('the map application uses shared toolbar setup with legacy map callbacks', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
+    const pageUi = await readFile(new URL('../scripts/map/map-page-ui.js', import.meta.url), 'utf8');
 
-    assert.match(source, /setupActionButtons as setupToolbarActionButtons/);
-    assert.match(source, /setupToolbarActionButtons\(\{/);
+    assert.match(source, /setupMapPageUi\(\{/);
+    assert.match(pageUi, /setupActionButtons as setupToolbarActionButtons/);
+    assert.match(pageUi, /shareFile,/);
     assert.match(source, /shareFile: handleSpatialFileShare/);
     assert.match(source, /downloadPdf: button => downloadGeoPdf\(button\)/);
     assert.match(source, /downloadTiff: button => downloadGeoTiff\(button\)/);
-    assert.match(source, /closeModals: \(\) => closeModalsView\(\{ onBeforeClose: cancelDownloadViewPreload \}\)/);
-    assert.doesNotMatch(source, /function closeAllModals\(/);
-    assert.doesNotMatch(source, /function setupActionButtons\(/);
+    assert.match(pageUi, /closeModals: \(\) => closeModalsView\(\{ onBeforeClose: cancelDownloadViewPreload \}\)/);
+    assert.doesNotMatch(pageUi, /function closeAllModals\(/);
+    assert.doesNotMatch(pageUi, /function setupActionButtons\(/);
+});
+
+test('map page UI setup composes shared interaction modules in startup order', async () => {
+    const pageUi = await readFile(new URL('../scripts/map/map-page-ui.js', import.meta.url), 'utf8');
+
+    assert.match(pageUi, /export function setupMapPageUi\(\{/);
+    assert.match(pageUi, /setupSearch\(\{ state, documentObject, windowObject, setMobileSnapState \}\)/);
+    assert.match(pageUi, /setupSidebarCapsuleEvents\(\{ state, documentObject, onRender: renderSidebarList, notify \}\)/);
+    assert.match(pageUi, /setupHelpModeSystem\(\{/);
+    assert.match(pageUi, /setupViewToggleMenu\(\)/);
 });
 
 test('PDF and TIFF layout exports use the shared download action controller', async () => {
@@ -202,10 +215,11 @@ test('map page editor and back actions are owned by a shared navigation module',
 
 test('map and suggested-app search receive their browser dependencies explicitly', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
+    const pageUi = await readFile(new URL('../scripts/map/map-page-ui.js', import.meta.url), 'utf8');
     const search = await readFile(new URL('../scripts/map/map-search.js', import.meta.url), 'utf8');
     const toolbar = await readFile(new URL('../scripts/components/toolbar-actions.js', import.meta.url), 'utf8');
 
-    assert.match(source, /setupSearch\(\{ state, documentObject: document, windowObject: window, setMobileSnapState \}\)/);
+    assert.match(pageUi, /setupSearch\(\{ state, documentObject, windowObject, setMobileSnapState \}\)/);
     assert.match(search, /export function setupSearch\(\{/);
     assert.match(search, /export function setupAllAppsLiveSearch\(\{ documentObject/);
     assert.match(toolbar, /setupAllAppsLiveSearch\(\{ documentObject: document \}\)/);
@@ -268,20 +282,21 @@ test('help tooltip rendering and placement are owned by a shared view module', a
 
 test('help mode receives map state, browser objects, and action callbacks explicitly', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
+    const pageUi = await readFile(new URL('../scripts/map/map-page-ui.js', import.meta.url), 'utf8');
     const helpMode = await readFile(new URL('../scripts/components/map-modals.js', import.meta.url), 'utf8');
 
-    assert.match(source, /setupHelpModeSystem\(\{\s*state,/);
-    assert.match(source, /onCopyLink: performDirectCopyLink/);
-    assert.match(source, /MutationObserverClass: MutationObserver/);
+    assert.match(pageUi, /setupHelpModeSystem\(\{\s*state,/);
+    assert.match(pageUi, /onCopyLink: performDirectCopyLink/);
+    assert.match(pageUi, /MutationObserverClass/);
     assert.match(helpMode, /documentObject = globalThis\.document/);
     assert.doesNotMatch(helpMode, /from '\.\/toolbar-actions\.js'|from '\.\.\/state\.js'/);
 });
 
-test('the map entry wires shared sidebar capsule events directly', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+test('map page UI wires shared sidebar capsule events directly', async () => {
+    const pageUi = await readFile(new URL('../scripts/map/map-page-ui.js', import.meta.url), 'utf8');
 
-    assert.match(source, /setupSidebarCapsuleEvents\(\{\s+state,\s+documentObject: document,\s+onRender: renderSidebarList,\s+notify: showToast/);
-    assert.doesNotMatch(source, /function setupCapsules\(/);
+    assert.match(pageUi, /setupSidebarCapsuleEvents\(\{ state, documentObject, onRender: renderSidebarList, notify \}/);
+    assert.doesNotMatch(pageUi, /function setupCapsules\(/);
 });
 
 test('bird observation list items and map popups share one view component', async () => {

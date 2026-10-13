@@ -11,28 +11,27 @@ import {
     switchBaseMap as applyBaseMap,
     toggleLocationTracking as trackUserLocation
 } from './map/map-init.js';
-import { selectMapStyleByIndex, updateAllFeatureStyles as updateMapFeatureStyles, updateLabelZoomVisibility } from './map/map-layers.js';
+import { updateAllFeatureStyles as updateMapFeatureStyles, updateLabelZoomVisibility } from './map/map-layers.js';
 import { initializeMapRuntime } from './map/map-runtime.js';
 import { createMapLayoutDownloadActions } from './map/map-layout-downloads.js';
 import { createMapFeatureRepository } from './map/map-feature-repository.js';
 import { runMapPageStartup } from './map/map-page-startup.js';
 import { createMapFeatureNavigation } from './map/map-feature-navigation.js';
+import { setupMapPageUi } from './map/map-page-ui.js';
 import { setupMapPageNavigation } from './map/map-page-navigation.js';
 import { setupPageTransitionEvents } from './components/page-transition-events.js';
 import { createMapLayerLifecycle } from './map/map-layer-lifecycle.js';
 import {
-    cancelDownloadViewPreload,
     disposeRasterCache,
     getOrRenderLayoutCanvas,
     hasCachedLayoutCanvas,
     scheduleDownloadViewPreload
 } from './map/map-rendering.js';
-import { setupSearch } from './map/map-search.js';
 import { adjustHeaderFontSize, getFitPadding, updateHeader } from './components/header-view.js';
 import { syncSidebarTabs } from './components/sidebar-tabs.js';
-import { activateSidebarTab, setupSidebarCapsuleEvents } from './components/sidebar-capsule-events.js';
-import { setupSidebarScrollListener, updateKeyboardTileFocus } from './components/sidebar-list.js';
-import { openImageLightbox, setupImageLightbox } from './components/image-lightbox.js';
+import { activateSidebarTab } from './components/sidebar-capsule-events.js';
+import { updateKeyboardTileFocus } from './components/sidebar-list.js';
+import { openImageLightbox } from './components/image-lightbox.js';
 import { renderBirdObservationsList, renderSidebarBirdPanel as renderBirdSidebarPanel } from './components/bird-observation-view.js';
 import { renderBirdSpeciesList } from './components/bird-species-list.js';
 import { renderOrganizersList, renderResourcesList } from './components/sidebar-static-views.js';
@@ -41,13 +40,9 @@ import { renderSidebarOverview } from './components/sidebar-overview-view.js';
 import { createSidebarController } from './components/sidebar-controller.js';
 import { clearBirdObservations, createBirdSelectionController } from './map/bird-selection-controller.js';
 import { setupBirdObservationsLayer, updateBirdObservationsLayerStyles } from './map/bird-observation-layers.js';
-import { setupHelpModeSystem } from './components/map-modals.js';
-import { setupMobileBottomNav } from './components/bottom-nav-view.js';
 import { showToast } from './components/toast-view.js';
-import { setupActionButtons as setupToolbarActionButtons, setupViewToggleMenu, toggleFullscreen, performDirectCopyLink, getActiveDownloadFilename } from './components/toolbar-actions.js';
-import { handleAppDirectOpen } from './components/avenza-modal-view.js';
-import { closeAllModals as closeModalsView } from './components/modal-view.js';
-import { setMobileSnapState, setupListSwipeBack, setupMobileResizeBar, setupSwipeNavigation, updateControlPositions } from './components/mobile-view.js';
+import { toggleFullscreen, getActiveDownloadFilename } from './components/toolbar-actions.js';
+import { updateControlPositions } from './components/mobile-view.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
 import { state } from './state.js';
 
@@ -304,38 +299,20 @@ async function init() {
         loadFeatures: loadFeaturesForMapView,
         renderSidebarList,
         initializeMap,
-        setupPageUi: () => {
-            setupToolbarActionButtons({
-                shareFile: handleSpatialFileShare,
-                openSuggestedApp: handleAppDirectOpen,
-                notify: showToast,
-                downloadPdf: button => downloadGeoPdf(button),
-                downloadTiff: button => downloadGeoTiff(button),
-                closeModals: () => closeModalsView({ onBeforeClose: cancelDownloadViewPreload })
-            });
-            setupSearch({ state, documentObject: document, windowObject: window, setMobileSnapState });
-            setupSidebarCapsuleEvents({ state, documentObject: document, onRender: renderSidebarList, notify: showToast });
-            setupSwipeNavigation();
-            setupListSwipeBack();
-            setupImageLightbox();
-            setupMobileResizeBar();
-            setupHelpModeSystem({
+        setupPageUi: () => setupMapPageUi({
                 state,
                 renderSidebarList,
                 updateKeyboardFocus: updateKeyboardTileFocus,
                 onToggleFullscreen: toggleFullscreen,
-                onCopyLink: performDirectCopyLink,
-                onSelectMapStyle: selectMapStyleByIndex,
                 notify: showToast,
+                shareFile: handleSpatialFileShare,
+                downloadPdf: button => downloadGeoPdf(button),
+                downloadTiff: button => downloadGeoTiff(button),
                 documentObject: document,
                 windowObject: window,
                 navigatorObject: navigator,
                 MutationObserverClass: MutationObserver
-            });
-            setupSidebarScrollListener();
-            setupMobileBottomNav();
-            setupViewToggleMenu();
-        },
+            }),
         selectSubject,
         notify: showToast,
         updateHeader
