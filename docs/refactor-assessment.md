@@ -47,7 +47,7 @@ The issue is less the number of files than the lack of boundaries. A feature suc
 
 The branch has established testable shared boundaries for route parsing, active map-data configuration and lazy loading, GeoJSON selection, zone formatting and descriptions, download filenames and share metadata, external app instructions and store fallbacks, KML/GPX/TIFF export conversion, print geometry, QR image loading, and location containment.
 
-The production file has reduced by 1,032 lines from the assessment baseline. Node tests now cover 43 pure-function cases, and Playwright checks deep links, circles-to-count selection through the full list, downloads, and mobile navigation. The remaining high-risk work is the MapLibre initialization and layer slice, route/selection coordination, sidebar rendering, modals, search, feedback, and mobile gesture handling.
+The live page now loads a module entry point, and `scripts/maps-tile.js` has been reduced to a 299-line composition layer. The implementation is covered by 170 Node tests and five Playwright browser checks for deep links, circle selection, downloads, and mobile navigation. The next architectural step is to keep shrinking the composition boundary and to make the remaining stateful integrations explicit; map runtime, route and selection coordination, sidebar rendering, modals, search, feedback, and mobile interactions have already been moved behind shared modules.
 
 ## Refactor goals and guardrails
 
