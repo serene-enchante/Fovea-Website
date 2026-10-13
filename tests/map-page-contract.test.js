@@ -29,12 +29,15 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.match(startup, /state\.allFeatures = await loadFeatures\(initialFeature\)/);
     const selectionController = await readFile(new URL('../scripts/map/map-selection.js', import.meta.url), 'utf8');
     assert.match(selectionController, /targetFeatures = await loadFeatures\(featureName\);/);
-    assert.match(source, /import \{ findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry \} from '\.\/utils\/geometry-math\.js';/);
-    assert.match(source, /import \{ formatArea, formatDate, normalizeZoneId \} from '\.\/utils\/format-utils\.js';/);
+    assert.match(source, /import \{ getBbox \} from '\.\/utils\/geometry-math\.js';/);
+    assert.match(source, /import \{ normalizeZoneId \} from '\.\/utils\/format-utils\.js';/);
     assert.match(source, /updateAllFeatureStyles as updateMapFeatureStyles/);
     const mapLayers = await readFile(new URL('../scripts/map/map-layers.js', import.meta.url), 'utf8');
     assert.match(mapLayers, /getThemeAccent\(\)/);
-    assert.match(source, /import \{ canvasToTiffBlob, geojsonToGpx, geojsonToKml \} from '\.\/services\/format-converters\.js';/);
+    assert.match(source, /import \{ canvasToTiffBlob \} from '\.\/services\/format-converters\.js';/);
+    const toolbar = await readFile(new URL('../scripts/components/toolbar-actions.js', import.meta.url), 'utf8');
+    assert.match(toolbar, /geojsonToGpx/);
+    assert.match(toolbar, /geojsonToKml/);
     assert.doesNotMatch(source, /function generateZoneGeometrySVG\(/);
     assert.doesNotMatch(source, /function geojsonToKml\(/);
     assert.doesNotMatch(source, /function geojsonToGpx\(/);
@@ -54,10 +57,10 @@ test('map feature repository maps view names to datasets and caches feature arra
     assert.match(repository, /state\.eugeneFeatures = features/);
 });
 
-test('the map application uses the shared suggested-app and Avenza modal components', async () => {
+test('suggested-app configuration stays out of the map entry', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
 
-    assert.match(source, /import \{ handleAppDirectOpen \} from '\.\/components\/avenza-modal-view\.js';/);
+    assert.doesNotMatch(source, /from '\.\/components\/avenza-modal-view\.js'/);
     assert.doesNotMatch(source, /const APP_FORMAT_PREFERENCES =/);
     assert.doesNotMatch(source, /const APP_INSTRUCTION_CONFIGS =/);
 });

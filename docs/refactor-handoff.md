@@ -58,6 +58,7 @@ Recent commits, newest first:
 | `d11b3a1` | Move view-to-dataset resolution and feature-array state caching behind `map-feature-repository.js`. |
 | `10b1b7b` | Move map theme application, initial feature loading, page setup, selection, and entrance handling behind `map-page-startup.js`. |
 | `7d5e958` | Share circle routing for map and sidebar clicks through `map-feature-navigation.js`. |
+| `HEAD` | Remove imports from `maps-tile.js` that are unused there; shared toolbar modules remain the owners of export and suggested-app integration code. |
 | `cc71563` | Move PDF/TIFF layout export orchestration behind `map-layout-downloads.js`, injecting the legacy map share callback and notification behavior. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
@@ -310,6 +311,12 @@ After extracting map page startup orchestration:
 - `git diff --check` passed.
 
 After consolidating map and sidebar circle navigation:
+
+- `npm test` passed: 167 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After removing unused map-entry imports:
 
 - `npm test` passed: 167 tests.
 - `npm run test:browser` passed: 5 Playwright tests.

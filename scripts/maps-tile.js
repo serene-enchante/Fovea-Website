@@ -1,12 +1,11 @@
 import { CIRCLE_ID } from './config/app-config.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
 import { fetchBirdObservations, fetchTaxonDefaultPhoto } from './services/observations-client.js';
-import { getInitialIdFromUrl, getSelectedGeoJSONData } from './services/bird-data-service.js';
+import { getInitialIdFromUrl } from './services/bird-data-service.js';
 import { handleSpatialFileShare as shareSpatialFile } from './services/file-download-service.js';
-import { launchAppWithStoreFallback } from './services/app-launch-service.js';
-import { canvasToTiffBlob, geojsonToGpx, geojsonToKml } from './services/format-converters.js';
-import { findPointInsidePolygon, getBbox, isPointInGeoJSONGeometry } from './utils/geometry-math.js';
-import { formatArea, formatDate, normalizeZoneId } from './utils/format-utils.js';
+import { canvasToTiffBlob } from './services/format-converters.js';
+import { getBbox } from './utils/geometry-math.js';
+import { normalizeZoneId } from './utils/format-utils.js';
 import {
     checkUserLocationZone as updateLocationZone,
     switchBaseMap as applyBaseMap,
@@ -24,7 +23,6 @@ import { createMapLayerLifecycle } from './map/map-layer-lifecycle.js';
 import {
     cancelDownloadViewPreload,
     disposeRasterCache,
-    getFeatureCenter,
     getOrRenderLayoutCanvas,
     hasCachedLayoutCanvas,
     scheduleDownloadViewPreload
@@ -33,7 +31,6 @@ import { setupSearch } from './map/map-search.js';
 import { adjustHeaderFontSize, getFitPadding, updateHeader } from './components/header-view.js';
 import { syncSidebarTabs } from './components/sidebar-tabs.js';
 import { activateSidebarTab, setupSidebarCapsuleEvents } from './components/sidebar-capsule-events.js';
-import { getSuggestSelectionLabel, setupSuggestFormAndDrawing } from './components/feedback-form.js';
 import { setupSidebarScrollListener, updateKeyboardTileFocus } from './components/sidebar-list.js';
 import { openImageLightbox, setupImageLightbox } from './components/image-lightbox.js';
 import { renderBirdObservationsList, renderSidebarBirdPanel as renderBirdSidebarPanel } from './components/bird-observation-view.js';
@@ -47,14 +44,11 @@ import { setupBirdObservationsLayer, updateBirdObservationsLayerStyles } from '.
 import { setupHelpModeSystem } from './components/map-modals.js';
 import { setupMobileBottomNav } from './components/bottom-nav-view.js';
 import { showToast } from './components/toast-view.js';
-import { setupActionButtons as setupToolbarActionButtons, setupViewToggleMenu, updateAllAppsModalHeaderTitle, updateShareModalDescription, toggleFullscreen, performDirectCopyLink, getActiveDownloadFilename, generateAppSpatialBlob } from './components/toolbar-actions.js';
-import { closeAvenzaModal, closeAllAppsModal, closeAllModals as closeModalsView } from './components/modal-view.js';
-import { handleAppDirectOpen } from './components/avenza-modal-view.js';
+import { setupActionButtons as setupToolbarActionButtons, setupViewToggleMenu, toggleFullscreen, performDirectCopyLink, getActiveDownloadFilename } from './components/toolbar-actions.js';
+import { closeAllModals as closeModalsView } from './components/modal-view.js';
 import { setMobileSnapState, setupListSwipeBack, setupMobileResizeBar, setupSwipeNavigation, updateControlPositions } from './components/mobile-view.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
 import { state } from './state.js';
-
-const FALLBACK_IMAGE = "../images/wetlands.jpg";
 
 // MapLibre prototype polyfill for Leaflet legacy compatibility
 if (typeof maplibregl !== 'undefined' && maplibregl.Map) {
