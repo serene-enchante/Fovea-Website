@@ -6,7 +6,7 @@ import { state } from '../scripts/state.js';
 test('tracks cursor proximity through the shared map proximity controller', () => {
     const globalKeys = ['window', 'requestAnimationFrame'];
     const originalGlobals = new Map(globalKeys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
-    const stateKeys = ['map', 'labelData', '_proximityListenerAttached'];
+    const stateKeys = ['map', 'labelData'];
     const originalState = Object.fromEntries(stateKeys.map(key => [key, state[key]]));
     const listeners = new Map();
     const featureStates = [];
@@ -28,10 +28,11 @@ test('tracks cursor proximity through the shared map proximity controller', () =
             labelData: [
                 { id: '04', lng: 0, lat: 0 },
                 { id: '', lng: 0, lat: 0 }
-            ],
-            _proximityListenerAttached: false
+            ]
         });
+        delete state._proximityListenerAttached;
 
+        setupProximityTracking();
         setupProximityTracking();
         listeners.get('mousemove')({ clientX: 20, clientY: 30 });
         listeners.get('mouseleave')();
@@ -40,7 +41,8 @@ test('tracks cursor proximity through the shared map proximity controller', () =
             [{ source: 'zones', id: '04' }, { proximity: 1 }],
             [{ source: 'zones', id: '04' }, { proximity: 0 }]
         ]);
-        assert.equal(state._proximityListenerAttached, true);
+        assert.equal(listeners.size, 2);
+        assert.equal(Object.hasOwn(state, '_proximityListenerAttached'), false);
     } finally {
         for (const key of stateKeys) {
             if (originalState[key] === undefined) delete state[key];

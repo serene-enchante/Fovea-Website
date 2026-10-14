@@ -2,17 +2,19 @@ import { state } from '../state.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { normalizeZoneId } from '../utils/format-utils.js';
 
+const canvasesWithProximityTracking = new WeakSet();
+const canvasesWithProximityGlow = new WeakSet();
+
 // Cursor proximity glow: set feature-state 'proximity' (0–1) based on
 // screen-space distance from cursor to each zone center point
 export function setupProximityTracking() {
-    if (state._proximityListenerAttached) return;
-    state._proximityListenerAttached = true;
+    const canvas = state.map?.getCanvas();
+    if (!canvas || canvasesWithProximityTracking.has(canvas)) return;
+    canvasesWithProximityTracking.add(canvas);
 
     const RADIUS = 280;   // px — radial gradient falloff distance
     let rafPending = false;
     let lastCx = -9999, lastCy = -9999;
-
-    const canvas = state.map.getCanvas();
 
     canvas.addEventListener('mousemove', (e) => {
         if (window.innerWidth <= 768) return;
@@ -60,11 +62,12 @@ export function setupProximityTracking() {
 // This gives true per-segment glow — only the line pixels within the gradient radius
 // are revealed, rather than MapLibre's per-feature opacity which affects whole zones.
 export function setupProximityGlowCanvas() {
-    if (state._glowCanvasAttached) return;
-    state._glowCanvasAttached = true;
-
-    const mapCanvas = state.map.getCanvas();
+    const map = state.map;
+    const mapCanvas = map?.getCanvas();
+    if (!mapCanvas || canvasesWithProximityGlow.has(mapCanvas)) return;
     const container = document.getElementById('tile-map');
+    if (!container) return;
+    canvasesWithProximityGlow.add(mapCanvas);
 
     const glowCanvas = document.createElement('canvas');
     glowCanvas.id = 'map-glow-canvas';
