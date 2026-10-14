@@ -7,6 +7,7 @@ Updated: 2026-10-14
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
 - Latest refactor commit: `0d27d3d keep hovered feature id outside map state`
+- Latest handoff commit before this progress update: `e775eff sync hovered feature handoff`.
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -14,11 +15,20 @@ Updated: 2026-10-14
 
 ## Recent work
 
+## Progress snapshot (2026-10-14)
+
+- Overall estimate: **about 70%** of the goals in `docs/refactor-assessment.md`. This is a qualitative estimate; the plan has no formal scoring rubric.
+- The core map JavaScript migration is substantially advanced: `maps/index.html` loads `scripts/maps/entry.js`, and `scripts/maps-tile.js` is now a 316-line composition/compatibility layer (down from the assessment's original 8,865-line measurement).
+- Verified in the current checkout: `styles/page-maps-tile.css` is still 6,500 lines; `scripts/map/map-runtime.js` still configures `prefetchZoomDelta: 8`; there is no `.github/workflows` directory; and no JSON schema files were found in the schema search.
+- Remaining plan areas include reducing/organizing the map CSS, measuring and tuning map startup/prefetch behavior, adding CI browser checks, formalizing dataset/provider schemas and API contracts, and reviewing the entry composition layer for any remaining legacy responsibilities.
+- Next worker should first inspect `scripts/maps/entry.js`, `scripts/maps-tile.js`, and `scripts/map/map-runtime.js` to identify a safe next slice. Prefer completing one measurable behavior or boundary, then run `npm test`, `npm run test:browser`, and `git diff --check`; keep the Eugene-04 edits unstaged.
+
 Recent commits, newest first:
 
 | Commit | Change |
 | --- | --- |
 | `0d27d3d` | Keep the hovered feature ID in a map-keyed weak map and let the proximity glow read it through an accessor. |
+| `e775eff` | Sync the hovered-feature state extraction and verification into the handoff. |
 | `364be8d` | Record the proximity listener guard refactor and verification in this handoff. |
 | `2fa2030` | Keep proximity listener registration guards in module-private weak sets keyed by map canvas. |
 | `a338c8a` | Keep the map event registration guard in a module-private weak set keyed by map instance. |
@@ -86,7 +96,7 @@ Recent commits, newest first:
 | `33a8e27` | Remove an unused stale viewport/fullscreen implementation from `scripts/map/map-rendering.js`. |
 | `d006702` | Consolidate raster cache ownership in `scripts/map/map-rendering.js`; retain the live map's legacy sharing wrappers. |
 
-Earlier work and the overall rationale/order are recorded in [refactor-assessment.md](./refactor-assessment.md). The live map still boots from `scripts/maps-tile.js`; this is an incremental migration, not yet a switch to a new entry point.
+Earlier work and the overall rationale/order are recorded in [refactor-assessment.md](./refactor-assessment.md). The live map now boots from `scripts/maps/entry.js`; `scripts/maps-tile.js` remains as a smaller composition/compatibility layer while remaining responsibilities are reviewed.
 
 ## Verification history
 
