@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { CIRCLE_ID } from '../scripts/config/app-config.js';
-import { setupMapCanvasEvents, setupMapHoverEvents } from '../scripts/map/map-events.js';
+import { getHoveredFeatureId, setupMapCanvasEvents, setupMapHoverEvents } from '../scripts/map/map-events.js';
 
 test('registers canvas click and load behavior through callbacks', () => {
     const listeners = new Map();
@@ -60,6 +60,10 @@ test('canvas click ignores zone hits and routes circle context correctly', () =>
 });
 
 test('registers zone hover and click events once and delegates valid clicks', () => {
+    const originalRaf = Object.getOwnPropertyDescriptor(globalThis, 'requestAnimationFrame');
+    const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+    globalThis.requestAnimationFrame = () => 1;
+    globalThis.document = { getElementById: () => null };
     const listeners = new Map();
     const map = {
         on(event, layer, handler) { listeners.set(`${event}:${layer}`, handler); },
@@ -76,6 +80,10 @@ test('registers zone hover and click events once and delegates valid clicks', ()
 
     listeners.get('click:zones-fill')({ features: [{ id: '04', properties: { zid: '04' } }] });
     listeners.get('click:zones-fill')({ features: [] });
+    listeners.get('mousemove:zones-fill')({ features: [{ id: '05' }] });
+    assert.equal(getHoveredFeatureId(map), '05');
+    listeners.get('mouseleave:zones-fill')();
+    assert.equal(getHoveredFeatureId(map), null);
 
     assert.deepEqual([...listeners.keys()], [
         'mousemove:zones-fill', 'mouseleave:zones-fill', 'click:zones-fill'
@@ -85,7 +93,12 @@ test('registers zone hover and click events once and delegates valid clicks', ()
     assert.equal(selections[0].feature.properties.zid, '04');
     assert.equal(typeof state.lastZoneClickTime, 'number');
     assert.equal('_zoneEventsAttached' in state, false);
+    assert.equal('_hoveredFeatureId' in state, false);
 
     setupMapHoverEvents({ map, state, onFeatureClick: () => assert.fail('must not attach again') });
     assert.equal(listeners.size, 3);
+    if (originalRaf) Object.defineProperty(globalThis, 'requestAnimationFrame', originalRaf);
+    else delete globalThis.requestAnimationFrame;
+    if (originalDocument) Object.defineProperty(globalThis, 'document', originalDocument);
+    else delete globalThis.document;
 });

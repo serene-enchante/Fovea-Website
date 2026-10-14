@@ -1,6 +1,7 @@
 import { state } from '../state.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { normalizeZoneId } from '../utils/format-utils.js';
+import { getHoveredFeatureId } from './map-events.js';
 
 const canvasesWithProximityTracking = new WeakSet();
 const canvasesWithProximityGlow = new WeakSet();
@@ -133,7 +134,7 @@ export function setupProximityGlowCanvas() {
         const lineW = isLight ? 2.8 : 0.9;
 
         // --- Pass 1: Radial Fill Gradient clipped to currently hovered feature polygon ---
-        const activeHoverId = state._hoveredFeatureId;
+        const activeHoverId = getHoveredFeatureId(map);
         if (activeHoverId) {
             const feat = state.allFeatures.find(f => {
                 const props = f.properties || {};
