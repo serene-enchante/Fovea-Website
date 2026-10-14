@@ -107,7 +107,7 @@ test('groups features by their active ID and builds matching HTML label data', (
 
 test('applies the production light-theme feature colors and updates supplemental layers', () => {
     const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
-    const stateKeys = ['map', 'allFeatures', 'isCirclesFeature', 'currentFeature', 'currentId', 'currentBaseLayer', '_originalPlaceFilters', '_lastHiddenCircleNames', 'labelData'];
+    const stateKeys = ['map', 'allFeatures', 'isCirclesFeature', 'currentFeature', 'currentId', 'currentBaseLayer', 'labelData'];
     const originalState = Object.fromEntries(stateKeys.map(key => [key, state[key]]));
     const paints = new Map();
     const featureStates = [];
@@ -133,13 +133,13 @@ test('applies the production light-theme feature colors and updates supplemental
             currentFeature: 'eugene',
             currentId: '04',
             currentBaseLayer: 'default',
-            _originalPlaceFilters: undefined,
-            _lastHiddenCircleNames: undefined,
             labelData: []
         });
 
         updateAllFeatureStyles({ updateAdditionalLayers: () => supplementalUpdateCount++ });
 
+        assert.equal('_originalPlaceFilters' in state, false);
+        assert.equal('_lastHiddenCircleNames' in state, false);
         assert.equal(supplementalUpdateCount, 1);
         assert.deepEqual(featureStates, [[{ source: 'zones', id: '04' }, { selected: true }]]);
         assert.equal(classes.has('is-light-basemap'), true);

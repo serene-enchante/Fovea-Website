@@ -5,6 +5,9 @@ import { CIRCLE_ID } from '../config/app-config.js';
 import { showToast } from '../components/toast-view.js'; // Might be needed for selectMapStyleByIndex
 import { findPointInsidePolygon, getBbox } from '../utils/geometry-math.js';
 
+let originalPlaceFilters = null;
+let lastHiddenCircleNames = null;
+
 // Exported feature expressions & layer logic
 export function toExpression(f) {
     if (!f) return null;
@@ -44,8 +47,8 @@ export function updatePlaceLabelsFilter() {
     if (!state.map) return;
 
     // Lazily cache original place filters if not done already for this style
-    if (!state._originalPlaceFilters) {
-        state._originalPlaceFilters = {};
+    if (originalPlaceFilters === null) {
+        originalPlaceFilters = {};
         const placeLayersForFilter = [
             'place_city_r5',
             'place_city_r6',
@@ -63,14 +66,14 @@ export function updatePlaceLabelsFilter() {
         let foundAny = false;
         placeLayersForFilter.forEach(lId => {
             if (state.map.getLayer(lId)) {
-                state._originalPlaceFilters[lId] = state.map.getFilter(lId) || null;
+                originalPlaceFilters[lId] = state.map.getFilter(lId) || null;
                 foundAny = true;
             }
         });
 
         if (!foundAny) {
             // Style layers are not available yet (still loading), return and try again on next draw/update
-            delete state._originalPlaceFilters;
+            originalPlaceFilters = null;
             return;
         }
     }
@@ -78,15 +81,15 @@ export function updatePlaceLabelsFilter() {
     const isCirclesView = !!(state.isCirclesFeature || state.currentFeature === 'circles');
     
     // Only apply the filter update if the view type changed to save performance
-    if (state._lastHiddenCircleNames === isCirclesView) return;
-    state._lastHiddenCircleNames = isCirclesView;
+    if (lastHiddenCircleNames === isCirclesView) return;
+    lastHiddenCircleNames = isCirclesView;
 
     const circleNames = ['Eugene', 'Florence', 'Cottage Grove', 'Oakridge'];
     console.log("Applying duplicate circles filter. Hide circle names:", isCirclesView);
 
-    Object.keys(state._originalPlaceFilters).forEach(lId => {
+    Object.keys(originalPlaceFilters).forEach(lId => {
         if (state.map.getLayer(lId)) {
-            const origFilter = toExpression(state._originalPlaceFilters[lId]);
+            const origFilter = toExpression(originalPlaceFilters[lId]);
             if (isCirclesView) {
                 // If it's a circle overview, exclude the circle names from showing in the basemap
                 let newFilter;
@@ -421,8 +424,8 @@ export function setupMapLayers(state) {
         // 3. Tweak vector styles to brighten land, forest green parks, and enlarge road/label names
         try {
             // Reset filter cache and view state so they are re-cached and re-applied to the fresh style
-            state._lastHiddenCircleNames = null;
-            state._originalPlaceFilters = null;
+            lastHiddenCircleNames = null;
+            originalPlaceFilters = null;
 
             // Cache original road colors so we can restore them when switching back from Satellite hybrid map
             state._originalRoadColors = {};
