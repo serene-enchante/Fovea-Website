@@ -5,7 +5,7 @@ import { getInitialIdFromUrl } from './services/bird-data-service.js';
 import { handleSpatialFileShare as shareSpatialFile } from './services/file-download-service.js';
 import { canvasToTiffBlob } from './services/format-converters.js';
 import { getBbox } from './utils/geometry-math.js';
-import { normalizeZoneId } from './utils/format-utils.js';
+import { displayZoneId, normalizeZoneId } from './utils/format-utils.js';
 import {
     checkUserLocationZone as updateLocationZone,
     switchBaseMap as applyBaseMap,
@@ -44,6 +44,8 @@ import { showToast } from './components/toast-view.js';
 import { toggleFullscreen, getActiveDownloadFilename } from './components/toolbar-actions.js';
 import { updateControlPositions } from './components/mobile-view.js';
 import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
+import { updateMapRouteUrl } from './map/map-route-state.js';
+import { findFeatureByZoneId } from './services/geo-selection.js';
 import { state } from './state.js';
 
 // MapLibre prototype polyfill for Leaflet legacy compatibility
@@ -167,7 +169,15 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
         updateAllFeatureStyles,
         disposeRasterCache,
         scheduleSelectionPreload: scheduleDownloadViewPreload,
-        clearBirdObservations
+        clearBirdObservations,
+        updateUrl: selectedId => updateMapRouteUrl({
+            state,
+            id: selectedId,
+            windowObject: window,
+            circleId: CIRCLE_ID,
+            displayZoneId,
+            findFeatureByZoneId
+        })
     });
 }
 

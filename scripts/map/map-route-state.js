@@ -61,3 +61,27 @@ export function serializeMapRoute(search, { currentFeature, isCirclesFeature, id
     }
     return params.toString();
 }
+
+/** Write a selected map feature to the current URL without owning browser globals. */
+export function updateMapRouteUrl({
+    state,
+    id,
+    windowObject,
+    circleId,
+    displayZoneId,
+    findFeatureByZoneId
+}) {
+    if (!windowObject) return;
+    const url = new URL(windowObject.location.href);
+    const targetFeature = findFeatureByZoneId(state.allFeatures, id);
+    const selectedId = targetFeature?.properties?.zid || id;
+    url.search = serializeMapRoute(url.search, {
+        currentFeature: state.currentFeature,
+        isCirclesFeature: state.isCirclesFeature,
+        id: selectedId,
+        circleId,
+        displayZoneId
+    });
+    windowObject.history.replaceState({}, '', url.toString());
+    return url.toString();
+}

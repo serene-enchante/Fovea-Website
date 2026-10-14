@@ -32,7 +32,7 @@ test('the map application uses the shared GeoJSON repository', async () => {
     const selectionController = await readFile(new URL('../scripts/map/map-selection.js', import.meta.url), 'utf8');
     assert.match(selectionController, /targetFeatures = await loadFeatures\(featureName\);/);
     assert.match(source, /import \{ getBbox \} from '\.\/utils\/geometry-math\.js';/);
-    assert.match(source, /import \{ normalizeZoneId \} from '\.\/utils\/format-utils\.js';/);
+    assert.match(source, /import \{ displayZoneId, normalizeZoneId \} from '\.\/utils\/format-utils\.js';/);
     assert.match(source, /updateAllFeatureStyles as updateMapFeatureStyles/);
     const mapLayers = await readFile(new URL('../scripts/map/map-layers.js', import.meta.url), 'utf8');
     assert.match(mapLayers, /getThemeAccent\(\)/);

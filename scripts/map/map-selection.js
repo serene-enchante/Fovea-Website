@@ -5,10 +5,7 @@ import { updateAllFeatureStyles } from './map-layers.js';
 import { normalizeZoneId, displayZoneId } from '../utils/format-utils.js';
 import { getBbox } from '../utils/geometry-math.js';
 import { disposeRasterCache, scheduleSelectionPreload } from './map-rendering.js';
-import { getSuggestSelectionLabel } from '../components/feedback-form.js';
 import { showToast } from '../components/toast-view.js';
-import { serializeMapRoute } from './map-route-state.js';
-import { findFeatureByZoneId } from '../services/geo-selection.js';
 
 export function createFeatureTransitionController({
     state: appState,
@@ -94,21 +91,6 @@ export function createFeatureTransitionController({
     return { switchToFeature, switchToCirclesFeature };
 }
 
-export function updateUrl(id) {
-    if (typeof window === "undefined") return;
-    const url = new URL(window.location.href);
-    const targetFeature = findFeatureByZoneId(state.allFeatures, id);
-    const selectedId = targetFeature?.properties?.zid || id;
-    url.search = serializeMapRoute(url.search, {
-        currentFeature: state.currentFeature,
-        isCirclesFeature: state.isCirclesFeature,
-        id: selectedId,
-        circleId: CIRCLE_ID,
-        displayZoneId
-    });
-    window.history.replaceState({}, "", url.toString());
-}
-
 let _currentHierarchyLevel = 0;
 
 function _getHierarchyLevel(id) {
@@ -166,7 +148,7 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
                 backBtn.removeAttribute("aria-label");
             }
             renderSidebar();
-            updateUrl(id);
+            callbacks.updateUrl?.(id);
             if (triggerMapZoom && state.map) {
                 state.map.fitBounds(getBbox(state.allFeatures), {
                     padding: getFitPadding(),
@@ -230,7 +212,7 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
             }
         }
 
-        updateUrl(id);
+        callbacks.updateUrl?.(id);
         if (typeof state.refreshLayersModal === "function") state.refreshLayersModal();
         const isDownloadOpen = document.getElementById("downloads-modal")?.getAttribute("aria-hidden") === "false";
         if (isDownloadOpen) {

@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { parseMapRoute, serializeMapRoute } from '../scripts/map/map-route-state.js';
+import { parseMapRoute, serializeMapRoute, updateMapRouteUrl } from '../scripts/map/map-route-state.js';
+import { findFeatureByZoneId } from '../scripts/services/geo-selection.js';
+import { displayZoneId } from '../scripts/utils/format-utils.js';
 
 const CIRCLE_ID = 'circle';
 
@@ -55,4 +57,29 @@ test('clears legacy link parameters when the user changes map selection', () => 
         }),
         'feature=circles'
     );
+});
+
+test('writes canonical selected feature URLs through the injected browser history', () => {
+    let replacedUrl;
+    const windowObject = {
+        location: { href: 'https://example.test/maps/?source=newsletter&feature=eugene&zone=4' },
+        history: { replaceState: (_state, _title, url) => { replacedUrl = url; } }
+    };
+    const state = {
+        currentFeature: 'eugene',
+        isCirclesFeature: false,
+        allFeatures: [{ properties: { zid: '04' } }]
+    };
+
+    const result = updateMapRouteUrl({
+        state,
+        id: '4',
+        windowObject,
+        circleId: CIRCLE_ID,
+        displayZoneId,
+        findFeatureByZoneId
+    });
+
+    assert.equal(result, 'https://example.test/maps/?source=newsletter&feature=eugene&zone=04');
+    assert.equal(replacedUrl, result);
 });
