@@ -164,6 +164,10 @@ const mapLayerLifecycle = createMapLayerLifecycle({
 
 function selectSubject(id, triggerMapZoom = true, animate = true) {
     return selectMapSubject(id, triggerMapZoom, animate, {
+        state,
+        documentObject: document,
+        windowObject: window,
+        schedule: setTimeout,
         updateHeader,
         renderSidebarList,
         updateAllFeatureStyles,

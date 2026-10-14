@@ -1,4 +1,3 @@
-import { state } from '../state.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { normalizeZoneId, displayZoneId } from '../utils/format-utils.js';
 import { getBbox } from '../utils/geometry-math.js';
@@ -90,14 +89,18 @@ export function createFeatureTransitionController({
 
 let _currentHierarchyLevel = 0;
 
-function _getHierarchyLevel(id) {
-    if (state.isCirclesFeature) return 0;
+function _getHierarchyLevel(id, appState) {
+    if (appState.isCirclesFeature) return 0;
     if (!id || id === CIRCLE_ID) return 1;
     return 2;
 }
 
 export function selectSubject(id, triggerMapZoom = true, animate = true, callbacks = {}) {
     const {
+        state: appState,
+        documentObject,
+        windowObject,
+        schedule,
         updateHeader: renderHeader,
         renderSidebarList: renderSidebar,
         updateAllFeatureStyles: updateStyles,
@@ -108,39 +111,39 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
         updateUrl
     } = callbacks;
 
-    if (document.body.classList.contains("is-suggest-locked") && id !== state.currentId) {
+    if (documentObject.body.classList.contains("is-suggest-locked") && id !== appState.currentId) {
         return;
     }
 
     disposeCache();
-    window.scrollTo(0, 0);
-    if (state.isHelpModeActive && window.innerWidth <= 768) return;
+    windowObject.scrollTo(0, 0);
+    if (appState.isHelpModeActive && windowObject.innerWidth <= 768) return;
 
-    if (window.innerWidth <= 768) {
-        const sidebar = document.querySelector(".maps-tile-sidebar");
+    if (windowObject.innerWidth <= 768) {
+        const sidebar = documentObject.querySelector(".maps-tile-sidebar");
         if (sidebar) {
             sidebar.scrollTop = 0;
             sidebar.classList.remove("is-scrolled");
         }
-        document.body.classList.remove("sidebar-is-scrolled");
-        const header = document.getElementById("sidebar-header");
+        documentObject.body.classList.remove("sidebar-is-scrolled");
+        const header = documentObject.getElementById("sidebar-header");
         if (header) {
             header.classList.remove("is-scrolled");
         }
     }
 
     const oldLevel = _currentHierarchyLevel;
-    const newLevel = _getHierarchyLevel(id);
+    const newLevel = _getHierarchyLevel(id, appState);
     _currentHierarchyLevel = newLevel;
 
     const isLevelChanged = oldLevel !== newLevel;
 
     const performSelection = () => {
         clearObservations();
-        state.currentId = id;
-        const backBtn = document.getElementById("btn-capsule-back");
+        appState.currentId = id;
+        const backBtn = documentObject.getElementById("btn-capsule-back");
 
-        if (state.isCirclesFeature) {
+        if (appState.isCirclesFeature) {
             renderHeader("Coast to Cascades Bird Alliance");
             if (backBtn) {
                 backBtn.disabled = true;
@@ -150,8 +153,8 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
             }
             renderSidebar();
             updateUrl?.(id);
-            if (triggerMapZoom && state.map) {
-                state.map.fitBounds(getBbox(state.allFeatures), {
+            if (triggerMapZoom && appState.map) {
+                appState.map.fitBounds(getBbox(appState.allFeatures), {
                     padding: getFitPadding(),
                     animate,
                     speed: 0.8,
@@ -165,14 +168,14 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
         const isCircle = !id || id === CIRCLE_ID;
         let targetFeature = null;
         if (!isCircle) {
-            targetFeature = state.allFeatures.find(f => {
+            targetFeature = appState.allFeatures.find(f => {
                 const zid = f.properties?.zid;
                 return zid && (zid.toLowerCase() === id.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(id));
             });
         }
 
         if (isCircle || !targetFeature) {
-            const titleName = state.currentFeature === "florence" ? "Florence Christmas Bird Count Circle" : "Eugene Christmas Bird Count Circle";
+            const titleName = appState.currentFeature === "florence" ? "Florence Christmas Bird Count Circle" : "Eugene Christmas Bird Count Circle";
             renderHeader(titleName);
             if (backBtn) {
                 backBtn.disabled = false;
@@ -194,16 +197,16 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
         renderSidebar();
         updateStyles();
 
-        if (triggerMapZoom && state.map) {
+        if (triggerMapZoom && appState.map) {
             if (isCircle || !targetFeature) {
-                state.map.fitBounds(getBbox(state.allFeatures), {
+                appState.map.fitBounds(getBbox(appState.allFeatures), {
                     padding: getFitPadding(),
                     animate: animate,
                     speed: 0.8,
                     curve: 1.4
                 });
             } else {
-                state.map.fitBounds(getBbox([targetFeature]), {
+                appState.map.fitBounds(getBbox([targetFeature]), {
                     padding: getFitPadding(20),
                     maxZoom: 14,
                     animate: animate,
@@ -214,8 +217,8 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
         }
 
         updateUrl?.(id);
-        if (typeof state.refreshLayersModal === "function") state.refreshLayersModal();
-        const isDownloadOpen = document.getElementById("downloads-modal")?.getAttribute("aria-hidden") === "false";
+        if (typeof appState.refreshLayersModal === "function") appState.refreshLayersModal();
+        const isDownloadOpen = documentObject.getElementById("downloads-modal")?.getAttribute("aria-hidden") === "false";
         if (isDownloadOpen) {
             schedulePreload();
         } else {
@@ -225,16 +228,16 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
 
     // Trigger immediate click fly-out on current contents, update DOM & map mid-flyout, then fly in new screen
     if (isLevelChanged && animate) {
-        const isMobile = window.innerWidth <= 768;
+        const isMobile = windowObject.innerWidth <= 768;
 
         // Lock sidebar height on mobile during horizontal slide transition to eliminate vertical stutter/jumps
-        const sidebar = document.querySelector(".maps-tile-sidebar");
+        const sidebar = documentObject.querySelector(".maps-tile-sidebar");
         if (isMobile && sidebar) {
             const currentH = sidebar.offsetHeight;
             if (currentH > 0) {
                 sidebar.style.minHeight = `${currentH}px`;
                 sidebar.style.maxHeight = `${currentH}px`;
-                setTimeout(() => {
+                schedule(() => {
                     sidebar.style.minHeight = "";
                     sidebar.style.maxHeight = "";
                 }, 380);
@@ -242,10 +245,10 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
         }
 
         const animElements = [
-            !isMobile ? document.querySelector('.maps-tile-header') : null,
-            document.getElementById('sidebar-header'),
-            document.querySelector('.sidebar-list-container'),
-            document.querySelector('.sidebar-about-panel')
+            !isMobile ? documentObject.querySelector('.maps-tile-header') : null,
+            documentObject.getElementById('sidebar-header'),
+            documentObject.querySelector('.sidebar-list-container'),
+            documentObject.querySelector('.sidebar-about-panel')
         ].filter(Boolean);
 
         const isGoingUp = newLevel < oldLevel;
@@ -259,7 +262,7 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
         });
 
         // 2. Mid-flyout (130ms): Update DOM content & trigger map zoom, then fly in new content
-        setTimeout(() => {
+        schedule(() => {
             performSelection();
 
             // Force micro-reflow so the browser acknowledges new DOM state before animating in
@@ -270,7 +273,7 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
                 el.classList.add(inClass);
             });
 
-            setTimeout(() => {
+            schedule(() => {
                 animElements.forEach(el => {
                     el.classList.remove('anim-fly-out-left', 'anim-fly-out-right', 'anim-fly-in-left', 'anim-fly-in-right');
                 });
