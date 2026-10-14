@@ -15,6 +15,8 @@ export function createMapLayerLifecycle({
     setupProximityTracker = setupProximityTracking,
     setupProximityGlow = setupProximityGlowCanvas
 }) {
+    let labelListenersAttached = false;
+
     function rebuildGeoJsonLayer() {
         if (!state.map) return;
         const { geojsonData, labelData } = buildFeatureData(state.allFeatures, state.isCirclesFeature);
@@ -28,8 +30,8 @@ export function createMapLayerLifecycle({
         } else {
             addFeatureLayers(state.map, geojsonData);
 
-            if (!state._labelListenersAttached) {
-                state._labelListenersAttached = true;
+            if (!labelListenersAttached) {
+                labelListenersAttached = true;
                 state.map.on('move', renderHtmlLabels);
                 state.map.on('zoom', renderHtmlLabels);
                 state.map.on('render', renderHtmlLabels);

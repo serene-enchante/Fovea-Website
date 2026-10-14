@@ -29,6 +29,7 @@ test('builds map layers, binds them once, and delegates map feature clicks', () 
 
     lifecycle.rebuildGeoJsonLayer();
     assert.deepEqual(state.labelData, ['label']);
+    assert.equal('_labelListenersAttached' in state, false);
     assert.deepEqual(listeners.map(([name]) => name), ['move', 'zoom', 'render']);
     assert.deepEqual(calls.map(([name]) => name), ['build', 'add-layers', 'proximity', 'glow', 'label-zoom', 'styles', 'hover', 'location', 'styles']);
     const click = { feature: { properties: { cid: 'Eugene' } }, featureId: '04' };
