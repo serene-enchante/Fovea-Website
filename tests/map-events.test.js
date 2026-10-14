@@ -84,6 +84,7 @@ test('registers zone hover and click events once and delegates valid clicks', ()
     assert.equal(selections[0].featureId, '04');
     assert.equal(selections[0].feature.properties.zid, '04');
     assert.equal(typeof state.lastZoneClickTime, 'number');
+    assert.equal('_zoneEventsAttached' in state, false);
 
     setupMapHoverEvents({ map, state, onFeatureClick: () => assert.fail('must not attach again') });
     assert.equal(listeners.size, 3);

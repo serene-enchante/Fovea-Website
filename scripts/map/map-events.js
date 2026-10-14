@@ -1,6 +1,8 @@
 import { highlightTileItem, unhighlightTileItem } from '../components/sidebar-list.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 
+const mapsWithZoneEvents = new WeakSet();
+
 export function setupMapCanvasEvents({ map, state, onSelectCircles, onSwitchToCircles, onLoad }) {
     if (!map) return;
 
@@ -25,8 +27,8 @@ export function setupMapCanvasEvents({ map, state, onSelectCircles, onSwitchToCi
 }
 
 export function setupMapHoverEvents({ map, state, onFeatureClick }) {
-    if (!map || state._zoneEventsAttached) return;
-    state._zoneEventsAttached = true;
+    if (!map || mapsWithZoneEvents.has(map)) return;
+    mapsWithZoneEvents.add(map);
 
     let hoveredStateId = null;
     const activeHoverAlphas = {};
