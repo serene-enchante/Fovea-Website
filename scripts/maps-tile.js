@@ -43,7 +43,7 @@ import { setupBirdObservationsLayer, updateBirdObservationsLayerStyles } from '.
 import { showToast } from './components/toast-view.js';
 import { toggleFullscreen, getActiveDownloadFilename } from './components/toolbar-actions.js';
 import { updateControlPositions } from './components/mobile-view.js';
-import { createFeatureTransitionController, selectSubject as selectMapSubject } from './map/map-selection.js';
+import { createFeatureTransitionController, createMapSelectionController } from './map/map-selection.js';
 import { updateMapRouteUrl } from './map/map-route-state.js';
 import { findFeatureByZoneId } from './services/geo-selection.js';
 import { state } from './state.js';
@@ -135,6 +135,7 @@ const { downloadGeoPdf, downloadGeoTiff } = createMapLayoutDownloadActions({
 
 const mapFeatureRepository = createMapFeatureRepository({ state, loadGeoDataset });
 const { loadFeaturesForMapView } = mapFeatureRepository;
+const mapSelectionController = createMapSelectionController();
 
 const featureTransitionController = createFeatureTransitionController({
     state,
@@ -163,7 +164,7 @@ const mapLayerLifecycle = createMapLayerLifecycle({
 });
 
 function selectSubject(id, triggerMapZoom = true, animate = true) {
-    return selectMapSubject(id, triggerMapZoom, animate, {
+    return mapSelectionController.selectSubject(id, triggerMapZoom, animate, {
         state,
         documentObject: document,
         windowObject: window,

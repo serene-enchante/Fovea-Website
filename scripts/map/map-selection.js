@@ -87,15 +87,21 @@ export function createFeatureTransitionController({
     return { switchToFeature, switchToCirclesFeature };
 }
 
-let _currentHierarchyLevel = 0;
-
 function _getHierarchyLevel(id, appState) {
     if (appState.isCirclesFeature) return 0;
     if (!id || id === CIRCLE_ID) return 1;
     return 2;
 }
 
-export function selectSubject(id, triggerMapZoom = true, animate = true, callbacks = {}) {
+export function createMapSelectionController() {
+    const selectionState = { currentHierarchyLevel: 0 };
+    return {
+        selectSubject: (id, triggerMapZoom = true, animate = true, callbacks = {}) =>
+            runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState)
+    };
+}
+
+function runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState) {
     const {
         state: appState,
         documentObject,
@@ -132,9 +138,9 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
         }
     }
 
-    const oldLevel = _currentHierarchyLevel;
+    const oldLevel = selectionState.currentHierarchyLevel;
     const newLevel = _getHierarchyLevel(id, appState);
-    _currentHierarchyLevel = newLevel;
+    selectionState.currentHierarchyLevel = newLevel;
 
     const isLevelChanged = oldLevel !== newLevel;
 

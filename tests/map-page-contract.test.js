@@ -34,6 +34,9 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.doesNotMatch(selectionController, /from '\.\.\/components\/(?:header-view|sidebar-list)\.js'/);
     assert.doesNotMatch(selectionController, /from '\.\/map-(?:layers|rendering)\.js'/);
     assert.doesNotMatch(selectionController, /import \{ state \} from/);
+    assert.match(selectionController, /export function createMapSelectionController\(\)/);
+    assert.match(selectionController, /const selectionState = \{ currentHierarchyLevel: 0 \}/);
+    assert.doesNotMatch(selectionController, /_currentHierarchyLevel/);
     assert.match(selectionController, /state: appState/);
     assert.match(selectionController, /documentObject,/);
     assert.match(selectionController, /windowObject,/);
