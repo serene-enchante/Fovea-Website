@@ -1,12 +1,12 @@
 # Refactor handoff
 
-Updated: 2026-10-12
+Updated: 2026-10-13
 
 ## Current state
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `579e38e remove duplicate sidebar renderer`
+- Latest refactor commit: `11457f2 inject map route URL updates`
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -62,7 +62,8 @@ Recent commits, newest first:
 | `ebe41b7` | Inject the direct suggested-app opening action into toolbar card and search-result handlers. |
 | `a316ecb` | Move map search, toolbar, help-mode, capsule, lightbox, and mobile setup composition into `map-page-ui.js`. |
 | `01aaa98` | Make the production map defaults canonical in `state.js` and remove duplicate map state initialization from the entry. |
-| `HEAD` | Remove the unused pre-controller sidebar renderer and its legacy feature-switch calls; keep keyboard focus support. |
+| `579e38e` | Remove the unused pre-controller sidebar renderer and its legacy feature-switch calls; keep keyboard focus support. |
+| `HEAD` | Move selected-route URL updates into the route-state module and inject browser history, selection lookup, and zone formatting. |
 | `cc71563` | Move PDF/TIFF layout export orchestration behind `map-layout-downloads.js`, injecting the legacy map share callback and notification behavior. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
@@ -129,6 +130,12 @@ The duplicate lightbox setup function in `map-modals.js` was subsequently remove
 After removing the duplicate sidebar renderer and legacy switch path:
 
 - `npm test` passed: 170 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After injecting map route URL updates:
+
+- `npm test` passed: 171 tests.
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
