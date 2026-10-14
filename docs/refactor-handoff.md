@@ -6,7 +6,7 @@ Updated: 2026-10-14
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `00b2420 keep place filter cache out of map state`
+- Latest refactor commit: `e3a4338 keep road color cache out of map state`
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -70,7 +70,8 @@ Recent commits, newest first:
 | `8018e96` | Inject the feature-transition lock check and timer rather than reaching for global `document` and `setTimeout`. |
 | `d562045` | Keep the label-listener registration flag private to the map layer lifecycle controller. |
 | `b06703f` | Consolidate layer rebuild style updates into one final pass after location state is refreshed. |
-| `HEAD` | Keep basemap place-label filter caches private to `map-layers.js` and reset them on style reload. |
+| `00b2420` | Keep basemap place-label filter caches private to `map-layers.js` and reset them on style reload. |
+| `HEAD` | Move original road colors into the map-layer module and inject their lookup into basemap switching. |
 | `cc71563` | Move PDF/TIFF layout export orchestration behind `map-layout-downloads.js`, injecting the legacy map share callback and notification behavior. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
@@ -183,6 +184,12 @@ After consolidating map style refresh:
 - `git diff --check` passed.
 
 After moving place-filter caches out of shared map state:
+
+- `npm test` passed: 172 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After moving original road colors out of shared map state:
 
 - `npm test` passed: 172 tests.
 - `npm run test:browser` passed: 5 Playwright tests.
