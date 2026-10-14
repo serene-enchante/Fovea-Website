@@ -6,7 +6,7 @@ Updated: 2026-10-14
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `ea4a7ce scope hierarchy state to selection controller`
+- Latest refactor commit: `8018e96 inject map transition environment`
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -66,7 +66,8 @@ Recent commits, newest first:
 | `11457f2` | Move selected-route URL updates into the route-state module and inject browser history, selection lookup, and zone formatting. |
 | `21d3e88` | Remove rendering, map-style, and raster-cache fallback imports from selection; receive those actions through the entry callbacks. |
 | `a741fab` | Pass map state, browser objects, and the timer explicitly into selection; remove the module's singleton and global browser access. |
-| `HEAD` | Scope the current hierarchy level to a created map selection controller instead of module-global state. |
+| `ea4a7ce` | Scope the current hierarchy level to a created map selection controller instead of module-global state. |
+| `HEAD` | Inject the feature-transition lock check and timer rather than reaching for global `document` and `setTimeout`. |
 | `cc71563` | Move PDF/TIFF layout export orchestration behind `map-layout-downloads.js`, injecting the legacy map share callback and notification behavior. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
@@ -157,6 +158,12 @@ After injecting selection state and browser dependencies:
 After scoping hierarchy state to the selection controller:
 
 - `npm test` passed: 171 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After injecting the map transition environment:
+
+- `npm test` passed: 172 tests.
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
