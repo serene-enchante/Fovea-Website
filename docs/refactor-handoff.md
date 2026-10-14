@@ -6,7 +6,7 @@ Updated: 2026-10-14
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `2fa2030 keep proximity listener guards private`
+- Latest refactor commit: `0d27d3d keep hovered feature id outside map state`
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -18,6 +18,13 @@ Recent commits, newest first:
 
 | Commit | Change |
 | --- | --- |
+| `0d27d3d` | Keep the hovered feature ID in a map-keyed weak map and let the proximity glow read it through an accessor. |
+| `364be8d` | Record the proximity listener guard refactor and verification in this handoff. |
+| `2fa2030` | Keep proximity listener registration guards in module-private weak sets keyed by map canvas. |
+| `a338c8a` | Keep the map event registration guard in a module-private weak set keyed by map instance. |
+| `6cb87ff` | Record the road-color cache migration and verification in this handoff. |
+| `e3a4338` | Move original road colors into the map-layer module and inject their lookup into basemap switching. |
+| `00b2420` | Keep basemap place-label filter caches private to `map-layers.js` and reset them on style reload. |
 | `d2c0c02` | Share PDF and TIFF download button bindings through `setupSpatialDownloadButtons`, with injected renderer callbacks preserving the live map's legacy file-sharing behavior. |
 | `f265864` | Reduce `bottom-nav-view.js` to a map-page adapter; use the site-wide mobile navigation script for capsule animation and dragging. |
 | `7ffa561` | Extract iNaturalist observation and taxon-photo requests into `scripts/services/observations-client.js`, retaining fallback queries and existing UI behavior. |
@@ -70,11 +77,6 @@ Recent commits, newest first:
 | `8018e96` | Inject the feature-transition lock check and timer rather than reaching for global `document` and `setTimeout`. |
 | `d562045` | Keep the label-listener registration flag private to the map layer lifecycle controller. |
 | `b06703f` | Consolidate layer rebuild style updates into one final pass after location state is refreshed. |
-| `2fa2030` | Keep proximity listener registration guards in module-private weak sets keyed by map canvas. |
-| `a338c8a` | Keep the map event registration guard in a module-private weak set keyed by map instance. |
-| `6cb87ff` | Record the road-color cache migration and verification in this handoff. |
-| `e3a4338` | Move original road colors into the map-layer module and inject their lookup into basemap switching. |
-| `00b2420` | Keep basemap place-label filter caches private to `map-layers.js` and reset them on style reload. |
 | `cc71563` | Move PDF/TIFF layout export orchestration behind `map-layout-downloads.js`, injecting the legacy map share callback and notification behavior. |
 | `4f55ebf` | Share GeoJSON, KMZ, and GPX download button bindings through the same helper, injecting the legacy map share callback where needed. |
 | `68c2247` | Reuse the toolbar's `generateAppSpatialBlob` implementation from the live map and remove its duplicate. |
@@ -199,6 +201,12 @@ After moving original road colors out of shared map state:
 - `git diff --check` passed.
 
 After moving map event and proximity listener guards out of shared map state:
+
+- `npm test` passed: 172 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After moving the hovered feature ID out of shared map state:
 
 - `npm test` passed: 172 tests.
 - `npm run test:browser` passed: 5 Playwright tests.
