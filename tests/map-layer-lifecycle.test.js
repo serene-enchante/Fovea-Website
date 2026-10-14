@@ -31,7 +31,7 @@ test('builds map layers, binds them once, and delegates map feature clicks', () 
     assert.deepEqual(state.labelData, ['label']);
     assert.equal('_labelListenersAttached' in state, false);
     assert.deepEqual(listeners.map(([name]) => name), ['move', 'zoom', 'render']);
-    assert.deepEqual(calls.map(([name]) => name), ['build', 'add-layers', 'proximity', 'glow', 'label-zoom', 'styles', 'hover', 'location', 'styles']);
+    assert.deepEqual(calls.map(([name]) => name), ['build', 'add-layers', 'proximity', 'glow', 'label-zoom', 'hover', 'location', 'styles']);
     const click = { feature: { properties: { cid: 'Eugene' } }, featureId: '04' };
     hoverOptions.onFeatureClick(click);
     assert.deepEqual(calls.at(-1), ['click', click]);
@@ -40,4 +40,6 @@ test('builds map layers, binds them once, and delegates map feature clicks', () 
     lifecycle.rebuildGeoJsonLayer();
     assert.equal(calls.filter(([name]) => name === 'hover').length, 1);
     assert.equal(calls.filter(([name]) => name === 'set-data').length, 1);
+    assert.equal(calls.filter(([name]) => name === 'styles').length, 2);
+    assert.deepEqual(calls.slice(-5).map(([name]) => name), ['build', 'set-data', 'label-zoom', 'location', 'styles']);
 });

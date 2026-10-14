@@ -26,7 +26,6 @@ export function createMapLayerLifecycle({
         if (source) {
             source.setData(geojsonData);
             updateLabelZoomVisibility();
-            updateFeatureStyles();
         } else {
             addFeatureLayers(state.map, geojsonData);
 
@@ -39,7 +38,6 @@ export function createMapLayerLifecycle({
             setupProximityTracker();
             setupProximityGlow();
             updateLabelZoomVisibility();
-            updateFeatureStyles();
             setupHoverEvents({ map: state.map, state, onFeatureClick });
         }
 
