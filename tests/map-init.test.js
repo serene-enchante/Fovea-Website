@@ -55,10 +55,13 @@ test('switches basemap visibility and keeps theme styling in sync', () => {
                 { id: 'esri-street', layerId: 'base-esri-street' },
                 { id: 'esri-topo', layerId: 'base-esri-topo' }
             ],
-            _originalRoadColors: { road_service_case: '#123456' }
         };
 
-        switchBaseMap('satellite', { state, updateStyles: () => styleChanges.push('updated') });
+        switchBaseMap('satellite', {
+            state,
+            updateStyles: () => styleChanges.push('updated'),
+            getRoadColor: layerId => layerId === 'road_service_case' ? '#123456' : undefined
+        });
 
         assert.equal(state.currentBaseLayer, 'satellite');
         assert.ok(layoutChanges.some(([id, key, value]) => id === 'base-satellite' && key === 'visibility' && value === 'visible'));
@@ -68,6 +71,13 @@ test('switches basemap visibility and keeps theme styling in sync', () => {
         assert.deepEqual(backgrounds[0].slice(0, 2), ['background-color', '#000000']);
         assert.deepEqual(wrapperClasses, [['remove', 'is-light-basemap']]);
         assert.deepEqual(styleChanges, ['updated']);
+        switchBaseMap('default', {
+            state,
+            updateStyles: () => styleChanges.push('updated'),
+            getRoadColor: layerId => layerId === 'road_service_case' ? '#123456' : undefined
+        });
+        assert.ok(paintChanges.some(([id, key, value]) => id === 'road_service_case' && key === 'line-color' && value === '#123456'));
+        assert.equal('_originalRoadColors' in state, false);
     } finally {
         globalThis.document = originalDocument;
     }

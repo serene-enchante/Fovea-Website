@@ -2,7 +2,7 @@ import { isPointInGeoJSONGeometry } from '../utils/geometry-math.js';
 import { displayZoneId } from '../utils/format-utils.js';
 import { showToast } from '../components/toast-view.js';
 import { state } from '../state.js';
-import { updateAllFeatureStyles } from './map-layers.js';
+import { getOriginalRoadColor, updateAllFeatureStyles } from './map-layers.js';
 
 export function createMapInstance(mapLibre, options) {
     if (typeof mapLibre?.Map !== 'function') {
@@ -11,7 +11,11 @@ export function createMapInstance(mapLibre, options) {
     return new mapLibre.Map(options);
 }
 
-export function switchBaseMap(baseMapId, { state: mapState = state, updateStyles = updateAllFeatureStyles } = {}) {
+export function switchBaseMap(baseMapId, {
+    state: mapState = state,
+    updateStyles = updateAllFeatureStyles,
+    getRoadColor = getOriginalRoadColor
+} = {}) {
     if (!mapState.map || !mapState.baseMapsList) return;
     const targetId = baseMapId === 'dark' || baseMapId === 'default' ? 'default' : baseMapId;
     const targetMap = mapState.baseMapsList.find(item => item.id === targetId) || mapState.baseMapsList[0];
@@ -51,8 +55,8 @@ export function switchBaseMap(baseMapId, { state: mapState = state, updateStyles
         if (!mapState.map.getLayer(layerId)) return;
         mapState.map.setPaintProperty(layerId, 'line-opacity', isSatellite ? 0.35 : 1.0);
         if (isSatellite) mapState.map.setPaintProperty(layerId, 'line-color', '#ffffff');
-        else if (mapState._originalRoadColors?.[layerId] !== undefined) {
-            mapState.map.setPaintProperty(layerId, 'line-color', mapState._originalRoadColors[layerId]);
+        else if (getRoadColor(layerId) !== undefined) {
+            mapState.map.setPaintProperty(layerId, 'line-color', getRoadColor(layerId));
         }
     });
 

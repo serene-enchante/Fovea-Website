@@ -7,6 +7,11 @@ import { findPointInsidePolygon, getBbox } from '../utils/geometry-math.js';
 
 let originalPlaceFilters = null;
 let lastHiddenCircleNames = null;
+let originalRoadColors = {};
+
+export function getOriginalRoadColor(layerId) {
+    return originalRoadColors[layerId];
+}
 
 // Exported feature expressions & layer logic
 export function toExpression(f) {
@@ -428,7 +433,7 @@ export function setupMapLayers(state) {
             originalPlaceFilters = null;
 
             // Cache original road colors so we can restore them when switching back from Satellite hybrid map
-            state._originalRoadColors = {};
+            originalRoadColors = {};
             const cacheRoadLayers = [
                 'road_service_case', 'road_minor_case', 'road_pri_case_ramp', 'road_trunk_case_ramp', 'road_mot_case_ramp',
                 'road_sec_case_noramp', 'road_pri_case_noramp', 'road_trunk_case_noramp', 'road_mot_case_noramp', 'road_path',
@@ -443,7 +448,7 @@ export function setupMapLayers(state) {
             ];
             cacheRoadLayers.forEach(lId => {
                 if (state.map.getLayer(lId)) {
-                    state._originalRoadColors[lId] = state.map.getPaintProperty(lId, 'line-color');
+                    originalRoadColors[lId] = state.map.getPaintProperty(lId, 'line-color');
                 }
             });
 
@@ -612,8 +617,8 @@ export function setupMapLayers(state) {
                     state.map.setPaintProperty(lId, 'line-opacity', isSatelliteInitial ? 0.35 : 1.0);
                     if (isSatelliteInitial) {
                         state.map.setPaintProperty(lId, 'line-color', '#ffffff');
-                    } else if (state._originalRoadColors && state._originalRoadColors[lId] !== undefined) {
-                        state.map.setPaintProperty(lId, 'line-color', state._originalRoadColors[lId]);
+                    } else if (originalRoadColors[lId] !== undefined) {
+                        state.map.setPaintProperty(lId, 'line-color', originalRoadColors[lId]);
                     }
                 }
             });
