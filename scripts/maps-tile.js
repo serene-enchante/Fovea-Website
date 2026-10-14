@@ -169,6 +169,7 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
         updateAllFeatureStyles,
         disposeRasterCache,
         scheduleSelectionPreload: scheduleDownloadViewPreload,
+        getFitPadding,
         clearBirdObservations,
         updateUrl: selectedId => updateMapRouteUrl({
             state,

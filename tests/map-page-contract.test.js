@@ -31,6 +31,10 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.match(startup, /state\.allFeatures = await loadFeatures\(initialFeature\)/);
     const selectionController = await readFile(new URL('../scripts/map/map-selection.js', import.meta.url), 'utf8');
     assert.match(selectionController, /targetFeatures = await loadFeatures\(featureName\);/);
+    assert.doesNotMatch(selectionController, /from '\.\.\/components\/(?:header-view|sidebar-list)\.js'/);
+    assert.doesNotMatch(selectionController, /from '\.\/map-(?:layers|rendering)\.js'/);
+    assert.match(selectionController, /updateHeader: renderHeader/);
+    assert.match(selectionController, /disposeRasterCache: disposeCache/);
     assert.match(source, /import \{ getBbox \} from '\.\/utils\/geometry-math\.js';/);
     assert.match(source, /import \{ displayZoneId, normalizeZoneId \} from '\.\/utils\/format-utils\.js';/);
     assert.match(source, /updateAllFeatureStyles as updateMapFeatureStyles/);

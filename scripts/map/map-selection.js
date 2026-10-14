@@ -1,10 +1,7 @@
 import { state } from '../state.js';
 import { CIRCLE_ID } from '../config/app-config.js';
-import { updateHeader, getFitPadding } from '../components/header-view.js';
-import { updateAllFeatureStyles } from './map-layers.js';
 import { normalizeZoneId, displayZoneId } from '../utils/format-utils.js';
 import { getBbox } from '../utils/geometry-math.js';
-import { disposeRasterCache, scheduleSelectionPreload } from './map-rendering.js';
 import { showToast } from '../components/toast-view.js';
 
 export function createFeatureTransitionController({
@@ -100,12 +97,16 @@ function _getHierarchyLevel(id) {
 }
 
 export function selectSubject(id, triggerMapZoom = true, animate = true, callbacks = {}) {
-    const renderHeader = callbacks.updateHeader || updateHeader;
-    const renderSidebar = callbacks.renderSidebarList || (() => {});
-    const updateStyles = callbacks.updateAllFeatureStyles || updateAllFeatureStyles;
-    const disposeCache = callbacks.disposeRasterCache || disposeRasterCache;
-    const schedulePreload = callbacks.scheduleSelectionPreload || scheduleSelectionPreload;
-    const clearObservations = callbacks.clearBirdObservations || (() => {});
+    const {
+        updateHeader: renderHeader,
+        renderSidebarList: renderSidebar,
+        updateAllFeatureStyles: updateStyles,
+        disposeRasterCache: disposeCache,
+        scheduleSelectionPreload: schedulePreload,
+        getFitPadding,
+        clearBirdObservations: clearObservations = () => {},
+        updateUrl
+    } = callbacks;
 
     if (document.body.classList.contains("is-suggest-locked") && id !== state.currentId) {
         return;
@@ -148,7 +149,7 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
                 backBtn.removeAttribute("aria-label");
             }
             renderSidebar();
-            callbacks.updateUrl?.(id);
+            updateUrl?.(id);
             if (triggerMapZoom && state.map) {
                 state.map.fitBounds(getBbox(state.allFeatures), {
                     padding: getFitPadding(),
@@ -212,7 +213,7 @@ export function selectSubject(id, triggerMapZoom = true, animate = true, callbac
             }
         }
 
-        callbacks.updateUrl?.(id);
+        updateUrl?.(id);
         if (typeof state.refreshLayersModal === "function") state.refreshLayersModal();
         const isDownloadOpen = document.getElementById("downloads-modal")?.getAttribute("aria-hidden") === "false";
         if (isDownloadOpen) {
