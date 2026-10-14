@@ -10,8 +10,9 @@ export function createFeatureTransitionController({
     selectSubject,
     disposeRasterCache,
     getFitPadding,
+    schedule,
     showToast,
-    isSuggestLocked = () => document.body.classList.contains('is-suggest-locked')
+    isSuggestLocked
 }) {
     let latestTransitionId = 0;
 
@@ -52,7 +53,7 @@ export function createFeatureTransitionController({
                 curve: 1.4,
                 padding: getFitPadding()
             });
-            setTimeout(performSwap, 1000);
+            schedule(performSwap, 1000);
         } else {
             performSwap();
         }

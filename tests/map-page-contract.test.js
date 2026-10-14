@@ -43,6 +43,8 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.match(selectionController, /schedule,/);
     assert.match(selectionController, /updateHeader: renderHeader/);
     assert.match(selectionController, /disposeRasterCache: disposeCache/);
+    assert.match(selectionController, /schedule,\s*showToast,\s*isSuggestLocked\s*}/);
+    assert.doesNotMatch(selectionController, /document\.body|setTimeout\(/);
     assert.match(source, /import \{ getBbox \} from '\.\/utils\/geometry-math\.js';/);
     assert.match(source, /import \{ displayZoneId, normalizeZoneId \} from '\.\/utils\/format-utils\.js';/);
     assert.match(source, /updateAllFeatureStyles as updateMapFeatureStyles/);

@@ -5,6 +5,7 @@ import { createFeatureTransitionController } from '../scripts/map/map-selection.
 function createHarness(loadFeatures) {
     const state = { map: {}, currentFeature: 'circles', isCirclesFeature: true, allFeatures: [] };
     const effects = [];
+    const scheduled = [];
     const controller = createFeatureTransitionController({
         state,
         loadFeatures,
@@ -12,10 +13,11 @@ function createHarness(loadFeatures) {
         selectSubject: (...args) => effects.push(['select', ...args]),
         disposeRasterCache: () => effects.push('dispose'),
         getFitPadding: () => 12,
+        schedule: (callback, delay) => scheduled.push({ callback, delay }),
         showToast: (...args) => effects.push(['toast', ...args]),
         isSuggestLocked: () => false
     });
-    return { state, effects, controller };
+    return { state, effects, scheduled, controller };
 }
 
 test('loads an area dataset before swapping map state and rendering selection', async () => {
@@ -29,6 +31,22 @@ test('loads an area dataset before swapping map state and rendering selection', 
 
     assert.equal(harness.state.currentFeature, 'eugene');
     assert.equal(harness.state.isCirclesFeature, false);
+    assert.equal(harness.state.allFeatures, features);
+    assert.deepEqual(harness.effects, ['dispose', 'rebuild', ['select', 'ecbc-circle', false]]);
+});
+
+test('uses the injected timer as a fallback when an animated feature swap has no moveend', async () => {
+    const features = [{ properties: { zid: '04' } }];
+    const harness = createHarness(async () => features);
+    harness.state.map.once = () => {};
+    harness.state.map.fitBounds = () => {};
+
+    await harness.controller.switchToFeature('eugene', [[-123, 44], [-122, 45]]);
+
+    assert.equal(harness.scheduled.length, 1);
+    assert.equal(harness.scheduled[0].delay, 1000);
+    harness.scheduled[0].callback();
+    assert.equal(harness.state.currentFeature, 'eugene');
     assert.equal(harness.state.allFeatures, features);
     assert.deepEqual(harness.effects, ['dispose', 'rebuild', ['select', 'ecbc-circle', false]]);
 });

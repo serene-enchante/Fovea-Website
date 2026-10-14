@@ -144,6 +144,7 @@ const featureTransitionController = createFeatureTransitionController({
     selectSubject,
     disposeRasterCache,
     getFitPadding,
+    schedule: setTimeout,
     showToast,
     isSuggestLocked: () => document.body.classList.contains('is-suggest-locked')
 });
