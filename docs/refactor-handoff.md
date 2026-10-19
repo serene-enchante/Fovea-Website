@@ -601,3 +601,5 @@ Commits from this continuation, newest first: `4a54864`, `137878e`, `05a38e6`, `
 Latest verification: `npm test` passed with 196 tests; `npm run test:browser` passed with 6 Playwright tests; `git diff --check` passed. The browser suite needs permission to bind its local server at `127.0.0.1:4173` in this sandbox.
 
 Remaining decision before changing MapLibre cache/prefetch settings: choose a representative physical mobile device for memory profiling. The desktop browser request baseline does not measure WebGL tile-cache memory. Keep `maxTileCacheSize: 2500` and `prefetchZoomDelta: 8` unchanged until that profile is available. The CI workflow also needs its first GitHub-hosted run to confirm hosted Chrome installation and workflow execution.
+
+Follow-up audit: removed the unreferenced `loadBirdData()` helper from `scripts/services/bird-data-service.js`; it had eagerly loaded all three datasets and duplicated the route-scoped production repository. Commit: `b1e581b`. Verification remained green at 196 unit tests and six browser tests.
