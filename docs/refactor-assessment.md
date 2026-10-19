@@ -167,7 +167,7 @@ The original ordering below has been replaced with this status-based queue as of
 
 | Status | Work |
 | --- | --- |
-| Complete or in place | Entry/compatibility audit; provider cancellation, timeouts, and active-basemap error messages; shared wizard data repository with stepper, selection-view, and app-handoff components; feedback and mobile view decomposition; versioned schemas, provider contracts, dataset manifest, and hardened CI workflow. Hosted CI passed on `ed683d8`; the latest `d30a8c0` hosted run was pending at the last check. See the latest checkpoint in `docs/refactor-handoff.md`. |
+| Complete or in place | Entry/compatibility audit; provider cancellation, timeouts, and active-basemap error messages; shared wizard data repository with stepper, selection-view, and app-handoff components; feedback and mobile view decomposition; versioned schemas, provider contracts, dataset manifest, and hardened CI workflow. Hosted CI passed through `0d3c5af`; the latest hosted run for the current checkpoint was pending at the last check. See the latest checkpoint in `docs/refactor-handoff.md`. |
 | Requires external evidence/state | Profile MapLibre cache memory on a representative physical mobile device before changing cache/prefetch settings. The user currently has no physical-device test setup. |
 
 The download-wizard controller is now below the 500-line soft limit after extracting its distinct stepper, selection-view, and compatible-app handoff responsibilities. Remaining cache profiling is gated on access to a representative physical mobile device; see the handoff for current status.
