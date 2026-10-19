@@ -5,6 +5,7 @@ import { setupMapNavigationControls } from './map-controls.js';
 import { setupMapStyleControl } from './map-style-control.js';
 import { setupMapEffectsAndFullscreen } from './map-viewport.js';
 import { MAP_PROVIDER_URLS } from '../config/map-provider-config.js';
+import { createMapProviderErrorHandler } from './map-provider-errors.js';
 
 export function initializeMapRuntime({
     maplibregl,
@@ -50,6 +51,10 @@ export function initializeMapRuntime({
         zoom: 11,
         attributionControl: false
     });
+    state.map.on('error', createMapProviderErrorHandler({
+        getActiveBaseLayer: () => state.currentBaseLayer || 'default',
+        notify
+    }));
 
     const background = isLightMode ? '#f8f9fa' : '#000000';
     mapContainer.style.setProperty('background-color', background, 'important');
