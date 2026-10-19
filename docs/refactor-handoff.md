@@ -6,8 +6,8 @@ Updated: 2026-10-19
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `9ba6696 remove duplicate map layer rebuild`
-- Latest handoff commit before this update: `8a4f105 sync vector theme styling handoff`.
+- Latest refactor commit: `73251c0 extract place label filter controller`
+- Latest handoff commit before this update: `fad2527 sync map rebuild cleanup handoff`.
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -15,6 +15,7 @@ Updated: 2026-10-19
 
 ## Recent work
 
+- Moved legacy place-filter conversion and circles-view filtering into `scripts/map/map-place-label-filter.js` (100 lines). The controller owns its original-filter cache and exposes `reset()` for style reloads; `map-layers.js` preserves compatibility exports and is now 438 lines.
 - Removed the unused `rebuildGeoJsonLayer` duplicate from `map-layers.js`; production uses `map-layer-lifecycle.js`. Added a contract assertion to keep the duplicate from returning. `map-layers.js` is now 547 lines.
 - Moved theme-specific land, park, waterway, road-label, and place-label styling into `scripts/map/map-vector-theme-styles.js` (145 lines). `setupMapLayers` still owns style-load ordering, road-color capture and restore, satellite road opacity, filter-cache resets, and initial place filtering.
 - Extracted HTML map-label DOM rendering, zoom visibility, and basemap text styling into `scripts/map/map-html-labels.js` (104 lines). `map-layers.js` re-exports the existing label functions for compatibility.
@@ -29,15 +30,16 @@ Updated: 2026-10-19
 - `map-rendering.js` was split into a 272-line cache/download facade, a 487-line layout renderer, and a 174-line pure print-geometry utility. The old `map-rendering.js` path re-exports the renderer and geometry functions to preserve existing imports.
 - `feedback-form.js` now delegates annotation preview and submission GeoJSON construction to a 74-line service; the form controller is 707 lines.
 - HTML label DOM rendering, visibility, and basemap colors now live in `map-html-labels.js` (104 lines); `map-layers.js` remains the compatibility owner for the existing exports.
-- Theme-specific base vector styling now lives in `map-vector-theme-styles.js` (145 lines); `map-layers.js` is 547 lines. The style-load sequence and road color cache remain in `map-layers.js`.
+- Theme-specific base vector styling now lives in `map-vector-theme-styles.js` (145 lines); place-label filtering lives in `map-place-label-filter.js` (100 lines); `map-layers.js` is 438 lines. The style-load sequence and road color cache remain in `map-layers.js`.
 - Verified in the current checkout: `styles/page-maps-tile.css` is still 6,500 lines; `scripts/map/map-runtime.js` still configures `prefetchZoomDelta: 8`; there is no `.github/workflows` directory; and no JSON schema files were found in the schema search.
 - Remaining plan areas include reducing/organizing the map CSS, measuring and tuning map startup/prefetch behavior, adding CI browser checks, formalizing dataset/provider schemas and API contracts, and reviewing the entry composition layer for any remaining legacy responsibilities.
-- Next priority: inspect the place-label filter conversion and cache (`toExpression`, `updatePlaceLabelsFilter`) in `map-layers.js` as a possible cohesive unit. If extracting it, preserve original-filter capture across style reloads and the circles-view-only filter behavior. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
+- Next priority: inspect the 6,500-line `styles/page-maps-tile.css` for safe component or feature boundaries. Preserve selector cascade and load order when splitting stylesheets, and avoid broad selector rewrites. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
 
 Recent commits, newest first:
 
 | Commit | Change |
 | --- | --- |
+| `73251c0` | Extract place-label filter state and conversion into a dedicated controller. |
 | `9ba6696` | Remove the unused duplicate map-layer rebuild. |
 | `9df90ca` | Extract theme-specific base vector styling from map-layer setup. |
 | `ca47adf` | Extract HTML map-label rendering from the map layers module. |
@@ -298,6 +300,12 @@ After extracting theme-specific vector styling:
 After removing the duplicate map-layer rebuild:
 
 - `npm test` passed: 186 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After extracting the place-label filter controller:
+
+- `npm test` passed: 188 tests.
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
