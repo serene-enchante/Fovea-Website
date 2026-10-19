@@ -1,0 +1,374 @@
+/* Right 3/4 Width Map Area with Margins on All Sides */
+.maps-tile-map-area {
+    flex: 1;
+    height: auto; /* Let flexbox stretch handle height with margins */
+    margin-top: 0; /* Bar now fills the gap itself */
+    padding: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    position: relative;
+    overflow: hidden; /* Clips the map as the back bar expands */
+}
+
+/* Desktop nav tabs container sitting in the gap above the map frame */
+.desktop-nav-tabs {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    width: 100%;
+    /* Half the sidebar selection header height */
+    height: calc(18px + 0.4rem);
+    margin-bottom: 0.45rem;
+    flex-shrink: 0;
+    transition: height 0.5s cubic-bezier(0.25, 1, 0.5, 1), margin-bottom 0.5s cubic-bezier(0.25, 1, 0.5, 1), gap 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: height, margin-bottom, gap;
+}
+
+.desktop-nav-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    height: 100%;
+    background: #0f0f0f;
+    text-decoration: none;
+    color: var(--color-text-muted, rgba(255,255,255,0.45));
+    cursor: pointer;
+    transition: color 0.18s ease, background 0.18s ease, height 0.5s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: height, border-radius;
+}
+
+.desktop-nav-tab__label {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    transition: color 0.18s ease;
+}
+
+.desktop-nav-tab:hover .desktop-nav-tab__label {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+#desktop-nav-tab-tools {
+    border-radius: 0 0 0 24px; /* bottom-left rounded (outer: 24px), bottom-right straight */
+}
+
+#desktop-nav-tab-home {
+    border-radius: 0;          /* middle: both straight */
+}
+
+#desktop-nav-tab-settings {
+    border-radius: 0 0 24px 0; /* bottom-right rounded outer corner */
+}
+
+.desktop-nav-tab__icon {
+    display: block;
+    filter: invert(1) brightness(0.45) grayscale(100%);  /* match the muted text colour and desaturate */
+    transition: opacity 0.3s ease, filter 0.18s ease;
+}
+
+.desktop-nav-tab__icon--home {
+    width: 12px;
+    height: 12px;
+}
+
+.desktop-nav-tab__icon--tools,
+.desktop-nav-tab__icon--settings {
+    width: 14px;
+    height: 14px;
+}
+
+.desktop-nav-tab:hover .desktop-nav-tab__icon {
+    filter: invert(1) brightness(0.85) grayscale(100%);
+}
+
+.desktop-nav-tab:hover {
+    color: rgba(255, 255, 255, 0.85);
+    background: #1c1c1c;
+}
+
+/* Map loading placeholder covering map with slightly brighter grey than view tabs (#0f0f0f) */
+#map-loading-placeholder {
+    display: none !important;
+}
+
+/* Page transition overlay: starts full black in dark mode, full white in light mode, loads elements behind scenes, fades out */
+#page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    z-index: 999999;
+    opacity: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: all;
+    will-change: opacity;
+}
+
+.page-loader-spinner {
+    width: 52px;
+    height: 52px;
+    border: 3.5px solid rgba(255, 255, 255, 0.15);
+    border-top-color: var(--accent-primary, #64b5f6);
+    border-radius: 50%;
+    animation: pageLoaderSpin 0.8s cubic-bezier(0.4, 0.1, 0.4, 0.9) infinite;
+    box-sizing: border-box;
+}
+
+[data-theme="light"] .page-loader-spinner,
+html.theme-light .page-loader-spinner,
+body.theme-light .page-loader-spinner {
+    border-color: rgba(0, 0, 0, 0.10);
+    border-top-color: var(--accent-primary, #64b5f6);
+}
+
+@keyframes pageLoaderSpin {
+    to { transform: rotate(360deg); }
+}
+
+[data-theme="light"] #page-transition-overlay,
+html.theme-light #page-transition-overlay,
+body.theme-light #page-transition-overlay {
+    background: #ffffff !important;
+}
+
+#page-transition-overlay.is-loaded {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+#page-transition-overlay.is-active {
+    opacity: 1 !important;
+    pointer-events: all !important;
+}
+
+
+
+/* Leaflet Window Container extending to edges */
+.maps-tile-map-container {
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    background: #090b0a;
+    border-radius: 24px 0 0 0 !important;
+    overflow: hidden !important;
+    box-shadow: none;
+    border: none;
+}
+
+/* Dark gradient fade overlay on all sides of the map frame */
+.map-fade-overlay {
+    display: none !important;
+}
+
+/* Map hint text (no box, slides up on cursor hover) */
+.map-fullscreen-hint {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    z-index: 600;
+    background: transparent;
+    color: rgba(200, 200, 200, 0.8);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0;
+    border: none;
+    pointer-events: none;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.maps-tile-map-container:hover .map-fullscreen-hint {
+    opacity: 1;
+    transform: translateY(0);
+    color: rgba(230, 230, 230, 0.9);
+}
+
+/* Fullscreen state */
+.maps-tile-map-container.is-fullscreen {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 99999 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+}
+
+.maps-tile-map-container.is-fullscreen #tile-map,
+.maps-tile-map-container.is-fullscreen #tile-map .maplibregl-canvas-container,
+.maps-tile-map-container.is-fullscreen #tile-map .maplibregl-canvas,
+.maps-tile-map-container.is-fullscreen #tile-map canvas {
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    border-radius: 0 !important;
+}
+
+.maps-tile-map-container.is-fullscreen .map-fade-overlay,
+.maps-tile-map-container.is-fullscreen .map-fullscreen-hint {
+    display: none !important;
+}
+
+.maps-tile-map-container,
+.maps-tile-map-container #tile-map {
+    background-color: #000000 !important;
+    background: #000000 !important;
+}
+
+#tile-map {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border-radius: 24px 0 0 0 !important;
+    overflow: hidden !important;
+}
+
+#tile-map .maplibregl-canvas-container,
+#tile-map .maplibregl-canvas,
+#tile-map canvas {
+    border-radius: 24px 0 0 0 !important;
+}
+
+/* Custom control overlay container — fills the map, pointer-events pass-through */
+.maps-tile-map-container .map-ctrl-container {
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    z-index: 1000 !important;
+    overflow: visible !important;
+}
+
+/* Top-level flex panels — each is a flex column anchored to a corner */
+.maps-tile-map-container .map-ctrl-panel {
+    position: absolute !important;
+    pointer-events: none !important;
+    overflow: visible !important;
+    display: flex !important;
+    align-items: flex-start !important;
+}
+
+/* Desktop default: all controls stack vertically at bottom-left.
+   column-reverse means first child in DOM = visually lowest (bottom). */
+.maps-tile-map-container .map-ctrl-panel.map-ctrl-panel--left {
+    left: 20px !important;
+    right: auto !important;
+    bottom: 20px !important;
+    top: auto !important;
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+}
+
+/* Right panel — used only on mobile for zoom */
+.maps-tile-map-container .map-ctrl-panel.map-ctrl-panel--right {
+    right: 20px !important;
+    left: auto !important;
+    top: 72px !important;
+    bottom: auto !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+/* All direct controls are in-flow within the flex parent, except layers which needs relative */
+.maps-tile-map-container .map-ctrl-panel .map-ctrl:not(.map-ctrl-styles) {
+    pointer-events: auto !important;
+    position: static !important;
+    margin: 0 !important;
+}
+.maps-tile-map-container .map-ctrl-panel .map-ctrl.map-ctrl-styles {
+    pointer-events: auto !important;
+    position: relative !important;
+    margin: 0 !important;
+}
+
+/* Zoom control: vertical column of two buttons */
+.maps-tile-map-container .map-ctrl-zoom {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+/* Single-button controls */
+.maps-tile-map-container .map-ctrl-locate,
+.maps-tile-map-container .map-ctrl-fullscreen {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 26px !important;
+    height: 26px !important;
+}
+
+/* Dark Mode palette tuning for Carto tiles */
+.maps-tile-map-container .carto-dark-tile {
+    filter: brightness(1.18) contrast(1.12) hue-rotate(195deg) saturate(1.4);
+}
+
+.maps-tile-map-container .google-sat-tile,
+.maps-tile-map-container img.google-sat-tile {
+    filter: none !important;
+}
+
+/* Dark theme overrides for Leaflet controls on tile map */
+
+.maps-tile-map-container .map-ctrl-zoom {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Header Logo Container */
+.header-logo-container {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.header-logo-container .home-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+
+/* Leaflet Control Containers (Zoom, Locate, Fullscreen) Styled as transparent containers */
+.maps-tile-map-container .map-ctrl-zoom,
+.maps-tile-map-container .map-ctrl-locate,
+.maps-tile-map-container .map-ctrl-fullscreen {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    overflow: visible !important;
+}
+
+.maps-tile-map-container .map-ctrl-zoom,
+.maps-tile-map-container .map-ctrl-locate,
+.maps-tile-map-container .map-ctrl-fullscreen {
+    filter: none !important;
+}
+
+.maps-tile-map-container .map-ctrl-styles:not(.map-ctrl-styles--expanded) .map-ctrl-styles__toggle {
+    filter: none !important;
+}
+

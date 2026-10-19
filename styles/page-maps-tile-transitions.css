@@ -1,0 +1,356 @@
+/* Sidebar Hierarchy Navigation Transitions */
+@keyframes navFlyOutLeft {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(-40px);
+        opacity: 0;
+    }
+}
+
+@keyframes navFlyInRight {
+    0% {
+        transform: translateX(40px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes navFlyOutRight {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(40px);
+        opacity: 0;
+    }
+}
+
+@keyframes navFlyInLeft {
+    0% {
+        transform: translateX(-40px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.anim-fly-out-left {
+    animation: navFlyOutLeft 0.18s cubic-bezier(0.4, 0.0, 0.2, 1) forwards !important;
+}
+
+.anim-fly-in-right {
+    animation: navFlyInRight 0.22s cubic-bezier(0.0, 0.0, 0.2, 1) forwards !important;
+}
+
+.anim-fly-out-right {
+    animation: navFlyOutRight 0.18s cubic-bezier(0.4, 0.0, 0.2, 1) forwards !important;
+}
+
+.anim-fly-in-left {
+    animation: navFlyInLeft 0.22s cubic-bezier(0.0, 0.0, 0.2, 1) forwards !important;
+}
+
+/* ── Full Screen Blackout Avenza Instruction Modal ── */
+.avenza-blackout-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.2rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.avenza-blackout-modal.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.avenza-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: #000000 !important;
+    opacity: 0.96 !important;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+}
+
+.avenza-modal-panel {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 380px;
+    background: rgba(18, 18, 20, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 24px;
+    padding: 1.5rem 1.4rem 1.4rem 1.4rem;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(100, 181, 246, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    color: #ffffff;
+    box-sizing: border-box;
+    transform: scale(0.92);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.avenza-blackout-modal.is-open .avenza-modal-panel {
+    transform: scale(1);
+}
+
+.avenza-modal-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
+}
+
+.avenza-transfer-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+}
+
+.avenza-modal-icon-badge {
+    width: 60px;
+    height: 60px;
+    border-radius: 17px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.avenza-selection-badge,
+.avenza-modal-header .avenza-selection-badge {
+    width: auto !important;
+    height: 54px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.avenza-selection-badge img,
+#avenza-selection-thumb {
+    height: 54px !important;
+    width: auto !important;
+    max-width: 90px !important;
+    object-fit: contain !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    filter: none !important;
+}
+
+.avenza-transfer-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8e8e93 !important;
+    opacity: 1 !important;
+}
+
+.avenza-modal-app-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avenza-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+
+.avenza-target-name {
+    color: var(--accent-primary, #64b5f6) !important;
+    font-weight: 700;
+}
+
+.avenza-step-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.avenza-step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    background: rgba(255, 255, 255, 0.035);
+    border: none !important;
+    border-radius: 18px;
+    padding: 0.95rem 1rem;
+}
+
+.avenza-step-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent-primary, #64b5f6);
+    color: #000000;
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+}
+
+.avenza-step-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.avenza-step-heading {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.avenza-step-text {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+}
+
+.avenza-modal-close {
+    position: absolute !important;
+    top: 1.2rem !important;
+    right: 1.2rem !important;
+    z-index: 10 !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.avenza-modal-close:hover {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.24) !important;
+}
+
+.avenza-filename-pill {
+    display: inline-block;
+    padding: 0.12rem 0.45rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.95);
+    border-radius: 6px;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.avenza-ui-badge {
+    display: inline-block;
+    padding: 0.05rem 0.4rem;
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 5px;
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 0.8rem;
+}
+
+.avenza-step-action-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    align-self: flex-start !important;
+    padding: 0.4rem 0.85rem !important;
+    background: var(--accent-primary, #64b5f6) !important;
+    color: #000000 !important;
+    border: none !important;
+    border-radius: 9999px !important;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: none !important;
+}
+
+.avenza-continue-btn {
+    width: 100%;
+    padding: 0.75rem 1.2rem !important;
+    background: var(--accent-primary, #64b5f6) !important;
+    color: #000000 !important;
+    border: none !important;
+    border-radius: 9999px !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: none !important;
+}
+
+.avenza-step-action-btn:hover,
+.avenza-continue-btn:hover {
+    background: var(--accent-hover, #93c5fd) !important;
+    color: #000000 !important;
+    transform: translateY(-1px);
+    box-shadow: none !important;
+}
+
+.avenza-step-action-btn:active,
+.avenza-continue-btn:active {
+    transform: scale(0.98);
+}
+
+.avenza-step-action-btn.is-downloaded {
+    background: #34c759 !important;
+    color: #000000 !important;
+}
+
+/* Hide mobile bottom navigation bar when Avenza instruction blackout screen is open */
+body:has(#avenza-instruction-modal.is-open) .mobile-bottom-nav-container,
+body.has-avenza-modal .mobile-bottom-nav-container,
+.avenza-blackout-modal.is-open ~ .mobile-bottom-nav-container {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(120px) !important;
+}
+
