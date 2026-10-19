@@ -7,7 +7,7 @@ Updated: 2026-10-19
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
 - Latest refactor commit: `f5fdb73 split map page stylesheet into ordered partials`
-- Latest handoff commit before this update: `88a8ca7 sync place label filter handoff`.
+- Latest handoff commit before this update: `5e978be sync map stylesheet split handoff`.
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -35,6 +35,8 @@ Updated: 2026-10-19
 - `styles/page-maps-tile.css` is now a 12-line ordered import entry; its 12 partials range from 164 to 832 lines. `scripts/map/map-runtime.js` still configures `prefetchZoomDelta: 8`; there is no `.github/workflows` directory; and no JSON schema files were found in the schema search.
 - Remaining plan areas include reducing/organizing the map CSS, measuring and tuning map startup/prefetch behavior, adding CI browser checks, formalizing dataset/provider schemas and API contracts, and reviewing the entry composition layer for any remaining legacy responsibilities.
 - Next priority: review the remaining 963-line `scripts/download-wizard.js` for another cohesive workflow responsibility to extract, keeping its generated outputs and wizard-specific formatting stable. Other modules over 500 lines include `toolbar-actions.js` (732), `feedback-form.js` (707), `maps.js` (681), and `mobile-view.js` (552); inspect cohesion before splitting any of them. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
+
+For the next worker: start with `git status --short --branch`; keep the existing Eugene-04 GeoJSON edit and untracked TopoJSON out of refactor commits. The stylesheet split is a structure-only change: its partials are contiguous source sections imported in order, and their concatenation matched the pre-split file byte for byte. Keep `page-maps-tile.css` as the public entry path, preserve all imports in order, and keep partials below 1,000 lines. Use the latest test counts in Verification history rather than the older counts farther down that historical log.
 
 Recent commits, newest first:
 
