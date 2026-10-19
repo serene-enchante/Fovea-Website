@@ -130,8 +130,6 @@ test('starts and stops geolocation and removes the marker and accuracy layer', (
 });
 
 test('renders and updates the user marker and accuracy polygon', () => {
-    const originalDocument = globalThis.document;
-    const originalMapLibre = globalThis.maplibregl;
     let markerElement;
     let accuracyFeature;
     class FakeMarker {
@@ -140,8 +138,8 @@ test('renders and updates the user marker and accuracy polygon', () => {
         addTo(map) { this.map = map; return this; }
         getLngLat() { return { lng: this.position[0], lat: this.position[1] }; }
     }
-    globalThis.document = { createElement: () => ({ setAttribute() {}, className: '', innerHTML: '' }) };
-    globalThis.maplibregl = { Marker: FakeMarker };
+    const documentObject = { createElement: () => ({ setAttribute() {}, className: '', innerHTML: '' }) };
+    const mapLibre = { Marker: FakeMarker };
     const map = {
         isStyleLoaded: () => true,
         getSource: () => undefined,
@@ -151,12 +149,7 @@ test('renders and updates the user marker and accuracy polygon', () => {
     const state = { map, isLocating: true, allFeatures: [] };
     const checked = [];
 
-    try {
-        updateUserLocationOnMap(-123, 44, 100, state, value => checked.push(value));
-    } finally {
-        globalThis.document = originalDocument;
-        globalThis.maplibregl = originalMapLibre;
-    }
+    updateUserLocationOnMap(-123, 44, 100, state, value => checked.push(value), { documentObject, mapLibre });
 
     assert.equal(state.userLocationAccuracy, 100);
     assert.deepEqual(state.userLocationMarker.getLngLat(), { lng: -123, lat: 44 });

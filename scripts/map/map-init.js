@@ -108,15 +108,22 @@ function createAccuracyCircle(lng, lat, radiusMeters, pointCount = 64) {
     };
 }
 
-export function updateUserLocationOnMap(lng, lat, accuracy, mapState = state, onLocationUpdated = checkUserLocationZone) {
+export function updateUserLocationOnMap(
+    lng,
+    lat,
+    accuracy,
+    mapState = state,
+    onLocationUpdated = checkUserLocationZone,
+    { documentObject = globalThis.document, mapLibre = globalThis.maplibregl } = {}
+) {
     if (!mapState.map || !Number.isFinite(lng) || !Number.isFinite(lat)) return;
 
     if (!mapState.userLocationMarker) {
-        const markerElement = document.createElement('div');
+        const markerElement = documentObject.createElement('div');
         markerElement.className = 'user-location-marker';
         markerElement.setAttribute('aria-label', 'Your location');
         markerElement.innerHTML = '<span class="user-location-dot"></span>';
-        mapState.userLocationMarker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
+        mapState.userLocationMarker = new mapLibre.Marker({ element: markerElement, anchor: 'center' })
             .setLngLat([lng, lat])
             .addTo(mapState.map);
     } else {
@@ -207,10 +214,12 @@ export function checkUserLocationZone(latlng, mapState = state) {
 export function toggleLocationTracking(mapState = state, {
     geolocation = globalThis.navigator?.geolocation,
     notify = showToast,
-    checkLocation = latlng => checkUserLocationZone(latlng, mapState)
+    checkLocation = latlng => checkUserLocationZone(latlng, mapState),
+    documentObject = globalThis.document,
+    mapLibre = globalThis.maplibregl
 } = {}) {
     if (!mapState.map) return;
-    const locateControlEl = document.querySelector(".map-ctrl-locate");
+    const locateControlEl = documentObject.querySelector(".map-ctrl-locate");
 
     if (mapState.isLocating) {
         mapState.isLocating = false;
@@ -246,7 +255,7 @@ export function toggleLocationTracking(mapState = state, {
                 const lng = position.coords.longitude;
                 const lat = position.coords.latitude;
                 const accuracy = position.coords.accuracy;
-                updateUserLocationOnMap(lng, lat, accuracy, mapState, checkLocation);
+                updateUserLocationOnMap(lng, lat, accuracy, mapState, checkLocation, { documentObject, mapLibre });
             },
             (error) => {
                 console.error("Location error:", error);
