@@ -1,5 +1,8 @@
 import { renderMapLayoutCanvas } from './map/map-rendering.js';
 import { canvasToTiffBlob } from './services/format-converters.js';
+import { geojsonToGpx, geojsonToKml } from './services/download-wizard-formatters.js';
+import { APP_INSTRUCTION_CONFIGS, COUNT_CIRCLES } from './config/download-wizard-config.js';
+import { createDownloadWizardRasterCache } from './map/download-wizard-raster-cache.js';
 
 /**
  * download-wizard.js
@@ -52,91 +55,6 @@ async function fetchGeoJsonFile(filenameOrPath) {
     throw lastErr || new Error(`Could not fetch ${filename}`);
 }
 
-// Available Count Circles Catalog
-const COUNT_CIRCLES = [
-    {
-        id: "eugene",
-        name: "Eugene",
-        subtitle: "Lane County, Oregon · 29 Zones",
-        totalZones: 29,
-        geojsonPath: "geojson/Eugene-05-wgs84.geojson",
-        thumbnail: "images/logo-small.png",
-        hasData: true
-    },
-    {
-        id: "florence",
-        name: "Florence",
-        subtitle: "Coastal Oregon · 14 Zones",
-        totalZones: 14,
-        geojsonPath: "geojson/Florence-00-wgs84.geojson",
-        thumbnail: "images/florence.png",
-        hasData: true
-    },
-    {
-        id: "cottage-grove",
-        name: "Cottage Grove",
-        subtitle: "Lane County, Oregon · No Data",
-        totalZones: 0,
-        geojsonPath: "geojson/circles-wgs84.geojson",
-        circleFid: 2,
-        hasData: false
-    },
-    {
-        id: "oakridge",
-        name: "Oakridge",
-        subtitle: "Cascade Foothills · No Data",
-        totalZones: 0,
-        geojsonPath: "geojson/circles-wgs84.geojson",
-        circleFid: 3,
-        hasData: false
-    }
-];
-
-// App Instructions Configuration (Identical to Maps Page)
-const APP_INSTRUCTION_CONFIGS = {
-    avenza: {
-        appName: "Avenza Maps",
-        scheme: "avenzamaps://",
-        formatKey: "geopdf",
-        ext: "pdf",
-        iconSrc: "images/app_icons/avenza.webp",
-        step1Heading: "Download the GeoPDF",
-        step2Heading: "Open in Avenza Maps",
-        step2Text: "Tap <strong class=\"avenza-ui-badge\">Download</strong> above, then select <strong class=\"avenza-ui-badge\">Open in Avenza Maps</strong> from the share sheet."
-    },
-
-    gaia: {
-        appName: "Gaia GPS",
-        scheme: "gaiagps://",
-        formatKey: "gpx",
-        ext: "gpx",
-        iconSrc: "images/app_icons/gaia.webp",
-        step1Heading: "Download the GPX File",
-        step2Heading: "Import into Gaia GPS",
-        step2Text: "Tap <strong class=\"avenza-ui-badge\">Download</strong> above, then tap <strong class=\"avenza-ui-badge\">Open in Gaia GPS</strong> to import the boundary."
-    },
-    caltopo: {
-        appName: "CalTopo",
-        scheme: "caltopo://",
-        formatKey: "gpx",
-        ext: "gpx",
-        iconSrc: "images/app_icons/caltopo.webp",
-        step1Heading: "Download the GPX File",
-        step2Heading: "Import into CalTopo",
-        step2Text: "Download the file and open it with CalTopo to overlay the zone on USGS quad or custom layers."
-    },
-    osmand: {
-        appName: "OsmAnd Maps",
-        scheme: "osmand://",
-        formatKey: "gpx",
-        ext: "gpx",
-        iconSrc: "images/app_icons/osmandmaps.webp",
-        step1Heading: "Download the GPX File",
-        step2Heading: "Open with OsmAnd",
-        step2Text: "Tap <strong class=\"avenza-ui-badge\">Download</strong>, then choose <strong class=\"avenza-ui-badge\">OsmAnd Maps</strong> to import the boundary track."
-    }
-};
-
 // Wizard State
 const state = {
     currentStep: 1,
@@ -188,95 +106,27 @@ export function initDownloadWizard() {
 // Pre-render Cache & Garbage Management for Download Wizard
 // ──────────────────────────────────────────────────────────────
 
-const WIZARD_RASTER_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL
-
-let wizardRasterCache = {
-    key: null,
-    promise: null,
-    canvas: null,
-    createdAt: 0,
-    timerId: null
-};
-
-function getWizardCacheKey() {
-    const cid = state.selectedCircle?.id || "eugene";
-    const zid = state.selectedZone ? (state.selectedZone.properties?.zid || "0") : "full";
-    return `${cid}:${zid}`;
-}
-
-function disposeWizardRasterCache() {
-    if (wizardRasterCache.timerId) {
-        clearTimeout(wizardRasterCache.timerId);
-        wizardRasterCache.timerId = null;
-    }
-    if (wizardRasterCache.canvas) {
-        try {
-            wizardRasterCache.canvas.width = 0;
-            wizardRasterCache.canvas.height = 0;
-        } catch (e) {}
-    }
-    wizardRasterCache.key = null;
-    wizardRasterCache.promise = null;
-    wizardRasterCache.canvas = null;
-    wizardRasterCache.createdAt = 0;
-}
-
-function preloadWizardRaster() {
-    const key = getWizardCacheKey();
-    const now = Date.now();
-
-    if (wizardRasterCache.key === key && (now - wizardRasterCache.createdAt < WIZARD_RASTER_TTL_MS)) {
-        if (wizardRasterCache.promise) return wizardRasterCache.promise;
-        if (wizardRasterCache.canvas) return Promise.resolve(wizardRasterCache.canvas);
-    }
-
-    disposeWizardRasterCache();
-
-    wizardRasterCache.key = key;
-    wizardRasterCache.createdAt = now;
-
-    const renderPromise = renderMapLayoutCanvas({
+const wizardRasterCache = createDownloadWizardRasterCache({
+    getCacheKey: () => {
+        const circleId = state.selectedCircle?.id || 'eugene';
+        const zoneId = state.selectedZone ? (state.selectedZone.properties?.zid || '0') : 'full';
+        return `${circleId}:${zoneId}`;
+    },
+    getRenderOptions: () => ({
         features: state.loadedFeatures.length > 0 ? state.loadedFeatures : (state.loadedGeoJSON?.features || []),
         targetFeatureId: state.selectedZone ? (state.selectedZone.properties?.zid || null) : null,
-        currentFeature: state.selectedCircle?.id || "eugene",
-        isCirclesFeature: false,
-        pageUrl: window.location.href
-    })
-    .then(canvas => {
-        if (wizardRasterCache.key === key) {
-            wizardRasterCache.canvas = canvas;
-            wizardRasterCache.promise = null;
-            wizardRasterCache.timerId = setTimeout(disposeWizardRasterCache, WIZARD_RASTER_TTL_MS);
-        } else {
-            try {
-                canvas.width = 0;
-                canvas.height = 0;
-            } catch (e) {}
-        }
-        return canvas;
-    })
-    .catch(err => {
-        if (wizardRasterCache.key === key) {
-            disposeWizardRasterCache();
-        }
-        throw err;
-    });
-
-    wizardRasterCache.promise = renderPromise;
-    return renderPromise;
-}
-
-async function getOrRenderWizardCanvas() {
-    const key = getWizardCacheKey();
-    const now = Date.now();
-
-    if (wizardRasterCache.key === key && (now - wizardRasterCache.createdAt < WIZARD_RASTER_TTL_MS)) {
-        if (wizardRasterCache.canvas) return wizardRasterCache.canvas;
-        if (wizardRasterCache.promise) return await wizardRasterCache.promise;
-    }
-
-    return await preloadWizardRaster();
-}
+        currentFeature: state.selectedCircle?.id || 'eugene',
+        isCirclesFeature: false
+    }),
+    renderLayoutCanvas: renderMapLayoutCanvas,
+    getPageUrl: () => window.location.href
+});
+const {
+    dispose: disposeWizardRasterCache,
+    preload: preloadWizardRaster,
+    getOrRender: getOrRenderWizardCanvas,
+    hasCachedCanvas: hasWizardRasterCanvas
+} = wizardRasterCache;
 
 /**
  * Stepper logic
@@ -696,128 +546,6 @@ function getDownloadFilename(ext) {
     return `${circleName}-Full-Circle.${ext}`;
 }
 
-/**
- * Converts GeoJSON to standard KML XML string
- */
-function geojsonToKml(geojson, docName = "CBC Boundary") {
-    let placemarks = "";
-    const features = geojson.features || (geojson.type === "Feature" ? [geojson] : []);
-
-    features.forEach((feat, idx) => {
-        const props = feat.properties || {};
-        const title = props.zid ? `Zone ${props.zid}` : props.cid ? `${props.cid} Circle` : `Feature ${idx + 1}`;
-        const desc = props.name || props.description || `Christmas Bird Count boundary for ${title}`;
-        let geomKml = "";
-
-        if (feat.geometry) {
-            const gType = feat.geometry.type;
-            const coords = feat.geometry.coordinates;
-
-            if (gType === "Polygon") {
-                geomKml = polygonToKml(coords);
-            } else if (gType === "MultiPolygon") {
-                geomKml = "<MultiGeometry>" + coords.map(p => polygonToKml(p)).join("") + "</MultiGeometry>";
-            } else if (gType === "Point") {
-                geomKml = `<Point><coordinates>${coords[0]},${coords[1]},0</coordinates></Point>`;
-            } else if (gType === "LineString") {
-                const lineStr = coords.map(c => `${c[0]},${c[1]},0`).join(" ");
-                geomKml = `<LineString><coordinates>${lineStr}</coordinates></LineString>`;
-            }
-        }
-
-        if (geomKml) {
-            placemarks += `
-    <Placemark>
-      <name>${escapeXml(title)}</name>
-      <description>${escapeXml(desc)}</description>
-      <Style>
-        <LineStyle><color>ff00aaff</color><width>3</width></LineStyle>
-        <PolyStyle><color>4000aaff</color></PolyStyle>
-      </Style>
-      ${geomKml}
-    </Placemark>`;
-        }
-    });
-
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <name>${escapeXml(docName)}</name>
-    ${placemarks}
-  </Document>
-</kml>`;
-}
-
-function polygonToKml(coords) {
-    let out = "<Polygon><tessellate>1</tessellate>";
-    if (coords && coords.length > 0) {
-        const outer = coords[0].map(c => `${c[0]},${c[1]},0`).join(" ");
-        out += `<outerBoundaryIs><LinearRing><coordinates>${outer}</coordinates></LinearRing></outerBoundaryIs>`;
-        for (let i = 1; i < coords.length; i++) {
-            const inner = coords[i].map(c => `${c[0]},${c[1]},0`).join(" ");
-            out += `<innerBoundaryIs><LinearRing><coordinates>${inner}</coordinates></LinearRing></innerBoundaryIs>`;
-        }
-    }
-    out += "</Polygon>";
-    return out;
-}
-
-/**
- * Converts GeoJSON to standard GPX XML string
- */
-function geojsonToGpx(geojson, trackName = "CBC Survey Boundary") {
-    let trkSegments = "";
-    const features = geojson.features || (geojson.type === "Feature" ? [geojson] : []);
-
-    features.forEach((feat) => {
-        if (!feat.geometry) return;
-        const gType = feat.geometry.type;
-        const coords = feat.geometry.coordinates;
-
-        const processRing = (ring) => {
-            let pts = "";
-            ring.forEach(pt => {
-                pts += `      <trkpt lat="${pt[1]}" lon="${pt[0]}"></trkpt>\n`;
-            });
-            return `    <trkseg>\n${pts}    </trkseg>\n`;
-        };
-
-        if (gType === "Polygon" && coords.length > 0) {
-            trkSegments += processRing(coords[0]);
-        } else if (gType === "MultiPolygon") {
-            coords.forEach(poly => {
-                if (poly.length > 0) trkSegments += processRing(poly[0]);
-            });
-        } else if (gType === "LineString") {
-            trkSegments += processRing(coords);
-        }
-    });
-
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Fovea Spatial Tools - https://fovea.org" xmlns="http://www.topografix.com/GPX/1/1">
-  <metadata>
-    <name>${escapeXml(trackName)}</name>
-    <time>${new Date().toISOString()}</time>
-  </metadata>
-  <trk>
-    <name>${escapeXml(trackName)}</name>
-${trkSegments}  </trk>
-</gpx>`;
-}
-
-function escapeXml(unsafe) {
-    if (!unsafe) return "";
-    return String(unsafe).replace(/[<>&'"]/g, c => {
-        switch (c) {
-            case '<': return '&lt;';
-            case '>': return '&gt;';
-            case '&': return '&amp;';
-            case '\'': return '&apos;';
-            case '"': return '&quot;';
-        }
-    });
-}
-
 function escapeHtml(str) {
     if (!str) return "";
     return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[m]);
@@ -850,8 +578,7 @@ async function generateGeoPdfBlob(targetBtn = null, silent = false) {
         targetBtn.classList.add("is-preparing");
     }
     try {
-        const key = getWizardCacheKey();
-        const isReady = wizardRasterCache.key === key && !!wizardRasterCache.canvas;
+        const isReady = hasWizardRasterCanvas();
         if (!silent && !isReady) {
             showToast("Rendering map layout...");
         }
@@ -899,8 +626,7 @@ async function generateGeoTiffBlob(targetBtn = null, silent = false) {
         targetBtn.classList.add("is-preparing");
     }
     try {
-        const key = getWizardCacheKey();
-        const isReady = wizardRasterCache.key === key && !!wizardRasterCache.canvas;
+        const isReady = hasWizardRasterCanvas();
         if (!silent && !isReady) {
             showToast("Rendering map layout...");
         }
