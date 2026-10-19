@@ -2,9 +2,9 @@ import { state } from '../state.js';
 import { showToast } from './toast-view.js';
 import { closeAllModals, closeAvenzaModal, closeAllAppsModal } from './modal-view.js';
 import { launchAppWithStoreFallback } from './avenza-modal-view.js';
+import { downloadGeoPdf, downloadGeoTiff, getOrRenderLayoutCanvas, scheduleDownloadViewPreload, cancelDownloadViewPreload } from '../map/map-rendering.js';
 import { getSelectedGeoJSONData } from '../services/bird-data-service.js';
 import { geojsonToGpx, geojsonToKml, canvasToTiffBlob } from '../services/format-converters.js';
-import { downloadGeoPdf, downloadGeoTiff, getOrRenderLayoutCanvas, scheduleDownloadViewPreload, cancelDownloadViewPreload } from '../map/map-rendering.js';
 import { setupSuggestFormAndDrawing } from './feedback-form.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { handleSpatialFileShare } from '../services/file-download-service.js';
@@ -12,6 +12,7 @@ import { getDownloadFilename } from '../services/download-file-names.js';
 import { setupDownloadAppSearch, updateShareModalDescription } from './suggested-app-controls.js';
 import { getShareQrCodeImageUrl } from '../services/qr-image-service.js';
 import { setupMapToolbarModalLayout } from './map-toolbar-modal-layout.js';
+import { createToolbarDownloadActions } from './toolbar-download-actions.js';
 
 export {
     MAP_VIEWER_APPS,
@@ -29,128 +30,20 @@ export function getActiveDownloadFilename(ext) {
     }, ext);
 }
 
-export function setupSpatialDownloadButtons({
-    shareFile = handleSpatialFileShare,
-    notify = showToast,
-    downloadPdf = button => downloadGeoPdf(getActiveDownloadFilename("pdf"), button),
-    downloadTiff = button => downloadGeoTiff(getActiveDownloadFilename("tif"), button)
-} = {}) {
-    const geojsonBtn = document.getElementById("download-geojson");
-    if (geojsonBtn) {
-        geojsonBtn.addEventListener("click", async (event) => {
-            const geojson = getSelectedGeoJSONData();
-            const filename = getActiveDownloadFilename("geojson");
-            const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
-            await shareFile(event, blob, filename, geojsonBtn);
-            notify(`Exported ${filename}`);
-        });
-    }
-
-    const kmzBtn = document.getElementById("download-kmz");
-    if (kmzBtn) {
-        kmzBtn.addEventListener("click", async (event) => {
-            const geojson = getSelectedGeoJSONData();
-            const filename = getActiveDownloadFilename("kmz");
-            const kmlStr = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
-            let blob;
-            if (typeof JSZip !== "undefined") {
-                const zip = new JSZip();
-                zip.file("doc.kml", kmlStr);
-                blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
-            } else {
-                blob = new Blob([kmlStr], { type: "application/vnd.google-earth.kml+xml" });
-            }
-            await shareFile(event, blob, filename, kmzBtn);
-            notify(`Exported ${filename}`);
-        });
-    }
-
-    const gpxBtn = document.getElementById("download-gpx");
-    if (gpxBtn) {
-        gpxBtn.addEventListener("click", async (event) => {
-            const geojson = getSelectedGeoJSONData();
-            const filename = getActiveDownloadFilename("gpx");
-            const gpxStr = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
-            const blob = new Blob([gpxStr], { type: "application/gpx+xml" });
-            await shareFile(event, blob, filename, gpxBtn);
-            notify(`Exported ${filename}`);
-        });
-    }
-
-    const geopdfBtn = document.getElementById("download-geopdf");
-    if (geopdfBtn) {
-        geopdfBtn.addEventListener("click", async () => downloadPdf(geopdfBtn));
-    }
-
-    const geotiffBtn = document.getElementById("download-geotiff");
-    if (geotiffBtn) {
-        geotiffBtn.addEventListener("click", async () => downloadTiff(geotiffBtn));
-    }
-}
-
-export async function generateAppSpatialBlob(formatKey) {
-  const geojson = getSelectedGeoJSONData();
-  const filename = getActiveDownloadFilename(formatKey === "geopdf" ? "pdf" : formatKey);
-
-  if (formatKey === "geopdf") {
-    const canvas = await getOrRenderLayoutCanvas({
-        features: state.allFeatures,
-        targetFeatureId: state.currentId,
-        currentFeature: state.currentFeature,
-        isCirclesFeature: state.isCirclesFeature
-    });
-    if (window.jspdf && window.jspdf.jsPDF) {
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4"
-      });
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
-      pdf.setProperties({
-        title: filename.replace(/\.pdf$/, ""),
-        subject: "GeoPDF Map Layout Export - Esri Topo Basemap",
-        creator: "Fovea Web Map Layout Engine"
-      });
-      return { blob: pdf.output("blob"), filename };
-    } else {
-      return new Promise((resolve) => {
-        canvas.toBlob((blob) => {
-          resolve({ blob, filename: filename.replace(/\.pdf$/, "-layout.png") });
-        }, "image/png");
-      });
-    }
-  } else if (formatKey === "geotiff" || formatKey === "tif") {
-    const canvas = await getOrRenderLayoutCanvas({
-        features: state.allFeatures,
-        targetFeatureId: state.currentId,
-        currentFeature: state.currentFeature,
-        isCirclesFeature: state.isCirclesFeature
-    });
-    const tiffBlob = canvasToTiffBlob(canvas);
-    return { blob: tiffBlob, filename: getActiveDownloadFilename("tif") };
-  } else if (formatKey === "gpx") {
-    const gpxStr = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
-    const blob = new Blob([gpxStr], { type: "application/gpx+xml" });
-    return { blob, filename: filename.endsWith(".gpx") ? filename : `${filename}.gpx` };
-  } else if (formatKey === "kmz") {
-    const kmlStr = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
-    if (typeof JSZip !== "undefined") {
-      const zip = new JSZip();
-      zip.file("doc.kml", kmlStr);
-      const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
-      return { blob, filename };
-    } else {
-      const blob = new Blob([kmlStr], { type: "application/vnd.google-earth.kml+xml" });
-      return { blob, filename: filename.replace(/\.kmz$/i, ".kml") };
-    }
-  } else {
-    // Default GeoJSON
-    const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
-    return { blob, filename };
-  }
-}
+const toolbarDownloadActions = createToolbarDownloadActions({
+    state,
+    getSelectedGeoJSONData,
+    getFilename: getActiveDownloadFilename,
+    renderLayout: getOrRenderLayoutCanvas,
+    downloadPdf: button => downloadGeoPdf(getActiveDownloadFilename('pdf'), button),
+    downloadTiff: button => downloadGeoTiff(getActiveDownloadFilename('tif'), button),
+    convertCanvasToTiff: canvasToTiffBlob,
+    shareFile: handleSpatialFileShare,
+    notify: showToast,
+    geojsonToGpx,
+    geojsonToKml
+});
+export const { setupSpatialDownloadButtons, generateAppSpatialBlob } = toolbarDownloadActions;
 
 export function toggleFullscreen() {
     const mapWrapper = document.getElementById("map-wrapper");
