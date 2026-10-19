@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fovea.org/schemas/v1/zones.schema.json",
+  "title": "Fovea count zones v1",
+  "type": "object",
+  "required": ["type", "features"],
+  "properties": {
+    "type": { "const": "FeatureCollection" },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "geometry", "properties"],
+        "properties": {
+          "type": { "const": "Feature" },
+          "geometry": { "$ref": "#/$defs/polygonGeometry" },
+          "properties": {
+            "type": "object",
+            "required": ["zid"],
+            "properties": {
+              "zid": { "type": "string", "minLength": 1 },
+              "id": { "type": ["string", "null"] }
+            },
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "position": { "type": "array", "minItems": 2, "items": { "type": "number" } },
+    "polygonGeometry": {
+      "oneOf": [
+        { "type": "object", "required": ["type", "coordinates"], "properties": { "type": { "const": "Polygon" }, "coordinates": { "type": "array", "items": { "type": "array", "minItems": 4, "items": { "$ref": "#/$defs/position" } } } } },
+        { "type": "object", "required": ["type", "coordinates"], "properties": { "type": { "const": "MultiPolygon" }, "coordinates": { "type": "array", "items": { "type": "array", "items": { "type": "array", "minItems": 4, "items": { "$ref": "#/$defs/position" } } } } } }
+      ]
+    }
+  }
+}

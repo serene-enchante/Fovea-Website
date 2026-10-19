@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fovea.org/schemas/v1/bird-observations.schema.json",
+  "title": "Fovea normalized bird observations v1",
+  "type": "object",
+  "required": ["type", "features"],
+  "properties": {
+    "type": { "const": "FeatureCollection" },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "geometry", "properties"],
+        "properties": {
+          "type": { "const": "Feature" },
+          "geometry": { "type": "object", "required": ["type", "coordinates"], "properties": { "type": { "const": "Point" }, "coordinates": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number" } } } },
+          "properties": {
+            "type": "object",
+            "required": ["id", "user", "date", "place", "photoUrl", "uri", "species"],
+            "properties": {
+              "id": { "type": ["integer", "string"] },
+              "user": { "type": "string" },
+              "date": { "type": "string" },
+              "place": { "type": "string" },
+              "photoUrl": { "type": "string" },
+              "uri": { "type": "string" },
+              "species": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}

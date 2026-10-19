@@ -10,6 +10,24 @@ function validateFeatureCollection(datasetId, data) {
     if (data?.type !== 'FeatureCollection' || !Array.isArray(data.features)) {
         throw new Error(`Invalid GeoJSON FeatureCollection for ${datasetId}`);
     }
+    for (const [index, feature] of data.features.entries()) {
+        const geometryType = feature?.geometry?.type;
+        if (feature?.type !== 'Feature' || !feature.properties || typeof feature.properties !== 'object'
+            || !['Polygon', 'MultiPolygon'].includes(geometryType) || !Array.isArray(feature.geometry.coordinates)) {
+            throw new Error(`Invalid ${datasetId} feature at index ${index}`);
+        }
+
+        if (datasetId === 'circles' && (typeof feature.properties.cid !== 'string' || !feature.properties.cid.trim())) {
+            throw new Error(`Invalid circle ID at ${datasetId} feature index ${index}`);
+        }
+        if (datasetId !== 'circles' && (typeof feature.properties.zid !== 'string' || !feature.properties.zid.trim())) {
+            throw new Error(`Invalid zone ID at ${datasetId} feature index ${index}`);
+        }
+        if (datasetId === 'eugene' && 'id' in feature.properties
+            && feature.properties.id !== null && typeof feature.properties.id !== 'string') {
+            throw new Error(`Invalid legacy zone ID at ${datasetId} feature index ${index}`);
+        }
+    }
     return data;
 }
 
