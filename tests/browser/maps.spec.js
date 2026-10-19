@@ -87,6 +87,24 @@ test('opens the downloads modal and exports GeoJSON', async ({ page }) => {
     expect(download.suggestedFilename()).toMatch(/\.geojson$/i);
 });
 
+test('keeps suggestion drawing active after the feedback form split', async ({ page }) => {
+    await openMap(page);
+
+    await page.locator('#btn-suggest').click();
+    await expect(page.locator('#suggest-modal')).toHaveAttribute('aria-hidden', 'false');
+    await page.locator('#suggest-input-title').fill('Boundary note');
+    await page.locator('#suggest-input-message').fill('The path follows the creek.');
+    await page.locator('#btn-draw-marker').click();
+
+    const mapBounds = await page.locator('#tile-map canvas.maplibregl-canvas').boundingBox();
+    await page.locator('#tile-map canvas.maplibregl-canvas').click({
+        position: { x: mapBounds.width * 0.55, y: mapBounds.height * 0.55 }
+    });
+
+    await expect(page.locator('#suggest-annotation-status')).toContainText('1 Marker');
+    await expect(page.locator('body')).toHaveClass(/is-suggest-locked/);
+});
+
 test.describe('mobile navigation', () => {
     test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
