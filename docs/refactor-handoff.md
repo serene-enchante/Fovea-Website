@@ -6,8 +6,8 @@ Updated: 2026-10-19
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `ece2bf8 inject map initialization document dependency`
-- Latest handoff commit before this update: `6dad636 sync location refactor handoff`.
+- Latest refactor commit: `2b9edc8 split suggested app controls from toolbar`
+- Latest handoff commit before this update: `468d638 sync map initialization handoff`.
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -15,18 +15,21 @@ Updated: 2026-10-19
 
 ## Recent work
 
-## Progress snapshot (2026-10-14)
+## Progress snapshot (2026-10-19)
 
 - Overall estimate: **about 70%** of the goals in `docs/refactor-assessment.md`. This is a qualitative estimate; the plan has no formal scoring rubric.
 - The core map JavaScript migration is substantially advanced: `maps/index.html` loads `scripts/maps/entry.js`, and `scripts/maps-tile.js` is now a 316-line composition/compatibility layer (down from the assessment's original 8,865-line measurement).
+- The 1,141-line `toolbar-actions.js` was split by responsibility: toolbar actions now occupy 732 lines and suggested-app controls occupy 422 lines. Treat 500 lines as a review prompt and 1,000 lines as a strong signal to inspect cohesion, not as an automatic split target.
 - Verified in the current checkout: `styles/page-maps-tile.css` is still 6,500 lines; `scripts/map/map-runtime.js` still configures `prefetchZoomDelta: 8`; there is no `.github/workflows` directory; and no JSON schema files were found in the schema search.
 - Remaining plan areas include reducing/organizing the map CSS, measuring and tuning map startup/prefetch behavior, adding CI browser checks, formalizing dataset/provider schemas and API contracts, and reviewing the entry composition layer for any remaining legacy responsibilities.
-- Next priority: measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` on startup/network use before changing MapLibre settings. If measurement infrastructure is too heavy, add the planned browser CI workflow as a separate slice. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
+- Next priority: inspect the 1,237-line `scripts/download-wizard.js` for cohesive extraction candidates, reusing existing services rather than making a mechanical split. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
 
 Recent commits, newest first:
 
 | Commit | Change |
 | --- | --- |
+| `2b9edc8` | Move viewer-app metadata, app suggestions, and download search controls into `suggested-app-controls.js`; reduce the toolbar module below 1,000 lines. |
+| `468d638` | Record map initialization document injection and its verification in the handoff. |
 | `ece2bf8` | Inject `document` into basemap styling and location badge updates; pass it through location tracking. |
 | `6dad636` | Update the progress handoff after extracting location marker browser dependencies. |
 | `372fd06` | Inject document and MapLibre dependencies into user-location marker creation and pass them through location tracking. |
@@ -233,6 +236,12 @@ After injecting user-location marker browser dependencies:
 - `git diff --check` passed.
 
 After injecting the map initialization document dependency:
+
+- `npm test` passed: 173 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After splitting suggested-app controls from the toolbar module:
 
 - `npm test` passed: 173 tests.
 - `npm run test:browser` passed: 5 Playwright tests.
