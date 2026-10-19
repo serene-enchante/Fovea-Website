@@ -5,6 +5,7 @@ import { APP_INSTRUCTION_CONFIGS, COUNT_CIRCLES } from './config/download-wizard
 import { createDownloadWizardRasterCache } from './map/download-wizard-raster-cache.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
 import { createDownloadWizardStepper } from './components/download-wizard-stepper.js';
+import { createDownloadWizardSelectionView } from './components/download-wizard-selection-view.js';
 
 /**
  * download-wizard.js
@@ -130,116 +131,19 @@ const {
     escapeHtml
 });
 
-/**
- * Setup live search inputs with clear buttons
- */
-function setupSearchBars() {
-    // Circle Search
-    const circleInput = document.getElementById("circle-search-input");
-    const circleClear = document.getElementById("circle-search-clear");
-    if (circleInput) {
-        circleInput.addEventListener("input", (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            if (circleClear) circleClear.style.display = query ? "flex" : "none";
-            const filtered = COUNT_CIRCLES.filter(c => 
-                c.name.toLowerCase().includes(query) || c.subtitle.toLowerCase().includes(query)
-            );
-            renderCirclesList(filtered);
-        });
-    }
-    if (circleClear && circleInput) {
-        circleClear.addEventListener("click", () => {
-            circleInput.value = "";
-            circleClear.style.display = "none";
-            circleInput.focus();
-            renderCirclesList(COUNT_CIRCLES);
-        });
-    }
-
-    // Zone Search
-    const zoneInput = document.getElementById("zone-search-input");
-    const zoneClear = document.getElementById("zone-search-clear");
-    if (zoneInput) {
-        zoneInput.addEventListener("input", (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            if (zoneClear) zoneClear.style.display = query ? "flex" : "none";
-            filterZonesList(query);
-        });
-    }
-    if (zoneClear && zoneInput) {
-        zoneClear.addEventListener("click", () => {
-            zoneInput.value = "";
-            zoneClear.style.display = "none";
-            zoneInput.focus();
-            filterZonesList("");
-        });
-    }
-}
-
-/**
- * Renders Step 1 Count Circles Grid
- */
-function renderCirclesList(circles) {
-    const container = document.getElementById("circle-cards-grid");
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    if (circles.length === 0) {
-        container.innerHTML = `<div class="wizard-no-results">No count circles match your search.</div>`;
-        return;
-    }
-
-    circles.forEach(circle => {
-        const card = document.createElement("div");
-        card.className = `wizard-item-card ${state.selectedCircle?.id === circle.id ? 'is-selected' : ''} ${!circle.hasData ? 'is-disabled' : ''}`;
-        card.setAttribute("role", "button");
-        card.setAttribute("tabindex", "0");
-
-        let thumbHtml = "";
-        if (!circle.hasData) {
-            thumbHtml = `
-                <div class="wizard-circle-thumb wizard-circle-thumb--no-data" title="No data available">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-                    </svg>
-                </div>
-            `;
-        } else {
-            thumbHtml = `
-                <div class="wizard-circle-thumb wizard-circle-thumb--logo">
-                    <img src="${resolveAssetPath(circle.thumbnail)}" alt="${escapeHtml(circle.name)}" loading="eager">
-                </div>
-            `;
-        }
-
-        card.innerHTML = `
-            <div class="wizard-item-card__left">
-                ${thumbHtml}
-                <div class="wizard-item-card__info">
-                    <h3 class="wizard-item-card__title">${escapeHtml(circle.name)}</h3>
-                    <span class="wizard-item-card__desc">${escapeHtml(circle.subtitle)}</span>
-                </div>
-            </div>
-            <div class="wizard-item-card__arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-            </div>
-        `;
-
-        card.addEventListener("click", () => selectCircle(circle));
-        card.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                selectCircle(circle);
-            }
-        });
-
-        container.appendChild(card);
-    });
-}
+const {
+    setupSearchBars,
+    renderCirclesList,
+    renderZonesList,
+    filterZonesList
+} = createDownloadWizardSelectionView({
+    state,
+    circles: COUNT_CIRCLES,
+    onSelectCircle: circle => selectCircle(circle),
+    onSelectZone: zone => selectZone(zone),
+    resolveAssetPath,
+    escapeHtml
+});
 
 /**
  * Handle circle selection and GeoJSON data loading
@@ -286,93 +190,6 @@ async function selectCircle(circle, advance = true) {
     } catch(err) {
         console.error("Error loading circle data:", err);
         showToast("Error loading circle data. Please try again.");
-    }
-}
-
-/**
- * Renders Step 2 Zones List
- */
-function renderZonesList(features) {
-    const container = document.getElementById("zone-cards-grid");
-    const circleNameEl = document.getElementById("step-2-circle-name");
-    if (circleNameEl && state.selectedCircle) {
-        circleNameEl.textContent = state.selectedCircle.name;
-    }
-
-    const fullCircleCard = document.getElementById("btn-download-full-circle");
-    if (fullCircleCard) {
-        fullCircleCard.onclick = () => selectZone(null);
-    }
-
-    if (!container) return;
-    container.innerHTML = "";
-
-    if (features.length === 0) {
-        container.innerHTML = `<div class="wizard-no-results">No zones available for this circle.</div>`;
-        return;
-    }
-
-    features.forEach(feature => {
-        const zid = feature.properties?.zid || "0";
-        const displayZid = String(zid).padStart(2, "0");
-        const card = document.createElement("div");
-        card.className = "wizard-item-card";
-        card.setAttribute("role", "button");
-        card.setAttribute("tabindex", "0");
-        card.dataset.zid = displayZid;
-
-        card.innerHTML = `
-            <div class="wizard-item-card__left">
-                <div class="wizard-item-card__info">
-                    <h3 class="wizard-item-card__title">Zone ${displayZid}</h3>
-                </div>
-            </div>
-            <div class="wizard-item-card__arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-            </div>
-        `;
-
-        card.addEventListener("click", () => selectZone(feature));
-        card.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                selectZone(feature);
-            }
-        });
-
-        container.appendChild(card);
-    });
-}
-
-/**
- * Filters zones by query
- */
-function filterZonesList(query) {
-    const cards = document.querySelectorAll("#zone-cards-grid .wizard-item-card");
-    let visibleCount = 0;
-    cards.forEach(card => {
-        const zid = card.dataset.zid || "";
-        const title = `zone ${zid}`.toLowerCase();
-        if (title.includes(query) || zid.includes(query)) {
-            card.style.display = "flex";
-            visibleCount++;
-        } else {
-            card.style.display = "none";
-        }
-    });
-
-    let noResultsEl = document.querySelector("#zone-cards-grid .wizard-no-results");
-    if (visibleCount === 0) {
-        if (!noResultsEl) {
-            noResultsEl = document.createElement("div");
-            noResultsEl.className = "wizard-no-results";
-            noResultsEl.textContent = "No zones match your search.";
-            document.getElementById("zone-cards-grid").appendChild(noResultsEl);
-        }
-    } else if (noResultsEl) {
-        noResultsEl.remove();
     }
 }
 
