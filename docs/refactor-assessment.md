@@ -5,7 +5,7 @@
 
 ## Status update (2026-10-19)
 
-This assessment records the original repository baseline and architectural rationale. Its measurements and statements about the production entry point describe the October 10 starting state, not the current checkout. Since then, `maps/index.html` now loads the 310-line composition root `scripts/maps/entry.js`; `scripts/maps-tile.js` is a two-line compatibility import; and the map stylesheet is an ordered entry point with partials. Shared map, sidebar, download, feedback, and mobile responsibilities have been extracted into focused modules. Provider clients now cover observations, feedback, QR generation, map URLs, and GeoJSON; versioned schemas, a dataset manifest, API contracts, and a CI workflow are in place. See `docs/refactor-handoff.md` for the current implementation state, verification history, preserved local changes, and remaining physical-device profiling gate.
+This assessment records the original repository baseline and architectural rationale. Its measurements and statements about the production entry point describe the October 10 starting state, not the current checkout. Since then, `maps/index.html` now loads the 245-line composition root `scripts/maps/entry.js`; `scripts/maps-tile.js` is a two-line compatibility import; and the map stylesheet is an ordered entry point with partials. Shared map, sidebar, download, feedback, and mobile responsibilities have been extracted into focused modules. Provider clients now cover observations, feedback, QR generation, map URLs, and GeoJSON; versioned schemas, a dataset manifest, API contracts, and a CI workflow are in place. See `docs/refactor-handoff.md` for the current implementation state, verification history, preserved local changes, and remaining physical-device profiling gate.
 
 The original phase plan below remains useful as a map of the intended architecture, but its near-term work order has been superseded by the status and priorities recorded at the end of this document.
 
@@ -167,7 +167,7 @@ The original ordering below has been replaced with this status-based queue as of
 
 | Status | Work |
 | --- | --- |
-| Complete or in place | Entry/compatibility audit; provider cancellation, timeouts, and active-basemap error messages; shared wizard data repository with stepper, selection-view, and app-handoff components; feedback and mobile view decomposition; versioned schemas, provider contracts, dataset manifest, and hardened CI workflow. Hosted CI and Pages deployment succeeded through `b800dc1`; see the latest checkpoint in `docs/refactor-handoff.md`. |
+| Complete or in place | Entry/compatibility audit; provider cancellation, timeouts, and active-basemap error messages; shared wizard data repository with stepper, selection-view, and app-handoff components; feedback and mobile view decomposition; versioned schemas, provider contracts, dataset manifest, and hardened CI workflow. Hosted CI and Pages deployment succeeded through `e1081dd`; see the latest checkpoint in `docs/refactor-handoff.md`. |
 | Requires external evidence/state | Profile MapLibre cache memory on a representative physical mobile device before changing cache/prefetch settings. The user currently has no physical-device test setup. |
 
 The download-wizard controller is now below the 500-line soft limit after extracting its distinct stepper, selection-view, and compatible-app handoff responsibilities. Remaining cache profiling is gated on access to a representative physical mobile device; see the handoff for current status.
