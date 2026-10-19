@@ -39,11 +39,23 @@ test('records the active-dataset and tile request startup baseline', async ({ pa
         }
     });
 
+    const navigationStartedAt = Date.now();
     await openMap(page, '/maps/?feature=eugene&zone=04');
+    const mapReadyMs = Date.now() - navigationStartedAt;
     await page.waitForTimeout(1500);
 
     expect(datasetRequests.map(url => new URL(url).pathname.split('/').at(-1))).toEqual(['Eugene-05-wgs84.geojson']);
-    console.log(`Map startup baseline (desktop Chromium, 1.5s after map ready): ${datasetRequests.length} GeoJSON request(s), ${tileRequests.length} CARTO/Esri tile request(s).`);
+    const scriptBytes = await page.evaluate(() => {
+        const resources = performance.getEntriesByType('resource').filter(entry => {
+            return entry.initiatorType === 'script' && new URL(entry.name).origin === location.origin;
+        });
+        return {
+            count: resources.length,
+            transferBytes: resources.reduce((sum, entry) => sum + entry.transferSize, 0),
+            decodedBytes: resources.reduce((sum, entry) => sum + entry.decodedBodySize, 0)
+        };
+    });
+    console.log(`Map startup baseline (desktop Chromium): ready=${mapReadyMs}ms; same-origin JS=${scriptBytes.count} resources, ${scriptBytes.transferBytes} transfer bytes, ${scriptBytes.decodedBytes} decoded bytes; after 1.5s: ${datasetRequests.length} GeoJSON request(s), ${tileRequests.length} CARTO/Esri tile request(s).`);
 });
 
 test('clears legacy deep-link parameters while selecting Eugene, circles, and Florence', async ({ page }) => {
