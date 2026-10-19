@@ -6,8 +6,8 @@ Updated: 2026-10-19
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `11f1149 decompose download wizard controller`
-- Latest handoff commit before this update: `93b51de document large module refactor guidance`.
+- Latest refactor commit: `df0d5df split print layout rendering responsibilities`
+- Latest handoff commit before this update: `987a981 sync download wizard handoff`.
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -21,14 +21,17 @@ Updated: 2026-10-19
 - The core map JavaScript migration is substantially advanced: `maps/index.html` loads `scripts/maps/entry.js`, and `scripts/maps-tile.js` is now a 316-line composition/compatibility layer (down from the assessment's original 8,865-line measurement).
 - The 1,141-line `toolbar-actions.js` was split by responsibility: toolbar actions now occupy 732 lines and suggested-app controls occupy 422 lines. Treat 500 lines as a review prompt and 1,000 lines as a strong signal to inspect cohesion, not as an automatic split target.
 - `download-wizard.js` was decomposed into a 963-line workflow controller, an 84-line configuration module, a 121-line wizard-specific formatter module, and an 87-line raster-cache controller. Wizard formatters preserve their existing output; they were not replaced with the shared converters because those have different output semantics.
+- `map-rendering.js` was split into a 272-line cache/download facade, a 487-line layout renderer, and a 174-line pure print-geometry utility. The old `map-rendering.js` path re-exports the renderer and geometry functions to preserve existing imports.
 - Verified in the current checkout: `styles/page-maps-tile.css` is still 6,500 lines; `scripts/map/map-runtime.js` still configures `prefetchZoomDelta: 8`; there is no `.github/workflows` directory; and no JSON schema files were found in the schema search.
 - Remaining plan areas include reducing/organizing the map CSS, measuring and tuning map startup/prefetch behavior, adding CI browser checks, formalizing dataset/provider schemas and API contracts, and reviewing the entry composition layer for any remaining legacy responsibilities.
-- Next priority: inspect the 927-line `scripts/map/map-rendering.js` for cohesive responsibilities to separate, without splitting solely to reduce line count. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
+- Next priority: inspect the 838-line `scripts/components/feedback-form.js` for cohesive responsibilities to separate, preserving its drawing and submission behavior. Then review the 834-line `scripts/map/map-layers.js`. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
 
 Recent commits, newest first:
 
 | Commit | Change |
 | --- | --- |
+| `df0d5df` | Split pure print geometry and print-layout rendering from the raster cache and download facade. |
+| `987a981` | Record the download-wizard decomposition and verification in the handoff. |
 | `11f1149` | Extract wizard configuration, wizard-specific KML/GPX serialization, and raster cache lifecycle from the large wizard controller. |
 | `93b51de` | Record module size guidance and the oversized wizard as the next extraction candidate. |
 | `2b9edc8` | Move viewer-app metadata, app suggestions, and download search controls into `suggested-app-controls.js`; reduce the toolbar module below 1,000 lines. |
@@ -253,6 +256,12 @@ After splitting suggested-app controls from the toolbar module:
 After decomposing the download-wizard controller:
 
 - `npm test` passed: 179 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After splitting print-layout rendering responsibilities:
+
+- `npm test` passed: 182 tests.
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
