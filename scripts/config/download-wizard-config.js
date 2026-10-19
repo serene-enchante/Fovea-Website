@@ -1,3 +1,5 @@
+import { MAP_DATASETS } from './map-data-manifest.js';
+
 // Available Count Circles Catalog
 export const COUNT_CIRCLES = [
     {
@@ -5,7 +7,7 @@ export const COUNT_CIRCLES = [
         name: "Eugene",
         subtitle: "Lane County, Oregon · 29 Zones",
         totalZones: 29,
-        geojsonPath: "geojson/Eugene-05-wgs84.geojson",
+        geojsonPath: `geojson/${MAP_DATASETS.eugene.fileName}`,
         thumbnail: "images/logo-small.png",
         hasData: true
     },
@@ -14,7 +16,7 @@ export const COUNT_CIRCLES = [
         name: "Florence",
         subtitle: "Coastal Oregon · 14 Zones",
         totalZones: 14,
-        geojsonPath: "geojson/Florence-00-wgs84.geojson",
+        geojsonPath: `geojson/${MAP_DATASETS.florence.fileName}`,
         thumbnail: "images/florence.png",
         hasData: true
     },
@@ -23,7 +25,7 @@ export const COUNT_CIRCLES = [
         name: "Cottage Grove",
         subtitle: "Lane County, Oregon · No Data",
         totalZones: 0,
-        geojsonPath: "geojson/circles-wgs84.geojson",
+        geojsonPath: `geojson/${MAP_DATASETS.circles.fileName}`,
         circleFid: 2,
         hasData: false
     },
@@ -32,7 +34,7 @@ export const COUNT_CIRCLES = [
         name: "Oakridge",
         subtitle: "Cascade Foothills · No Data",
         totalZones: 0,
-        geojsonPath: "geojson/circles-wgs84.geojson",
+        geojsonPath: `geojson/${MAP_DATASETS.circles.fileName}`,
         circleFid: 3,
         hasData: false
     }

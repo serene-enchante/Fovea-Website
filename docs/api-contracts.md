@@ -16,6 +16,8 @@ JSON Schemas use JSON Schema Draft 2020-12 and the stable `https://fovea.org/sch
 
 The map repository enforces the active datasets' required feature type, polygon geometry family, and circle/zone identifiers before caching a response. `tests/geo-data-repository.test.js` runs that validation against all files in the active manifest and exercises invalid data. The JSON schema files are the fuller interchange contract; a future service should validate them with a Draft 2020-12 implementation.
 
+The active map manifest records each dataset's source edition, schema version, served filename, source QMD file, WGS84 bounds, and SHA-256 checksum. The repository test checks the checksums and bounds against the committed active files. The download wizard derives its GeoJSON filenames from this manifest so it cannot silently keep an old Eugene or Florence file path.
+
 ## Provider contracts
 
 | Provider / use | Request and normalization | Cache, timeout, retry | Failure behavior |

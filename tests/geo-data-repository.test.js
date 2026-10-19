@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import test, { afterEach } from 'node:test';
 import { readFile } from 'node:fs/promises';
 
@@ -136,6 +137,19 @@ test('active GeoJSON datasets satisfy their manifest-backed property and geometr
     assert.equal(loaded.circles.features.length, 4);
     assert.equal(loaded.eugene.features.length, 29);
     assert.equal(loaded.florence.features.length, 13);
+
+    for (const dataset of Object.values(MAP_DATASETS)) {
+        const file = await readFile(new URL(`../geojson/${dataset.fileName}`, import.meta.url));
+        const source = await readFile(new URL(`../${dataset.sourceFile}`, import.meta.url));
+        const parsed = JSON.parse(file.toString('utf8'));
+        const bounds = getFeatureCollectionBounds(parsed);
+
+        assert.ok(source.byteLength > 0, `${dataset.id} source file is present`);
+        assert.equal(createHash('sha256').update(file).digest('hex'), dataset.sha256, `${dataset.id} checksum`);
+        assert.deepEqual(bounds.map(value => Number(value.toFixed(9))), dataset.bounds.map(value => Number(value.toFixed(9))));
+        assert.equal(dataset.path, `../geojson/${dataset.fileName}`);
+        assert.ok(Object.isFrozen(dataset.bounds));
+    }
 });
 
 test('versioned schemas expose the active dataset, observation, feedback, and export contracts', async () => {
@@ -150,3 +164,20 @@ test('versioned schemas expose the active dataset, observation, feedback, and ex
     assert.deepEqual(schemas[3].required, ['title', 'description', 'geojson']);
     assert.deepEqual(schemas[4].properties.format.enum, ['geojson', 'kml', 'gpx', 'pdf', 'tiff']);
 });
+
+function getFeatureCollectionBounds(collection) {
+    const bounds = [Infinity, Infinity, -Infinity, -Infinity];
+    const visit = value => {
+        if (!Array.isArray(value)) return;
+        if (value.length >= 2 && typeof value[0] === 'number' && typeof value[1] === 'number') {
+            bounds[0] = Math.min(bounds[0], value[0]);
+            bounds[1] = Math.min(bounds[1], value[1]);
+            bounds[2] = Math.max(bounds[2], value[0]);
+            bounds[3] = Math.max(bounds[3], value[1]);
+            return;
+        }
+        value.forEach(visit);
+    };
+    collection.features.forEach(feature => visit(feature.geometry.coordinates));
+    return bounds;
+}
