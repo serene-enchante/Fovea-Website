@@ -23,6 +23,24 @@ for (const { circle, zone, expectedTitle } of [
     });
 }
 
+test('records the active-dataset and tile request startup baseline', async ({ page }) => {
+    const datasetRequests = [];
+    const tileRequests = [];
+    page.on('request', request => {
+        const url = request.url();
+        if (/\/geojson\/[^/]+\.geojson(?:\?|$)/i.test(url)) datasetRequests.push(url);
+        if (/(?:cartocdn\.com|arcgisonline\.com)/i.test(url) && /\/\d+\/\d+\/\d+(?:\.[a-z0-9]+)?(?:\?|$)/i.test(url)) {
+            tileRequests.push(url);
+        }
+    });
+
+    await openMap(page, '/maps/?feature=eugene&zone=04');
+    await page.waitForTimeout(1500);
+
+    expect(datasetRequests.map(url => new URL(url).pathname.split('/').at(-1))).toEqual(['Eugene-05-wgs84.geojson']);
+    console.log(`Map startup baseline (desktop Chromium, 1.5s after map ready): ${datasetRequests.length} GeoJSON request(s), ${tileRequests.length} CARTO/Esri tile request(s).`);
+});
+
 test('clears legacy deep-link parameters while selecting Eugene, circles, and Florence', async ({ page }) => {
     await openMap(page, '/maps/?circle=Eugene');
     await expect(page.locator('#header-title')).toContainText(/Eugene Christmas Bird\s*Count Circle/);
