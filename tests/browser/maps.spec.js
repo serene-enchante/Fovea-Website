@@ -118,6 +118,22 @@ test('opens the header view menu and applies a selected view label', async ({ pa
     await expect(page.locator('#header-view-menu')).toHaveAttribute('aria-hidden', 'true');
 });
 
+test('reparents toolbar modals between desktop and mobile layouts', async ({ page }) => {
+    await openMap(page);
+    const actionsRow = page.locator('.maps-tile-header__actions');
+
+    await expect.poll(() => actionsRow.evaluate(element => element.parentElement.id)).toBe('map-wrapper');
+    await expect.poll(() => page.locator('#downloads-modal').evaluate(element => {
+        return element.parentElement === document.querySelector('.maps-tile-header__actions');
+    })).toBeTruthy();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect.poll(() => actionsRow.evaluate(element => element.parentElement === document.body)).toBeTruthy();
+    await expect.poll(() => page.locator('#downloads-modal').evaluate(element => {
+        return element.parentElement === document.querySelector('.maps-tile-header__actions');
+    })).toBeTruthy();
+});
+
 test.describe('mobile navigation', () => {
     test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 

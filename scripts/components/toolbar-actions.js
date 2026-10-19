@@ -10,6 +10,7 @@ import { handleSpatialFileShare } from '../services/file-download-service.js';
 import { getDownloadFilename } from '../services/download-file-names.js';
 import { setupDownloadAppSearch, updateShareModalDescription } from './suggested-app-controls.js';
 import { getShareQrCodeImageUrl } from '../services/qr-image-service.js';
+import { setupMapToolbarModalLayout } from './map-toolbar-modal-layout.js';
 
 export {
     MAP_VIEWER_APPS,
@@ -216,35 +217,9 @@ export function setupActionButtons({
     const helpBtn = document.getElementById("btn-help");
     const suggestBtn = document.getElementById("btn-suggest");
 
-    const handleModalReparenting = () => {
-        const mapWrapper = document.getElementById("map-wrapper") || document.querySelector(".maps-tile-map-area");
-        const actionsRow = document.querySelector(".maps-tile-header__actions");
-        const modals = [downloadModal, copyModal, helpModal, suggestModal];
-
-        if (window.innerWidth <= 768) {
-            if (actionsRow && actionsRow.parentElement !== document.body) {
-                document.body.appendChild(actionsRow);
-            }
-            modals.forEach(m => {
-                if (m && m.parentElement !== actionsRow) {
-                    actionsRow.appendChild(m);
-                }
-            });
-        } else if (mapWrapper) {
-            if (actionsRow && actionsRow.parentElement !== mapWrapper) {
-                mapWrapper.appendChild(actionsRow);
-            }
-            if (actionsRow) {
-                modals.forEach(m => {
-                    if (m && m.parentElement !== actionsRow) {
-                        actionsRow.appendChild(m);
-                    }
-                });
-            }
-        }
-    };
-    handleModalReparenting();
-    window.addEventListener("resize", handleModalReparenting);
+    setupMapToolbarModalLayout({
+        modals: [downloadModal, copyModal, helpModal, suggestModal]
+    });
 
     window.transitionToPage = function(dest) {
         const overlay = document.getElementById("page-transition-overlay");
