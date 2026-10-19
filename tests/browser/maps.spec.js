@@ -105,6 +105,19 @@ test('keeps suggestion drawing active after the feedback form split', async ({ p
     await expect(page.locator('body')).toHaveClass(/is-suggest-locked/);
 });
 
+test('opens the header view menu and applies a selected view label', async ({ page }) => {
+    await openMap(page);
+
+    await page.locator('#header-view-toggle').click();
+    await expect(page.locator('#header-view-toggle')).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('#header-view-menu')).toHaveAttribute('aria-hidden', 'false');
+    await page.locator('.header-view-menu__item[data-value="map"]').click();
+
+    await expect(page.locator('#header-view-toggle-label')).toHaveText('Map');
+    await expect(page.locator('#header-view-toggle')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#header-view-menu')).toHaveAttribute('aria-hidden', 'true');
+});
+
 test.describe('mobile navigation', () => {
     test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 

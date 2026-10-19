@@ -3,7 +3,8 @@ import { setupSidebarCapsuleEvents } from '../components/sidebar-capsule-events.
 import { setupImageLightbox } from '../components/image-lightbox.js';
 import { setupHelpModeSystem } from '../components/map-modals.js';
 import { setupMobileBottomNav } from '../components/bottom-nav-view.js';
-import { setupActionButtons as setupToolbarActionButtons, setupViewToggleMenu, performDirectCopyLink } from '../components/toolbar-actions.js';
+import { setupActionButtons as setupToolbarActionButtons, performDirectCopyLink } from '../components/toolbar-actions.js';
+import { setupViewToggleMenu } from '../components/header-view-toggle.js';
 import { handleAppDirectOpen } from '../components/avenza-modal-view.js';
 import { closeAllModals as closeModalsView } from '../components/modal-view.js';
 import { cancelDownloadViewPreload } from './map-rendering.js';
