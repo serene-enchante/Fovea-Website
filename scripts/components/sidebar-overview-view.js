@@ -70,7 +70,7 @@ export function renderSidebarOverview(listContainer, { state, isCirclesFeature, 
             `;
         });
 
-        imgSrc = "../images/ccba.jpg";
+        imgSrc = "../images/ccba.webp";
         imgAlt = "Audubon Christmas Bird Count Circles";
         descText = "Coordinated by the Coast to Cascades Bird Alliance, our regional counts span from coastal estuaries in Florence to Willamette Valley wetlands in Eugene, tracking winter bird populations through community science.";
 
@@ -99,10 +99,10 @@ export function renderSidebarOverview(listContainer, { state, isCirclesFeature, 
 
         imgAlt = `${circleTitle} Overview`;
         if (state.currentFeature === "florence") {
-            imgSrc = "../images/fcbc.jpg";
+            imgSrc = "../images/fcbc.webp";
             descText = "Sponsored by the Coast to Cascades Bird Alliance since 1980, the Florence count explores the Siuslaw estuary, ocean beaches, and coastal dunes, documenting thousands of wintering shorebirds, seabirds, and waterfowl each December.";
         } else {
-            imgSrc = "../images/ecbc.jpg";
+            imgSrc = "../images/ecbc.webp";
             descText = "Founded in 1942, the Eugene Christmas Bird Count spans 27 zones across the southern Willamette Valley—from Fern Ridge to Spencer Butte—where field and backyard counters tally over 130 winter species annually.";
         }
 
@@ -278,8 +278,8 @@ export function renderSidebarOverview(listContainer, { state, isCirclesFeature, 
     const mediaDiv = overviewEl.querySelector(".sidebar-about-media");
     if (img) {
         img.addEventListener("error", () => {
-            if (imgSrc !== "../images/wetlands.jpg" && !isCircle) {
-                img.src = "../images/wetlands.jpg";
+            if (imgSrc !== "../images/wetlands.webp" && !isCircle) {
+                img.src = "../images/wetlands.webp";
             } else {
                 if (mediaDiv) mediaDiv.style.display = "none";
             }

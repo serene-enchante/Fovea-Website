@@ -1,6 +1,6 @@
 const GEOJSON_PATH = "../geojson/Eugene-05-wgs84.geojson";
 const CIRCLE_ID = "ecbc-circle";
-const FALLBACK_HERO_IMAGE = "../images/wetlands.jpg";
+const FALLBACK_HERO_IMAGE = "../images/wetlands.webp";
 const VIEW_OPTIONS = ["map", "grid", "list"];
 const SORT_OPTIONS = ["title", "modified", "founded", "area"];
 const MAP_STYLE_CIRCLE_BLACK = {
@@ -122,12 +122,12 @@ function formatArea(value) {
 function zoneImagePath(zoneId) {
     let zid = displayZoneId(zoneId);
     if (!zid) return FALLBACK_HERO_IMAGE;
-    if (zid === "6A" || zid === "6B" || zid === "06A" || zid === "06B") return "../images/zone-images/z06-01.jpg";
-    if (zid === "8" || zid === "08") return "../images/zone-images/z08A-01.jpg";
-    if (zid === "10") return "../images/zone-images/z10A-01.jpg";
-    if (zid === "20B") return "../images/zone-images/20B-01.jpg";
+    if (zid === "6A" || zid === "6B" || zid === "06A" || zid === "06B") return "../images/zone-images/z06-01.webp";
+    if (zid === "8" || zid === "08") return "../images/zone-images/z08A-01.webp";
+    if (zid === "10") return "../images/zone-images/z10A-01.webp";
+    if (zid === "20B") return "../images/zone-images/20B-01.webp";
     if (zid === "1") zid = "01";
-    return `../images/zone-images/z${zid}-01.jpg`;
+    return `../images/zone-images/z${zid}-01.webp`;
 }
 
 function attachImageFallback(imageElement) {

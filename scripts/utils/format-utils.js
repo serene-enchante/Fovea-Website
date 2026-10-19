@@ -1,4 +1,4 @@
-export const FALLBACK_IMAGE = "../images/wetlands.jpg";
+export const FALLBACK_IMAGE = "../images/wetlands.webp";
 
 export function normalizeZoneId(value) {
     if (!value) return "";
@@ -16,13 +16,13 @@ export function zoneImagePath(zoneId) {
     let zid = displayZoneId(zoneId);
     if (!zid) return FALLBACK_IMAGE;
 
-    if (zid === "6A" || zid === "6B" || zid === "06A" || zid === "06B") return "../images/zone-images/z06-01.jpg";
-    if (zid === "8" || zid === "08") return "../images/zone-images/z08A-01.jpg";
-    if (zid === "10") return "../images/zone-images/z10A-01.jpg";
-    if (zid === "20B") return "../images/zone-images/20B-01.jpg";
+    if (zid === "6A" || zid === "6B" || zid === "06A" || zid === "06B") return "../images/zone-images/z06-01.webp";
+    if (zid === "8" || zid === "08") return "../images/zone-images/z08A-01.webp";
+    if (zid === "10") return "../images/zone-images/z10A-01.webp";
+    if (zid === "20B") return "../images/zone-images/20B-01.webp";
     if (zid === "1") zid = "01";
 
-    return `../images/zone-images/z${zid}-01.jpg`;
+    return `../images/zone-images/z${zid}-01.webp`;
 }
 
 export function formatDate(value) {

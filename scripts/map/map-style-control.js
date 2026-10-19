@@ -1,7 +1,7 @@
 import { CIRCLE_ID } from '../config/app-config.js';
 import { displayZoneId, normalizeZoneId, zoneImagePath } from '../utils/format-utils.js';
 
-export function setupMapStyleControl({ topLeft, state, onSelectSubject, onSwitchBaseMap, notify = () => {}, fallbackImage = '../images/wetlands.jpg', documentObject = globalThis.document }) {
+export function setupMapStyleControl({ topLeft, state, onSelectSubject, onSwitchBaseMap, notify = () => {}, fallbackImage = '../images/wetlands.webp', documentObject = globalThis.document }) {
     const layersDiv = documentObject.createElement("div");
     layersDiv.className = "map-ctrl-bar map-ctrl map-ctrl-styles";
     
@@ -90,7 +90,7 @@ export function setupMapStyleControl({ topLeft, state, onSelectSubject, onSwitch
         const layers = [];
         if (state.isCirclesFeature || state.currentFeature === "circles") {
             layers.push({
-                id: "circles", name: "Coast to Cascades Bird Alliance", isChild: false, image: "../images/wetlands.jpg", isLogo: false,
+                id: "circles", name: "Coast to Cascades Bird Alliance", isChild: false, image: "../images/wetlands.webp", isLogo: false,
                 action: () => onSelectSubject(CIRCLE_ID, true)
             });
         } else {

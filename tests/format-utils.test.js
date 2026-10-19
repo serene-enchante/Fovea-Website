@@ -4,9 +4,9 @@ import test from 'node:test';
 import { displayZoneId, formatArea, normalizeZoneId, zoneImagePath } from '../scripts/utils/format-utils.js';
 
 test('uses the expected zone image aliases', () => {
-    assert.equal(zoneImagePath('06A'), '../images/zone-images/z06-01.jpg');
-    assert.equal(zoneImagePath('1'), '../images/zone-images/z01-01.jpg');
-    assert.equal(zoneImagePath('20B'), '../images/zone-images/20B-01.jpg');
+    assert.equal(zoneImagePath('06A'), '../images/zone-images/z06-01.webp');
+    assert.equal(zoneImagePath('1'), '../images/zone-images/z01-01.webp');
+    assert.equal(zoneImagePath('20B'), '../images/zone-images/20B-01.webp');
 });
 
 test('formats valid areas and rejects non-numeric values', () => {

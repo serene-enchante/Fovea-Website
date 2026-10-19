@@ -21,7 +21,7 @@ export function initializeMapRuntime({
     notify,
     adjustHeaderFontSize,
     updateLabelZoomVisibility,
-    fallbackImage = '../images/wetlands.jpg',
+    fallbackImage = '../images/wetlands.webp',
     documentObject = globalThis.document,
     windowObject = globalThis.window,
     navigatorObject = globalThis.navigator
