@@ -49,74 +49,26 @@ import { updateMapRouteUrl } from '../map/map-route-state.js';
 import { findFeatureByZoneId } from '../services/geo-selection.js';
 import { state } from '../state.js';
 
+// Keep map and observation layer styling synchronized through one adapter.
 function updateAllFeatureStyles() {
     updateMapFeatureStyles({ updateAdditionalLayers: updateBirdObservationsLayerStyles });
 }
 
-// --- Client-Side Exporter Helpers (GeoJSON, KMZ, GPX) ---
-
-
+// Preserve legacy map download metadata while using the shared file service.
 function handleSpatialFileShare(event, fileOrBlob, fileName, triggerButton = null) {
-  return shareSpatialFile(
-    event,
-    fileOrBlob,
-    fileName,
-    triggerButton,
-    (message, isError) => showToast(message, isError),
-    { compatibilityProfile: 'legacy-map' }
-  );
+    return shareSpatialFile(
+        event,
+        fileOrBlob,
+        fileName,
+        triggerButton,
+        (message, isError) => showToast(message, isError),
+        { compatibilityProfile: 'legacy-map' }
+    );
 }
-
-/**
- * Dynamically updates the Avenza modal title to match selection type (Zones vs Circles).
- */
-
-
-/**
- * Returns count circle thumbnail/logo for the current selection (matching top-left header logo).
- */
-
-
-/**
- * Opens the blackout instruction modal dynamically configured for any app (Avenza, Gaia GPS, CalTopo, OsmAnd).
- */
-
-
 
 function switchBaseMap(baseMapId) {
     return applyBaseMap(baseMapId, { state, updateStyles: updateAllFeatureStyles });
 }
-
-// ──────────────────────────────────────────────────────────────
-// Headless offscreen MapLibre renderer for PDF / TIFF exports
-// No dependency on the on-screen map DOM or state.map
-// ──────────────────────────────────────────────────────────────
-
-
-/**
- * Fast & exact Pole of Inaccessibility (Polylabel) algorithm.
- * Finds the most distant internal point from the polygon outline (maximum clearance from all borders).
- * Guaranteed to place labels in the widest, most spacious part of any polygon (even concave/complex).
- */
-
-
-/**
- * Helper to compute the most spacious interior point for a GeoJSON feature (maximum border clearance).
- */
-
-
-/**
- * Create a headless offscreen MapLibre GL instance, render Esri Topo tiles
- * with optional zone polygon overlays, and return a standalone canvas copy + zone label positions.
- */
-
-
-/**
- * Render a full cartographic print layout canvas using a headless offscreen MapLibre instance.
- * Completely independent of the on-screen map.
- * @returns {Promise<HTMLCanvasElement>} The final 4000×3000 layout canvas
- */
-
 
 const { downloadGeoPdf, downloadGeoTiff } = createMapLayoutDownloadActions({
     hasCachedLayout: hasCachedLayoutCanvas,
@@ -224,9 +176,7 @@ selectBirdHandler = createBirdSelectionController({
 // This gives true per-segment glow — only the line pixels within the gradient radius
 // are revealed, rather than MapLibre's per-feature opacity which affects whole zones.
 
-
 // HTML label overlay — repositions div labels on every map render
-
 
 function initializeMap() {
     return initializeMapRuntime({
@@ -246,18 +196,6 @@ function initializeMap() {
     });
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 setupMapPageNavigation({
     state,
     circleId: CIRCLE_ID,
@@ -266,7 +204,6 @@ setupMapPageNavigation({
     selectSubject,
     switchToCirclesFeature
 });
-
 
 async function init() {
     return runMapPageStartup({
@@ -280,26 +217,24 @@ async function init() {
         renderSidebarList,
         initializeMap,
         setupPageUi: () => setupMapPageUi({
-                state,
-                renderSidebarList,
-                updateKeyboardFocus: updateKeyboardTileFocus,
-                onToggleFullscreen: toggleFullscreen,
-                notify: showToast,
-                shareFile: handleSpatialFileShare,
-                downloadPdf: button => downloadGeoPdf(button),
-                downloadTiff: button => downloadGeoTiff(button),
-                documentObject: document,
-                windowObject: window,
-                navigatorObject: navigator,
-                MutationObserverClass: MutationObserver
-            }),
+            state,
+            renderSidebarList,
+            updateKeyboardFocus: updateKeyboardTileFocus,
+            onToggleFullscreen: toggleFullscreen,
+            notify: showToast,
+            shareFile: handleSpatialFileShare,
+            downloadPdf: button => downloadGeoPdf(button),
+            downloadTiff: button => downloadGeoTiff(button),
+            documentObject: document,
+            windowObject: window,
+            navigatorObject: navigator,
+            MutationObserverClass: MutationObserver
+        }),
         selectSubject,
         notify: showToast,
         updateHeader
     });
 }
-
-
 
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
