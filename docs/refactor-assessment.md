@@ -3,6 +3,12 @@
 **Assessment date:** 2026-10-10  
 **Scope:** Static review of the checked-out website source. This report does not cover the future Rust implementation. It recommends changes that make the existing JavaScript site easier to change safely while creating portable data and domain boundaries for that later work.
 
+## Status update (2026-10-19)
+
+This assessment records the original repository baseline and architectural rationale. Its measurements and statements about the production entry point describe the October 10 starting state, not the current checkout. Since then, `maps/index.html` now loads the 310-line composition root `scripts/maps/entry.js`; `scripts/maps-tile.js` is a two-line compatibility import; and the map stylesheet is an ordered entry point with partials. Shared map, sidebar, download, feedback, and mobile responsibilities have been extracted into focused modules. Provider clients now cover observations, feedback, QR generation, map URLs, and GeoJSON; versioned schemas, a dataset manifest, API contracts, and a CI workflow are in place. See `docs/refactor-handoff.md` for the current implementation state, verification history, preserved local changes, and remaining physical-device profiling gate.
+
+The original phase plan below remains useful as a map of the intended architecture, but its near-term work order has been superseded by the status and priorities recorded at the end of this document.
+
 ## Executive summary
 
 The main concern is valid: the map experience has grown into a tightly coupled browser application. Its production entry point is an 8,865-line script, `scripts/maps-tile.js`, coupled to a 6,500-line stylesheet, `styles/page-maps-tile.css`. It owns data loading, map rendering, selection, UI composition, downloads, external API calls, feedback submission, navigation, mobile gestures, and page initialization in one global scope.
@@ -20,34 +26,34 @@ The practical strategy is an incremental strangler refactor: establish a stable 
 | The partial extraction has a known functional gap | `scripts/map/map-init.js` defines `updateUserLocationOnMap` as a stub, while it is invoked by geolocation tracking. | Migration needs feature-level parity checks before any module is promoted to the live entry point. |
 | Shared behavior is implemented several times | Map, settings, wizard, and navigation code each define theme, toast, formatting, or mobile-navigation behaviors; `scripts/maps-tile.js`, `scripts/mobile-bottom-nav.js`, and `scripts/components/bottom-nav-view.js` all contain mobile bottom-nav logic. GeoJSON export selection, zone-ID matching, export filenames, file sharing, suggested-app settings and resolution, store fallback behavior, app selection presentation, and map bounds now have shared implementations. | Fixes can land in one implementation and fail to reach the route that customers use. |
 | Page files contain application code and styling | `index.html` is 2,435 lines and includes extensive CSS and scripts; the map and download pages also depend on global CDN scripts and inline theme bootstrapping. | Templates cannot be reviewed as structure alone, and browser dependencies are implicit. |
-| Startup preloads nonessential map tiles | Map initialization preloads 84 low-resolution tile images across four base-map sources after the map becomes idle. Geographic data now loads only for the requested initial view and is cached for later navigation. | The data-loading cost is reduced, while unused base-map warming still consumes bandwidth after startup. |
-| External dependencies and operational values are scattered | MapLibre, Turf, JSZip, jsPDF, QR libraries, tile providers, iNaturalist, QR services, and the feedback endpoint are referenced directly from HTML and feature code. | Updating a provider or handling an outage requires broad code search; these calls are difficult to mock or observe. |
-| Feedback success cannot be verified in the browser | The feedback form posts with `mode: "no-cors"`, so its response is opaque to the page. | The interface can show a submission success message even when the endpoint did not accept the request. |
+| Startup previously preloaded nonessential map tiles | The low-resolution tile-warming loop has been removed. Startup loads only the requested GeoJSON dataset; MapLibre still controls tile cache and prefetch through its configured options. | Startup request counts are covered in Playwright. Tile-cache memory still needs a representative physical-device profile before changing MapLibre settings. |
+| External dependencies and operational values are partly centralized | Map provider URLs, iNaturalist, QR URL construction, feedback POST, GeoJSON loading, app stores, and eBird lookup now have shared configuration or service boundaries. Some browser libraries remain CDN globals. | The active integrations have narrower test seams and contracts; the future Rust boundary remains documented. |
+| Feedback acceptance cannot be verified in the browser | The feedback form posts with `mode: "no-cors"`, so its response is opaque to the page. | The interface says “request sent” and does not claim confirmed acceptance. Server-side confirmation still requires a CORS-enabled response contract. |
 | Map deep-link state was duplicated | The live map and extracted data service each parsed `circle`, `cid`, `feature`, `zone`, and `id` independently. `scripts/map/map-route-state.js` now owns this contract and has unit coverage. | Route behavior is testable and compatible across the current entry point and future modular entry point. |
-| Browser checks have no CI execution yet | Playwright now covers map deep links, Eugene and Florence selection, returning to circles, downloads, and mobile navigation locally, but no CI workflow runs it on each change. | Interactive regressions are detectable before release when contributors run the command, but enforcement requires CI. |
-| Data versions have no explicit manifest | Multiple versions of Eugene GeoJSON, QMD, and TopoJSON files coexist. `scripts/config/map-data-manifest.js` now names the active served datasets and their paths, but it does not yet record source versions or archival status. | It is easy for routes to serve different geographic data or for obsolete files to remain ambiguous. |
+| Browser CI now runs on pushes and pull requests | `.github/workflows/ci.yml` passed its first hosted run on `d9150ca`; the job completed Node and Playwright checks in 1m 14s. | GitHub emitted runner maintenance notices for Node 20 action fallback and the upcoming `ubuntu-latest` image migration; neither failed the run. |
+| Historical and active data coexist | `scripts/config/map-data-manifest.js` identifies each active served dataset with its edition, schema version, filename, source QMD, bounds, and SHA-256 checksum. Historical source files are outside the active manifest. | The active browser data version is explicit; archival labeling of every historical file remains a separate data-curation task. |
 
 ## Current coupling map
 
 ```mermaid
 flowchart LR
-  Page["maps/index.html"] --> Legacy["scripts/maps-tile.js\nproduction entry point"]
-  Legacy --> Browser["DOM, URL, storage\nand global libraries"]
-  Legacy --> Geo["GeoJSON files"]
-  Legacy --> Map["MapLibre and tile providers"]
-  Legacy --> External["iNaturalist, QR, feedback endpoint"]
-  Legacy --> Export["PDF, TIFF, GPX, KML, ZIP"]
-
-  Modules["scripts/map, components,\nservices, utils, config"] -. "partially extracted;\nnot loaded by map page" .-> Page
+  Page["maps/index.html"] --> Entry["scripts/maps/entry.js\ncomposition root"]
+  Entry --> Browser["DOM, URL, app state"]
+  Entry --> Modules["map, components, services,\nutils, config"]
+  Modules --> Geo["Manifest-backed GeoJSON"]
+  Modules --> Map["MapLibre and tile providers"]
+  Modules --> External["iNaturalist, QR, feedback"]
+  Modules --> Export["PDF, TIFF, GPX, KML, ZIP"]
+  Shim["scripts/maps-tile.js"] -. "compatibility import" .-> Entry
 ```
 
-The issue is less the number of files than the lack of boundaries. A feature such as selection needs data, URL mutation, map state, sidebar DOM, download rendering, and possibly mobile layout; all are reachable from the same global script. The target should make those dependencies explicit.
+The original issue was less the number of files than the lack of boundaries. The active map now routes selection, data loading, export, UI, and provider behavior through modules with explicit callback wiring. The remaining entry is a 310-line composition root; `scripts/maps-tile.js` is a two-line compatibility import.
 
 ## Progress through this branch
 
 The branch has established testable shared boundaries for route parsing, active map-data configuration and lazy loading, GeoJSON selection, zone formatting and descriptions, download filenames and share metadata, external app instructions and store fallbacks, KML/GPX/TIFF export conversion, print geometry, QR image loading, and location containment.
 
-The live page now loads a module entry point, and `scripts/maps-tile.js` has been reduced to a 299-line composition layer. The implementation is covered by 170 Node tests and five Playwright browser checks for deep links, circle selection, downloads, and mobile navigation. The next architectural step is to keep shrinking the composition boundary and to make the remaining stateful integrations explicit; map runtime, route and selection coordination, sidebar rendering, modals, search, feedback, and mobile interactions have already been moved behind shared modules.
+The live page loads `scripts/maps/entry.js`; the old script path remains only as a compatibility import. The current suite has 211 Node tests and ten Playwright checks, including deep links, downloads, mobile navigation, suggestion drawing, the header view toggle, and responsive toolbar-modal placement. The hosted CI workflow passed on `d9150ca` in 1m 14s. The entry audit found no cohesive behavior that should move out of the composition root. Recent slices have moved provider request lifecycles, wizard data loading, feedback drawing and annotation layers, mobile resize/snap handling, and toolbar modal/view behavior behind focused modules. See the handoff for verification details and the remaining physical-device profiling gate.
 
 ## Refactor goals and guardrails
 
@@ -157,15 +163,14 @@ This creates useful migration assets: test cases, data schemas, normalized fixtu
 
 ## Near-term work order
 
-The following order offers the best balance of client value, risk reduction, and effort:
+The original ordering below has been replaced with this status-based queue as of 2026-10-19:
 
-1. Defer nonessential tile preloading and limit it to the active base layer.
-2. Add a data manifest and move active geographic paths to one configuration module.
-3. Add tooling plus tests for URL, GeoJSON, formatting, and export behavior.
-4. Create the map module entry point and migrate data loading and selection first.
-5. Complete and migrate the MapLibre/user-location slice.
-6. Migrate exports, then sidebar and modal UI.
-7. Consolidate mobile navigation and route templates; delete the monolith and duplicate implementations.
+| Status | Work |
+| --- | --- |
+| Complete or in place | Entry/compatibility audit; provider cancellation, timeouts, and active-basemap error messages; shared wizard data repository; feedback and mobile view decomposition; versioned schemas, provider contracts, dataset manifest, and CI workflow. The hosted CI run passed on `d9150ca`. See the latest checkpoint in `docs/refactor-handoff.md`. |
+| Requires external evidence/state | Profile MapLibre cache memory on a representative physical mobile device before changing cache/prefetch settings. The user currently has no physical-device test setup. |
+
+The download-wizard decomposition is already recorded as complete in the handoff. Its remaining controller size alone is not a next-step justification; revisit it only if a current cohesion audit finds a distinct responsibility worth extracting.
 
 ## Risks to manage
 

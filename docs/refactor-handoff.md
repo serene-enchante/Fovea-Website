@@ -6,8 +6,8 @@ Updated: 2026-10-19
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `f5fdb73 split map page stylesheet into ordered partials`
-- Latest handoff commit before this update: `5e978be sync map stylesheet split handoff`.
+- Latest refactor commit: `797e45c Extract responsive toolbar modal layout`
+- Latest handoff commit: `Record hosted CI and device profiling gate`.
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -24,19 +24,16 @@ Updated: 2026-10-19
 
 ## Progress snapshot (2026-10-19)
 
-- Overall estimate: **about 70%** of the goals in `docs/refactor-assessment.md`. This is a qualitative estimate; the plan has no formal scoring rubric.
-- The core map JavaScript migration is substantially advanced: `maps/index.html` loads `scripts/maps/entry.js`, and `scripts/maps-tile.js` is now a 316-line composition/compatibility layer (down from the assessment's original 8,865-line measurement).
-- The 1,141-line `toolbar-actions.js` was split by responsibility: toolbar actions now occupy 732 lines and suggested-app controls occupy 422 lines. Treat 500 lines as a review prompt and 1,000 lines as a strong signal to inspect cohesion, not as an automatic split target.
-- `download-wizard.js` was decomposed into a 963-line workflow controller, an 84-line configuration module, a 121-line wizard-specific formatter module, and an 87-line raster-cache controller. Wizard formatters preserve their existing output; they were not replaced with the shared converters because those have different output semantics.
-- `map-rendering.js` was split into a 272-line cache/download facade, a 487-line layout renderer, and a 174-line pure print-geometry utility. The old `map-rendering.js` path re-exports the renderer and geometry functions to preserve existing imports.
-- `feedback-form.js` now delegates annotation preview and submission GeoJSON construction to a 74-line service; the form controller is 707 lines.
-- HTML label DOM rendering, visibility, and basemap colors now live in `map-html-labels.js` (104 lines); `map-layers.js` remains the compatibility owner for the existing exports.
-- Theme-specific base vector styling now lives in `map-vector-theme-styles.js` (145 lines); place-label filtering lives in `map-place-label-filter.js` (100 lines); `map-layers.js` is 438 lines. The style-load sequence and road color cache remain in `map-layers.js`.
-- `styles/page-maps-tile.css` is now a 12-line ordered import entry; its 12 partials range from 164 to 832 lines. `scripts/map/map-runtime.js` still configures `prefetchZoomDelta: 8`; there is no `.github/workflows` directory; and no JSON schema files were found in the schema search.
-- Remaining plan areas include reducing/organizing the map CSS, measuring and tuning map startup/prefetch behavior, adding CI browser checks, formalizing dataset/provider schemas and API contracts, and reviewing the entry composition layer for any remaining legacy responsibilities.
-- Next priority: review the remaining 963-line `scripts/download-wizard.js` for another cohesive workflow responsibility to extract, keeping its generated outputs and wizard-specific formatting stable. Other modules over 500 lines include `toolbar-actions.js` (732), `feedback-form.js` (707), `maps.js` (681), and `mobile-view.js` (552); inspect cohesion before splitting any of them. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
+- Overall estimate: **about 95%** of the goals in `docs/refactor-assessment.md`. This is qualitative; the plan has no formal scoring rubric. The core local architecture, integration, schema, contract, and test-workflow priorities are in place. The initial hosted CI run succeeded; the remaining evidence gate is physical-device memory profiling.
+- `maps/index.html` loads the 310-line `scripts/maps/entry.js` composition root. `scripts/maps-tile.js` is a two-line compatibility import. The entry audit found no cohesive runtime behavior that should move out of the composition root.
+- Responsibility-based splits now include: `toolbar-actions.js` (619 lines), `header-view-toggle.js` (90), and `map-toolbar-modal-layout.js` (30); `feedback-form.js` (100), `suggestion-drawing-controller.js` (487), and `suggestion-annotation-layers.js` (133); `mobile-view.js` (337), `mobile-snap-state.js` (63), and `mobile-resize-controller.js` (159). Compatibility exports preserve existing imports where appropriate.
+- `download-wizard.js` is a 953-line workflow controller with separate config, formatters, and raster-cache modules. Its GeoJSON loading now uses the shared manifest-backed repository while preserving its route-fallback URL order. Revisit its controller only if a cohesion audit finds a distinct responsibility.
+- The active map uses provider clients/configuration, request cancellation and timeouts, and deduplicated error messages for the selected basemap. The feedback endpoint remains `no-cors`, so its status is “request sent,” not confirmed acceptance.
+- Active GeoJSON data has a manifest with edition, schema version, source, bounds, and checksums. Versioned Draft 2020-12 schemas and provider/API contracts are present. The workflow `.github/workflows/ci.yml` runs unit and browser checks on main pushes and pull requests. The first hosted run succeeded on `d9150ca` in 1m 14s; GitHub emitted maintenance notices for Node 20 action fallback and the upcoming `ubuntu-latest` image migration.
+- Latest local verification: 211 unit tests and 10 Playwright tests pass; `git diff --check` passes. The browser suite covers route selection, downloads, feedback drawing, header view toggle, responsive toolbar-modal placement, and mobile navigation. Desktop request measurements do not estimate WebGL cache memory.
+- Do not change `maxTileCacheSize: 2500` or `prefetchZoomDelta: 8` until profiling on a representative physical mobile device and browser. The user currently has no physical-device test setup; this is the only remaining evidence gate and needs no immediate setup to continue non-performance work. Refactor commits through `d9150ca` were pushed to `origin/main` with the user's authorization. Preserve the existing Eugene-04 working-tree edits outside refactor commits.
 
-For the next worker: start with `git status --short --branch`; keep the existing Eugene-04 GeoJSON edit and untracked TopoJSON out of refactor commits. The stylesheet split is a structure-only change: its partials are contiguous source sections imported in order, and their concatenation matched the pre-split file byte for byte. Keep `page-maps-tile.css` as the public entry path, preserve all imports in order, and keep partials below 1,000 lines. Use the latest test counts in Verification history rather than the older counts farther down that historical log.
+For the next worker: start with `git status --short --branch`; keep the existing Eugene-04 GeoJSON edit and untracked TopoJSON out of refactor commits. The stylesheet split is a structure-only change: its partials are contiguous source sections imported in order, and their concatenation matched the pre-split file byte for byte. Keep `page-maps-tile.css` as the public entry path and preserve imports in order. Use the latest test counts above rather than older counts in the historical log.
 
 Recent commits, newest first:
 
@@ -545,11 +542,11 @@ The browser suite starts a server on `127.0.0.1:4173`. In this environment it ne
 2. Continue from `main`. Make one coherent, reviewable refactor slice at a time.
 3. Run `npm test`, `npm run test:browser`, and `git diff --check` for each code slice, then commit only the intended refactor files to `main`.
 4. Reuse existing shared boundaries when behavior matches. Where the live map intentionally differs (notably `legacy-map` iOS share metadata), inject its current callback rather than silently changing behavior.
-5. Refer to `docs/refactor-assessment.md` for the remaining larger priorities. The highest-value unresolved work includes establishing the map entry/controller boundary, completing one-source-of-truth integration clients, and gradually migrating remaining bird/sidebar/modal/map behavior out of `scripts/maps-tile.js`.
+5. The map entry/controller audit is complete. Treat `docs/refactor-assessment.md` as architectural rationale and this handoff's progress snapshot plus latest continuation entries as current status; refresh them when implementation evidence changes.
 
 ## Important implementation context
 
-- `scripts/maps-tile.js` remains the production map entry and is still large. Avoid broad rewrites or switching the live page wholesale to the partial modules.
+- `maps/index.html` loads the 310-line composition root `scripts/maps/entry.js`. `scripts/maps-tile.js` is a two-line compatibility import; avoid broad rewrites or switching the live page wholesale to partial modules.
 - `scripts/components/toolbar-actions.js` owns production action-button wiring. The map injects its legacy file-share, PDF/TIFF, and modal-close callbacks; `setupSpatialDownloadButtons` also accepts these callbacks for direct use.
 - `scripts/map/map-rendering.js` is the shared owner of the raster cache and layout canvas rendering. `scripts/map/map-layout-downloads.js` owns PDF/TIFF layout export orchestration and injects the live map's legacy file-sharing callback.
 - `scripts/map/map-layers.js` owns production feature styling and the HTML zone/circle label renderer. The map entry injects bird-observation layer styling through the `updateAdditionalLayers` callback.
@@ -563,10 +560,10 @@ The browser suite starts a server on `127.0.0.1:4173`. In this environment it ne
 - `scripts/config/map-help-content.js` stores the help-mode selector, title, description, and optional shortcut records consumed by `map-modals.js`.
 - `scripts/components/map-help-targets.js` owns applying help attributes and resolving hovered or touched targets, including suppressing tooltip hits on map controls.
 - `scripts/components/map-help-tooltip-view.js` owns tooltip markup, mouse/touch placement, target highlighting, and dismissal.
-- `scripts/components/map-modals.js` accepts app state, browser APIs, notifications, and shortcut actions through `setupHelpModeSystem`; production wiring lives in `maps-tile.js`.
+- `scripts/components/map-modals.js` accepts app state, browser APIs, notifications, and shortcut actions through `setupHelpModeSystem`; production wiring lives in `scripts/maps/entry.js`.
 - `scripts/map/map-proximity.js` owns cursor proximity tracking and the glow canvas; the live map entry calls both shared setup functions.
 - `scripts/map/map-viewport.js` owns pointer effects, resize invalidation, fullscreen classes, and mobile home animation; the map entry injects layout and map callbacks.
-- `scripts/map/map-runtime.js` owns production MapLibre construction and composes layer, control, canvas-event, and viewport setup; `maps-tile.js` supplies state and page-specific actions.
+- `scripts/map/map-runtime.js` owns production MapLibre construction and composes layer, control, canvas-event, and viewport setup; `scripts/maps/entry.js` supplies state and page-specific actions.
 - `scripts/map/map-feature-repository.js` maps circles, Eugene, and Florence views to shared GeoJSON loads and stores each dataset's feature array in app state.
 - `scripts/map/map-page-startup.js` owns theme application, initial feature loading, map/sidebar setup sequencing, initial selection, and map entrance/error handling; the page entry supplies setup callbacks.
 - `scripts/map/map-page-ui.js` composes production toolbar, map search, capsule, swipe, lightbox, help-mode, sidebar-scroll, and mobile-navigation setup; page-specific state and actions are injected by startup.
@@ -614,12 +611,13 @@ Startup-measurement follow-up: the Playwright baseline now logs map-ready time a
 
 Latest continuation (2026-10-19):
 
-- Audited `scripts/maps/entry.js` and `scripts/maps-tile.js`. The entry is a 317-line composition root with callback adapters for legacy-map file sharing and selection/style wiring; `maps-tile.js` is a two-line compatibility import. No broad extraction is justified from the current entry. Moved the Leaflet-era `invalidateSize()` bridge from the entry's global prototype mutation to `createMapInstance()` in `scripts/map/map-init.js`, where MapLibre construction owns that compatibility behavior. Existing implementations are preserved.
+- Audited `scripts/maps/entry.js` and `scripts/maps-tile.js`. The entry is a 310-line composition root with callback adapters for legacy-map file sharing and selection/style wiring; `maps-tile.js` is a two-line compatibility import. No broad extraction is justified from the current entry. Moved the Leaflet-era `invalidateSize()` bridge from the entry's global prototype mutation to `createMapInstance()` in `scripts/map/map-init.js`, where MapLibre construction owns that compatibility behavior. Existing implementations are preserved.
 - Selected-bird iNaturalist requests now abort when a different bird is selected or selection is cleared. Observation, taxon photo, and feedback provider requests share a 15-second timeout/cancellation helper. The API contract lists these timeout and failure behaviors. This does not change retry behavior or the feedback endpoint contract.
 - Commits from this continuation: `c1b7c5c` (MapLibre compatibility bridge moved into runtime); `ed7d6da` (provider cancellation and timeout behavior).
 - The download wizard now uses the shared repository for path fallback, validation, cancellation, deduplication, and error cleanup while preserving its candidate URL order. Commit: `2dd7ea1`.
 - Verification: 207 unit tests pass; 7 browser tests pass; `git diff --check` passes. Latest desktop Chromium sample: ready 526 ms; 78 same-origin JS resources, 474,459 transfer bytes and 451,059 decoded bytes; after 1.5 seconds, one GeoJSON and four CARTO/Esri tile requests.
-- Remaining decisions/validation: choose a representative physical mobile device and browser for MapLibre memory profiling before changing `maxTileCacheSize: 2500` or `prefetchZoomDelta: 8`. The CI workflow still needs its first GitHub-hosted run, which requires publishing the local `main` commits; do not push unless explicitly requested. Active-basemap provider errors now have a deduplicated user-facing message; no generic telemetry or logging was added.
+- Remaining validation: profile MapLibre cache memory on a representative physical mobile device and browser before changing `maxTileCacheSize: 2500` or `prefetchZoomDelta: 8`. The user has no physical-device setup yet. The first GitHub-hosted CI run succeeded on `d9150ca` (run `39328722914`) in 1m 14s, including `npm test` and `npm run test:browser`; GitHub emitted the Node 20 and Ubuntu image maintenance notices noted above. Active-basemap provider errors now have a deduplicated user-facing message; no generic telemetry or logging was added.
+- Keep `geojson/Eugene-04-wgs84.geojson` and untracked `geojson/Eugene-04-wgs84-10m.topojson` out of refactor commits. The working tree also contains earlier user edits in `docs/refactor-assessment.md` and `docs/refactor-handoff.md`; review before staging those documents.
 
 Provider error follow-up: `scripts/map/map-provider-errors.js` now maps recognized MapLibre source/URL errors to a deduplicated connection message only when that provider matches the active basemap. Unknown sources and errors from inactive CARTO/Esri layers are ignored. API contract updated; 209 unit tests and 7 browser tests pass; `git diff --check` passes. Commit: `38ab68a`.
 
