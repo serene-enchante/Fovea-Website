@@ -596,7 +596,7 @@ The October 19 continuation completed these slices on `main`:
 - Added Draft 2020-12 contracts in `schemas/v1/` for circles, zones, normalized bird observations, feedback payloads, and export requests. `docs/api-contracts.md` records provider request/fallback/cache behavior. The GeoJSON repository now rejects malformed feature types, unsupported geometries, and missing circle/zone IDs before caching.
 - Added a browser startup request baseline. On desktop Chromium, 1.5 seconds after the Eugene zone map was ready, it observed one GeoJSON request (the selected Eugene dataset) and four CARTO/Esri tile requests. This is a request-count baseline, not a memory or transfer-size profile.
 
-Commits from this continuation, newest first: `b98aa67`, `fa2b48a`, `d4bdd1f`, `8637fad`, `07f3392`, `e53f621`, `78b90d5`, `b1e581b`, `4a54864`, `137878e`, `05a38e6`, `7490e09`, `901ddd7`, `4db19e9`, `c79017f`. The Eugene-04 GeoJSON and TopoJSON changes remain outside those commits.
+Commits from this continuation, newest first: `e0b3d80`, `4cc1780`, `d416170`, `b98aa67`, `fa2b48a`, `d4bdd1f`, `8637fad`, `07f3392`, `e53f621`, `78b90d5`, `b1e581b`, `4a54864`, `137878e`, `05a38e6`, `7490e09`, `901ddd7`, `4db19e9`, `c79017f`. The Eugene-04 GeoJSON and TopoJSON changes remain outside those commits.
 
 Latest verification: `npm test` passed with 200 tests; `npm run test:browser` passed with 7 Playwright tests; `git diff --check` passed. The browser suite needs permission to bind its local server at `127.0.0.1:4173` in this sandbox.
 
