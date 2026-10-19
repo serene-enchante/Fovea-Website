@@ -9,6 +9,7 @@ import { CIRCLE_ID } from '../config/app-config.js';
 import { handleSpatialFileShare } from '../services/file-download-service.js';
 import { getDownloadFilename } from '../services/download-file-names.js';
 import { setupDownloadAppSearch, updateShareModalDescription } from './suggested-app-controls.js';
+import { getShareQrCodeImageUrl } from '../services/qr-image-service.js';
 
 export {
     MAP_VIEWER_APPS,
@@ -480,7 +481,7 @@ export function setupActionButtons({
                     };
                     const isLightMode = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
                     const qrColor = isLightMode ? "000000" : "b8b8b8";
-                    qrImg.src = `https://quickchart.io/qr?text=${encodeURIComponent(currentUrl)}&light=00000000&dark=${qrColor}&size=500&margin=0`;
+                    qrImg.src = getShareQrCodeImageUrl(currentUrl, { darkColor: qrColor });
                 }
                 copyModal.setAttribute("aria-hidden", "false");
                 copyModal.classList.add("is-open");
