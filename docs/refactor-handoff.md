@@ -6,8 +6,8 @@ Updated: 2026-10-19
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `372fd06 inject location marker browser dependencies`
-- Latest handoff commit before this update: `299420d record refactor progress snapshot`.
+- Latest refactor commit: `ece2bf8 inject map initialization document dependency`
+- Latest handoff commit before this update: `6dad636 sync location refactor handoff`.
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -27,6 +27,8 @@ Recent commits, newest first:
 
 | Commit | Change |
 | --- | --- |
+| `ece2bf8` | Inject `document` into basemap styling and location badge updates; pass it through location tracking. |
+| `6dad636` | Update the progress handoff after extracting location marker browser dependencies. |
 | `372fd06` | Inject document and MapLibre dependencies into user-location marker creation and pass them through location tracking. |
 | `299420d` | Record the refactor progress estimate, evidence, and remaining work for the next worker. |
 | `0d27d3d` | Keep the hovered feature ID in a map-keyed weak map and let the proximity glow read it through an accessor. |
@@ -227,6 +229,12 @@ After moving the hovered feature ID out of shared map state:
 After injecting user-location marker browser dependencies:
 
 - `npm test` passed: 172 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After injecting the map initialization document dependency:
+
+- `npm test` passed: 173 tests.
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
