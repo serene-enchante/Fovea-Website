@@ -3,130 +3,22 @@ import { normalizeZoneId } from "../utils/format-utils.js";
 import { state } from '../state.js';
 import { rebuildHtmlLabels } from './map-html-labels.js';
 import { applyVectorThemeStyles } from './map-vector-theme-styles.js';
+import { createPlaceLabelFilterController, toExpression } from './map-place-label-filter.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { showToast } from '../components/toast-view.js'; // Might be needed for selectMapStyleByIndex
 import { findPointInsidePolygon, getBbox } from '../utils/geometry-math.js';
 
 export { rebuildHtmlLabels, updateLabelZoomVisibility } from './map-html-labels.js';
 
-let originalPlaceFilters = null;
-let lastHiddenCircleNames = null;
 let originalRoadColors = {};
 
 export function getOriginalRoadColor(layerId) {
     return originalRoadColors[layerId];
 }
 
-// Exported feature expressions & layer logic
-export function toExpression(f) {
-    if (!f) return null;
-    if (!Array.isArray(f)) return f;
-    
-    const op = f[0];
-    if (op === 'all' || op === 'any' || op === 'none') {
-        return [op, ...f.slice(1).map(toExpression)];
-    }
-    
-    // If it's already an expression (e.g. second element is an array), return as is
-    if (Array.isArray(f[1])) {
-        return f;
-    }
-    
-    const key = f[1];
-    if (op === '==' || op === '!=' || op === '>' || op === '>=' || op === '<' || op === '<=') {
-        return [op, ['get', key], f[2]];
-    }
-    if (op === 'has') {
-        return ['has', key];
-    }
-    if (op === '!has') {
-        return ['!', ['has', key]];
-    }
-    if (op === 'in') {
-        return ['in', ['get', key], ['literal', f.slice(2)]];
-    }
-    if (op === '!in') {
-        return ['!', ['in', ['get', key], ['literal', f.slice(2)]]];
-    }
-    
-    return f;
-}
-
-export function updatePlaceLabelsFilter() {
-    if (!state.map) return;
-
-    // Lazily cache original place filters if not done already for this style
-    if (originalPlaceFilters === null) {
-        originalPlaceFilters = {};
-        const placeLayersForFilter = [
-            'place_city_r5',
-            'place_city_r6',
-            'place_town',
-            'place_villages',
-            'place_suburbs',
-            'place_hamlet',
-            'place_city_dot_r7',
-            'place_city_dot_r4',
-            'place_city_dot_r2',
-            'place_city_dot_z7',
-            'place_capital_dot_z7'
-        ];
-        
-        let foundAny = false;
-        placeLayersForFilter.forEach(lId => {
-            if (state.map.getLayer(lId)) {
-                originalPlaceFilters[lId] = state.map.getFilter(lId) || null;
-                foundAny = true;
-            }
-        });
-
-        if (!foundAny) {
-            // Style layers are not available yet (still loading), return and try again on next draw/update
-            originalPlaceFilters = null;
-            return;
-        }
-    }
-
-    const isCirclesView = !!(state.isCirclesFeature || state.currentFeature === 'circles');
-    
-    // Only apply the filter update if the view type changed to save performance
-    if (lastHiddenCircleNames === isCirclesView) return;
-    lastHiddenCircleNames = isCirclesView;
-
-    const circleNames = ['Eugene', 'Florence', 'Cottage Grove', 'Oakridge'];
-    console.log("Applying duplicate circles filter. Hide circle names:", isCirclesView);
-
-    Object.keys(originalPlaceFilters).forEach(lId => {
-        if (state.map.getLayer(lId)) {
-            const origFilter = toExpression(originalPlaceFilters[lId]);
-            if (isCirclesView) {
-                // If it's a circle overview, exclude the circle names from showing in the basemap
-                let newFilter;
-                const exclusion = [
-                    'all',
-                    ['match', ['get', 'name'], 'Eugene', false, 'Florence', false, 'Cottage Grove', false, 'Oakridge', false, true],
-                    ['match', ['get', 'name_en'], 'Eugene', false, 'Florence', false, 'Cottage Grove', false, 'Oakridge', false, true]
-                ];
-                
-                if (!origFilter) {
-                    newFilter = exclusion;
-                } else if (origFilter[0] === 'all') {
-                    newFilter = [...origFilter, ...exclusion.slice(1)];
-                } else {
-                    newFilter = ['all', origFilter, ...exclusion.slice(1)];
-                }
-                state.map.setFilter(lId, newFilter);
-            } else {
-                // Restore original filter
-                if (origFilter === null) {
-                    state.map.setFilter(lId, undefined);
-                } else {
-                    state.map.setFilter(lId, origFilter);
-                }
-            }
-        }
-    });
-}
+const placeLabelFilterController = createPlaceLabelFilterController(state);
+export const updatePlaceLabelsFilter = placeLabelFilterController.updatePlaceLabelsFilter;
+export { toExpression };
 
 export function updateAllFeatureStyles({ updateAdditionalLayers = () => {} } = {}) {
     if (!state.map || !state.map.getSource('zones')) return;
@@ -336,8 +228,7 @@ export function setupMapLayers(state) {
         // 3. Tweak vector styles to brighten land, forest green parks, and enlarge road/label names
         try {
             // Reset filter cache and view state so they are re-cached and re-applied to the fresh style
-            lastHiddenCircleNames = null;
-            originalPlaceFilters = null;
+            placeLabelFilterController.reset();
 
             // Cache original road colors so we can restore them when switching back from Satellite hybrid map
             originalRoadColors = {};
