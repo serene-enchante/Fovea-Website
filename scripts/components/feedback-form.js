@@ -4,6 +4,7 @@ import { displayZoneId, normalizeZoneId } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { getThemeAccent } from '../utils/color-utils.js';
 import { buildAnnotationFeatureCollection, buildSuggestionFeatureCollection } from '../services/suggestion-annotations.js';
+import { sendFeedbackRequest } from '../services/feedback-client.js';
 
 export function getSuggestSelectionLabel() {
     if (state.isCirclesFeature) {
@@ -668,24 +669,15 @@ export function setupSuggestFormAndDrawing(closeAllModals) {
             geojson: suggestionGeoJSON
         };
 
-        const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbz7MxHqTniRl88_VFM7FOdbOwD0jt7AfSZ4v3fMB6sJLIeNseFdFJFoWQnA3RysLFiY_w/exec";
-
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.innerHTML = `<span>Submitting...</span>`;
         }
 
         try {
-            await fetch(ENDPOINT_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: {
-                    "Content-Type": "text/plain;charset=utf-8"
-                },
-                body: JSON.stringify(payload)
-            });
+            await sendFeedbackRequest(payload);
 
-            showToast("Suggestion submitted! Thank you for your feedback.");
+            showToast("Suggestion request sent. Thank you for your feedback.");
 
             if (titleInput) titleInput.value = "";
             if (msgInput) msgInput.value = "";
