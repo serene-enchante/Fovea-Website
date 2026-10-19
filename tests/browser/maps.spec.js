@@ -10,6 +10,11 @@ async function openMap(page, path = '/maps/') {
     await expect(page.locator('#header-title')).not.toHaveText('Loading...');
 }
 
+test('initializes the home globe with the shared CARTO style configuration', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('#home-globe canvas.maplibregl-canvas')).toBeVisible();
+});
+
 for (const { circle, zone, expectedTitle } of [
     { circle: 'eugene', zone: '04', expectedTitle: 'Zone 04' },
     { circle: 'florence', zone: '01', expectedTitle: 'Zone 01' }

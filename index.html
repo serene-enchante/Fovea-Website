@@ -1506,7 +1506,8 @@
         <div class="globe-overlay-shimmer"></div>
     </div>
 
-    <script>
+    <script type="module">
+        import { MAP_PROVIDER_URLS } from "./scripts/config/map-provider-config.js";
         const COUNT_CIRCLES_DATA = [
             {
                 name: "Eugene",
@@ -1940,7 +1941,7 @@
                 const getGlobeRestZoom = () => (window.innerWidth <= 768 ? 1.37 : 2.18);
                 homeMap = new maplibregl.Map({
                     container: 'home-globe',
-                    style: isHomeLight ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+                    style: isHomeLight ? MAP_PROVIDER_URLS.carto.lightVectorStyle : MAP_PROVIDER_URLS.carto.darkVectorStyle,
                     projection: { type: 'globe' },
                     center: [-123.079, 0], // Centered at the equator to display a true, undistorted 3D sphere
                     zoom: getGlobeRestZoom(), // 2.18 renders 738.5px globe inside 736px dome with zero gap and zero clipping
