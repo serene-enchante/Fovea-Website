@@ -70,3 +70,56 @@ export function setupMapEffectsAndFullscreen(mapWrapper, {
         onMobileHomeAnimation: triggerMobileHomeAnimation
     });
 }
+
+export function toggleMapFullscreen({
+    state,
+    documentObject = globalThis.document,
+    windowObject = globalThis.window,
+    schedule = globalThis.setTimeout
+} = {}) {
+    const mapWrapper = documentObject.getElementById('map-wrapper');
+    if (!mapWrapper) return;
+
+    const handleResize = () => {
+        if (!state.map) return;
+        state.map.invalidateSize();
+        schedule(() => state.map.invalidateSize(), 50);
+        schedule(() => state.map.invalidateSize(), 200);
+        schedule(() => state.map.invalidateSize(), 400);
+    };
+
+    const triggerMobileHomeAnimation = () => {
+        if (windowObject.innerWidth > 768) return;
+        const targets = documentObject.querySelectorAll('.intro-header, .maps-tile-header, .maps-tile-sidebar');
+        targets.forEach(element => {
+            element.classList.remove('animate-mobile-slide-down');
+            void element.offsetWidth;
+            element.classList.add('animate-mobile-slide-down');
+        });
+    };
+
+    if (!documentObject.fullscreenElement && !mapWrapper.classList.contains('is-fullscreen')) {
+        if (mapWrapper.requestFullscreen) {
+            mapWrapper.requestFullscreen().catch(() => {
+                mapWrapper.classList.add('is-fullscreen');
+                handleResize();
+            });
+        } else {
+            mapWrapper.classList.add('is-fullscreen');
+            handleResize();
+        }
+        return;
+    }
+
+    if (documentObject.exitFullscreen && documentObject.fullscreenElement) {
+        documentObject.exitFullscreen().catch(() => {
+            mapWrapper.classList.remove('is-fullscreen');
+            triggerMobileHomeAnimation();
+            handleResize();
+        });
+        return;
+    }
+
+    mapWrapper.classList.remove('is-fullscreen');
+    triggerMobileHomeAnimation();
+}

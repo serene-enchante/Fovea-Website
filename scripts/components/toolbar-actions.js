@@ -13,6 +13,7 @@ import { setupDownloadAppSearch, updateShareModalDescription } from './suggested
 import { getShareQrCodeImageUrl } from '../services/qr-image-service.js';
 import { setupMapToolbarModalLayout } from './map-toolbar-modal-layout.js';
 import { createToolbarDownloadActions } from './toolbar-download-actions.js';
+import { toggleMapFullscreen } from '../map/map-viewport.js';
 
 export {
     MAP_VIEWER_APPS,
@@ -46,51 +47,7 @@ const toolbarDownloadActions = createToolbarDownloadActions({
 export const { setupSpatialDownloadButtons, generateAppSpatialBlob } = toolbarDownloadActions;
 
 export function toggleFullscreen() {
-    const mapWrapper = document.getElementById("map-wrapper");
-    if (!mapWrapper) return;
-
-    const handleResize = () => {
-        if (state.map) {
-            state.map.invalidateSize();
-            setTimeout(() => state.map.invalidateSize(), 50);
-            setTimeout(() => state.map.invalidateSize(), 200);
-            setTimeout(() => state.map.invalidateSize(), 400);
-        }
-    };
-
-    const triggerMobileHomeAnimation = () => {
-        if (window.innerWidth <= 768) {
-            const targets = document.querySelectorAll(".intro-header, .maps-tile-header, .maps-tile-sidebar");
-            targets.forEach(el => {
-                el.classList.remove("animate-mobile-slide-down");
-                void el.offsetWidth;
-                el.classList.add("animate-mobile-slide-down");
-            });
-        }
-    };
-
-    if (!document.fullscreenElement && !mapWrapper.classList.contains("is-fullscreen")) {
-        if (mapWrapper.requestFullscreen) {
-            mapWrapper.requestFullscreen().catch(() => {
-                mapWrapper.classList.add("is-fullscreen");
-                handleResize();
-            });
-        } else {
-            mapWrapper.classList.add("is-fullscreen");
-            handleResize();
-        }
-    } else {
-        if (document.exitFullscreen && document.fullscreenElement) {
-            document.exitFullscreen().catch(() => {
-                mapWrapper.classList.remove("is-fullscreen");
-                triggerMobileHomeAnimation();
-                handleResize();
-            });
-        } else {
-            mapWrapper.classList.remove("is-fullscreen");
-            triggerMobileHomeAnimation();
-        }
-    }
+    return toggleMapFullscreen({ state, documentObject: document, windowObject: window, schedule: setTimeout });
 }
 
 export function setupActionButtons({

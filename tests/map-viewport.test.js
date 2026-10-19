@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { setupMapEffectsAndFullscreen, setupMapViewportEffects } from '../scripts/map/map-viewport.js';
+import { setupMapEffectsAndFullscreen, setupMapViewportEffects, toggleMapFullscreen } from '../scripts/map/map-viewport.js';
 
 test('tracks desktop pointer position and resets it when leaving the map', () => {
     const properties = [];
@@ -103,4 +103,73 @@ test('owns map resize, delayed invalidation, and mobile home animation', () => {
         ['remove', 'animate-mobile-slide-down'],
         ['add', 'animate-mobile-slide-down']
     ]);
+});
+
+test('toggles the CSS fullscreen fallback and invalidates the map on entry', () => {
+    const classes = new Set();
+    const invalidations = [];
+    const scheduled = [];
+    const animations = [];
+    const mapWrapper = {
+        classList: {
+            add: name => classes.add(name),
+            remove: name => classes.delete(name),
+            contains: name => classes.has(name)
+        }
+    };
+    const state = { map: { invalidateSize: () => invalidations.push('invalidate') } };
+    const documentObject = {
+        fullscreenElement: null,
+        getElementById: () => mapWrapper,
+        querySelectorAll: () => [{
+            classList: {
+                remove: name => animations.push(['remove', name]),
+                add: name => animations.push(['add', name])
+            },
+            offsetWidth: 1
+        }]
+    };
+    const dependencies = {
+        state,
+        documentObject,
+        windowObject: { innerWidth: 400 },
+        schedule: (callback, delay) => scheduled.push([callback, delay])
+    };
+
+    toggleMapFullscreen(dependencies);
+    assert.equal(classes.has('is-fullscreen'), true);
+    assert.deepEqual(invalidations, ['invalidate']);
+    assert.deepEqual(scheduled.map(([, delay]) => delay), [50, 200, 400]);
+
+    toggleMapFullscreen(dependencies);
+    assert.equal(classes.has('is-fullscreen'), false);
+    assert.deepEqual(animations, [
+        ['remove', 'animate-mobile-slide-down'],
+        ['add', 'animate-mobile-slide-down']
+    ]);
+    assert.deepEqual(invalidations, ['invalidate']);
+});
+
+test('falls back to CSS fullscreen when the browser fullscreen request rejects', async () => {
+    const classes = new Set();
+    const invalidations = [];
+    const mapWrapper = {
+        classList: {
+            add: name => classes.add(name),
+            remove: name => classes.delete(name),
+            contains: name => classes.has(name)
+        },
+        requestFullscreen: () => Promise.reject(new Error('not allowed'))
+    };
+
+    toggleMapFullscreen({
+        state: { map: { invalidateSize: () => invalidations.push('invalidate') } },
+        documentObject: { getElementById: () => mapWrapper, fullscreenElement: null },
+        windowObject: { innerWidth: 1024 },
+        schedule: () => {}
+    });
+    await new Promise(resolve => setImmediate(resolve));
+
+    assert.equal(classes.has('is-fullscreen'), true);
+    assert.deepEqual(invalidations, ['invalidate']);
 });
