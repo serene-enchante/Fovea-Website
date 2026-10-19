@@ -4,27 +4,30 @@ import test from 'node:test';
 
 const mapPagePath = new URL('../maps/index.html', import.meta.url);
 const mapEntryPath = new URL('../scripts/maps/entry.js', import.meta.url);
-const mapScriptPath = new URL('../scripts/maps-tile.js', import.meta.url);
+const mapCompatibilityPath = new URL('../scripts/maps-tile.js', import.meta.url);
 
 test('the map page loads the map application as an ES module', async () => {
     const page = await readFile(mapPagePath, 'utf8');
 
-    assert.match(page, /<script type="module" src="\.\.\/scripts\/maps\/entry\.js\?v=247"><\/script>/);
+    assert.match(page, /<script type="module" src="\.\.\/scripts\/maps\/entry\.js\?v=248"><\/script>/);
+    assert.match(page, /page-maps-tile\.css\?v=122/);
     const entry = await readFile(mapEntryPath, 'utf8');
-    assert.match(entry, /import '\.\.\/maps-tile\.js';/);
+    assert.match(entry, /import \{ state \} from '\.\.\/state\.js';/);
+    const compatibility = await readFile(mapCompatibilityPath, 'utf8');
+    assert.match(compatibility, /import '\.\/maps\/entry\.js\?v=248';/);
     assert.match(page, /maplibre-gl\.js/);
     assert.match(page, /turf\.min\.js/);
 });
 
 test('the map application uses the shared GeoJSON repository', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const state = await readFile(new URL('../scripts/state.js', import.meta.url), 'utf8');
 
-    assert.match(source, /import \{ state \} from '\.\/state\.js';/);
+    assert.match(source, /import \{ state \} from '\.\.\/state\.js';/);
     assert.doesNotMatch(source, /Object\.assign\(state,/);
     assert.match(state, /activeTab: "overview"/);
     assert.match(state, /currentBaseLayer: "default"/);
-    assert.match(source, /import \{ loadGeoDataset \} from '\.\/services\/geo-data-repository\.js';/);
+    assert.match(source, /import \{ loadGeoDataset \} from '\.\.\/services\/geo-data-repository\.js';/);
     assert.match(source, /createMapFeatureRepository\(\{ state, loadGeoDataset \}\)/);
     assert.match(source, /loadFeatures: loadFeaturesForMapView,/);
     const startup = await readFile(new URL('../scripts/map/map-page-startup.js', import.meta.url), 'utf8');
@@ -45,12 +48,12 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.match(selectionController, /disposeRasterCache: disposeCache/);
     assert.match(selectionController, /schedule,\s*showToast,\s*isSuggestLocked\s*}/);
     assert.doesNotMatch(selectionController, /document\.body|setTimeout\(/);
-    assert.match(source, /import \{ getBbox \} from '\.\/utils\/geometry-math\.js';/);
-    assert.match(source, /import \{ displayZoneId, normalizeZoneId \} from '\.\/utils\/format-utils\.js';/);
+    assert.match(source, /import \{ getBbox \} from '\.\.\/utils\/geometry-math\.js';/);
+    assert.match(source, /import \{ displayZoneId, normalizeZoneId \} from '\.\.\/utils\/format-utils\.js';/);
     assert.match(source, /updateAllFeatureStyles as updateMapFeatureStyles/);
     const mapLayers = await readFile(new URL('../scripts/map/map-layers.js', import.meta.url), 'utf8');
     assert.match(mapLayers, /getThemeAccent\(\)/);
-    assert.match(source, /import \{ canvasToTiffBlob \} from '\.\/services\/format-converters\.js';/);
+    assert.match(source, /import \{ canvasToTiffBlob \} from '\.\.\/services\/format-converters\.js';/);
     const toolbar = await readFile(new URL('../scripts/components/toolbar-actions.js', import.meta.url), 'utf8');
     assert.match(toolbar, /geojsonToGpx/);
     assert.match(toolbar, /geojsonToKml/);
@@ -74,14 +77,14 @@ test('map feature repository maps view names to datasets and caches feature arra
 });
 
 test('suggested-app configuration stays out of the map entry', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
 
     assert.doesNotMatch(source, /const APP_FORMAT_PREFERENCES =/);
     assert.doesNotMatch(source, /const APP_INSTRUCTION_CONFIGS =/);
 });
 
 test('the map injects suggested-app opening into the shared toolbar', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const pageUi = await readFile(new URL('../scripts/map/map-page-ui.js', import.meta.url), 'utf8');
     const toolbar = await readFile(new URL('../scripts/components/toolbar-actions.js', import.meta.url), 'utf8');
     const suggestedControls = await readFile(new URL('../scripts/components/suggested-app-controls.js', import.meta.url), 'utf8');
@@ -95,7 +98,7 @@ test('the map injects suggested-app opening into the shared toolbar', async () =
 });
 
 test('the map application uses shared toolbar setup with legacy map callbacks', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const pageUi = await readFile(new URL('../scripts/map/map-page-ui.js', import.meta.url), 'utf8');
 
     assert.match(source, /setupMapPageUi\(\{/);
@@ -120,7 +123,7 @@ test('map page UI setup composes shared interaction modules in startup order', a
 });
 
 test('PDF and TIFF layout exports use the shared download action controller', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const downloads = await readFile(new URL('../scripts/map/map-layout-downloads.js', import.meta.url), 'utf8');
 
     assert.match(source, /createMapLayoutDownloadActions\(\{/);
@@ -131,10 +134,10 @@ test('PDF and TIFF layout exports use the shared download action controller', as
 });
 
 test('the map application reads Florence zone guide content from config', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const overview = await readFile(new URL('../scripts/components/sidebar-overview-view.js', import.meta.url), 'utf8');
 
-    assert.match(source, /import \{ renderSidebarOverview \} from '\.\/components\/sidebar-overview-view\.js';/);
+    assert.match(source, /import \{ renderSidebarOverview \} from '\.\.\/components\/sidebar-overview-view\.js';/);
     assert.match(overview, /FLORENCE_ZONE_BIRDS\[zid\]/);
     assert.match(overview, /export function renderSidebarOverview\(/);
     assert.doesNotMatch(source, /function renderOverviewTab\(/);
@@ -157,7 +160,7 @@ test('toolbar actions leave sidebar capsule events to the sidebar component', as
 });
 
 test('the map application uses the shared cursor proximity tracker', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const lifecycle = await readFile(new URL('../scripts/map/map-layer-lifecycle.js', import.meta.url), 'utf8');
 
     assert.match(lifecycle, /import \{ setupProximityGlowCanvas, setupProximityTracking \} from '\.\/map-proximity\.js';/);
@@ -165,7 +168,7 @@ test('the map application uses the shared cursor proximity tracker', async () =>
 });
 
 test('map resize and fullscreen behavior is owned by the viewport module', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const runtime = await readFile(new URL('../scripts/map/map-runtime.js', import.meta.url), 'utf8');
     const viewport = await readFile(new URL('../scripts/map/map-viewport.js', import.meta.url), 'utf8');
 
@@ -175,7 +178,7 @@ test('map resize and fullscreen behavior is owned by the viewport module', async
 });
 
 test('map layer rebuild lifecycle is owned by a shared map controller', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const lifecycle = await readFile(new URL('../scripts/map/map-layer-lifecycle.js', import.meta.url), 'utf8');
     const mapLayers = await readFile(new URL('../scripts/map/map-layers.js', import.meta.url), 'utf8');
 
@@ -187,7 +190,7 @@ test('map layer rebuild lifecycle is owned by a shared map controller', async ()
 });
 
 test('navigation controls are created by the shared map controls module', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const controls = await readFile(new URL('../scripts/map/map-controls.js', import.meta.url), 'utf8');
 
     assert.match(source, /initializeMapRuntime\(\{/);
@@ -197,7 +200,7 @@ test('navigation controls are created by the shared map controls module', async 
 });
 
 test('map runtime owns map construction and passes page actions into map setup', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const runtime = await readFile(new URL('../scripts/map/map-runtime.js', import.meta.url), 'utf8');
 
     assert.match(source, /initializeMapRuntime\(\{[\s\S]*onSelectCircles: \(\) => selectSubject\(CIRCLE_ID\)/);
@@ -209,7 +212,7 @@ test('map runtime owns map construction and passes page actions into map setup',
 });
 
 test('map style picker behavior is owned by a shared map control module', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const styleControl = await readFile(new URL('../scripts/map/map-style-control.js', import.meta.url), 'utf8');
 
     const runtime = await readFile(new URL('../scripts/map/map-runtime.js', import.meta.url), 'utf8');
@@ -222,7 +225,7 @@ test('map style picker behavior is owned by a shared map control module', async 
 });
 
 test('map page editor and back actions are owned by a shared navigation module', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const navigation = await readFile(new URL('../scripts/map/map-page-navigation.js', import.meta.url), 'utf8');
 
     assert.match(source, /setupMapPageNavigation\(\{/);
@@ -233,7 +236,7 @@ test('map page editor and back actions are owned by a shared navigation module',
 });
 
 test('map and suggested-app search receive their browser dependencies explicitly', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const pageUi = await readFile(new URL('../scripts/map/map-page-ui.js', import.meta.url), 'utf8');
     const search = await readFile(new URL('../scripts/map/map-search.js', import.meta.url), 'utf8');
     const suggestedControls = await readFile(new URL('../scripts/components/suggested-app-controls.js', import.meta.url), 'utf8');
@@ -246,7 +249,7 @@ test('map and suggested-app search receive their browser dependencies explicitly
 });
 
 test('map home-link transition events are owned by the shared page transition component', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const transitions = await readFile(new URL('../scripts/components/page-transition-events.js', import.meta.url), 'utf8');
     const toolbar = await readFile(new URL('../scripts/components/toolbar-actions.js', import.meta.url), 'utf8');
 
@@ -300,7 +303,7 @@ test('help tooltip rendering and placement are owned by a shared view module', a
 });
 
 test('help mode receives map state, browser objects, and action callbacks explicitly', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const pageUi = await readFile(new URL('../scripts/map/map-page-ui.js', import.meta.url), 'utf8');
     const helpMode = await readFile(new URL('../scripts/components/map-modals.js', import.meta.url), 'utf8');
 
@@ -319,7 +322,7 @@ test('map page UI wires shared sidebar capsule events directly', async () => {
 });
 
 test('bird observation list items and map popups share one view component', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const observationView = await readFile(new URL('../scripts/components/bird-observation-view.js', import.meta.url), 'utf8');
     const observationLayers = await readFile(new URL('../scripts/map/bird-observation-layers.js', import.meta.url), 'utf8');
 
@@ -336,7 +339,7 @@ test('bird observation list items and map popups share one view component', asyn
 });
 
 test('bird observations tab rendering and selection cleanup live in shared modules', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const observationView = await readFile(new URL('../scripts/components/bird-observation-view.js', import.meta.url), 'utf8');
     const selectionController = await readFile(new URL('../scripts/map/bird-selection-controller.js', import.meta.url), 'utf8');
 
@@ -348,7 +351,7 @@ test('bird observations tab rendering and selection cleanup live in shared modul
 });
 
 test('bird species guide rendering lives in its shared sidebar component', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const component = await readFile(new URL('../scripts/components/bird-species-list.js', import.meta.url), 'utf8');
 
     assert.match(source, /renderBirdSpecies: renderBirdSpeciesList/);
@@ -358,10 +361,10 @@ test('bird species guide rendering lives in its shared sidebar component', async
 });
 
 test('organizer and resource sidebar views are shared components', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const component = await readFile(new URL('../scripts/components/sidebar-static-views.js', import.meta.url), 'utf8');
 
-    assert.match(source, /import \{ renderOrganizersList, renderResourcesList \} from '\.\/components\/sidebar-static-views\.js';/);
+    assert.match(source, /import \{ renderOrganizersList, renderResourcesList \} from '\.\.\/components\/sidebar-static-views\.js';/);
     assert.doesNotMatch(source, /function renderOrganizersList\(/);
     assert.doesNotMatch(source, /function renderResourcesList\(/);
     assert.match(component, /export function renderOrganizersList\(/);
@@ -369,12 +372,12 @@ test('organizer and resource sidebar views are shared components', async () => {
 });
 
 test('circle and zone sidebar rows are rendered by the shared map feature list', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const component = await readFile(new URL('../scripts/components/map-feature-list.js', import.meta.url), 'utf8');
     const sidebarController = await readFile(new URL('../scripts/components/sidebar-controller.js', import.meta.url), 'utf8');
     const navigation = await readFile(new URL('../scripts/map/map-feature-navigation.js', import.meta.url), 'utf8');
 
-    assert.match(source, /import \{ renderMapFeatureList \} from '\.\/components\/map-feature-list\.js';/);
+    assert.match(source, /import \{ renderMapFeatureList \} from '\.\.\/components\/map-feature-list\.js';/);
     assert.match(source, /onSelectCircle: featureNavigation\.selectCircle/);
     assert.match(source, /onFeatureClick: featureNavigation\.handleMapFeatureClick/);
     assert.match(source, /onSelectZone: id => selectSubject\(id\)/);
@@ -387,7 +390,7 @@ test('circle and zone sidebar rows are rendered by the shared map feature list',
 });
 
 test('map sidebar routing is owned by the shared sidebar controller', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const controller = await readFile(new URL('../scripts/components/sidebar-controller.js', import.meta.url), 'utf8');
 
     assert.match(source, /createSidebarController\(\{/);
@@ -398,7 +401,7 @@ test('map sidebar routing is owned by the shared sidebar controller', async () =
 });
 
 test('bird selection and observation loading are owned by the shared map controller', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const controller = await readFile(new URL('../scripts/map/bird-selection-controller.js', import.meta.url), 'utf8');
 
     assert.match(source, /createBirdSelectionController\(\{/);
@@ -407,10 +410,10 @@ test('bird selection and observation loading are owned by the shared map control
 });
 
 test('bird observation map layers are configured outside the map entry', async () => {
-    const source = await readFile(mapScriptPath, 'utf8');
+    const source = await readFile(mapEntryPath, 'utf8');
     const layers = await readFile(new URL('../scripts/map/bird-observation-layers.js', import.meta.url), 'utf8');
 
-    assert.match(source, /import \{ setupBirdObservationsLayer, updateBirdObservationsLayerStyles \} from '\.\/map\/bird-observation-layers\.js';/);
+    assert.match(source, /import \{ setupBirdObservationsLayer, updateBirdObservationsLayerStyles \} from '\.\.\/map\/bird-observation-layers\.js';/);
     assert.doesNotMatch(source, /function setupBirdObservationsLayer\(/);
     assert.doesNotMatch(source, /function updateBirdObservationsLayerStyles\(/);
     assert.match(layers, /export function setupBirdObservationsLayer\(/);

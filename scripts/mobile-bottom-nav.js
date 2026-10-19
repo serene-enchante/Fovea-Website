@@ -8,7 +8,7 @@
  *           data-root="./">
  *   </script>
  *
- *   Add data-no-scroll-listener on maps page (maps-tile.js manages scroll there).
+ *   Add data-no-scroll-listener on maps page (map-page modules manage its scroll behavior).
  */
 (function () {
     const scriptEl = document.currentScript;
@@ -120,7 +120,7 @@
             });
         }
 
-        // ─── 3. Capsule animation (skip on maps — maps-tile.js owns this) ───────
+        // ─── 3. Capsule animation (skip on maps — map-page setup owns this) ────
         if (!isMaps) {
             initMobileBottomNavAnimation();
 
@@ -308,6 +308,6 @@
         });
     }
 
-    // Expose so maps-tile.js can call it after HTML is injected
+    // Expose for pages that initialize this animation through bottom-nav-view.
     window.initMobileBottomNavAnimation = initMobileBottomNavAnimation;
 })();
