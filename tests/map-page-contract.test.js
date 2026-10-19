@@ -84,12 +84,13 @@ test('the map injects suggested-app opening into the shared toolbar', async () =
     const source = await readFile(mapScriptPath, 'utf8');
     const pageUi = await readFile(new URL('../scripts/map/map-page-ui.js', import.meta.url), 'utf8');
     const toolbar = await readFile(new URL('../scripts/components/toolbar-actions.js', import.meta.url), 'utf8');
+    const suggestedControls = await readFile(new URL('../scripts/components/suggested-app-controls.js', import.meta.url), 'utf8');
 
     assert.match(pageUi, /import \{ handleAppDirectOpen \} from '\.\.\/components\/avenza-modal-view\.js';/);
     assert.match(pageUi, /openSuggestedApp: handleAppDirectOpen/);
     assert.match(toolbar, /openSuggestedApp = \(\) => \{\}/);
     assert.match(toolbar, /setupDownloadAppSearch\(\{ onOpenApp: openSuggestedApp \}\)/);
-    assert.match(toolbar, /await onOpenApp\(appName, card\)/);
+    assert.match(suggestedControls, /await onOpenApp\(appName, card\)/);
     assert.doesNotMatch(toolbar, /await handleAppDirectOpen\(/);
 });
 
@@ -233,12 +234,12 @@ test('map and suggested-app search receive their browser dependencies explicitly
     const source = await readFile(mapScriptPath, 'utf8');
     const pageUi = await readFile(new URL('../scripts/map/map-page-ui.js', import.meta.url), 'utf8');
     const search = await readFile(new URL('../scripts/map/map-search.js', import.meta.url), 'utf8');
-    const toolbar = await readFile(new URL('../scripts/components/toolbar-actions.js', import.meta.url), 'utf8');
+    const suggestedControls = await readFile(new URL('../scripts/components/suggested-app-controls.js', import.meta.url), 'utf8');
 
     assert.match(pageUi, /setupSearch\(\{ state, documentObject, windowObject, setMobileSnapState \}\)/);
     assert.match(search, /export function setupSearch\(\{/);
     assert.match(search, /export function setupAllAppsLiveSearch\(\{ documentObject/);
-    assert.match(toolbar, /setupAllAppsLiveSearch\(\{ documentObject: document \}\)/);
+    assert.match(suggestedControls, /setupAllAppsLiveSearch\(\{ documentObject: document \}\)/);
     assert.doesNotMatch(search, /document\.getElementById|window\.innerWidth/);
 });
 
