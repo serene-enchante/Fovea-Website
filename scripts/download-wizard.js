@@ -3,6 +3,7 @@ import { canvasToTiffBlob } from './services/format-converters.js';
 import { geojsonToGpx, geojsonToKml } from './services/download-wizard-formatters.js';
 import { APP_INSTRUCTION_CONFIGS, COUNT_CIRCLES } from './config/download-wizard-config.js';
 import { createDownloadWizardRasterCache } from './map/download-wizard-raster-cache.js';
+import { loadGeoDataset } from './services/geo-data-repository.js';
 
 /**
  * download-wizard.js
@@ -30,7 +31,7 @@ function resolveAssetPath(relativePath) {
     return `${getRootPrefix()}${cleanPath}`;
 }
 
-async function fetchGeoJsonFile(filenameOrPath) {
+async function fetchGeoJsonFile(datasetId, filenameOrPath) {
     const filename = filenameOrPath.split('/').pop();
     const root = getRootPrefix();
     const candidatePaths = [
@@ -41,18 +42,7 @@ async function fetchGeoJsonFile(filenameOrPath) {
         `/geojson/${filename}`
     ];
 
-    let lastErr = null;
-    for (const p of candidatePaths) {
-        try {
-            const res = await fetch(p);
-            if (res.ok) {
-                return await res.json();
-            }
-        } catch(e) {
-            lastErr = e;
-        }
-    }
-    throw lastErr || new Error(`Could not fetch ${filename}`);
+    return loadGeoDataset(datasetId, { paths: candidatePaths });
 }
 
 // Wizard State
@@ -373,7 +363,7 @@ async function selectCircle(circle, advance = true) {
 
     // Fetch GeoJSON features for this circle
     try {
-        const geojson = await fetchGeoJsonFile(circle.geojsonPath);
+        const geojson = await fetchGeoJsonFile(circle.id, circle.geojsonPath);
         state.loadedGeoJSON = geojson;
 
         if (circle.totalZones > 0) {

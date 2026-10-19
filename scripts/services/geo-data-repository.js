@@ -42,30 +42,37 @@ export function getGeoDatasetPath(datasetId) {
     return getMapDataset(datasetId).path;
 }
 
-function createDatasetRequest(datasetId, path) {
+function createDatasetRequest(datasetId, paths, cacheKey) {
     const request = {
         datasetId,
+        cacheKey,
         controller: new AbortController(),
         consumers: 0,
         settled: false,
         promise: null
     };
-    request.promise = Promise.resolve()
-        .then(() => fetch(path, { signal: request.controller.signal }))
-        .then(async response => {
-            if (!response.ok) {
-                throw new Error(`${datasetId} data fetch failed (${response.status})`);
+    request.promise = Promise.resolve().then(async () => {
+        let lastError;
+        for (const path of paths) {
+            try {
+                const response = await fetch(path, { signal: request.controller.signal });
+                if (!response.ok) throw new Error(`${datasetId} data fetch failed (${response.status})`);
+                return validateFeatureCollection(datasetId, await response.json());
+            } catch (error) {
+                if (request.controller.signal.aborted) throw error;
+                lastError = error;
             }
-            return validateFeatureCollection(datasetId, await response.json());
-        })
+        }
+        throw lastError || new Error(`Could not fetch ${datasetId} data`);
+    })
         .catch(error => {
-            if (datasetRequests.get(datasetId) === request) datasetRequests.delete(datasetId);
+            if (datasetRequests.get(cacheKey) === request) datasetRequests.delete(cacheKey);
             throw error;
         })
         .finally(() => {
             request.settled = true;
         });
-    datasetRequests.set(datasetId, request);
+    datasetRequests.set(cacheKey, request);
     return request;
 }
 
@@ -79,7 +86,7 @@ function consumeDatasetRequest(request, signal) {
         released = true;
         request.consumers -= 1;
         if (!request.settled && request.consumers === 0) {
-            if (datasetRequests.get(request.datasetId) === request) datasetRequests.delete(request.datasetId);
+            if (datasetRequests.get(request.cacheKey) === request) datasetRequests.delete(request.cacheKey);
             request.controller.abort();
         }
     };
@@ -108,11 +115,15 @@ function consumeDatasetRequest(request, signal) {
     });
 }
 
-export async function loadGeoDataset(datasetId, { signal } = {}) {
-    const path = getGeoDatasetPath(datasetId);
+export async function loadGeoDataset(datasetId, { signal, paths } = {}) {
+    const candidates = paths || [getGeoDatasetPath(datasetId)];
+    if (!Array.isArray(candidates) || candidates.length === 0 || candidates.some(path => typeof path !== 'string' || !path)) {
+        throw new Error(`Invalid data paths for ${datasetId}`);
+    }
     if (signal?.aborted) throw createAbortError();
-    let request = datasetRequests.get(datasetId);
-    if (!request || request.controller.signal.aborted) request = createDatasetRequest(datasetId, path);
+    const cacheKey = `${datasetId}:${candidates.join('|')}`;
+    let request = datasetRequests.get(cacheKey);
+    if (!request || request.controller.signal.aborted) request = createDatasetRequest(datasetId, candidates, cacheKey);
     return consumeDatasetRequest(request, signal);
 }
 

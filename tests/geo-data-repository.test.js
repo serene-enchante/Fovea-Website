@@ -87,6 +87,26 @@ test('shares one request for concurrent loads of the same dataset', async () => 
     assert.strictEqual(first, second);
 });
 
+test('tries the next supplied path when a route-specific dataset path fails', async () => {
+    const requestedPaths = [];
+    globalThis.fetch = async path => {
+        requestedPaths.push(path);
+        return path === '../../geojson/Eugene-05-wgs84.geojson'
+            ? jsonResponse({}, 404)
+            : jsonResponse(featureCollection('Eugene', 'eugene'));
+    };
+
+    const dataset = await loadGeoDataset('eugene', {
+        paths: ['../../geojson/Eugene-05-wgs84.geojson', '../geojson/Eugene-05-wgs84.geojson']
+    });
+
+    assert.deepEqual(requestedPaths, [
+        '../../geojson/Eugene-05-wgs84.geojson',
+        '../geojson/Eugene-05-wgs84.geojson'
+    ]);
+    assert.equal(dataset.features[0].properties.zid, 'Eugene');
+});
+
 test('aborts the underlying fetch when its only consumer cancels', async () => {
     let requestSignal;
     let fetchStarted;
