@@ -6,14 +6,16 @@ Updated: 2026-10-19
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `df0d5df split print layout rendering responsibilities`
-- Latest handoff commit before this update: `987a981 sync download wizard handoff`.
+- Latest refactor commit: `c2d756c extract suggestion annotation GeoJSON builders`
+- Latest handoff commit before this update: `dac48c1 sync print rendering handoff`.
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
 - Preserve the separate, pre-existing edits to `geojson/Eugene-04-wgs84.geojson` and `geojson/Eugene-04-wgs84-10m.topojson`; do not stage them as part of unrelated work.
 
 ## Recent work
+
+- Extracted preview and submission GeoJSON construction from `feedback-form.js` into the pure `scripts/services/suggestion-annotations.js` service. The form fell from 838 to 707 lines; the extracted service is 74 lines. Preview-only vertices and in-progress geometry remain separate from submission output.
 
 ## Progress snapshot (2026-10-19)
 
@@ -22,14 +24,16 @@ Updated: 2026-10-19
 - The 1,141-line `toolbar-actions.js` was split by responsibility: toolbar actions now occupy 732 lines and suggested-app controls occupy 422 lines. Treat 500 lines as a review prompt and 1,000 lines as a strong signal to inspect cohesion, not as an automatic split target.
 - `download-wizard.js` was decomposed into a 963-line workflow controller, an 84-line configuration module, a 121-line wizard-specific formatter module, and an 87-line raster-cache controller. Wizard formatters preserve their existing output; they were not replaced with the shared converters because those have different output semantics.
 - `map-rendering.js` was split into a 272-line cache/download facade, a 487-line layout renderer, and a 174-line pure print-geometry utility. The old `map-rendering.js` path re-exports the renderer and geometry functions to preserve existing imports.
+- `feedback-form.js` now delegates annotation preview and submission GeoJSON construction to a 74-line service; the form controller is 707 lines.
 - Verified in the current checkout: `styles/page-maps-tile.css` is still 6,500 lines; `scripts/map/map-runtime.js` still configures `prefetchZoomDelta: 8`; there is no `.github/workflows` directory; and no JSON schema files were found in the schema search.
 - Remaining plan areas include reducing/organizing the map CSS, measuring and tuning map startup/prefetch behavior, adding CI browser checks, formalizing dataset/provider schemas and API contracts, and reviewing the entry composition layer for any remaining legacy responsibilities.
-- Next priority: inspect the 838-line `scripts/components/feedback-form.js` for cohesive responsibilities to separate, preserving its drawing and submission behavior. Then review the 834-line `scripts/map/map-layers.js`. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
+- Next priority: inspect the 834-line `scripts/map/map-layers.js` for cohesive responsibilities to separate, preserving layer ordering, style refresh, and label behavior. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
 
 Recent commits, newest first:
 
 | Commit | Change |
 | --- | --- |
+| `c2d756c` | Extract preview and submission annotation GeoJSON builders from the feedback-form controller. |
 | `df0d5df` | Split pure print geometry and print-layout rendering from the raster cache and download facade. |
 | `987a981` | Record the download-wizard decomposition and verification in the handoff. |
 | `11f1149` | Extract wizard configuration, wizard-specific KML/GPX serialization, and raster cache lifecycle from the large wizard controller. |
@@ -262,6 +266,12 @@ After decomposing the download-wizard controller:
 After splitting print-layout rendering responsibilities:
 
 - `npm test` passed: 182 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After extracting suggestion annotation GeoJSON builders:
+
+- `npm test` passed: 184 tests.
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
