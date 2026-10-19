@@ -584,3 +584,20 @@ The browser suite starts a server on `127.0.0.1:4173`. In this environment it ne
 - `scripts/map/bird-observation-layers.js` owns the bird-observation GeoJSON source, map layers, theme-aware paint properties, and map hover/click bindings.
 - `scripts/services/ebird-links.js` owns eBird link lookup. Species IDs and fallback URL normalization were moved without changing behavior.
 - Preserve public map URLs and query parameters (`circle`, `cid`, `feature`, `zone`, `id`) and keep desktop/mobile smoke flows working.
+
+## Latest continuation checkpoint (2026-10-19)
+
+The October 19 continuation completed these slices on `main`:
+
+- Audited the composition boundary, promoted `scripts/maps/entry.js` to the map composition root, and reduced `scripts/maps-tile.js` to a compatibility import. `maps/index.html` now loads the new entry directly.
+- Consolidated QR share URL construction and the feedback POST behind service clients. The feedback UI now says “request sent” because the deployed `no-cors` endpoint cannot confirm acceptance. iNaturalist already uses `scripts/services/observations-client.js`.
+- Centralized primary MapLibre CARTO/Esri style and tile URLs in `scripts/config/map-provider-config.js`; layer setup, runtime style choice, and PDF/TIFF tile rendering use that config.
+- Added `.github/workflows/ci.yml` for `npm test` and `npm run test:browser` on pushes to `main` and pull requests.
+- Added Draft 2020-12 contracts in `schemas/v1/` for circles, zones, normalized bird observations, feedback payloads, and export requests. `docs/api-contracts.md` records provider request/fallback/cache behavior. The GeoJSON repository now rejects malformed feature types, unsupported geometries, and missing circle/zone IDs before caching.
+- Added a browser startup request baseline. On desktop Chromium, 1.5 seconds after the Eugene zone map was ready, it observed one GeoJSON request (the selected Eugene dataset) and four CARTO/Esri tile requests. This is a request-count baseline, not a memory or transfer-size profile.
+
+Commits from this continuation, newest first: `4a54864`, `137878e`, `05a38e6`, `7490e09`, `901ddd7`, `4db19e9`, `c79017f`. The Eugene-04 GeoJSON and TopoJSON changes remain outside those commits.
+
+Latest verification: `npm test` passed with 196 tests; `npm run test:browser` passed with 6 Playwright tests; `git diff --check` passed. The browser suite needs permission to bind its local server at `127.0.0.1:4173` in this sandbox.
+
+Remaining decision before changing MapLibre cache/prefetch settings: choose a representative physical mobile device for memory profiling. The desktop browser request baseline does not measure WebGL tile-cache memory. Keep `maxTileCacheSize: 2500` and `prefetchZoomDelta: 8` unchanged until that profile is available. The CI workflow also needs its first GitHub-hosted run to confirm hosted Chrome installation and workflow execution.
