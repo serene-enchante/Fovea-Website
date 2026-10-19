@@ -74,33 +74,80 @@ test('loads and maps observations for the selected zone and updates the active s
     assert.equal(backButton.disabled, false);
 });
 
-test('ignores observations when the selected bird changes during the request', async () => {
-    let resolveObservations;
+test('aborts old observation requests when the selected bird changes', async () => {
+    const pendingSignals = new Map();
+    const updatedPanels = [];
+    const errors = [];
     const state = {
-        map: { getSource: () => ({ setData() { throw new Error('stale data should not render'); } }) },
+        map: { getSource: () => ({ setData() {} }) },
         allFeatures: [{ properties: { zid: '04' } }],
         currentId: '04',
-        selectedBirdObservations: []
+        selectedBirdObservations: [],
+        activeTab: 'birds'
     };
     const controller = createBirdSelectionController({
         state,
-        fetchObservations: () => new Promise(resolve => { resolveObservations = resolve; }),
+        fetchObservations: (birdName, _bounds, { signal }) => {
+            if (birdName === 'Robin') return Promise.resolve({ results: [] });
+            pendingSignals.set(birdName, signal);
+            return new Promise((_resolve, reject) => {
+                signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+            });
+        },
         fetchDefaultPhoto: async () => null,
         getBbox: () => null,
         updateHeader() {},
         renderSidebarList() {},
-        updateSidebarBirdPanel() { throw new Error('stale panel should not render'); },
+        updateSidebarBirdPanel: (...args) => updatedPanels.push(args),
+        setupObservationsLayer() {},
+        documentObject: { getElementById: () => null },
+        turfObject: null,
+        onError: (...args) => errors.push(args)
+    });
+
+    const oldRequest = controller.selectBird('Osprey');
+    const newRequest = controller.selectBird('Robin');
+    await Promise.all([oldRequest, newRequest]);
+
+    assert.equal(pendingSignals.get('Osprey').aborted, true);
+    assert.equal(state.selectedBird, 'Robin');
+    assert.equal(updatedPanels.length, 1);
+    assert.equal(updatedPanels[0][0], 'Robin');
+    assert.deepEqual(errors, []);
+});
+
+test('clearing bird selection aborts its pending observation request', async () => {
+    let pendingSignal;
+    const state = {
+        map: { getSource: () => ({ setData() {} }) },
+        allFeatures: [{ properties: { zid: '04' } }],
+        currentId: '04',
+        activeTab: 'observations'
+    };
+    const selection = createBirdSelectionController({
+        state,
+        fetchObservations: (_birdName, _bounds, { signal }) => {
+            pendingSignal = signal;
+            return new Promise((_resolve, reject) => {
+                signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+            });
+        },
+        fetchDefaultPhoto: async () => null,
+        getBbox: () => null,
+        updateHeader() {},
+        renderSidebarList() {},
+        updateSidebarBirdPanel() {},
         setupObservationsLayer() {},
         documentObject: { getElementById: () => null },
         turfObject: null
     });
 
-    const request = controller.selectBird('Osprey');
-    state.selectedBird = 'Robin';
-    resolveObservations({ results: [{ id: 1, location: '44,-123' }] });
-    await request;
+    const loading = selection.selectBird('Osprey');
+    clearBirdObservations(state);
+    await loading;
 
-    assert.deepEqual(state.selectedBirdObservations, []);
+    assert.equal(pendingSignal.aborted, true);
+    assert.equal(state.selectedBird, null);
 });
 
 test('falls back to the default taxon photo when observations have no photos', async () => {

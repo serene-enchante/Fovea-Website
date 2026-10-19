@@ -25,6 +25,23 @@ test('fetches observations by taxon name and retries with the text query when em
     assert.match(urls[1], /observations\?q=Osprey/);
 });
 
+test('forwards cancellation to both observation queries and taxon photo requests', async () => {
+    const controller = new AbortController();
+    const calls = [];
+    const fetchImpl = async (url, options) => {
+        calls.push({ url, options });
+        if (url.includes('/observations?taxon_name=')) return response({ results: [] });
+        if (url.includes('/observations?q=')) return response({ results: [{ id: 8 }] });
+        return response({ results: [{ default_photo: null }] });
+    };
+
+    await fetchBirdObservations('Osprey', bounds, { fetchImpl, signal: controller.signal });
+    await fetchTaxonDefaultPhoto('Osprey', { fetchImpl, signal: controller.signal });
+
+    assert.equal(calls.length, 3);
+    assert.ok(calls.every(call => call.options.signal instanceof AbortSignal));
+});
+
 test('throws if both observation queries fail and returns the default taxon photo when available', async () => {
     await assert.rejects(
         fetchBirdObservations('Osprey', bounds, { fetchImpl: async () => response({}, false) }),

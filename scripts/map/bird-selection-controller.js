@@ -2,7 +2,17 @@ import { normalizeZoneId } from '../utils/format-utils.js';
 import { state as sharedState } from '../state.js';
 import { clearBirdObservationPopup } from '../components/bird-observation-view.js';
 
+const activeBirdRequests = new WeakMap();
+
+function cancelPendingBirdRequest(state) {
+    const controller = activeBirdRequests.get(state);
+    if (!controller) return;
+    activeBirdRequests.delete(state);
+    controller.abort();
+}
+
 export function clearBirdObservations(state = sharedState) {
+    cancelPendingBirdRequest(state);
     state.selectedBird = null;
     state.selectedBirdObservations = [];
     state.selectedBirdPhotoUrl = '';
@@ -22,9 +32,11 @@ export function createBirdSelectionController({
     setupObservationsLayer,
     documentObject = globalThis.document,
     turfObject = globalThis.turf,
+    AbortControllerConstructor = globalThis.AbortController,
     onError = (...args) => console.error(...args)
 }) {
     async function selectBird(birdName) {
+        cancelPendingBirdRequest(state);
         state.selectedBird = birdName;
         updateHeader(birdName);
 
@@ -46,10 +58,13 @@ export function createBirdSelectionController({
         if (!targetFeature) return;
 
         setupObservationsLayer();
+        const requestController = new AbortControllerConstructor();
+        activeBirdRequests.set(state, requestController);
 
         try {
-            const data = await fetchObservations(birdName, getBbox(targetFeature));
-            if (state.selectedBird !== birdName) return;
+            const requestOptions = { signal: requestController.signal };
+            const data = await fetchObservations(birdName, getBbox(targetFeature), requestOptions);
+            if (requestController.signal.aborted || state.selectedBird !== birdName) return;
 
             const results = data.results || [];
             const features = [];
@@ -107,7 +122,8 @@ export function createBirdSelectionController({
             }
 
             if (!featuredPhotoUrl) {
-                const defaultPhoto = await fetchDefaultPhoto(birdName);
+                const defaultPhoto = await fetchDefaultPhoto(birdName, requestOptions);
+                if (requestController.signal.aborted || state.selectedBird !== birdName) return;
                 if (defaultPhoto) {
                     featuredPhotoUrl = (defaultPhoto.medium_url || defaultPhoto.url || '').replace('square', 'large').replace('medium', 'large');
                     photoCredit = defaultPhoto.attribution || 'Photo via iNaturalist';
@@ -119,10 +135,13 @@ export function createBirdSelectionController({
             if (state.activeTab === 'observations') renderSidebarList();
             else updateSidebarBirdPanel(birdName, features, featuredPhotoUrl, photoCredit);
         } catch (error) {
+            if (requestController.signal.aborted || state.selectedBird !== birdName) return;
             onError('iNaturalist error:', error);
             const listContainer = documentObject?.getElementById('sidebar-zone-list');
             const status = listContainer?.querySelector('.sidebar-bird-panel__status');
             if (status) status.textContent = 'Could not load observations from iNaturalist.';
+        } finally {
+            if (activeBirdRequests.get(state) === requestController) activeBirdRequests.delete(state);
         }
     }
 
