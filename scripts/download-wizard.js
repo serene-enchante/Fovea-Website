@@ -6,6 +6,7 @@ import { createDownloadWizardRasterCache } from './map/download-wizard-raster-ca
 import { loadGeoDataset } from './services/geo-data-repository.js';
 import { createDownloadWizardStepper } from './components/download-wizard-stepper.js';
 import { createDownloadWizardSelectionView } from './components/download-wizard-selection-view.js';
+import { createDownloadWizardAppHandoff } from './components/download-wizard-app-handoff.js';
 
 /**
  * download-wizard.js
@@ -143,6 +144,23 @@ const {
     onSelectZone: zone => selectZone(zone),
     resolveAssetPath,
     escapeHtml
+});
+
+const {
+    setupAppCards,
+    setupModalEvents
+} = createDownloadWizardAppHandoff({
+    state,
+    appInstructions: APP_INSTRUCTION_CONFIGS,
+    getExportGeoJSON,
+    getDownloadFilename,
+    generateGeoPdfBlob,
+    generateGeoTiffBlob,
+    geojsonToKml,
+    geojsonToGpx,
+    downloadBlob,
+    showToast,
+    resolveAssetPath
 });
 
 /**
@@ -441,205 +459,6 @@ function setupDirectDownloadButtons() {
             }
         });
     }
-}
-
-/**
- * Setup App cards in Step 3
- */
-function setupAppCards() {
-    document.querySelectorAll(".wizard-app-card").forEach(card => {
-        card.addEventListener("click", () => {
-            const appKey = card.dataset.app;
-            handleAppCardClick(appKey);
-        });
-    });
-}
-
-/**
- * Handle Compatible App Card click -> Opens instruction popup immediately & renders in background
- */
-function handleAppCardClick(appKey) {
-    const config = APP_INSTRUCTION_CONFIGS[appKey] || APP_INSTRUCTION_CONFIGS.avenza;
-    const geojson = getExportGeoJSON();
-    const filename = getDownloadFilename(config.ext);
-
-    let blobPromise = null;
-    if (config.formatKey === "geopdf" || config.ext === "pdf") {
-        blobPromise = generateGeoPdfBlob(null, true);
-    } else if (config.formatKey === "geotiff" || config.ext === "tif") {
-        blobPromise = generateGeoTiffBlob(null, true);
-    } else if (config.formatKey === "kmz") {
-        blobPromise = (async () => {
-            const kmlContent = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
-            if (typeof JSZip !== "undefined") {
-                const zip = new JSZip();
-                zip.file("doc.kml", kmlContent);
-                const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
-                return { blob, filename };
-            } else {
-                return { blob: new Blob([kmlContent], { type: "application/vnd.google-earth.kml+xml" }), filename: filename.replace(/\.kmz$/i, ".kml") };
-            }
-        })();
-    } else if (config.formatKey === "gpx") {
-        const gpxContent = geojsonToGpx(geojson, filename.replace(/\.gpx$/i, ""));
-        blobPromise = Promise.resolve({ blob: new Blob([gpxContent], { type: "application/gpx+xml" }), filename });
-    } else {
-        blobPromise = Promise.resolve({ blob: new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" }), filename });
-    }
-
-    state.activeGeneratedBlobPromise = blobPromise;
-    state.activeGeneratedBlob = null;
-    state.activeGeneratedFilename = filename;
-
-    blobPromise.then(res => {
-        state.activeGeneratedBlob = res.blob;
-        if (res.filename) state.activeGeneratedFilename = res.filename;
-    }).catch(err => {
-        console.error("Background export error:", err);
-    });
-
-    // Open popup instantly without delay
-    openAppInstructionModal(config, filename);
-}
-
-/**
- * Opens App Instruction Modal
- */
-function openAppInstructionModal(config, filename) {
-    const modal = document.getElementById("avenza-instruction-modal");
-    if (!modal) return;
-
-    // Set App Icon
-    const appIconEl = document.getElementById("avenza-modal-app-icon");
-    if (appIconEl) {
-        appIconEl.src = resolveAssetPath(config.iconSrc);
-        appIconEl.alt = config.appName;
-    }
-
-    // Set Target Name
-    const targetNameEl = document.getElementById("avenza-target-name");
-    if (targetNameEl) {
-        targetNameEl.textContent = state.selectedZone
-            ? `Zone ${String(state.selectedZone.properties?.zid || "0").padStart(2, "0")}`
-            : (state.selectedCircle?.name || "Count Circle");
-    }
-
-    // Set Selection Logo Thumbnail
-    const selectionThumb = document.getElementById("avenza-selection-thumb");
-    if (selectionThumb) {
-        selectionThumb.src = resolveAssetPath(state.selectedCircle?.thumbnail || "images/logo-small.png");
-    }
-
-    // Set Step Texts
-    const step1Heading = document.getElementById("avenza-step1-heading");
-    if (step1Heading) step1Heading.textContent = config.step1Heading;
-
-    const step2Heading = document.getElementById("avenza-step2-heading");
-    if (step2Heading) step2Heading.textContent = config.step2Heading;
-
-    const step2Text = document.getElementById("avenza-step2-text");
-    if (step2Text) step2Text.innerHTML = config.step2Text;
-
-    // Download Button handler in Modal
-    const modalDownloadBtn = document.getElementById("avenza-modal-download-btn");
-    if (modalDownloadBtn) {
-        modalDownloadBtn.classList.remove("is-downloaded", "is-preparing");
-        const defaultHtml = `
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            <span>Download File</span>
-        `;
-        modalDownloadBtn.innerHTML = defaultHtml;
-
-        modalDownloadBtn.onclick = async () => {
-            if (modalDownloadBtn.classList.contains("is-preparing")) return;
-
-            let blob = state.activeGeneratedBlob;
-            let targetFilename = state.activeGeneratedFilename || filename;
-
-            if (!(blob instanceof Blob)) {
-                showToast("Rendering map layout...");
-                modalDownloadBtn.classList.add("is-preparing");
-                modalDownloadBtn.innerHTML = `
-                    <svg class="spin-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="2" x2="12" y2="6"></line>
-                        <line x1="12" y1="18" x2="12" y2="22"></line>
-                        <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-                        <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-                        <line x1="2" y1="12" x2="6" y2="12"></line>
-                        <line x1="18" y1="12" x2="22" y2="12"></line>
-                        <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-                        <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
-                    </svg>
-                    <span>Preparing...</span>
-                `;
-
-                try {
-                    if (state.activeGeneratedBlobPromise) {
-                        const res = await state.activeGeneratedBlobPromise;
-                        blob = res.blob;
-                        if (res.filename) targetFilename = res.filename;
-                    }
-                    state.activeGeneratedBlob = blob;
-                    state.activeGeneratedFilename = targetFilename;
-                } catch (err) {
-                    console.error("Modal download error:", err);
-                    showToast("Error generating download file.");
-                    modalDownloadBtn.classList.remove("is-preparing");
-                    modalDownloadBtn.innerHTML = defaultHtml;
-                    return;
-                }
-                modalDownloadBtn.classList.remove("is-preparing");
-            }
-
-            downloadBlob(blob, targetFilename);
-            modalDownloadBtn.classList.add("is-downloaded");
-            modalDownloadBtn.innerHTML = `
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Downloaded</span>
-            `;
-            showToast(`Downloaded ${targetFilename}`);
-        };
-    }
-
-    // Direct Launch App button
-    const openBtn = document.getElementById("avenza-modal-open-btn");
-    if (openBtn) {
-        openBtn.textContent = `Open in ${config.appName}`;
-        openBtn.onclick = (e) => {
-            e.preventDefault();
-            window.location.href = config.scheme;
-        };
-    }
-
-    modal.classList.add("is-open");
-    modal.setAttribute("aria-hidden", "false");
-}
-
-
-/**
- * Setup modal close triggers
- */
-function setupModalEvents() {
-    const modal = document.getElementById("avenza-instruction-modal");
-    if (!modal) return;
-
-    modal.querySelectorAll("[data-modal-close]").forEach(el => {
-        el.addEventListener("click", () => {
-            modal.classList.remove("is-open");
-            modal.setAttribute("aria-hidden", "true");
-        });
-    });
-
-    window.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && modal.classList.contains("is-open")) {
-            modal.classList.remove("is-open");
-            modal.setAttribute("aria-hidden", "true");
-        }
-    });
 }
 
 /**

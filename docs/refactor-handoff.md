@@ -6,8 +6,8 @@ Updated: 2026-10-19
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `797e45c Extract responsive toolbar modal layout`
-- Latest handoff commit: `Record hosted CI and device profiling gate`.
+- Latest refactor commit: `0d3c5af Extract download wizard selection views` (current working slice extracts compatible-app handoff and modal behavior)
+- Latest handoff commit: `Record current refactor and CI checkpoint`.
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -24,14 +24,14 @@ Updated: 2026-10-19
 
 ## Progress snapshot (2026-10-19)
 
-- Overall estimate: **about 95%** of the goals in `docs/refactor-assessment.md`. This is qualitative; the plan has no formal scoring rubric. The core local architecture, integration, schema, contract, and test-workflow priorities are in place. The initial hosted CI run succeeded; the remaining evidence gate is physical-device memory profiling.
+- Overall estimate: **about 96%** of the active goals in `docs/refactor-assessment.md`. This is qualitative; the plan has no formal scoring rubric. The core local architecture, integration, schema, contract, and test-workflow priorities are in place. Hosted CI passes with the current pinned Node 24 actions on Ubuntu 24.04; the remaining evidence gate for map cache tuning is physical-device memory profiling.
 - `maps/index.html` loads the 310-line `scripts/maps/entry.js` composition root. `scripts/maps-tile.js` is a two-line compatibility import. The entry audit found no cohesive runtime behavior that should move out of the composition root.
 - Responsibility-based splits now include: `toolbar-actions.js` (619 lines), `header-view-toggle.js` (90), and `map-toolbar-modal-layout.js` (30); `feedback-form.js` (100), `suggestion-drawing-controller.js` (487), and `suggestion-annotation-layers.js` (133); `mobile-view.js` (337), `mobile-snap-state.js` (63), and `mobile-resize-controller.js` (159). Compatibility exports preserve existing imports where appropriate.
-- `download-wizard.js` is a 953-line workflow controller with separate config, formatters, and raster-cache modules. Its GeoJSON loading now uses the shared manifest-backed repository while preserving its route-fallback URL order. Revisit its controller only if a cohesion audit finds a distinct responsibility.
+- `download-wizard.js` is now a 486-line workflow controller with separate stepper, selection view, app-handoff/modal, config, formatters, and raster-cache modules. Its GeoJSON loading uses the shared manifest-backed repository while preserving its route-fallback URL order. The extracted `download-wizard-stepper.js` (105 lines), `download-wizard-selection-view.js` (167 lines), and `download-wizard-app-handoff.js` (184 lines) each have focused behavior tests.
 - The active map uses provider clients/configuration, request cancellation and timeouts, and deduplicated error messages for the selected basemap. The feedback endpoint remains `no-cors`, so its status is “request sent,” not confirmed acceptance.
-- Active GeoJSON data has a manifest with edition, schema version, source, bounds, and checksums. Versioned Draft 2020-12 schemas and provider/API contracts are present. The workflow `.github/workflows/ci.yml` runs unit and browser checks on main pushes and pull requests. The first hosted run succeeded on `d9150ca` in 1m 14s; GitHub emitted maintenance notices for Node 20 action fallback and the upcoming `ubuntu-latest` image migration.
-- Latest local verification: 211 unit tests and 10 Playwright tests pass; `git diff --check` passes. The browser suite covers route selection, downloads, feedback drawing, header view toggle, responsive toolbar-modal placement, and mobile navigation. Desktop request measurements do not estimate WebGL cache memory.
-- Do not change `maxTileCacheSize: 2500` or `prefetchZoomDelta: 8` until profiling on a representative physical mobile device and browser. The user currently has no physical-device test setup; this is the only remaining evidence gate and needs no immediate setup to continue non-performance work. Refactor commits through `d9150ca` were pushed to `origin/main` with the user's authorization. Preserve the existing Eugene-04 working-tree edits outside refactor commits.
+- Active GeoJSON data has a manifest with edition, schema version, source, bounds, and checksums. Versioned Draft 2020-12 schemas and provider/API contracts are present. The workflow `.github/workflows/ci.yml` runs unit and browser checks on main pushes and pull requests. The workflow now pins verified Node 24 action releases, uses Node 24 and Ubuntu 24.04, and grants only `contents: read`; the hosted run on `ed683d8` passed without the earlier runner notices.
+- Latest local verification: 217 unit tests and 10 Playwright tests pass; `git diff --check` passes. The browser suite covers route selection, downloads, feedback drawing, header view toggle, responsive toolbar-modal placement, and mobile navigation. Desktop request measurements do not estimate WebGL cache memory.
+- Do not change `maxTileCacheSize: 2500` or `prefetchZoomDelta: 8` until profiling on a representative physical mobile device and browser. The user currently has no physical-device test setup; this is the only remaining evidence gate for cache tuning and needs no immediate setup to continue non-performance work. Refactor commits through `0d3c5af` were pushed to `origin/main` with the user's authorization. Preserve the existing Eugene-04 working-tree edits outside refactor commits. The current compatible-app handoff extraction is locally verified but not yet committed/pushed; finish the slice and refresh this checkpoint before handoff.
 
 For the next worker: start with `git status --short --branch`; keep the existing Eugene-04 GeoJSON edit and untracked TopoJSON out of refactor commits. The stylesheet split is a structure-only change: its partials are contiguous source sections imported in order, and their concatenation matched the pre-split file byte for byte. Keep `page-maps-tile.css` as the public entry path and preserve imports in order. Use the latest test counts above rather than older counts in the historical log.
 
@@ -124,7 +124,7 @@ Recent commits, newest first:
 | `33a8e27` | Remove an unused stale viewport/fullscreen implementation from `scripts/map/map-rendering.js`. |
 | `d006702` | Consolidate raster cache ownership in `scripts/map/map-rendering.js`; retain the live map's legacy sharing wrappers. |
 
-Earlier work and the overall rationale/order are recorded in [refactor-assessment.md](./refactor-assessment.md). The live map now boots from `scripts/maps/entry.js`; `scripts/maps-tile.js` remains as a smaller composition/compatibility layer while remaining responsibilities are reviewed.
+Earlier work and the overall rationale/order are recorded in [refactor-assessment.md](./refactor-assessment.md). The live map boots from the 310-line composition root `scripts/maps/entry.js`; `scripts/maps-tile.js` is a two-line compatibility import.
 
 ## Verification history
 
@@ -597,7 +597,7 @@ Commits from this continuation, newest first: `e0b3d80`, `4cc1780`, `d416170`, `
 
 Latest verification: `npm test` passed with 200 tests; `npm run test:browser` passed with 7 Playwright tests; `git diff --check` passed. The browser suite needs permission to bind its local server at `127.0.0.1:4173` in this sandbox.
 
-Remaining decision before changing MapLibre cache/prefetch settings: choose a representative physical mobile device for memory profiling. The desktop browser request baseline does not measure WebGL tile-cache memory. Keep `maxTileCacheSize: 2500` and `prefetchZoomDelta: 8` unchanged until that profile is available. The CI workflow also needs its first GitHub-hosted run to confirm hosted Chrome installation and workflow execution.
+At that October 19 checkpoint, device profiling and the first hosted CI run were still pending. The initial CI run and the post-hardening run have since passed; physical-device cache profiling remains pending.
 
 Follow-up audit: removed the unreferenced `loadBirdData()` helper from `scripts/services/bird-data-service.js`; it had eagerly loaded all three datasets and duplicated the route-scoped production repository. Commit: `b1e581b`. Verification remained green at 196 unit tests and six browser tests.
 
@@ -616,8 +616,9 @@ Latest continuation (2026-10-19):
 - Commits from this continuation: `c1b7c5c` (MapLibre compatibility bridge moved into runtime); `ed7d6da` (provider cancellation and timeout behavior).
 - The download wizard now uses the shared repository for path fallback, validation, cancellation, deduplication, and error cleanup while preserving its candidate URL order. Commit: `2dd7ea1`.
 - Verification: 207 unit tests pass; 7 browser tests pass; `git diff --check` passes. Latest desktop Chromium sample: ready 526 ms; 78 same-origin JS resources, 474,459 transfer bytes and 451,059 decoded bytes; after 1.5 seconds, one GeoJSON and four CARTO/Esri tile requests.
-- Remaining validation: profile MapLibre cache memory on a representative physical mobile device and browser before changing `maxTileCacheSize: 2500` or `prefetchZoomDelta: 8`. The user has no physical-device setup yet. The first GitHub-hosted CI run succeeded on `d9150ca` (run `39328722914`) in 1m 14s, including `npm test` and `npm run test:browser`; GitHub emitted the Node 20 and Ubuntu image maintenance notices noted above. Active-basemap provider errors now have a deduplicated user-facing message; no generic telemetry or logging was added.
-- Keep `geojson/Eugene-04-wgs84.geojson` and untracked `geojson/Eugene-04-wgs84-10m.topojson` out of refactor commits. The working tree also contains earlier user edits in `docs/refactor-assessment.md` and `docs/refactor-handoff.md`; review before staging those documents.
+- Remaining validation: profile MapLibre cache memory on a representative physical mobile device and browser before changing `maxTileCacheSize: 2500` or `prefetchZoomDelta: 8`. The user has no physical-device setup yet. Hosted CI passed on `ed683d8` with Node 24, pinned actions, and Ubuntu 24.04. Active-basemap provider errors now have a deduplicated user-facing message; no generic telemetry or logging was added.
+- The 953-line wizard controller was recently audited and its stepper/navigation/view responsibility extracted to `download-wizard-stepper.js`; the controller is now 850 lines and the new component is 105 lines. `npm test` passes 213 tests and `npm run test:browser` passes 10 tests.
+- Keep `geojson/Eugene-04-wgs84.geojson` and untracked `geojson/Eugene-04-wgs84-10m.topojson` out of refactor commits.
 
 Provider error follow-up: `scripts/map/map-provider-errors.js` now maps recognized MapLibre source/URL errors to a deduplicated connection message only when that provider matches the active basemap. Unknown sources and errors from inactive CARTO/Esri layers are ignored. API contract updated; 209 unit tests and 7 browser tests pass; `git diff --check` passes. Commit: `38ab68a`.
 
