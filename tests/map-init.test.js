@@ -4,7 +4,8 @@ import {
     createMapInstance,
     switchBaseMap,
     toggleLocationTracking,
-    updateUserLocationOnMap
+    updateUserLocationOnMap,
+    checkUserLocationZone
 } from '../scripts/map/map-init.js';
 
 test('creates the live map through the injected MapLibre constructor', () => {
@@ -37,8 +38,7 @@ test('switches basemap visibility and keeps theme styling in sync', () => {
     };
     const backgrounds = [];
     const wrapperClasses = [];
-    const originalDocument = globalThis.document;
-    globalThis.document = {
+    const documentObject = {
         body: { classList: { contains: () => false } },
         getElementById(id) {
             if (id === 'tile-map') return { style: { setProperty: (...args) => backgrounds.push(args) } };
@@ -46,48 +46,45 @@ test('switches basemap visibility and keeps theme styling in sync', () => {
         }
     };
 
-    try {
-        const state = {
-            map,
-            baseMapsList: [
-                { id: 'default', layerId: 'base-dark-vector' },
-                { id: 'satellite', layerId: 'base-satellite' },
-                { id: 'esri-street', layerId: 'base-esri-street' },
-                { id: 'esri-topo', layerId: 'base-esri-topo' }
-            ],
-        };
+    const state = {
+        map,
+        baseMapsList: [
+            { id: 'default', layerId: 'base-dark-vector' },
+            { id: 'satellite', layerId: 'base-satellite' },
+            { id: 'esri-street', layerId: 'base-esri-street' },
+            { id: 'esri-topo', layerId: 'base-esri-topo' }
+        ]
+    };
 
-        switchBaseMap('satellite', {
-            state,
-            updateStyles: () => styleChanges.push('updated'),
-            getRoadColor: layerId => layerId === 'road_service_case' ? '#123456' : undefined
-        });
+    switchBaseMap('satellite', {
+        state,
+        documentObject,
+        updateStyles: () => styleChanges.push('updated'),
+        getRoadColor: layerId => layerId === 'road_service_case' ? '#123456' : undefined
+    });
 
-        assert.equal(state.currentBaseLayer, 'satellite');
-        assert.ok(layoutChanges.some(([id, key, value]) => id === 'base-satellite' && key === 'visibility' && value === 'visible'));
-        assert.ok(layoutChanges.some(([id, key, value]) => id === 'base-esri-street' && key === 'visibility' && value === 'none'));
-        assert.ok(paintChanges.some(([id, key, value]) => id === 'road_service_case' && key === 'line-opacity' && value === 0.35));
-        assert.ok(paintChanges.some(([id, key, value]) => id === 'road_service_case' && key === 'line-color' && value === '#ffffff'));
-        assert.deepEqual(backgrounds[0].slice(0, 2), ['background-color', '#000000']);
-        assert.deepEqual(wrapperClasses, [['remove', 'is-light-basemap']]);
-        assert.deepEqual(styleChanges, ['updated']);
-        switchBaseMap('default', {
-            state,
-            updateStyles: () => styleChanges.push('updated'),
-            getRoadColor: layerId => layerId === 'road_service_case' ? '#123456' : undefined
-        });
-        assert.ok(paintChanges.some(([id, key, value]) => id === 'road_service_case' && key === 'line-color' && value === '#123456'));
-        assert.equal('_originalRoadColors' in state, false);
-    } finally {
-        globalThis.document = originalDocument;
-    }
+    assert.equal(state.currentBaseLayer, 'satellite');
+    assert.ok(layoutChanges.some(([id, key, value]) => id === 'base-satellite' && key === 'visibility' && value === 'visible'));
+    assert.ok(layoutChanges.some(([id, key, value]) => id === 'base-esri-street' && key === 'visibility' && value === 'none'));
+    assert.ok(paintChanges.some(([id, key, value]) => id === 'road_service_case' && key === 'line-opacity' && value === 0.35));
+    assert.ok(paintChanges.some(([id, key, value]) => id === 'road_service_case' && key === 'line-color' && value === '#ffffff'));
+    assert.deepEqual(backgrounds[0].slice(0, 2), ['background-color', '#000000']);
+    assert.deepEqual(wrapperClasses, [['remove', 'is-light-basemap']]);
+    assert.deepEqual(styleChanges, ['updated']);
+    switchBaseMap('default', {
+        state,
+        documentObject,
+        updateStyles: () => styleChanges.push('updated'),
+        getRoadColor: layerId => layerId === 'road_service_case' ? '#123456' : undefined
+    });
+    assert.ok(paintChanges.some(([id, key, value]) => id === 'road_service_case' && key === 'line-color' && value === '#123456'));
+    assert.equal('_originalRoadColors' in state, false);
 });
 
 test('starts and stops geolocation and removes the marker and accuracy layer', () => {
     const calls = [];
     const classes = [];
-    const originalDocument = globalThis.document;
-    globalThis.document = {
+    const documentObject = {
         querySelector: () => ({ classList: {
             add: value => classes.push(['add', value]),
             remove: value => classes.push(['remove', value])
@@ -113,13 +110,9 @@ test('starts and stops geolocation and removes the marker and accuracy layer', (
     };
     const checked = [];
 
-    try {
-        toggleLocationTracking(state, { geolocation, checkLocation: value => checked.push(value) });
-        assert.equal(state.isLocating, true);
-        toggleLocationTracking(state, { geolocation, checkLocation: value => checked.push(value) });
-    } finally {
-        globalThis.document = originalDocument;
-    }
+    toggleLocationTracking(state, { geolocation, documentObject, checkLocation: value => checked.push(value) });
+    assert.equal(state.isLocating, true);
+    toggleLocationTracking(state, { geolocation, documentObject, checkLocation: value => checked.push(value) });
 
     assert.equal(state.isLocating, false);
     assert.equal(state.userLocationMarker, null);
@@ -157,4 +150,29 @@ test('renders and updates the user marker and accuracy polygon', () => {
     assert.equal(accuracyFeature.geometry.type, 'Polygon');
     assert.equal(accuracyFeature.geometry.coordinates[0].length, 65);
     assert.deepEqual(checked, [{ lng: -123, lat: 44 }]);
+});
+
+test('updates the location badge through an injected document', () => {
+    const classes = [];
+    const badge = {
+        innerHTML: '',
+        classList: {
+            add: value => classes.push(['add', value]),
+            remove: value => classes.push(['remove', value])
+        }
+    };
+    const documentObject = { getElementById: id => id === 'user-location-badge' ? badge : null };
+    const state = {
+        isLocating: true,
+        isCirclesFeature: false,
+        allFeatures: [{
+            properties: { zid: '04' },
+            geometry: { type: 'Polygon', coordinates: [[[-124, 43], [-122, 43], [-122, 45], [-124, 45], [-124, 43]]] }
+        }]
+    };
+
+    checkUserLocationZone({ lng: -123, lat: 44 }, state, documentObject);
+
+    assert.match(badge.innerHTML, /You are in Zone 04/);
+    assert.deepEqual(classes, [['add', 'is-visible']]);
 });

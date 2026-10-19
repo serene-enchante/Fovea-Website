@@ -14,7 +14,8 @@ export function createMapInstance(mapLibre, options) {
 export function switchBaseMap(baseMapId, {
     state: mapState = state,
     updateStyles = updateAllFeatureStyles,
-    getRoadColor = getOriginalRoadColor
+    getRoadColor = getOriginalRoadColor,
+    documentObject = globalThis.document
 } = {}) {
     if (!mapState.map || !mapState.baseMapsList) return;
     const targetId = baseMapId === 'dark' || baseMapId === 'default' ? 'default' : baseMapId;
@@ -60,14 +61,14 @@ export function switchBaseMap(baseMapId, {
         }
     });
 
-    const isLightMode = document.body.classList.contains('theme-light') || targetId === 'esri-street' || targetId === 'esri-topo';
-    const tileMap = document.getElementById('tile-map');
+    const isLightMode = documentObject.body.classList.contains('theme-light') || targetId === 'esri-street' || targetId === 'esri-topo';
+    const tileMap = documentObject.getElementById('tile-map');
     if (tileMap) {
         const background = isLightMode ? '#f8f9fa' : '#000000';
         tileMap.style.setProperty('background-color', background, 'important');
         tileMap.style.setProperty('background', background, 'important');
     }
-    const mapWrapper = document.getElementById('map-wrapper');
+    const mapWrapper = documentObject.getElementById('map-wrapper');
     if (mapWrapper) {
         if (targetId === 'esri-street' || targetId === 'esri-topo' || (targetId === 'default' && isLightMode)) {
             mapWrapper.classList.add('is-light-basemap');
@@ -173,8 +174,8 @@ export function updateUserLocationOnMap(
     onLocationUpdated(mapState.userLocationMarker.getLngLat());
 }
 
-export function checkUserLocationZone(latlng, mapState = state) {
-    const badge = document.getElementById("user-location-badge");
+export function checkUserLocationZone(latlng, mapState = state, documentObject = globalThis.document) {
+    const badge = documentObject.getElementById("user-location-badge");
     if (!badge) return;
 
     if (!mapState.isLocating || !latlng) {
@@ -214,7 +215,7 @@ export function checkUserLocationZone(latlng, mapState = state) {
 export function toggleLocationTracking(mapState = state, {
     geolocation = globalThis.navigator?.geolocation,
     notify = showToast,
-    checkLocation = latlng => checkUserLocationZone(latlng, mapState),
+    checkLocation = latlng => checkUserLocationZone(latlng, mapState, documentObject),
     documentObject = globalThis.document,
     mapLibre = globalThis.maplibregl
 } = {}) {
