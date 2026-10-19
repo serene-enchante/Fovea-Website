@@ -11,16 +11,33 @@ import {
 test('creates the live map through the injected MapLibre constructor', () => {
     const options = { container: 'tile-map', zoom: 11 };
     let receivedOptions;
+    let resizeCount = 0;
     class FakeMap {
         constructor(value) {
             receivedOptions = value;
         }
+        resize() { resizeCount += 1; }
     }
 
     const map = createMapInstance({ Map: FakeMap }, options);
 
     assert.ok(map instanceof FakeMap);
     assert.equal(receivedOptions, options);
+    assert.equal(typeof FakeMap.prototype.invalidateSize, 'function');
+    map.invalidateSize();
+    assert.equal(resizeCount, 1);
+});
+
+test('preserves a MapLibre invalidateSize implementation when already provided', () => {
+    const invalidateSize = function() { return 'custom'; };
+    class FakeMap {
+        resize() { throw new Error('the existing implementation should be preserved'); }
+    }
+    FakeMap.prototype.invalidateSize = invalidateSize;
+
+    createMapInstance({ Map: FakeMap }, {});
+
+    assert.equal(FakeMap.prototype.invalidateSize, invalidateSize);
 });
 
 test('fails clearly when MapLibre is not available', () => {

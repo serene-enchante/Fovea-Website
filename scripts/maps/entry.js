@@ -49,13 +49,6 @@ import { updateMapRouteUrl } from '../map/map-route-state.js';
 import { findFeatureByZoneId } from '../services/geo-selection.js';
 import { state } from '../state.js';
 
-// MapLibre prototype polyfill for Leaflet legacy compatibility
-if (typeof maplibregl !== 'undefined' && maplibregl.Map) {
-    maplibregl.Map.prototype.invalidateSize = function() {
-        this.resize();
-    };
-}
-
 function updateAllFeatureStyles() {
     updateMapFeatureStyles({ updateAdditionalLayers: updateBirdObservationsLayerStyles });
 }

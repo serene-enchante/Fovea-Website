@@ -8,6 +8,12 @@ export function createMapInstance(mapLibre, options) {
     if (typeof mapLibre?.Map !== 'function') {
         throw new Error('MapLibre is unavailable');
     }
+    // The shared viewport and toolbar still call Leaflet's invalidateSize name.
+    if (typeof mapLibre.Map.prototype.invalidateSize !== 'function') {
+        mapLibre.Map.prototype.invalidateSize = function() {
+            this.resize();
+        };
+    }
     return new mapLibre.Map(options);
 }
 
