@@ -177,9 +177,11 @@ test('map resize and fullscreen behavior is owned by the viewport module', async
 test('map layer rebuild lifecycle is owned by a shared map controller', async () => {
     const source = await readFile(mapScriptPath, 'utf8');
     const lifecycle = await readFile(new URL('../scripts/map/map-layer-lifecycle.js', import.meta.url), 'utf8');
+    const mapLayers = await readFile(new URL('../scripts/map/map-layers.js', import.meta.url), 'utf8');
 
     assert.match(source, /createMapLayerLifecycle\(\{/);
     assert.doesNotMatch(source, /function rebuildGeoJsonLayer\(/);
+    assert.doesNotMatch(mapLayers, /export function rebuildGeoJsonLayer\(/);
     assert.match(lifecycle, /export function createMapLayerLifecycle\(/);
     assert.match(lifecycle, /setupHoverEvents\(\{ map: state\.map, state, onFeatureClick \}\)/);
 });
