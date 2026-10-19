@@ -1,13 +1,13 @@
 # Refactor handoff
 
-Updated: 2026-10-14
+Updated: 2026-10-19
 
 ## Current state
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `0d27d3d keep hovered feature id outside map state`
-- Latest handoff commit before this progress update: `e775eff sync hovered feature handoff`.
+- Latest refactor commit: `372fd06 inject location marker browser dependencies`
+- Latest handoff commit before this update: `299420d record refactor progress snapshot`.
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -21,12 +21,14 @@ Updated: 2026-10-14
 - The core map JavaScript migration is substantially advanced: `maps/index.html` loads `scripts/maps/entry.js`, and `scripts/maps-tile.js` is now a 316-line composition/compatibility layer (down from the assessment's original 8,865-line measurement).
 - Verified in the current checkout: `styles/page-maps-tile.css` is still 6,500 lines; `scripts/map/map-runtime.js` still configures `prefetchZoomDelta: 8`; there is no `.github/workflows` directory; and no JSON schema files were found in the schema search.
 - Remaining plan areas include reducing/organizing the map CSS, measuring and tuning map startup/prefetch behavior, adding CI browser checks, formalizing dataset/provider schemas and API contracts, and reviewing the entry composition layer for any remaining legacy responsibilities.
-- Next worker should first inspect `scripts/maps/entry.js`, `scripts/maps-tile.js`, and `scripts/map/map-runtime.js` to identify a safe next slice. Prefer completing one measurable behavior or boundary, then run `npm test`, `npm run test:browser`, and `git diff --check`; keep the Eugene-04 edits unstaged.
+- Next priority: measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` on startup/network use before changing MapLibre settings. If measurement infrastructure is too heavy, add the planned browser CI workflow as a separate slice. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
 
 Recent commits, newest first:
 
 | Commit | Change |
 | --- | --- |
+| `372fd06` | Inject document and MapLibre dependencies into user-location marker creation and pass them through location tracking. |
+| `299420d` | Record the refactor progress estimate, evidence, and remaining work for the next worker. |
 | `0d27d3d` | Keep the hovered feature ID in a map-keyed weak map and let the proximity glow read it through an accessor. |
 | `e775eff` | Sync the hovered-feature state extraction and verification into the handoff. |
 | `364be8d` | Record the proximity listener guard refactor and verification in this handoff. |
@@ -217,6 +219,12 @@ After moving map event and proximity listener guards out of shared map state:
 - `git diff --check` passed.
 
 After moving the hovered feature ID out of shared map state:
+
+- `npm test` passed: 172 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After injecting user-location marker browser dependencies:
 
 - `npm test` passed: 172 tests.
 - `npm run test:browser` passed: 5 Playwright tests.
