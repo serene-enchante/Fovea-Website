@@ -6,8 +6,8 @@ Updated: 2026-10-19
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `ca47adf extract map HTML label renderer`
-- Latest handoff commit before this update: `838da61 sync suggestion annotation refactor handoff`.
+- Latest refactor commit: `9df90ca extract theme-specific vector styling`
+- Latest handoff commit before this update: `889e30f sync map label renderer refactor handoff`.
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -15,6 +15,7 @@ Updated: 2026-10-19
 
 ## Recent work
 
+- Moved theme-specific land, park, waterway, road-label, and place-label styling into `scripts/map/map-vector-theme-styles.js` (145 lines). `setupMapLayers` still owns style-load ordering, road-color capture and restore, satellite road opacity, filter-cache resets, and initial place filtering. `map-layers.js` is now 594 lines.
 - Extracted HTML map-label DOM rendering, zoom visibility, and basemap text styling into `scripts/map/map-html-labels.js`. `map-layers.js` re-exports the existing label functions for compatibility and is now 735 lines; the new renderer is 104 lines.
 - Extracted preview and submission GeoJSON construction from `feedback-form.js` into the pure `scripts/services/suggestion-annotations.js` service. The form fell from 838 to 707 lines; the extracted service is 74 lines. Preview-only vertices and in-progress geometry remain separate from submission output.
 
@@ -26,15 +27,17 @@ Updated: 2026-10-19
 - `download-wizard.js` was decomposed into a 963-line workflow controller, an 84-line configuration module, a 121-line wizard-specific formatter module, and an 87-line raster-cache controller. Wizard formatters preserve their existing output; they were not replaced with the shared converters because those have different output semantics.
 - `map-rendering.js` was split into a 272-line cache/download facade, a 487-line layout renderer, and a 174-line pure print-geometry utility. The old `map-rendering.js` path re-exports the renderer and geometry functions to preserve existing imports.
 - `feedback-form.js` now delegates annotation preview and submission GeoJSON construction to a 74-line service; the form controller is 707 lines.
-- HTML label DOM rendering, visibility, and basemap colors now live in `map-html-labels.js` (104 lines); `map-layers.js` remains the compatibility owner for the existing exports (735 lines).
+- HTML label DOM rendering, visibility, and basemap colors now live in `map-html-labels.js` (104 lines); `map-layers.js` remains the compatibility owner for the existing exports.
+- Theme-specific base vector styling now lives in `map-vector-theme-styles.js` (145 lines); `map-layers.js` is 594 lines. The style-load sequence and road color cache remain in `map-layers.js`.
 - Verified in the current checkout: `styles/page-maps-tile.css` is still 6,500 lines; `scripts/map/map-runtime.js` still configures `prefetchZoomDelta: 8`; there is no `.github/workflows` directory; and no JSON schema files were found in the schema search.
 - Remaining plan areas include reducing/organizing the map CSS, measuring and tuning map startup/prefetch behavior, adding CI browser checks, formalizing dataset/provider schemas and API contracts, and reviewing the entry composition layer for any remaining legacy responsibilities.
-- Next priority: inspect `setupMapLayers` in `scripts/map/map-layers.js` for a cohesive vector-style setup boundary, especially the theme-specific land, park, road, and place styling. Preserve style-load ordering, road-color cache behavior, place-filter resets, and feature-layer updates. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
+- Next priority: inspect the remaining `rebuildGeoJsonLayer` export in `scripts/map/map-layers.js`. Repository search found no production callers; production uses `map-layer-lifecycle.js`, while tests call the lifecycle controller. Confirm whether the legacy export can be removed without affecting external consumers or contracts, and add/adjust focused coverage if removing it. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
 
 Recent commits, newest first:
 
 | Commit | Change |
 | --- | --- |
+| `9df90ca` | Extract theme-specific base vector styling from map-layer setup. |
 | `ca47adf` | Extract HTML map-label rendering from the map layers module. |
 | `c2d756c` | Extract preview and submission annotation GeoJSON builders from the feedback-form controller. |
 | `df0d5df` | Split pure print geometry and print-layout rendering from the raster cache and download facade. |
@@ -282,6 +285,12 @@ After extracting the HTML map-label renderer:
 
 - `npm test` passed: 184 tests.
 - Playwright reported all 5 browser tests passed; the process then hung during shutdown and was interrupted after the pass report.
+- `git diff --check` passed.
+
+After extracting theme-specific vector styling:
+
+- `npm test` passed: 186 tests.
+- `npm run test:browser` passed: 5 Playwright tests (the suite completed successfully in 59.5 seconds).
 - `git diff --check` passed.
 
 After removing the duplicate lightbox setup:
