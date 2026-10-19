@@ -4,6 +4,7 @@ import { geojsonToGpx, geojsonToKml } from './services/download-wizard-formatter
 import { APP_INSTRUCTION_CONFIGS, COUNT_CIRCLES } from './config/download-wizard-config.js';
 import { createDownloadWizardRasterCache } from './map/download-wizard-raster-cache.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
+import { createDownloadWizardStepper } from './components/download-wizard-stepper.js';
 
 /**
  * download-wizard.js
@@ -118,120 +119,16 @@ const {
     hasCachedCanvas: hasWizardRasterCanvas
 } = wizardRasterCache;
 
-/**
- * Stepper logic
- */
-function setupStepper() {
-    const stepNodes = document.querySelectorAll(".stepper-step");
-    stepNodes.forEach(node => {
-        node.addEventListener("click", () => {
-            const stepNum = parseInt(node.dataset.step, 10);
-            if (stepNum === 1) {
-                setStep(1);
-            } else if (stepNum === 2 && state.selectedCircle && state.selectedCircle.totalZones > 0) {
-                setStep(2);
-            } else if (stepNum === 3 && state.selectedCircle && (state.selectedZone !== null || state.currentStep === 3)) {
-                setStep(3);
-            }
-        });
-    });
-
-    document.querySelectorAll(".wizard-back-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const targetStep = parseInt(btn.dataset.targetStep, 10) || (state.currentStep - 1);
-            if (targetStep >= 1) setStep(targetStep);
-        });
-    });
-
-    const changeBtn = document.getElementById("wizard-change-selection-btn");
-    if (changeBtn) {
-        changeBtn.addEventListener("click", () => {
-            setStep(state.selectedCircle && state.selectedCircle.totalZones > 0 ? 2 : 1);
-        });
-    }
-
-    window.addEventListener("beforeunload", disposeWizardRasterCache);
-}
-
-/**
- * Changes active wizard step
- */
-function setStep(stepNum) {
-    if (stepNum < 3) {
-        disposeWizardRasterCache();
-    }
-
-    state.currentStep = stepNum;
-
-    // Update step views visibility
-    document.querySelectorAll(".wizard-step-view").forEach(v => v.classList.remove("is-visible"));
-    const targetView = document.getElementById(`step-${stepNum}-view`);
-    if (targetView) targetView.classList.add("is-visible");
-
-    // Update stepper bar UI
-    updateStepperUI();
-
-    // Scroll to top smoothly
-    window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-/**
- * Dynamically updates stepper nodes with logos, names, and numbers
- */
-function updateStepperUI() {
-    const stepNum = state.currentStep;
-    const stepNodes = document.querySelectorAll(".stepper-step");
-
-    stepNodes.forEach(node => {
-        const nStep = parseInt(node.dataset.step, 10);
-        node.classList.remove("is-active", "is-completed", "has-logo", "is-selected-zone");
-        const nodeEl = node.querySelector(".stepper-step__node");
-        const labelEl = node.querySelector(".stepper-step__label");
-
-        if (nStep === 1) {
-            if (state.selectedCircle) {
-                if (labelEl) labelEl.textContent = state.selectedCircle.name;
-                node.classList.add("has-logo");
-                if (nodeEl) nodeEl.innerHTML = `<img src="${resolveAssetPath(state.selectedCircle.thumbnail)}" alt="${escapeHtml(state.selectedCircle.name)}">`;
-            } else {
-                if (labelEl) labelEl.textContent = "chose count circle";
-                if (nodeEl) nodeEl.textContent = "1";
-            }
-        } else if (nStep === 2) {
-            if (state.selectedZone !== null) {
-                const zid = state.selectedZone?.properties?.zid;
-                const displayZid = zid ? String(zid).padStart(2, "0") : "00";
-                if (labelEl) labelEl.textContent = `Zone ${displayZid}`;
-                node.classList.add("is-selected-zone");
-                if (nodeEl) nodeEl.innerHTML = `<span style="font-size: 0.76rem; font-weight: 800; color: #000000; line-height: 1;">${displayZid}</span>`;
-            } else if (state.currentStep === 3 && state.selectedCircle) {
-                // Full circle selected in step 3
-                if (labelEl) labelEl.textContent = "full circle";
-                node.classList.add("is-selected-zone");
-                if (nodeEl) nodeEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5"><circle cx="12" cy="12" r="9"></circle></svg>`;
-            } else {
-                if (labelEl) labelEl.textContent = "select zone";
-                if (nodeEl) nodeEl.textContent = "2";
-            }
-        } else if (nStep === 3) {
-            if (labelEl) labelEl.textContent = "download files";
-            if (nodeEl) nodeEl.textContent = "3";
-        }
-
-        if (nStep === stepNum) {
-            node.classList.add("is-active");
-        } else if (nStep < stepNum) {
-            node.classList.add("is-completed");
-        }
-    });
-
-    // Update progress track fill
-    const trackProgress = document.getElementById("stepper-track-progress");
-    if (trackProgress) {
-        const progressWidths = { 1: "0%", 2: "50%", 3: "100%" };
-        trackProgress.style.width = progressWidths[stepNum] || "0%";
-    }
-}
+const {
+    setup: setupStepper,
+    setStep,
+    updateStepperUI
+} = createDownloadWizardStepper({
+    state,
+    disposeRasterCache: disposeWizardRasterCache,
+    resolveAssetPath,
+    escapeHtml
+});
 
 /**
  * Setup live search inputs with clear buttons
