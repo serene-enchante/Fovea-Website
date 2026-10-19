@@ -7,6 +7,7 @@ import { createPlaceLabelFilterController, toExpression } from './map-place-labe
 import { CIRCLE_ID } from '../config/app-config.js';
 import { showToast } from '../components/toast-view.js'; // Might be needed for selectMapStyleByIndex
 import { findPointInsidePolygon, getBbox } from '../utils/geometry-math.js';
+import { CARTO_SUBDOMAINS, MAP_PROVIDER_URLS } from '../config/map-provider-config.js';
 
 export { rebuildHtmlLabels, updateLabelZoomVisibility } from './map-html-labels.js';
 
@@ -160,25 +161,25 @@ export function addRasterBaseLayers(map, activeLayerId = 'dark') {
     const sources = [
         ['satellite-tiles', {
             type: 'raster',
-            tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+            tiles: [MAP_PROVIDER_URLS.esri.satelliteTiles],
             tileSize: 128,
             maxzoom: 18
         }],
         ['esri-street-tiles', {
             type: 'raster',
-            tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'],
+            tiles: [MAP_PROVIDER_URLS.esri.streetTiles],
             tileSize: 256,
             maxzoom: 18
         }],
         ['esri-topo-tiles', {
             type: 'raster',
-            tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'],
+            tiles: [MAP_PROVIDER_URLS.esri.topoTiles],
             tileSize: 256,
             maxzoom: 18
         }],
         ['dark-tiles', {
             type: 'raster',
-            tiles: ['a', 'b', 'c', 'd'].map(subdomain => `https://${subdomain}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png`),
+            tiles: CARTO_SUBDOMAINS.map(subdomain => MAP_PROVIDER_URLS.carto.darkRasterTiles.replace('{s}', subdomain)),
             tileSize: 128,
             maxzoom: 19
         }]

@@ -4,6 +4,7 @@ import { setupMapCanvasEvents } from './map-events.js';
 import { setupMapNavigationControls } from './map-controls.js';
 import { setupMapStyleControl } from './map-style-control.js';
 import { setupMapEffectsAndFullscreen } from './map-viewport.js';
+import { MAP_PROVIDER_URLS } from '../config/map-provider-config.js';
 
 export function initializeMapRuntime({
     maplibregl,
@@ -32,8 +33,8 @@ export function initializeMapRuntime({
         || state.currentBaseLayer === 'esri-street'
         || documentObject.documentElement.getAttribute('data-theme') === 'light';
     const defaultVectorStyle = isLightMode
-        ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
-        : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+        ? MAP_PROVIDER_URLS.carto.lightVectorStyle
+        : MAP_PROVIDER_URLS.carto.darkVectorStyle;
 
     state.map = createMapInstance(maplibregl, {
         container: 'tile-map',

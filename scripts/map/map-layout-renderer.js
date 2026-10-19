@@ -5,12 +5,13 @@ import { getLayoutScaleBar } from '../utils/map-print-math.js';
 import { getBbox } from '../utils/geometry-math.js';
 import { loadQrCodeImage } from '../services/qr-image-service.js';
 import { getFeatureCenter } from '../utils/map-print-geometry.js';
+import { MAP_PROVIDER_URLS } from '../config/map-provider-config.js';
 
 // ──────────────────────────────────────────────────────────────
 // Headless offscreen MapLibre renderer for PDF / TIFF export
 // ──────────────────────────────────────────────────────────────
 
-const ESRI_TOPO_TILE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}";
+const ESRI_TOPO_TILE_URL = MAP_PROVIDER_URLS.esri.topoTiles;
 
 // Offscreen map viewport dimensions (used by the hidden MapLibre canvas) — 3800px width with safe WebGL headroom
 const OFFSCREEN_MAP_WIDTH = 3800;
