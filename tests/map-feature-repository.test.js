@@ -28,3 +28,18 @@ test('loads the requested dataset and stores features in the matching state fiel
 
     assert.deepEqual(requests, ['circles', 'eugene', 'florence', 'circles']);
 });
+
+test('forwards cancellation options to the GeoJSON repository', async () => {
+    const controller = new AbortController();
+    let optionsReceived;
+    const repository = createMapFeatureRepository({
+        state: {},
+        loadGeoDataset: async (_datasetId, options) => {
+            optionsReceived = options;
+            return { features: [] };
+        }
+    });
+
+    await repository.loadFeaturesForMapView('eugene', { signal: controller.signal });
+    assert.strictEqual(optionsReceived.signal, controller.signal);
+});

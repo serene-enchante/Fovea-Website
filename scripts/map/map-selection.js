@@ -12,27 +12,43 @@ export function createFeatureTransitionController({
     getFitPadding,
     schedule,
     showToast,
-    isSuggestLocked
+    isSuggestLocked,
+    AbortControllerConstructor = globalThis.AbortController
 }) {
     let latestTransitionId = 0;
+    let activeDatasetRequest = null;
+
+    function beginDatasetRequest() {
+        activeDatasetRequest?.abort();
+        const controller = new AbortControllerConstructor();
+        activeDatasetRequest = controller;
+        return controller;
+    }
+
+    function finishDatasetRequest(controller) {
+        if (activeDatasetRequest === controller) activeDatasetRequest = null;
+    }
 
     async function switchToFeature(featureName, circleLayer) {
         if (isSuggestLocked() && (featureName !== appState.currentFeature || appState.isCirclesFeature)) return;
         if (!appState.map) return;
         disposeRasterCache();
         const transitionId = ++latestTransitionId;
+        const requestController = beginDatasetRequest();
 
         let targetFeatures;
         try {
-            targetFeatures = await loadFeatures(featureName);
+            targetFeatures = await loadFeatures(featureName, { signal: requestController.signal });
         } catch (error) {
-            if (transitionId === latestTransitionId) {
+            finishDatasetRequest(requestController);
+            if (transitionId === latestTransitionId && !requestController.signal.aborted) {
                 console.error(`Unable to load ${featureName} map data:`, error);
                 showToast(`Unable to load ${featureName} map data`, true);
             }
             return;
         }
         if (transitionId !== latestTransitionId) return;
+        finishDatasetRequest(requestController);
 
         let transitionFinished = false;
         const performSwap = () => {
@@ -64,18 +80,21 @@ export function createFeatureTransitionController({
         if (!appState.map) return;
         disposeRasterCache();
         const transitionId = ++latestTransitionId;
+        const requestController = beginDatasetRequest();
 
         let circlesFeatures;
         try {
-            circlesFeatures = await loadFeatures('circles');
+            circlesFeatures = await loadFeatures('circles', { signal: requestController.signal });
         } catch (error) {
-            if (transitionId === latestTransitionId) {
+            finishDatasetRequest(requestController);
+            if (transitionId === latestTransitionId && !requestController.signal.aborted) {
                 console.error('Unable to load circles map data:', error);
                 showToast('Unable to load circle map data', true);
             }
             return;
         }
         if (transitionId !== latestTransitionId) return;
+        finishDatasetRequest(requestController);
 
         appState.currentFeature = 'circles';
         appState.isCirclesFeature = true;

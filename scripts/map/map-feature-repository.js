@@ -1,9 +1,9 @@
 export function createMapFeatureRepository({ state, loadGeoDataset }) {
-    async function loadFeaturesForMapView(featureName) {
+    async function loadFeaturesForMapView(featureName, options) {
         const datasetId = featureName === 'florence' ? 'florence'
             : featureName === 'eugene' ? 'eugene'
                 : 'circles';
-        const dataset = await loadGeoDataset(datasetId);
+        const dataset = await loadGeoDataset(datasetId, options);
         const features = dataset.features;
 
         if (datasetId === 'circles') {

@@ -87,6 +87,51 @@ test('shares one request for concurrent loads of the same dataset', async () => 
     assert.strictEqual(first, second);
 });
 
+test('aborts the underlying fetch when its only consumer cancels', async () => {
+    let requestSignal;
+    let fetchStarted;
+    const started = new Promise(resolve => { fetchStarted = resolve; });
+    globalThis.fetch = async (_path, { signal }) => {
+        requestSignal = signal;
+        fetchStarted();
+        return new Promise((_resolve, reject) => {
+            signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+        });
+    };
+
+    const controller = new AbortController();
+    const loading = loadGeoDataset('eugene', { signal: controller.signal });
+    await started;
+    controller.abort();
+
+    await assert.rejects(loading, error => error.name === 'AbortError');
+    assert.equal(requestSignal.aborted, true);
+});
+
+test('keeps a shared fetch alive while another consumer still needs the dataset', async () => {
+    let resolveFetch;
+    let requestSignal;
+    let requestCount = 0;
+    globalThis.fetch = (_path, { signal }) => {
+        requestCount += 1;
+        requestSignal = signal;
+        return new Promise(resolve => { resolveFetch = resolve; });
+    };
+
+    const firstController = new AbortController();
+    const secondController = new AbortController();
+    const first = loadGeoDataset('eugene', { signal: firstController.signal });
+    const second = loadGeoDataset('eugene', { signal: secondController.signal });
+    const firstResult = assert.rejects(first, error => error.name === 'AbortError');
+    firstController.abort();
+
+    await firstResult;
+    assert.equal(requestCount, 1);
+    assert.equal(requestSignal.aborted, false);
+    resolveFetch(jsonResponse(featureCollection('Eugene', 'eugene')));
+    assert.equal((await second).features[0].properties.zid, 'Eugene');
+});
+
 test('rejects malformed GeoJSON and permits a later retry', async () => {
     let requestCount = 0;
     globalThis.fetch = async () => {

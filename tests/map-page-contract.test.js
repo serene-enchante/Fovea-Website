@@ -33,7 +33,7 @@ test('the map application uses the shared GeoJSON repository', async () => {
     const startup = await readFile(new URL('../scripts/map/map-page-startup.js', import.meta.url), 'utf8');
     assert.match(startup, /state\.allFeatures = await loadFeatures\(initialFeature\)/);
     const selectionController = await readFile(new URL('../scripts/map/map-selection.js', import.meta.url), 'utf8');
-    assert.match(selectionController, /targetFeatures = await loadFeatures\(featureName\);/);
+    assert.match(selectionController, /targetFeatures = await loadFeatures\(featureName, \{ signal: requestController\.signal \}\);/);
     assert.doesNotMatch(selectionController, /from '\.\.\/components\/(?:header-view|sidebar-list)\.js'/);
     assert.doesNotMatch(selectionController, /from '\.\/map-(?:layers|rendering)\.js'/);
     assert.doesNotMatch(selectionController, /import \{ state \} from/);
@@ -46,7 +46,7 @@ test('the map application uses the shared GeoJSON repository', async () => {
     assert.match(selectionController, /schedule,/);
     assert.match(selectionController, /updateHeader: renderHeader/);
     assert.match(selectionController, /disposeRasterCache: disposeCache/);
-    assert.match(selectionController, /schedule,\s*showToast,\s*isSuggestLocked\s*}/);
+    assert.match(selectionController, /schedule,\s*showToast,\s*isSuggestLocked,\s*AbortControllerConstructor/);
     assert.doesNotMatch(selectionController, /document\.body|setTimeout\(/);
     assert.match(source, /import \{ getBbox \} from '\.\.\/utils\/geometry-math\.js';/);
     assert.match(source, /import \{ displayZoneId, normalizeZoneId \} from '\.\.\/utils\/format-utils\.js';/);

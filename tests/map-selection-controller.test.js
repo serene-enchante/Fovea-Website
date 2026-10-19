@@ -53,9 +53,15 @@ test('uses the injected timer as a fallback when an animated feature swap has no
 
 test('discards an older dataset response after a newer navigation request', async () => {
     const pending = new Map();
-    const harness = createHarness(datasetId => new Promise(resolve => pending.set(datasetId, resolve)));
+    const signals = new Map();
+    const harness = createHarness((datasetId, { signal } = {}) => new Promise(resolve => {
+        pending.set(datasetId, resolve);
+        signals.set(datasetId, signal);
+    }));
     const areaChange = harness.controller.switchToFeature('eugene');
+    assert.equal(signals.get('eugene').aborted, false);
     const circlesChange = harness.controller.switchToCirclesFeature();
+    assert.equal(signals.get('eugene').aborted, true);
 
     const circles = [{ properties: { cid: 'Eugene' } }];
     pending.get('circles')(circles);
@@ -66,4 +72,21 @@ test('discards an older dataset response after a newer navigation request', asyn
     assert.equal(harness.state.currentFeature, 'circles');
     assert.equal(harness.state.allFeatures, circles);
     assert.deepEqual(harness.effects, ['dispose', 'dispose', 'rebuild', ['select', 'ecbc-circle', true]]);
+});
+
+test('silently ignores an aborted stale dataset request', async () => {
+    const harness = createHarness((datasetId, { signal }) => new Promise((resolve, reject) => {
+        if (datasetId === 'circles') {
+            resolve([{ properties: { cid: 'Eugene' } }]);
+            return;
+        }
+        signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+    }));
+
+    const areaChange = harness.controller.switchToFeature('eugene');
+    await harness.controller.switchToCirclesFeature();
+    await areaChange;
+
+    assert.equal(harness.state.currentFeature, 'circles');
+    assert.equal(harness.effects.some(effect => Array.isArray(effect) && effect[0] === 'toast'), false);
 });
