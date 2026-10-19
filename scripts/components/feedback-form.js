@@ -3,6 +3,7 @@ import { showToast } from './toast-view.js';
 import { displayZoneId, normalizeZoneId } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { getThemeAccent } from '../utils/color-utils.js';
+import { buildAnnotationFeatureCollection, buildSuggestionFeatureCollection } from '../services/suggestion-annotations.js';
 
 export function getSuggestSelectionLabel() {
     if (state.isCirclesFeature) {
@@ -319,103 +320,15 @@ export function setupSuggestFormAndDrawing(closeAllModals) {
     const updateAnnotationSource = () => {
         if (!state.map) return;
         ensureAnnotationLayers(state.map);
-
-        const features = [];
-
-        // 1. All placed markers
-        markers.forEach((coord, idx) => {
-            features.push({
-                type: "Feature",
-                properties: { kind: "marker", index: idx },
-                geometry: { type: "Point", coordinates: coord }
-            });
-        });
-
-        // 2. All placed lines + in-progress line
-        lines.forEach((line) => {
-            if (line.length >= 2) {
-                features.push({
-                    type: "Feature",
-                    properties: { kind: "line" },
-                    geometry: { type: "LineString", coordinates: line }
-                });
-            }
-            line.forEach(coord => {
-                features.push({
-                    type: "Feature",
-                    properties: { kind: "vertex" },
-                    geometry: { type: "Point", coordinates: coord }
-                });
-            });
-        });
-
-        if (activeLineCoords.length > 0) {
-            if (activeLineCoords.length >= 2) {
-                features.push({
-                    type: "Feature",
-                    properties: { kind: "line" },
-                    geometry: { type: "LineString", coordinates: activeLineCoords }
-                });
-            }
-            activeLineCoords.forEach(coord => {
-                features.push({
-                    type: "Feature",
-                    properties: { kind: "vertex" },
-                    geometry: { type: "Point", coordinates: coord }
-                });
-            });
-        }
-
-        // 3. All placed polygons + in-progress polygon
-        polygons.forEach((poly) => {
-            if (poly.length >= 3) {
-                const ring = [...poly, poly[0]];
-                features.push({
-                    type: "Feature",
-                    properties: { kind: "polygon" },
-                    geometry: { type: "Polygon", coordinates: [ring] }
-                });
-            }
-            poly.forEach(coord => {
-                features.push({
-                    type: "Feature",
-                    properties: { kind: "vertex" },
-                    geometry: { type: "Point", coordinates: coord }
-                });
-            });
-        });
-
-        if (activePolyCoords.length > 0) {
-            if (activePolyCoords.length >= 3) {
-                const ring = [...activePolyCoords, activePolyCoords[0]];
-                features.push({
-                    type: "Feature",
-                    properties: { kind: "polygon" },
-                    geometry: { type: "Polygon", coordinates: [ring] }
-                });
-            } else if (activePolyCoords.length === 2) {
-                features.push({
-                    type: "Feature",
-                    properties: { kind: "line" },
-                    geometry: { type: "LineString", coordinates: activePolyCoords }
-                });
-            }
-            activePolyCoords.forEach(coord => {
-                features.push({
-                    type: "Feature",
-                    properties: { kind: "vertex" },
-                    geometry: { type: "Point", coordinates: coord }
-                });
-            });
-        }
-
-        const geojson = {
-            type: "FeatureCollection",
-            features: features
-        };
-
-        if (state.map.getSource("suggest-annotation-source")) {
-            state.map.getSource("suggest-annotation-source").setData(geojson);
+        const source = state.map.getSource('suggest-annotation-source');
+        if (source) {
+            source.setData(buildAnnotationFeatureCollection({
+                markers,
+                lines,
+                polygons,
+                activeLineCoords,
+                activePolyCoords
+            }));
         }
     };
 
@@ -739,48 +652,7 @@ export function setupSuggestFormAndDrawing(closeAllModals) {
             return;
         }
 
-        const geojsonFeatures = [];
-
-        // Markers
-        markers.forEach((coord) => {
-            geojsonFeatures.push({
-                type: "Feature",
-                properties: { kind: "marker" },
-                geometry: {
-                    type: "Point",
-                    coordinates: coord
-                }
-            });
-        });
-
-        // Lines
-        lines.forEach((line) => {
-            if (line && line.length >= 2) {
-                geojsonFeatures.push({
-                    type: "Feature",
-                    properties: { kind: "line" },
-                    geometry: {
-                        type: "LineString",
-                        coordinates: line
-                    }
-                });
-            }
-        });
-
-        // Polygons
-        polygons.forEach((poly) => {
-            if (poly && poly.length >= 3) {
-                const ring = [...poly, poly[0]];
-                geojsonFeatures.push({
-                    type: "Feature",
-                    properties: { kind: "polygon" },
-                    geometry: {
-                        type: "Polygon",
-                        coordinates: [ring]
-                    }
-                });
-            }
-        });
+        const suggestionGeoJSON = buildSuggestionFeatureCollection({ markers, lines, polygons });
 
         const selectionLabel = getSuggestSelectionLabel();
         let submittedTitle = title;
@@ -793,10 +665,7 @@ export function setupSuggestFormAndDrawing(closeAllModals) {
         const payload = {
             title: submittedTitle,
             description: description,
-            geojson: {
-                type: "FeatureCollection",
-                features: geojsonFeatures
-            }
+            geojson: suggestionGeoJSON
         };
 
         const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbz7MxHqTniRl88_VFM7FOdbOwD0jt7AfSZ4v3fMB6sJLIeNseFdFJFoWQnA3RysLFiY_w/exec";
