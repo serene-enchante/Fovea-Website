@@ -6,8 +6,8 @@ Updated: 2026-10-19
 
 - Repository: `Fovea-Website`
 - Active branch: `main` (the `refactor` branch has been merged into `main`)
-- Latest refactor commit: `2b9edc8 split suggested app controls from toolbar`
-- Latest handoff commit before this update: `468d638 sync map initialization handoff`.
+- Latest refactor commit: `11f1149 decompose download wizard controller`
+- Latest handoff commit before this update: `93b51de document large module refactor guidance`.
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
 - Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
 - Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
@@ -20,14 +20,17 @@ Updated: 2026-10-19
 - Overall estimate: **about 70%** of the goals in `docs/refactor-assessment.md`. This is a qualitative estimate; the plan has no formal scoring rubric.
 - The core map JavaScript migration is substantially advanced: `maps/index.html` loads `scripts/maps/entry.js`, and `scripts/maps-tile.js` is now a 316-line composition/compatibility layer (down from the assessment's original 8,865-line measurement).
 - The 1,141-line `toolbar-actions.js` was split by responsibility: toolbar actions now occupy 732 lines and suggested-app controls occupy 422 lines. Treat 500 lines as a review prompt and 1,000 lines as a strong signal to inspect cohesion, not as an automatic split target.
+- `download-wizard.js` was decomposed into a 963-line workflow controller, an 84-line configuration module, a 121-line wizard-specific formatter module, and an 87-line raster-cache controller. Wizard formatters preserve their existing output; they were not replaced with the shared converters because those have different output semantics.
 - Verified in the current checkout: `styles/page-maps-tile.css` is still 6,500 lines; `scripts/map/map-runtime.js` still configures `prefetchZoomDelta: 8`; there is no `.github/workflows` directory; and no JSON schema files were found in the schema search.
 - Remaining plan areas include reducing/organizing the map CSS, measuring and tuning map startup/prefetch behavior, adding CI browser checks, formalizing dataset/provider schemas and API contracts, and reviewing the entry composition layer for any remaining legacy responsibilities.
-- Next priority: inspect the 1,237-line `scripts/download-wizard.js` for cohesive extraction candidates, reusing existing services rather than making a mechanical split. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
+- Next priority: inspect the 927-line `scripts/map/map-rendering.js` for cohesive responsibilities to separate, without splitting solely to reduce line count. Also measure the impact of `prefetchZoomDelta: 8` and `maxTileCacheSize: 2500` before changing MapLibre settings. Run `npm test`, `npm run test:browser`, and `git diff --check` after code changes; keep the Eugene-04 edits unstaged.
 
 Recent commits, newest first:
 
 | Commit | Change |
 | --- | --- |
+| `11f1149` | Extract wizard configuration, wizard-specific KML/GPX serialization, and raster cache lifecycle from the large wizard controller. |
+| `93b51de` | Record module size guidance and the oversized wizard as the next extraction candidate. |
 | `2b9edc8` | Move viewer-app metadata, app suggestions, and download search controls into `suggested-app-controls.js`; reduce the toolbar module below 1,000 lines. |
 | `468d638` | Record map initialization document injection and its verification in the handoff. |
 | `ece2bf8` | Inject `document` into basemap styling and location badge updates; pass it through location tracking. |
@@ -244,6 +247,12 @@ After injecting the map initialization document dependency:
 After splitting suggested-app controls from the toolbar module:
 
 - `npm test` passed: 173 tests.
+- `npm run test:browser` passed: 5 Playwright tests.
+- `git diff --check` passed.
+
+After decomposing the download-wizard controller:
+
+- `npm test` passed: 179 tests.
 - `npm run test:browser` passed: 5 Playwright tests.
 - `git diff --check` passed.
 
