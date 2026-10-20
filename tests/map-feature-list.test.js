@@ -50,14 +50,18 @@ test('sorts count circles and delegates hover and available-circle selection', (
         features: [
             { properties: { cid: 'Oakridge' } },
             { properties: { cid: 'Florence' } },
-            { properties: { cid: 'Eugene' } }
+            { properties: { cid: 'Eugene' } },
+            { properties: { cid: 'Other circle' } }
         ],
         map: { getSource: () => ({}), setFeatureState: (...args) => featureStates.push(args) },
         onSelectCircle: (id, feature) => selected.push([id, feature]),
         documentObject: createDocument()
     });
 
-    assert.deepEqual(rows.map(row => row['data-id']), ['Eugene', 'Florence', 'Oakridge']);
+    assert.deepEqual(rows.map(row => row['data-id']), ['Eugene', 'Florence', 'Other circle', 'Oakridge']);
+    assert.match(rows[3].innerHTML, /tile-zone-item__thumb-placeholder/, 'circles without data do not request a thumbnail');
+    assert.match(rows[1].innerHTML, /florence\.png/);
+    assert.match(rows[2].innerHTML, /wetlands-thumb\.webp/);
     rows[1].listeners.mouseenter();
     rows[1].listeners.click();
     assert.equal(featureStates[0][0].id, 'Florence');

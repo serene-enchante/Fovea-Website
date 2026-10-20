@@ -90,7 +90,7 @@ export function setupMapStyleControl({ topLeft, state, onSelectSubject, onSwitch
         const layers = [];
         if (state.isCirclesFeature || state.currentFeature === "circles") {
             layers.push({
-                id: "circles", name: "Coast to Cascades Bird Alliance", isChild: false, image: "../images/wetlands.webp", isLogo: false,
+                id: "circles", name: "Coast to Cascades Bird Alliance", isChild: false, image: "../images/wetlands-thumb.webp", isLogo: false,
                 action: () => onSelectSubject(CIRCLE_ID, true)
             });
         } else {

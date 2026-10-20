@@ -41,7 +41,7 @@ export function renderMapFeatureList(listContainer, {
                 thumbImg = '../images/florence.png';
                 isLogo = true;
             } else if (!isNotAvailable) {
-                thumbImg = '../images/wetlands.webp';
+                thumbImg = '../images/wetlands-thumb.webp';
             }
 
             const thumbHtml = isNotAvailable
@@ -77,7 +77,7 @@ export function renderMapFeatureList(listContainer, {
         item.innerHTML = `<div class="tile-zone-item__thumb"><img src="${zoneImagePath(props.zid)}" alt="Zone ${zid}" loading="eager"></div><div class="tile-zone-item__info"><div class="tile-zone-item__title">Zone ${zid}</div></div>`;
 
         const img = item.querySelector('img');
-        if (img) img.addEventListener('error', () => { img.src = '../images/wetlands.webp'; });
+        if (img) img.addEventListener('error', () => { img.src = '../images/wetlands-thumb.webp'; });
 
         const isSelected = () => currentId !== CIRCLE_ID && (featureId === currentId || normalizeZoneId(featureId) === normalizeZoneId(currentId));
         item.addEventListener('mouseenter', () => {

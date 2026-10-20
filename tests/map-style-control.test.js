@@ -88,6 +88,7 @@ test('renders map layers and basemaps through injected selection actions', () =>
     layersTab.listeners.click({ preventDefault() {}, stopPropagation() {} });
     const layerRow = body.children.at(-1);
     assert.match(layerRow.innerHTML, /Coast to Cascades Bird Alliance/);
+    assert.match(layerRow.innerHTML, /wetlands-thumb\.webp/);
     layerRow.listeners.click({ preventDefault() {}, stopPropagation() {} });
     assert.deepEqual(selected, [['ecbc-circle', true]]);
 
