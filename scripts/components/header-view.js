@@ -127,10 +127,13 @@ export function updateDocumentTitle() {
 export function updateHeader(subjectTitle) {
     const titleEl = document.getElementById("header-title");
     if (titleEl) {
-        titleEl.innerHTML = balancedHeaderHTML(subjectTitle);
+        const nextTitle = balancedHeaderHTML(subjectTitle);
+        if (titleEl.innerHTML !== nextTitle) {
+            titleEl.innerHTML = nextTitle;
+            adjustHeaderFontSize();
+        }
     }
     updateHeaderLogo();
-    adjustHeaderFontSize();
     updateDocumentTitle();
 }
 

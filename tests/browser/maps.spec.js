@@ -10,9 +10,10 @@ async function openMap(page, path = '/maps/') {
     await expect(page.locator('#header-title')).not.toHaveText('Loading...');
 }
 
-test('renders the initial circles overview once during map startup', async ({ page }) => {
+test('avoids duplicate sidebar and header rendering during map startup', async ({ page }) => {
     await page.addInitScript(() => {
         window.__sidebarOverviewMounts = 0;
+        window.__headerTitleMutations = 0;
         document.addEventListener('DOMContentLoaded', () => {
             const sidebar = document.getElementById('sidebar-zone-list');
             new MutationObserver(records => {
@@ -24,11 +25,18 @@ test('renders the initial circles overview once during map startup', async ({ pa
                     }
                 }
             }).observe(sidebar, { childList: true });
+
+            const title = document.getElementById('header-title');
+            new MutationObserver(records => {
+                window.__headerTitleMutations += records.length;
+            }).observe(title, { childList: true });
         });
     });
 
     await openMap(page);
+    await expect.poll(() => page.evaluate(() => performance.getEntriesByName('fullLoad').length), { timeout: 30_000 }).toBeGreaterThan(0);
     await expect.poll(() => page.evaluate(() => window.__sidebarOverviewMounts)).toBe(1);
+    await expect.poll(() => page.evaluate(() => window.__headerTitleMutations)).toBe(1);
 });
 
 test('renders the home shell while the deferred globe dependencies are still loading', async ({ page }) => {
