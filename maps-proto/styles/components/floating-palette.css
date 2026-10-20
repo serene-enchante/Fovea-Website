@@ -1,0 +1,83 @@
+.toolbar-palette {
+  position: fixed;
+  z-index: 20;
+  width: max-content;
+  min-width: 180px;
+  max-width: calc(100vw - 16px);
+  overflow: hidden;
+  color: var(--control-text);
+  font: 13px system-ui, sans-serif;
+}
+
+.toolbar-palette__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 40px;
+  padding: 6px 8px 6px 14px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.toolbar-palette__header:active {
+  cursor: grabbing;
+}
+
+.toolbar-palette__title {
+  margin: 0;
+  color: color-mix(in srgb, var(--control-text) 68%, transparent);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.toolbar-palette__close {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.toolbar-palette__close:hover {
+  background: var(--control-surface);
+}
+
+.toolbar-palette__body {
+  padding: 0 8px 8px;
+}
+
+.toolbar-palette__body > .toolbar__groups {
+  flex-wrap: wrap;
+  width: max-content;
+  max-width: min(680px, calc(100vw - 40px));
+  min-height: 0;
+  padding: 8px;
+  opacity: 1;
+  transform: none;
+  animation: none;
+  transition: none;
+}
+
+.toolbar-palette__body .toolbar__options {
+  gap: 4px;
+}
+
+.toolbar-palette__body .toolbar__option {
+  min-width: 76px;
+}
+
+.toolbar-palette__close:focus-visible {
+  outline: 2px solid var(--control-text);
+  outline-offset: 2px;
+}

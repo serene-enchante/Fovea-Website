@@ -1,4 +1,9 @@
 import { createMaterialIcon } from "./material-icon.js";
+import {
+  createFloatingPalette,
+  focusFloatingPalette,
+  makePaletteHeadingDetachable,
+} from "./floating-palette.js";
 import appStateMachine from "../state/app-state.js";
 
 let toolbarInstance = 0;
@@ -30,7 +35,57 @@ export function createToolbar(items = []) {
   let hoverSuppressed = false;
   let hoverUnlockTimer = null;
   let ribbonTransition = 0;
+  let draggingPaletteTitle = false;
+  const detachedRibbonWindows = new Map();
   const menuButtons = [];
+
+  function renderToolbarGroups(item) {
+    return createToolbarGroups(item, {
+      eventTarget: toolbar,
+      detachable: true,
+      onDragStateChange: (isDragging) => {
+        draggingPaletteTitle = isDragging;
+      },
+      onDetach: (group, x, y) => detachGroup(item, group, x, y),
+    });
+  }
+
+  function detachGroup(item, group, x, y) {
+    const groupContent = createToolbarGroups({ ...item, groups: [group] }, {
+      eventTarget: toolbar,
+      detachable: false,
+      onDragStateChange: () => {},
+      onDetach: () => {},
+    }).querySelector(".toolbar__options");
+    return createFloatingPalette(group.label, groupContent, {
+      x,
+      y,
+      onClose: () => {},
+    });
+  }
+
+  function detachRibbonItem(item, x, y) {
+    const existingPalette = detachedRibbonWindows.get(item.id);
+    if (existingPalette?.isConnected) {
+      focusFloatingPalette(existingPalette);
+      return existingPalette;
+    }
+
+    const groups = renderToolbarGroups(item);
+    let palette;
+    palette = createFloatingPalette(item.label, groups, {
+      x,
+      y,
+      onClose: () => {
+        if (detachedRibbonWindows.get(item.id) === palette) detachedRibbonWindows.delete(item.id);
+      },
+    });
+    detachedRibbonWindows.set(item.id, palette);
+    hoveredItem = null;
+    pinnedItem = null;
+    renderMenu();
+    return palette;
+  }
 
   async function switchRibbon(item, previousItem, direction, transitionId) {
     const previousGroups = panelInner.querySelector(".toolbar__groups");
@@ -56,7 +111,7 @@ export function createToolbar(items = []) {
     if (transitionId !== ribbonTransition || toolbar.dataset.open !== "true" || currentItem !== item) return;
 
     panel.setAttribute("aria-label", `${item.label} options`);
-    const groups = createToolbarGroups(item);
+    const groups = renderToolbarGroups(item);
     panelInner.replaceChildren(groups);
     renderedItem = item;
     requestAnimationFrame(updateFrameWidth);
@@ -81,12 +136,13 @@ export function createToolbar(items = []) {
     if (!frame) return;
 
     const menuStyle = getComputedStyle(menu);
-    const menuItemsWidth = Array.from(menu.children)
+    const visibleMenuItems = Array.from(menu.children).filter((button) => !button.hidden);
+    const menuItemsWidth = visibleMenuItems
       .reduce((total, button) => total + button.getBoundingClientRect().width, 0);
     const menuGap = Number.parseFloat(menuStyle.columnGap) || 0;
     const menuPadding = (Number.parseFloat(menuStyle.paddingLeft) || 0) +
       (Number.parseFloat(menuStyle.paddingRight) || 0);
-    const menuWidth = menuItemsWidth + Math.max(0, menu.children.length - 1) * menuGap + menuPadding;
+    const menuWidth = menuItemsWidth + Math.max(0, visibleMenuItems.length - 1) * menuGap + menuPadding;
     const panelWidth = toolbar.dataset.open === "true" ? panelInner.scrollWidth : 0;
     const width = `${Math.ceil(Math.max(menuWidth, panelWidth) + 2)}px`;
 
@@ -125,7 +181,7 @@ export function createToolbar(items = []) {
         switchRibbon(activeItem, previousItem, direction, transitionId);
       } else {
         panel.setAttribute("aria-label", `${activeItem.label} options`);
-        panelInner.replaceChildren(createToolbarGroups(activeItem));
+        panelInner.replaceChildren(renderToolbarGroups(activeItem));
         renderedItem = activeItem;
       }
     } else if (!isOpen) {
@@ -209,6 +265,11 @@ export function createToolbar(items = []) {
     button.append(label);
     button.setAttribute("aria-controls", panelId);
     button.setAttribute("aria-expanded", "false");
+    makePaletteHeadingDetachable(
+      button,
+      (isDragging) => { draggingPaletteTitle = isDragging; },
+      (x, y) => detachRibbonItem(item, x, y),
+    );
     button.addEventListener("pointerenter", (event) => {
       if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
       if (hoverSuppressed) return;
@@ -225,6 +286,7 @@ export function createToolbar(items = []) {
   });
 
   toolbar.addEventListener("pointerleave", () => {
+    if (draggingPaletteTitle) return;
     hoveredItem = null;
     renderMenu();
   });
@@ -233,7 +295,12 @@ export function createToolbar(items = []) {
   return toolbar;
 }
 
-function createToolbarGroups(item) {
+function createToolbarGroups(item, {
+  eventTarget,
+  detachable,
+  onDragStateChange,
+  onDetach,
+}) {
   const groups = document.createElement("div");
   groups.className = "toolbar__groups";
 
@@ -244,6 +311,15 @@ function createToolbarGroups(item) {
     const heading = document.createElement("h2");
     heading.className = "toolbar__group-title";
     heading.textContent = group.label;
+    if (detachable) {
+      makePaletteHeadingDetachable(
+        heading,
+        onDragStateChange,
+        (x, y) => onDetach(group, x, y),
+      );
+    } else {
+      heading.dataset.detachable = "false";
+    }
 
     const options = document.createElement("div");
     options.className = "toolbar__options";
@@ -260,7 +336,7 @@ function createToolbarGroups(item) {
       label.textContent = option.label;
       button.append(label);
       button.addEventListener("click", () => {
-        groups.dispatchEvent(new CustomEvent("toolbaraction", {
+        eventTarget.dispatchEvent(new CustomEvent("toolbaraction", {
           bubbles: true,
           detail: { menuId: item.id, optionId: option.id },
         }));

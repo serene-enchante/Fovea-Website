@@ -50,6 +50,19 @@
   transition: background-color 160ms ease;
 }
 
+.toolbar__menu-item:not(.toolbar__menu-item--view-toggle) {
+  border-radius: 999px;
+  cursor: grab;
+}
+
+.toolbar__menu-item--view-toggle {
+  border-radius: 999px;
+}
+
+.toolbar__menu-item:not(.toolbar__menu-item--view-toggle):active {
+  cursor: grabbing;
+}
+
 .toolbar__menu-item--view-toggle {
   gap: 8px;
   min-height: 28px;
@@ -150,12 +163,25 @@
 }
 
 .toolbar__group-title {
+  cursor: grab;
   margin: 0;
   color: color-mix(in srgb, var(--control-text) 62%, transparent);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  touch-action: none;
+  user-select: none;
+}
+
+.toolbar__group-title:active {
+  cursor: grabbing;
+}
+
+.toolbar__group-title[data-detachable="false"] {
+  cursor: default;
+  touch-action: auto;
+  user-select: text;
 }
 
 .toolbar__options {
