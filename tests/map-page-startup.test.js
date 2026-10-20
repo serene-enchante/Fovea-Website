@@ -17,26 +17,19 @@ function classList() {
 
 function createDocument() {
     const attributes = {};
-    const bodyClasses = classList();
     const rootClasses = classList();
-    const overlayClasses = classList();
     return {
-        body: { classList: bodyClasses },
+        body: { classList: classList() },
         documentElement: {
             classList: rootClasses,
             setAttribute: (name, value) => { attributes[name] = value; }
         },
-        getElementById: id => id === 'page-transition-overlay'
-            ? { classList: overlayClasses }
-            : null,
         attributes,
-        bodyClasses,
-        rootClasses,
-        overlayClasses
+        rootClasses
     };
 }
 
-test('starts the map page in order and waits briefly for the loaded map before entrance', async () => {
+test('starts the map page in order and briefly finalizes the loaded map view', async () => {
     const calls = [];
     const timers = [];
     const state = {
@@ -75,20 +68,14 @@ test('starts the map page in order and waits briefly for the loaded map before e
 
     timers[0].callback();
     timers[0].callback();
-    assert.equal(documentObject.bodyClasses.contains('is-transitioning'), false);
-    assert.equal(documentObject.overlayClasses.contains('is-loaded'), true);
-    assert.equal(documentObject.overlayClasses.contains('is-active'), false);
     assert.deepEqual(calls.slice(-2), ['resize', ['select', '04', true, false, { mapViewOnly: true }]]);
     assert.equal(calls.filter(call => call === 'resize').length, 1, 'repeated entrance signals should resize the map once');
     assert.equal(calls.filter(call => Array.isArray(call) && call[0] === 'select').length, 2, 'startup restores the selected map view only once');
 });
 
-test('reports startup data failures and removes the transition overlay state', async () => {
+test('reports startup data failures without requiring a transition overlay', async () => {
     const calls = [];
     const documentObject = createDocument();
-    documentObject.bodyClasses.add('is-transitioning');
-    documentObject.overlayClasses.add('is-active');
-
     await runMapPageStartup({
         state: { isCirclesFeature: true, currentFeature: 'circles', currentId: 'ecbc-circle', map: null },
         storageObject: { getItem: () => 'dark' },
@@ -107,7 +94,4 @@ test('reports startup data failures and removes the transition overlay state', a
 
     assert.equal(calls[0][0], 'error');
     assert.deepEqual(calls[1], ['header', 'Error loading map data']);
-    assert.equal(documentObject.bodyClasses.contains('is-transitioning'), false);
-    assert.equal(documentObject.overlayClasses.contains('is-loaded'), true);
-    assert.equal(documentObject.overlayClasses.contains('is-active'), false);
 });

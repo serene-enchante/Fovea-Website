@@ -45,57 +45,9 @@
             } catch(e) {}
         })();
     </script>
-    <style>
-        #page-transition-overlay {
-            position: fixed;
-            inset: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000000;
-            z-index: 999999;
-            opacity: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: all;
-            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        [data-theme="light"] #page-transition-overlay,
-        html.theme-light #page-transition-overlay,
-        body.theme-light #page-transition-overlay {
-            background: #ffffff;
-        }
-        #page-transition-overlay.is-loaded {
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-        .page-loader-spinner {
-            width: 52px;
-            height: 52px;
-            border: 3.5px solid rgba(255, 255, 255, 0.15);
-            border-top-color: var(--accent-primary, #64b5f6);
-            border-radius: 50%;
-            animation: pageLoaderSpin 0.8s cubic-bezier(0.4, 0.1, 0.4, 0.9) infinite;
-            box-sizing: border-box;
-        }
-        [data-theme="light"] .page-loader-spinner,
-        html.theme-light .page-loader-spinner,
-        body.theme-light .page-loader-spinner {
-            border-color: rgba(0, 0, 0, 0.10);
-            border-top-color: var(--accent-primary, #64b5f6);
-        }
-        @keyframes pageLoaderSpin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
 </head>
 
 <body class="page-maps-tile">
-    <!-- Page transition overlay: full screen curtain with spinner that fades out once loaded -->
-    <div id="page-transition-overlay">
-        <div class="page-loader-spinner"></div>
-    </div>
-
     <!-- Main Tile View Interface -->
     <main class="maps-tile-main">
         <!-- Content Row (Specification section 2) -->
@@ -117,7 +69,28 @@
                                 <span id="header-logo-text" class="header-logo-text"></span>
                             </a>
                         </div>
-                        <h1 id="header-title" class="maps-tile-header__title">Loading...</h1>
+                        <h1 id="header-title" class="maps-tile-header__title">Coast to Cascades<br>Bird Alliance</h1>
+                        <script>
+                            (() => {
+                                const title = document.getElementById('header-title');
+                                const params = new URLSearchParams(window.location.search);
+                                const legacyCircle = (params.get('circle') || params.get('cid') || '').trim().toLowerCase();
+                                let feature = (params.get('feature') || 'circles').toLowerCase();
+                                if (legacyCircle) {
+                                    feature = ['eugene', 'florence'].includes(legacyCircle) ? legacyCircle : 'circles';
+                                } else if (!['circles', 'eugene', 'florence'].includes(feature)) {
+                                    feature = 'circles';
+                                }
+
+                                const hasSelectedZone = !legacyCircle && (params.has('zone') || params.has('id'));
+                                const titles = {
+                                    circles: 'Coast to Cascades<br>Bird Alliance',
+                                    eugene: 'Eugene Christmas Bird<br>Count Circle',
+                                    florence: 'Florence Christmas Bird<br>Count Circle'
+                                };
+                                if (title) title.innerHTML = hasSelectedZone ? 'Loading...' : titles[feature];
+                            })();
+                        </script>
                         <div class="header-view-toggle-wrapper">
                             <button type="button" id="header-view-toggle" class="header-view-toggle" aria-label="Select view mode" aria-expanded="false" title="View mode (Auto / Map)">
                                 <span id="header-view-toggle-icon" class="header-view-toggle__icon-wrap">

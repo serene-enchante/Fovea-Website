@@ -41,6 +41,27 @@ test('loads the local Alice font without a missing WOFF2 request', async ({ page
     expect(fontDisplayIsSwap).toBe(true);
 });
 
+test('reveals the correct initial map title while the map dataset is delayed', async ({ page }) => {
+    let releaseDataset;
+    let notifyDatasetRequested;
+    const datasetRequested = new Promise(resolve => { notifyDatasetRequested = resolve; });
+
+    await page.route('**/geojson/circles-wgs84.geojson', async route => {
+        notifyDatasetRequested();
+        await new Promise(resolve => { releaseDataset = resolve; });
+        await route.continue();
+    });
+
+    const navigation = page.goto('/maps/?feature=circles', { waitUntil: 'commit' });
+    await datasetRequested;
+    await expect(page.locator('#header-title')).toHaveText(/Coast to Cascades\s*Bird Alliance/);
+    await expect(page.locator('#page-transition-overlay')).toHaveCount(0);
+
+    releaseDataset();
+    await navigation;
+    await expect(page.locator('#tile-map canvas.maplibregl-canvas')).toBeVisible();
+});
+
 test('avoids duplicate sidebar and header rendering during map startup', async ({ page }) => {
     await page.addInitScript(() => {
         window.__sidebarOverviewMounts = 0;
@@ -67,10 +88,10 @@ test('avoids duplicate sidebar and header rendering during map startup', async (
     await openMap(page);
     await expect.poll(() => page.evaluate(() => performance.getEntriesByName('fullLoad').length), { timeout: 30_000 }).toBeGreaterThan(0);
     await expect.poll(() => page.evaluate(() => window.__sidebarOverviewMounts)).toBe(1);
-    await expect.poll(() => page.evaluate(() => window.__headerTitleMutations)).toBe(1);
+    await expect.poll(() => page.evaluate(() => window.__headerTitleMutations)).toBe(0);
 });
 
-test('loads light-theme CSS before revealing the map when light mode is selected', async ({ page }) => {
+test('loads light-theme CSS while the map remains visible in light mode', async ({ page }) => {
     let releaseThemeStyles;
     let notifyThemeStylesRequested;
     const themeStylesRequested = new Promise(resolve => { notifyThemeStylesRequested = resolve; });
@@ -85,10 +106,9 @@ test('loads light-theme CSS before revealing the map when light mode is selected
     await page.goto('/maps/?feature=circles', { waitUntil: 'domcontentloaded' });
     await themeStylesRequested;
     await expect(page.locator('#tile-map canvas.maplibregl-canvas')).toBeVisible();
-    await expect(page.locator('#page-transition-overlay')).not.toHaveClass(/is-loaded/);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 
     releaseThemeStyles();
-    await expect(page.locator('#page-transition-overlay')).toHaveClass(/is-loaded/);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
     await expect.poll(() => page.locator('.maps-tile-sidebar').evaluate(element => getComputedStyle(element).backgroundColor))
         .toBe('rgb(255, 255, 255)');
@@ -398,6 +418,7 @@ test('reports opt-in map startup timing marks', async ({ page }) => {
 test('clears legacy deep-link parameters while selecting Eugene, circles, and Florence', async ({ page }) => {
     await openMap(page, '/maps/?circle=Eugene');
     await expect(page.locator('#header-title')).toContainText(/Eugene Christmas Bird\s*Count Circle/);
+    await expect(page).toHaveURL(/feature=eugene/);
 
     await page.locator('#btn-capsule-back').click();
     await expect(page).toHaveURL(/feature=circles/);

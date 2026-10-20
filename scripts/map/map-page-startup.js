@@ -21,10 +21,8 @@ export async function runMapPageStartup({
     let mapResizedForEntrance = false;
     let selectionRestoredAfterMapLoad = false;
 
-    const triggerEntrance = () => {
-        const revealPage = !pageReadyMarked && themeStylesReady;
-        if (revealPage) {
-            documentObject.body.classList.remove('is-transitioning');
+    const finalizeStartupView = () => {
+        if (!pageReadyMarked && themeStylesReady) {
             markMapStartup('page-ready');
             pageReadyMarked = true;
         }
@@ -40,14 +38,6 @@ export async function runMapPageStartup({
                 selectSubject(state.currentId, true, false, { mapViewOnly: true });
             }
         }
-
-        if (revealPage) {
-            const overlay = documentObject.getElementById('page-transition-overlay');
-            if (overlay) {
-                overlay.classList.add('is-loaded');
-                overlay.classList.remove('is-active');
-            }
-        }
     };
 
     if (!themeStylesReady) {
@@ -55,7 +45,7 @@ export async function runMapPageStartup({
             .catch(() => {})
             .then(() => {
                 themeStylesReady = true;
-                if (state.map) triggerEntrance();
+                if (state.map) finalizeStartupView();
             });
     }
 
@@ -87,17 +77,17 @@ export async function runMapPageStartup({
         }
 
         if (!state.map) {
-            triggerEntrance();
+            finalizeStartupView();
         } else if (state.map.loaded && state.map.loaded()) {
-            schedule(triggerEntrance, 80);
+            schedule(finalizeStartupView, 80);
         } else {
-            state.map.once('load', () => schedule(triggerEntrance, 80));
-            state.map.once('idle', () => schedule(triggerEntrance, 80));
-            schedule(triggerEntrance, 400);
+            state.map.once('load', () => schedule(finalizeStartupView, 80));
+            state.map.once('idle', () => schedule(finalizeStartupView, 80));
+            schedule(finalizeStartupView, 400);
         }
     } catch (error) {
         logError('Error initializing maps tile page:', error);
         updateHeader('Error loading map data');
-        triggerEntrance();
+        finalizeStartupView();
     }
 }

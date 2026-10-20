@@ -73,19 +73,6 @@ export function setupActionButtons({
         modals: [downloadModal, copyModal, helpModal, suggestModal]
     });
 
-    window.transitionToPage = function(dest) {
-        const overlay = document.getElementById("page-transition-overlay");
-        if (overlay) {
-            overlay.classList.remove("is-loaded");
-            overlay.classList.add("is-active");
-            setTimeout(() => {
-                window.location.href = dest;
-            }, 500);
-        } else {
-            window.location.href = dest;
-        }
-    };
-
     const toolbar = document.querySelector(".maps-tile-header__actions");
     if (toolbar) {
         const threshold = 140; // px — proximity threshold distance
@@ -240,22 +227,14 @@ export function setupActionButtons({
         e.preventDefault();
         e.stopPropagation();
         if (e.currentTarget) e.currentTarget.blur();
-        if (window.transitionToPage) {
-            window.transitionToPage("../tools/");
-        } else {
-            window.location.href = "../tools/";
-        }
+        window.location.href = "../tools/";
     };
 
     const handleSettingsClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (e.currentTarget) e.currentTarget.blur();
-        if (window.transitionToPage) {
-            window.transitionToPage("../settings/");
-        } else {
-            window.location.href = "../settings/";
-        }
+        window.location.href = "../settings/";
     };
 
     ["desktop-nav-tab-tools", "mobile-nav-tab-tools"].forEach((id) => {

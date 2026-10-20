@@ -20,7 +20,6 @@ import { runMapPageStartup } from '../map/map-page-startup.js';
 import { createMapFeatureNavigation } from '../map/map-feature-navigation.js';
 import { setupMapPageUi } from '../map/map-page-ui.js';
 import { setupMapPageNavigation } from '../map/map-page-navigation.js';
-import { setupPageTransitionEvents } from '../components/page-transition-events.js';
 import { createMapLayerLifecycle } from '../map/map-layer-lifecycle.js';
 import {
     disposeRasterCache,
@@ -242,5 +241,3 @@ if (document.readyState === "loading") {
 } else {
     init();
 }
-
-setupPageTransitionEvents({ documentObject: document, windowObject: window });

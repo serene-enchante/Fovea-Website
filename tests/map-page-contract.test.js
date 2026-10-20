@@ -258,16 +258,15 @@ test('map and suggested-app search receive their browser dependencies explicitly
     assert.doesNotMatch(search, /document\.getElementById|window\.innerWidth/);
 });
 
-test('map home-link transition events are owned by the shared page transition component', async () => {
+test('map page starts without a transition curtain or transition event wiring', async () => {
     const source = await readFile(mapEntryPath, 'utf8');
-    const transitions = await readFile(new URL('../scripts/components/page-transition-events.js', import.meta.url), 'utf8');
     const toolbar = await readFile(new URL('../scripts/components/toolbar-actions.js', import.meta.url), 'utf8');
+    const html = await readFile(new URL('../maps/index.html', import.meta.url), 'utf8');
 
-    assert.match(source, /setupPageTransitionEvents\(\{ documentObject: document, windowObject: window \}\)/);
-    assert.doesNotMatch(source, /desktop-nav-tab-home/);
-    assert.doesNotMatch(toolbar, /function setupBackHomeTransition/);
-    assert.match(transitions, /windowObject\.transitionToPage\(destination\)/);
-    assert.match(transitions, /event\.persisted/);
+    assert.doesNotMatch(source, /page-transition-events|setupPageTransitionEvents/);
+    assert.doesNotMatch(toolbar, /transitionToPage|page-transition-overlay/);
+    assert.doesNotMatch(html, /page-transition-overlay|page-loader-spinner/);
+    assert.match(html, /<h1 id="header-title"[^>]*>Coast to Cascades<br>Bird Alliance<\/h1>/);
 });
 
 test('help mode delegates map keyboard shortcuts to a separate controller', async () => {
