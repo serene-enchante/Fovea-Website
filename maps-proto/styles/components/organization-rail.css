@@ -30,13 +30,22 @@
 .organization-rail__item--selected::before {
   position: absolute;
   top: 50%;
-  left: calc(-1 * var(--layout-padding, 24px));
+  left: calc(-1 * var(--layout-padding-left, var(--layout-padding, 24px)));
   width: 4px;
   height: 28px;
   border-radius: 999px;
   background: var(--accent-primary, var(--accent-color, #64b5f6));
   content: "";
-  transform: translateY(-50%);
+  opacity: 0;
+  transform: translate(-12px, -50%);
+  transition:
+    opacity 240ms ease,
+    transform 420ms cubic-bezier(.2, .8, .2, 1);
+}
+
+:root[data-view="directory-view"] .organization-rail__item--selected::before {
+  opacity: 1;
+  transform: translate(0, -50%);
 }
 
 .organization-rail__button {

@@ -11,6 +11,7 @@ body {
 
 .frame-layout {
   --layout-padding: 0px;
+  --layout-padding-left: 0px;
   --organization-frame-width: clamp(48px, 4vw, 64px);
   --directory-frame-width: clamp(220px, 24vw, 340px);
   --directory-layout-gap: 24px;
@@ -28,13 +29,14 @@ body {
 
 :root[data-view="directory-view"] .frame-layout {
   --layout-padding: 24px;
+  --layout-padding-left: 12px;
   grid-template-columns:
     var(--organization-frame-width)
     var(--directory-frame-width)
     minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
   gap: var(--directory-layout-gap);
-  padding: var(--layout-padding);
+  padding: var(--layout-padding) var(--layout-padding) var(--layout-padding) var(--layout-padding-left);
 }
 
 .app-frame.app-frame--user {
@@ -146,9 +148,10 @@ body {
     --user-frame-height: 56px;
     --user-frame-bottom: 8px;
     --layout-padding: 6px;
+    --layout-padding-left: 2px;
     grid-template-columns: 44px minmax(0, 1fr) 0;
     gap: 6px;
-    padding: var(--layout-padding);
+    padding: var(--layout-padding) var(--layout-padding) var(--layout-padding) var(--layout-padding-left);
   }
 
   .content-column {
@@ -215,9 +218,10 @@ body {
   .frame-layout,
   :root[data-view="directory-view"] .frame-layout {
     --layout-padding: 5px;
+    --layout-padding-left: 1px;
     grid-template-columns: 44px minmax(0, 1fr) 0;
     gap: 5px;
-    padding: var(--layout-padding);
+    padding: var(--layout-padding) var(--layout-padding) var(--layout-padding) var(--layout-padding-left);
   }
 
   .app-frame.app-frame--user {

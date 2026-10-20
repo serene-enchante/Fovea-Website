@@ -58,7 +58,8 @@
   .app-frame--organization,
   .app-frame--directory,
   .app-frame--user,
-  .content-titlebar {
+  .content-titlebar,
+  .organization-rail__item--selected::before {
     transition-duration: 0.01ms;
   }
 
