@@ -196,10 +196,8 @@ export function setupMapStyleControl({ topLeft, state, onSelectSubject, onSwitch
     };
 
     state.refreshLayersModal = () => {
-        renderContent();
+        if (layersDiv.classList.contains("map-ctrl-styles--expanded")) renderContent();
     };
-
-    renderContent();
 
     layersBtn.addEventListener("click", (e) => {
         e.stopPropagation();

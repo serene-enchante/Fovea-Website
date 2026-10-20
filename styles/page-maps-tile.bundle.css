@@ -2402,7 +2402,7 @@ body.theme-light .maps-tile-map-container .default-map-thumbnail {
 /* Satellite Preview thumbnail */
 .maps-tile-map-container .map-ctrl-styles__list .satellite-thumbnail,
 .maps-tile-map-container .satellite-thumbnail {
-    background-image: url("../images/Google_satellite-02.png") !important;
+    background-image: url("../images/Google_satellite-02.webp") !important;
 }
 
 /* Esri Street Preview thumbnail */

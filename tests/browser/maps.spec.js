@@ -49,6 +49,22 @@ test('keeps a visible globe placeholder when the deferred map stylesheet fails',
     await expect(page.locator('#home-globe')).toHaveCSS('opacity', '1');
 });
 
+test('uses the optimized WebP asset for the Satellite basemap preview', async ({ page }) => {
+    const imageRequests = [];
+    page.on('request', request => {
+        if (/Google_satellite-02\.(?:png|webp)(?:\?|$)/i.test(request.url())) imageRequests.push(request.url());
+    });
+    await openMap(page);
+    expect(imageRequests).toEqual([], 'the closed basemap selector should not fetch its preview image');
+    await page.locator('.map-ctrl-styles__toggle').click();
+
+    const satellitePreview = page.locator('.satellite-thumbnail');
+    await expect(satellitePreview).toBeVisible();
+    await expect(satellitePreview).toHaveCSS('background-image', /Google_satellite-02\.webp/);
+    expect(imageRequests.some(url => /Google_satellite-02\.webp(?:\?|$)/i.test(url))).toBe(true);
+    expect(imageRequests.some(url => /Google_satellite-02\.png(?:\?|$)/i.test(url))).toBe(false);
+});
+
 for (const { circle, zone, expectedTitle } of [
     { circle: 'eugene', zone: '04', expectedTitle: 'Zone 04' },
     { circle: 'florence', zone: '01', expectedTitle: 'Zone 01' }
