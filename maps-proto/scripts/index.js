@@ -1,6 +1,7 @@
 import { createAppFrame, initializeFrameLayout } from "./layout/frame-layout.js";
 import { createPageList, initializePageSelection, initializeTileStrips } from "./components/page-list.js";
 import { createOrganizationRail } from "./components/organization-rail.js";
+import { createUserProfile } from "./components/user-profile.js";
 import { loadDirectoryData } from "./data/load-directory-data.js";
 
 const frameLayout = document.getElementById("frame-layout");
@@ -8,7 +9,7 @@ const frameLayout = document.getElementById("frame-layout");
 if (frameLayout) {
   const organizationContent = document.createElement("div");
   const directoryContent = document.createElement("div");
-  const userContent = document.createElement("div");
+  const userContent = createUserProfile({ name: "User" });
 
   const contentColumn = document.createElement("div");
   contentColumn.className = "content-column";

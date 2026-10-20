@@ -28,6 +28,10 @@
   transform: translateX(-24px);
 }
 
+.app-frame--user {
+  transform: translate(-24px, 24px);
+}
+
 :root[data-view="directory-view"] .app-frame--organization,
 :root[data-view="directory-view"] .app-frame--directory,
 :root[data-view="directory-view"] .app-frame--user {
