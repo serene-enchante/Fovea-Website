@@ -78,7 +78,7 @@ test('starts the map page in order and waits briefly for the loaded map before e
     assert.equal(documentObject.bodyClasses.contains('is-transitioning'), false);
     assert.equal(documentObject.overlayClasses.contains('is-loaded'), true);
     assert.equal(documentObject.overlayClasses.contains('is-active'), false);
-    assert.deepEqual(calls.slice(-2), ['resize', ['select', '04', true, false, { renderSidebar: false }]]);
+    assert.deepEqual(calls.slice(-2), ['resize', ['select', '04', true, false, { mapViewOnly: true }]]);
     assert.equal(calls.filter(call => call === 'resize').length, 1, 'repeated entrance signals should resize the map once');
     assert.equal(calls.filter(call => Array.isArray(call) && call[0] === 'select').length, 2, 'startup restores the selected map view only once');
 });

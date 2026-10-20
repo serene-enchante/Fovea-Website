@@ -37,7 +37,7 @@ export async function runMapPageStartup({
             }
             if (mapIsLoaded && !selectionRestoredAfterMapLoad) {
                 selectionRestoredAfterMapLoad = true;
-                selectSubject(state.currentId, true, false, { renderSidebar: false });
+                selectSubject(state.currentId, true, false, { mapViewOnly: true });
             }
         }
 

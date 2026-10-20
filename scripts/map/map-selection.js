@@ -113,6 +113,49 @@ function _getHierarchyLevel(id, appState) {
     return 2;
 }
 
+function findSelectedFeature(id, appState) {
+    if (!id || id === CIRCLE_ID) return null;
+    return appState.allFeatures.find(feature => {
+        const zoneId = feature.properties?.zid;
+        return zoneId && (zoneId.toLowerCase() === id.toLowerCase() || normalizeZoneId(zoneId) === normalizeZoneId(id));
+    }) ?? null;
+}
+
+function fitMapToSelection(id, appState, map, getFitPadding, animate, targetFeature = undefined) {
+    if (!map) return;
+
+    if (appState.isCirclesFeature) {
+        map.fitBounds(getBbox(appState.allFeatures), {
+            padding: getFitPadding(),
+            animate,
+            speed: 0.8,
+            curve: 1.4
+        });
+        return;
+    }
+
+    const isCircle = !id || id === CIRCLE_ID;
+    const selectedFeature = targetFeature === undefined
+        ? findSelectedFeature(id, appState)
+        : targetFeature;
+    if (isCircle || !selectedFeature) {
+        map.fitBounds(getBbox(appState.allFeatures), {
+            padding: getFitPadding(),
+            animate,
+            speed: 0.8,
+            curve: 1.4
+        });
+    } else {
+        map.fitBounds(getBbox([selectedFeature]), {
+            padding: getFitPadding(20),
+            maxZoom: 14,
+            animate,
+            speed: 0.8,
+            curve: 1.4
+        });
+    }
+}
+
 export function createMapSelectionController() {
     const selectionState = { currentHierarchyLevel: 0 };
     return {
@@ -121,7 +164,10 @@ export function createMapSelectionController() {
     };
 }
 
-function runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState, { renderSidebar: shouldRenderSidebar = true } = {}) {
+function runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState, {
+    renderSidebar: shouldRenderSidebar = true,
+    mapViewOnly = false
+} = {}) {
     const {
         state: appState,
         documentObject,
@@ -138,6 +184,11 @@ function runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState,
     } = callbacks;
 
     if (documentObject.body.classList.contains("is-suggest-locked") && id !== appState.currentId) {
+        return;
+    }
+
+    if (mapViewOnly) {
+        if (triggerMapZoom) fitMapToSelection(id, appState, appState.map, getFitPadding, animate);
         return;
     }
 
@@ -179,26 +230,13 @@ function runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState,
             }
             if (shouldRenderSidebar) renderSidebar();
             updateUrl?.(id);
-            if (triggerMapZoom && appState.map) {
-                appState.map.fitBounds(getBbox(appState.allFeatures), {
-                    padding: getFitPadding(),
-                    animate,
-                    speed: 0.8,
-                    curve: 1.4
-                });
-            }
+            if (triggerMapZoom) fitMapToSelection(id, appState, appState.map, getFitPadding, animate);
             updateStyles();
             return;
         }
 
         const isCircle = !id || id === CIRCLE_ID;
-        let targetFeature = null;
-        if (!isCircle) {
-            targetFeature = appState.allFeatures.find(f => {
-                const zid = f.properties?.zid;
-                return zid && (zid.toLowerCase() === id.toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(id));
-            });
-        }
+        const targetFeature = isCircle ? null : findSelectedFeature(id, appState);
 
         if (isCircle || !targetFeature) {
             const titleName = appState.currentFeature === "florence" ? "Florence Christmas Bird Count Circle" : "Eugene Christmas Bird Count Circle";
@@ -224,22 +262,7 @@ function runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState,
         updateStyles();
 
         if (triggerMapZoom && appState.map) {
-            if (isCircle || !targetFeature) {
-                appState.map.fitBounds(getBbox(appState.allFeatures), {
-                    padding: getFitPadding(),
-                    animate: animate,
-                    speed: 0.8,
-                    curve: 1.4
-                });
-            } else {
-                appState.map.fitBounds(getBbox([targetFeature]), {
-                    padding: getFitPadding(20),
-                    maxZoom: 14,
-                    animate: animate,
-                    speed: 0.8,
-                    curve: 1.4
-                });
-            }
+            fitMapToSelection(id, appState, appState.map, getFitPadding, animate, targetFeature);
         }
 
         updateUrl?.(id);
