@@ -76,6 +76,32 @@ test('renders a usable map while its non-critical Google Fonts stylesheet is del
     await expect(page.locator('link[rel="stylesheet"][href^="https://fonts.googleapis.com/"]')).toHaveAttribute('media', 'all');
 });
 
+test('keeps the map canvas and navigation controls usable while MapLibre CSS is delayed', async ({ page }) => {
+    let releaseStyles;
+    let notifyStylesRequested;
+    const stylesRequested = new Promise(resolve => { notifyStylesRequested = resolve; });
+
+    await page.route('https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css', async route => {
+        notifyStylesRequested();
+        await new Promise(resolve => { releaseStyles = resolve; });
+        await route.continue();
+    });
+
+    await page.goto('/maps/', { waitUntil: 'domcontentloaded' });
+    await stylesRequested;
+    const canvas = page.locator('#tile-map canvas.maplibregl-canvas');
+    await expect(canvas).toBeVisible();
+    await expect(page.locator('#header-title')).not.toHaveText('Loading...');
+    await expect(page.locator('.map-ctrl-zoom-in')).toBeVisible();
+    const mapBeforeStyles = await page.locator('#tile-map').boundingBox();
+    expect(mapBeforeStyles?.width).toBeGreaterThan(0);
+    expect(mapBeforeStyles?.height).toBeGreaterThan(0);
+
+    releaseStyles();
+    await expect(page.locator('link[rel="stylesheet"][href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css"]')).toHaveAttribute('media', 'all');
+    await expect(canvas).toBeVisible();
+});
+
 test('keeps a visible globe placeholder when the deferred map stylesheet fails', async ({ page }) => {
     await page.route('https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css', route => route.abort());
     await page.goto('/', { waitUntil: 'domcontentloaded' });
