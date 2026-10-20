@@ -306,9 +306,7 @@
   }
 
   .app-frame--context.is-sheet-collapsed .context-pane__hero-logo {
-    top: 8px;
-    width: 24px;
-    height: 24px;
+    display: none;
   }
 
   .app-frame--context.is-sheet-collapsed .context-pane__controls {
