@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "build:map-css": "node scripts/build-map-css.js"
   },
   "devDependencies": {
     "@playwright/test": "1.55.0"

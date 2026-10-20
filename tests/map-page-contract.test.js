@@ -10,7 +10,7 @@ test('the map page loads the map application as an ES module', async () => {
     const page = await readFile(mapPagePath, 'utf8');
 
     assert.match(page, /<script type="module" src="\.\.\/scripts\/maps\/entry\.js\?v=248"><\/script>/);
-    assert.match(page, /page-maps-tile\.css\?v=122/);
+    assert.match(page, /page-maps-tile\.bundle\.css\?v=1/);
     const entry = await readFile(mapEntryPath, 'utf8');
     assert.match(entry, /import \{ state \} from '\.\.\/state\.js';/);
     const compatibility = await readFile(mapCompatibilityPath, 'utf8');

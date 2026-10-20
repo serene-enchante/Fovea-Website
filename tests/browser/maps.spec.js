@@ -57,6 +57,11 @@ test('records the active-dataset and tile request startup baseline', async ({ pa
             decodedBytes: resources.reduce((sum, entry) => sum + entry.decodedBodySize, 0)
         };
     });
+    const mapStylesheets = await page.evaluate(() => performance.getEntriesByType('resource')
+        .map(entry => entry.name)
+        .filter(name => name.includes('page-maps-tile'))
+        .map(name => name.replace(location.origin, '').split('?')[0]));
+    expect(mapStylesheets).toEqual(['/styles/page-maps-tile.bundle.css']);
     console.log(`Map startup baseline (desktop Chromium): ready=${mapReadyMs}ms; same-origin JS=${scriptBytes.count} resources, ${scriptBytes.transferBytes} transfer bytes, ${scriptBytes.decodedBytes} decoded bytes; after 1.5s: ${datasetRequests.length} GeoJSON request(s), ${tileRequests.length} CARTO/Esri tile request(s).`);
 });
 
