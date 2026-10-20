@@ -22,7 +22,7 @@ test('presents titles for overview, count-circle, and zone selections', () => {
 });
 
 test('returns the current selection thumbnail', () => {
-    assert.equal(getSelectionThumbnail({ currentFeature: 'circles', isCirclesFeature: true }), '../images/whiteLane-Audubon-favicon-152.png');
+    assert.equal(getSelectionThumbnail({ currentFeature: 'circles', isCirclesFeature: true }), '../images/whiteLane-Audubon-favicon.webp');
     assert.equal(getSelectionThumbnail({ currentFeature: 'florence', isCirclesFeature: false }), '../images/florence.png');
-    assert.equal(getSelectionThumbnail({ currentFeature: 'eugene', isCirclesFeature: false }), '../images/logo-small.png');
+    assert.equal(getSelectionThumbnail({ currentFeature: 'eugene', isCirclesFeature: false }), '../images/logo-small.webp');
 });

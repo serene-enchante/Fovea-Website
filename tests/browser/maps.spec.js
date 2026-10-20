@@ -83,6 +83,22 @@ test('uses the optimized WebP asset for the Satellite basemap preview', async ({
     expect(imageRequests.some(url => /Google_satellite-02\.png(?:\?|$)/i.test(url))).toBe(false);
 });
 
+test('loads only the right-sized circles logo on the initial map view', async ({ page }) => {
+    const logoRequests = [];
+    page.on('request', request => {
+        if (/\/(?:logo-small|whiteLane-Audubon-favicon)(?:-152)?\.(?:png|webp)(?:\?|$)/i.test(request.url())) {
+            logoRequests.push(new URL(request.url()).pathname);
+        }
+    });
+
+    await openMap(page);
+
+    const headerLogo = page.locator('.logo--header');
+    await expect(headerLogo).toHaveAttribute('src', '../images/whiteLane-Audubon-favicon.webp');
+    await expect.poll(() => headerLogo.evaluate(image => image.naturalWidth)).toBe(104);
+    expect(logoRequests).toEqual(['/images/whiteLane-Audubon-favicon.webp']);
+});
+
 for (const { circle, zone, expectedTitle } of [
     { circle: 'eugene', zone: '04', expectedTitle: 'Zone 04' },
     { circle: 'florence', zone: '01', expectedTitle: 'Zone 01' }

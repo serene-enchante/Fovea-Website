@@ -8,7 +8,7 @@ export const COUNT_CIRCLES = [
         subtitle: "Lane County, Oregon · 29 Zones",
         totalZones: 29,
         geojsonPath: `geojson/${MAP_DATASETS.eugene.fileName}`,
-        thumbnail: "images/logo-small.png",
+        thumbnail: "images/logo-small.webp",
         hasData: true
     },
     {

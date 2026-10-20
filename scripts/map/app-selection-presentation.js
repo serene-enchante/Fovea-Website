@@ -2,9 +2,9 @@ import { displayZoneId } from '../utils/format-utils.js';
 import { findFeatureByZoneId } from '../services/geo-selection.js';
 
 export function getSelectionThumbnail({ currentFeature, isCirclesFeature }) {
-    if (isCirclesFeature || currentFeature === 'circles') return '../images/whiteLane-Audubon-favicon-152.png';
+    if (isCirclesFeature || currentFeature === 'circles') return '../images/whiteLane-Audubon-favicon.webp';
     if (currentFeature === 'florence') return '../images/florence.png';
-    return '../images/logo-small.png';
+    return '../images/logo-small.webp';
 }
 
 /**

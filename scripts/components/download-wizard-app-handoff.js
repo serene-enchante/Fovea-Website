@@ -102,7 +102,7 @@ export function createDownloadWizardAppHandoff({
         }
 
         const selectionThumb = documentObject.getElementById('avenza-selection-thumb');
-        if (selectionThumb) selectionThumb.src = resolveAssetPath(state.selectedCircle?.thumbnail || 'images/logo-small.png');
+        if (selectionThumb) selectionThumb.src = resolveAssetPath(state.selectedCircle?.thumbnail || 'images/logo-small.webp');
 
         const step1Heading = documentObject.getElementById('avenza-step1-heading');
         if (step1Heading) step1Heading.textContent = config.step1Heading;

@@ -14,7 +14,7 @@ export function updateHeaderLogo() {
     if (!logoImg) return;
 
     if (state.isCirclesFeature || state.currentFeature === "circles") {
-        logoImg.src = "../images/whiteLane-Audubon-favicon-152.png";
+        logoImg.src = "../images/whiteLane-Audubon-favicon.webp";
         logoImg.alt = "Audubon Circles";
         if (logoText) {
             logoText.textContent = "";
@@ -25,7 +25,7 @@ export function updateHeaderLogo() {
             logoImg.src = "../images/florence.png";
             logoImg.alt = "Florence Christmas Bird Count";
         } else {
-            logoImg.src = "../images/logo-small.png";
+            logoImg.src = "../images/logo-small.webp";
             logoImg.alt = "Eugene Christmas Bird Count";
         }
 

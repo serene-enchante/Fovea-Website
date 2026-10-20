@@ -35,7 +35,7 @@ export function renderMapFeatureList(listContainer, {
             let isLogo = false;
             const isNotAvailable = NO_DATA_CIRCLES.has(cid);
             if (cid === 'Eugene') {
-                thumbImg = '../images/logo-small.png';
+                thumbImg = '../images/logo-small.webp';
                 isLogo = true;
             } else if (cid === 'Florence') {
                 thumbImg = '../images/florence.png';
