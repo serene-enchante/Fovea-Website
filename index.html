@@ -13,10 +13,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="images/logo-fav.png">
 
-    <!-- MapLibre GL -->
-    <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
-
     <script>
         (function() {
             try {
@@ -793,6 +789,12 @@
             opacity: 0;
             transition: opacity 0.8s ease;
         }
+
+        /* Keep a lightweight globe placeholder visible while the map library loads. */
+        .home-globe-map:not(.is-loaded) {
+            opacity: 1;
+            background: radial-gradient(ellipse at 36% 30%, #416071 0%, #1d303b 42%, #0b1117 74%);
+        }
         
         .home-globe-map.is-loaded {
             opacity: 1;
@@ -821,6 +823,18 @@
             );
             transform: translateX(-100%);
             animation: globe-shimmer 2.0s infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .globe-container,
+            .globe-container.is-flying,
+            .globe-container.is-hovered,
+            .home-globe-map,
+            .globe-overlay-shimmer,
+            .globe-overlay-shimmer::before {
+                animation: none !important;
+                transition: none !important;
+            }
         }
         
         @keyframes globe-shimmer {
@@ -1546,6 +1560,7 @@
         ];
 
         document.addEventListener("DOMContentLoaded", () => {
+            const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
             const input = document.getElementById("home-search-input");
             const clearBtn = document.getElementById("home-search-clear");
             const dropdown = document.getElementById("home-autocomplete");
@@ -1716,7 +1731,7 @@
                             if (homeMap) {
                                 homeMap.easeTo({
                                     center: [-123.079, 0],
-                                    duration: 2200,
+                                    duration: prefersReducedMotion ? 0 : 2200,
                                     easing: (t) => 1 - Math.pow(1 - t, 4)
                                 });
                             }
@@ -1790,7 +1805,7 @@
                     try {
                         homeMap.easeTo({
                             center: [avgLng, avgLat],
-                            duration: 2200,
+                            duration: prefersReducedMotion ? 0 : 2200,
                             easing: (t) => 1 - Math.pow(1 - t, 4)
                         });
                     } catch (e) {
@@ -1845,7 +1860,7 @@
                             if (homeMap) {
                                 homeMap.easeTo({
                                     center: [-123.079, 0],
-                                    duration: 2200,
+                                    duration: prefersReducedMotion ? 0 : 2200,
                                     easing: (t) => 1 - Math.pow(1 - t, 4)
                                 });
                             }
@@ -1939,18 +1954,102 @@
             if (globePortal && globeDiv) {
                 const isHomeLight = document.documentElement.getAttribute("data-theme") === "light" || document.body.classList.contains("theme-light");
                 const getGlobeRestZoom = () => (window.innerWidth <= 768 ? 1.37 : 2.18);
-                homeMap = new maplibregl.Map({
-                    container: 'home-globe',
-                    style: isHomeLight ? MAP_PROVIDER_URLS.carto.lightVectorStyle : MAP_PROVIDER_URLS.carto.darkVectorStyle,
-                    projection: { type: 'globe' },
-                    center: [-123.079, 0], // Centered at the equator to display a true, undistorted 3D sphere
-                    zoom: getGlobeRestZoom(), // 2.18 renders 738.5px globe inside 736px dome with zero gap and zero clipping
-                    minZoom: 0.5,
-                    maxZoom: 3.5,
-                    antialias: true,
-                    attributionControl: false,
-                    interactive: false
-                });
+                let mapLibrePromise = null;
+
+                function loadHomeMapLibre() {
+                    if (window.maplibregl) return Promise.resolve(window.maplibregl);
+                    if (mapLibrePromise) return mapLibrePromise;
+
+                    mapLibrePromise = new Promise((resolve, reject) => {
+                        const stylesheet = document.createElement("link");
+                        stylesheet.rel = "stylesheet";
+                        stylesheet.href = "https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css";
+                        stylesheet.onload = () => {
+                            const script = document.createElement("script");
+                            script.src = "https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js";
+                            script.async = true;
+                            script.onload = () => window.maplibregl
+                                ? resolve(window.maplibregl)
+                                : reject(new Error("MapLibre loaded without its global API"));
+                            script.onerror = () => reject(new Error("MapLibre script failed to load"));
+                            document.head.appendChild(script);
+                        };
+                        stylesheet.onerror = () => reject(new Error("MapLibre stylesheet failed to load"));
+                        document.head.appendChild(stylesheet);
+                    });
+                    return mapLibrePromise;
+                }
+
+                function prepareHomeGlobeStyle() {
+                    try {
+                        homeMap.setProjection({ type: 'globe' });
+                        const style = homeMap.getStyle();
+                        if (style && style.layers) {
+                            style.layers.forEach(layer => {
+                                const id = layer.id.toLowerCase();
+                                if (id.includes("label") || id.includes("place") || id.includes("poi") ||
+                                    id.includes("boundary") || id.includes("border") || id.includes("admin")) {
+                                    homeMap.setLayoutProperty(layer.id, "visibility", "none");
+                                }
+                            });
+                        }
+                        addSearchMarkersLayer();
+                    } catch (error) {
+                        console.warn("Home globe style setup failed:", error);
+                    }
+                }
+
+                function initializeHomeGlobe() {
+                    loadHomeMapLibre().then((maplibre) => {
+                        homeMap = new maplibre.Map({
+                            container: 'home-globe',
+                            style: isHomeLight ? MAP_PROVIDER_URLS.carto.lightVectorStyle : MAP_PROVIDER_URLS.carto.darkVectorStyle,
+                            projection: { type: 'globe' },
+                            center: [-123.079, 0], // Centered at the equator to display a true, undistorted 3D sphere
+                            zoom: getGlobeRestZoom(), // 2.18 renders 738.5px globe inside 736px dome with zero gap and zero clipping
+                            minZoom: 0.5,
+                            maxZoom: 3.5,
+                            antialias: true,
+                            attributionControl: false,
+                            interactive: false
+                        });
+
+                        homeMap.on("style.load", prepareHomeGlobeStyle);
+
+                        homeMap.on("load", () => {
+                            prepareHomeGlobeStyle();
+                            globePortal.classList.add("loaded");
+                            globeDiv.classList.add("is-loaded");
+                            if (!prefersReducedMotion && isSpinning) rotateGlobe();
+                        });
+                    }).catch((error) => {
+                        console.warn("Home globe unavailable; keeping static placeholder:", error);
+                        globePortal.classList.add("load-failed");
+                        globeDiv.classList.add("load-failed");
+                    });
+                }
+
+                // Wait until after initial paint, and prefer loading only as the globe approaches view.
+                let globeLoadStarted = false;
+                const startGlobeOnce = () => {
+                    if (globeLoadStarted) return;
+                    globeLoadStarted = true;
+                    if (globeObserver) globeObserver.disconnect();
+                    initializeHomeGlobe();
+                };
+                const globeObserver = "IntersectionObserver" in window
+                    ? new IntersectionObserver((entries) => {
+                        if (entries.some(entry => entry.isIntersecting)) startGlobeOnce();
+                    }, { rootMargin: "120px" })
+                    : null;
+                if (globeObserver) globeObserver.observe(globePortal);
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    if ("requestIdleCallback" in window) {
+                        requestIdleCallback(startGlobeOnce, { timeout: 1600 });
+                    } else {
+                        setTimeout(startGlobeOnce, 100);
+                    }
+                }));
 
                 window.addEventListener("resize", () => {
                     if (!homeMap) return;
@@ -1995,13 +2094,15 @@
                     
                     // Reset MapLibre camera to original resting state (pitch: 0, lat: 0)
                     try {
-                        homeMap.easeTo({
-                            pitch: 0,
-                            zoom: getGlobeRestZoom(), // Restores aligned scale on recovery
-                            center: [homeMap.getCenter().lng, 0],
-                            duration: 1000,
-                            easing: (t) => 1 - Math.pow(1 - t, 4)
-                        });
+                        if (homeMap) {
+                            homeMap.easeTo({
+                                pitch: 0,
+                                zoom: getGlobeRestZoom(), // Restores aligned scale on recovery
+                                center: [homeMap.getCenter().lng, 0],
+                                duration: prefersReducedMotion ? 0 : 1000,
+                                easing: (t) => 1 - Math.pow(1 - t, 4)
+                            });
+                        }
                     } catch (e) {
                         // Suppress map state errors if map is not fully loaded yet
                     }
@@ -2029,6 +2130,7 @@
                 }
 
                 function rotateGlobe() {
+                    if (!homeMap || prefersReducedMotion) return;
                     // Prevent duplicate concurrent animation loops
                     if (rotationId) {
                         cancelAnimationFrame(rotationId);
@@ -2109,65 +2211,6 @@
                         console.warn("addSearchMarkersLayer error:", err);
                     }
                 }
-
-                homeMap.on("style.load", () => {
-                    try {
-                        homeMap.setProjection({ type: 'globe' });
-                        
-                        // Hide all labels and borders for a clean landmass globe
-                        const style = homeMap.getStyle();
-                        if (style && style.layers) {
-                            style.layers.forEach(layer => {
-                                const id = layer.id.toLowerCase();
-                                if (id.includes("label") || 
-                                    id.includes("place") || 
-                                    id.includes("poi") || 
-                                    id.includes("boundary") || 
-                                    id.includes("border") || 
-                                    id.includes("admin")) {
-                                    homeMap.setLayoutProperty(layer.id, "visibility", "none");
-                                }
-                            });
-                        }
-                        
-                        addSearchMarkersLayer();
-                    } catch (e) {
-                        console.warn("style.load layout overrides error:", e);
-                    }
-                });
-
-                homeMap.on("load", () => {
-                    try {
-                        homeMap.setProjection({ type: 'globe' });
-                        
-                        // Enforce label and border hiding on map load
-                        const style = homeMap.getStyle();
-                        if (style && style.layers) {
-                            style.layers.forEach(layer => {
-                                const id = layer.id.toLowerCase();
-                                if (id.includes("label") || 
-                                    id.includes("place") || 
-                                    id.includes("poi") || 
-                                    id.includes("boundary") || 
-                                    id.includes("border") || 
-                                    id.includes("admin")) {
-                                    homeMap.setLayoutProperty(layer.id, "visibility", "none");
-                                }
-                            });
-                        }
-                        
-                        addSearchMarkersLayer();
-                    } catch (e) {
-                        console.warn("load layout overrides error:", e);
-                    }
-                    
-                    // Mark container loaded and fade out loading shimmer
-                    globePortal.classList.add("loaded");
-                    globeDiv.classList.add("is-loaded");
-                    
-                    // Start auto-rotation animation loop
-                    rotateGlobe();
-                });
 
                 // On click transition flight
                 globePortal.addEventListener("click", (e) => {

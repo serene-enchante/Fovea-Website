@@ -10,9 +10,43 @@ async function openMap(page, path = '/maps/') {
     await expect(page.locator('#header-title')).not.toHaveText('Loading...');
 }
 
-test('initializes the home globe with the shared CARTO style configuration', async ({ page }) => {
-    await page.goto('/');
+test('renders the home shell while the deferred globe dependencies are still loading', async ({ page }) => {
+    let releaseStyles;
+    let releaseScript;
+    let notifyStylesRequested;
+    let notifyScriptRequested;
+    const stylesRequested = new Promise(resolve => { notifyStylesRequested = resolve; });
+    const scriptRequested = new Promise(resolve => { notifyScriptRequested = resolve; });
+
+    await page.route('https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css', async route => {
+        notifyStylesRequested();
+        await new Promise(resolve => { releaseStyles = resolve; });
+        await route.continue();
+    });
+    await page.route('https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js', async route => {
+        notifyScriptRequested();
+        await new Promise(resolve => { releaseScript = resolve; });
+        await route.continue();
+    });
+
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await stylesRequested;
+    await expect(page.locator('.logo-title')).toBeVisible();
+    releaseStyles();
+    await scriptRequested;
+    await expect(page.locator('.logo-title')).toBeVisible();
+    releaseScript();
     await expect(page.locator('#home-globe canvas.maplibregl-canvas')).toBeVisible();
+});
+
+test('keeps a visible globe placeholder when the deferred map stylesheet fails', async ({ page }) => {
+    await page.route('https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css', route => route.abort());
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    await expect(page.locator('#home-globe.load-failed')).toBeVisible();
+    await expect(page.locator('.logo-title')).toBeVisible();
+    await expect(page.locator('#home-search-input')).toBeVisible();
+    await expect(page.locator('#home-globe')).toHaveCSS('opacity', '1');
 });
 
 for (const { circle, zone, expectedTitle } of [
