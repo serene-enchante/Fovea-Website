@@ -60,7 +60,6 @@ export function createToolbar(items = []) {
     return createFloatingPalette(group.label, groupContent, {
       x,
       y,
-      onClose: () => {},
     });
   }
 

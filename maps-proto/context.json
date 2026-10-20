@@ -1,0 +1,34 @@
+{
+  "id": "florence-cbc",
+  "title": "Florence CBC",
+  "image": "./assets/images/counts/fcbc.webp",
+  "logo": "./assets/images/counts/florence.webp",
+  "imageAlt": "Florence Christmas Bird Count",
+  "actions": [
+    { "id": "download", "label": "Download", "icon": "download" },
+    { "id": "suggest", "label": "Suggest", "icon": "lightbulb" },
+    { "id": "contact", "label": "Contact", "icon": "mail" }
+  ],
+  "sections": [
+    {
+      "id": "circle-zones",
+      "title": "Circle zones",
+      "view": "tiles",
+      "items": [
+        { "id": "01", "label": "Zone 1", "image": "./assets/images/counts/florence-zones/z01-01.webp" },
+        { "id": "02", "label": "Zone 2", "image": "./assets/images/counts/florence-zones/z02-01.webp" },
+        { "id": "03", "label": "Zone 3A", "image": "./assets/images/counts/florence-zones/z03A-01.webp" },
+        { "id": "04", "label": "Zone 4", "image": "./assets/images/counts/florence-zones/z04-01.webp" },
+        { "id": "05", "label": "Zone 5A", "image": "./assets/images/counts/florence-zones/z05A-01.webp" },
+        { "id": "06", "label": "Zone 6", "image": "./assets/images/counts/florence-zones/z06-01.webp" },
+        { "id": "07", "label": "Zone 7", "image": "./assets/images/counts/florence-zones/z07-01.webp" },
+        { "id": "08", "label": "Zone 8A", "image": "./assets/images/counts/florence-zones/z08A-01.webp" },
+        { "id": "09", "label": "Zone 9", "image": "./assets/images/counts/florence-zones/z09-01.webp" },
+        { "id": "10", "label": "Zone 10A", "image": "./assets/images/counts/florence-zones/z10A-01.webp" },
+        { "id": "11", "label": "Zone 11A", "image": "./assets/images/counts/florence-zones/z11A-01.webp" },
+        { "id": "12", "label": "Zone 12A", "image": "./assets/images/counts/florence-zones/z12A-01.webp" },
+        { "id": "13", "label": "Zone 13A", "image": "./assets/images/counts/florence-zones/z13A-01.webp" }
+      ]
+    }
+  ]
+}

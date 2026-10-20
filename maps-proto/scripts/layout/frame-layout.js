@@ -130,6 +130,7 @@ export function initializeFrameLayout() {
     if (Math.abs(deltaX) < 8) return;
 
     const isOpening = swipeStart.state === appStateMachine.states.CONTENT_VIEW;
+    if (isOpening && deltaX > 0 && swipeStart.tileList) return;
     if ((isOpening && deltaX < 0) || (!isOpening && deltaX > 0)) {
       if (swipeStart.dragging) {
         root.style.setProperty("--content-drag-offset", "0px");

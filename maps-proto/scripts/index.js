@@ -1,5 +1,6 @@
 import { createAppFrame, initializeFrameLayout } from "./layout/frame-layout.js";
 import { createPageList, initializePageSelection, initializeTileStrips } from "./components/page-list.js";
+import { createContextPane } from "./components/context-pane.js";
 import { createOrganizationRail } from "./components/organization-rail.js";
 import { createToolbar } from "./components/toolbar.js";
 import { createUserProfile } from "./components/user-profile.js";
@@ -11,6 +12,7 @@ if (frameLayout) {
   const organizationContent = document.createElement("div");
   const directoryContent = document.createElement("div");
   const userContent = createUserProfile({ name: "User" });
+  const contextPane = createContextPane();
 
   const contentColumn = document.createElement("div");
   contentColumn.className = "content-column";
@@ -25,7 +27,17 @@ if (frameLayout) {
     layout: "floating",
     material: "floating",
     label: "Context",
-    content: document.createElement("div"),
+    content: contextPane.element,
+  });
+  contextFrame.addEventListener("contextclose", () => {
+    contextFrame.classList.add("is-closed");
+    contextFrame.setAttribute("aria-hidden", "true");
+    contextFrame.inert = true;
+  });
+  contextFrame.addEventListener("contextopen", () => {
+    contextFrame.classList.remove("is-closed");
+    contextFrame.removeAttribute("aria-hidden");
+    contextFrame.inert = false;
   });
   mapStage.append(mapContainer, contextFrame);
 
@@ -64,6 +76,29 @@ if (frameLayout) {
   );
 
   initializeFrameLayout();
+
+  function showContext(context, dataUrl) {
+    contextPane.element.dataset.contextId = context.id || "";
+    contextPane.setContext(context, dataUrl);
+  }
+
+  frameLayout.addEventListener("contextchange", (event) => {
+    const { context, source } = event.detail || {};
+    if (context) {
+      showContext(context, source ? new URL(source, document.baseURI) : document.baseURI);
+    } else if (source) {
+      loadJsonData(source)
+        .then(({ data, dataUrl }) => showContext(data, dataUrl))
+        .catch((error) => console.error("Unable to load context data", error));
+    }
+  });
+
+  loadJsonData(frameLayout.dataset.contextSrc)
+    .then(({ data, dataUrl }) => showContext(data, dataUrl))
+    .catch((error) => {
+      console.error("Unable to load context data", error);
+      contextPane.element.textContent = "Context unavailable";
+    });
   loadJsonData(frameLayout.dataset.directorySrc)
     .then(({ data, dataUrl }) => {
       directoryContent.replaceChildren(createPageList(data, dataUrl));

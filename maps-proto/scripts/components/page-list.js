@@ -5,10 +5,12 @@ export function createPageList({ label, title, sections }, dataUrl) {
   navigation.className = "page-list";
   navigation.setAttribute("aria-label", label);
 
-  const directoryTitle = document.createElement("h1");
-  directoryTitle.className = "page-list__title";
-  directoryTitle.textContent = title;
-  navigation.append(directoryTitle);
+  if (title) {
+    const directoryTitle = document.createElement("h1");
+    directoryTitle.className = "page-list__title";
+    directoryTitle.textContent = title;
+    navigation.append(directoryTitle);
+  }
 
   sections.forEach(({ id, title, view = "list", items, selectable = false }) => {
     const section = document.createElement("section");
@@ -122,6 +124,8 @@ function createScrollButton(direction, label) {
 }
 
 export function initializeTileStrips(root) {
+  const cleanups = [];
+
   root.querySelectorAll(".page-list__tile-viewport").forEach((viewport) => {
     const list = viewport.querySelector(".page-list__items");
     const previous = viewport.querySelector(".page-list__scroll--left");
@@ -141,21 +145,35 @@ export function initializeTileStrips(root) {
     const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ? "auto"
       : "smooth";
-    previous.addEventListener("click", () => {
+    const scrollPrevious = () => {
       list.scrollBy({ left: -list.clientWidth * 0.8, behavior });
-    });
-    next.addEventListener("click", () => {
+    };
+    const scrollNext = () => {
       list.scrollBy({ left: list.clientWidth * 0.8, behavior });
-    });
+    };
+    previous.addEventListener("click", scrollPrevious);
+    next.addEventListener("click", scrollNext);
 
+    let resizeObserver;
+    const updateOnResize = () => updateEdges();
     if ("ResizeObserver" in window) {
-      const resizeObserver = new ResizeObserver(updateEdges);
+      resizeObserver = new ResizeObserver(updateEdges);
       resizeObserver.observe(list);
     } else {
-      window.addEventListener("resize", updateEdges);
+      window.addEventListener("resize", updateOnResize);
     }
     requestAnimationFrame(updateEdges);
+
+    cleanups.push(() => {
+      list.removeEventListener("scroll", updateEdges);
+      previous.removeEventListener("click", scrollPrevious);
+      next.removeEventListener("click", scrollNext);
+      resizeObserver?.disconnect();
+      if (!resizeObserver) window.removeEventListener("resize", updateOnResize);
+    });
   });
+
+  return () => cleanups.forEach((cleanup) => cleanup());
 }
 
 export function initializePageSelection(root) {

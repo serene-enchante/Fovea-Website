@@ -1,6 +1,6 @@
 let paletteZIndex = 20;
 
-export function createFloatingPalette(label, content, { x, y, onClose }) {
+export function createFloatingPalette(label, content, { x, y, onClose = () => {} }) {
   const palette = document.createElement("section");
   palette.className = "toolbar-palette frame-material--floating";
   palette.setAttribute("role", "dialog");
@@ -43,6 +43,7 @@ export function createFloatingPalette(label, content, { x, y, onClose }) {
   function beginWindowDrag(event) {
     if (event.button !== 0 || event.target.closest("button")) return;
     event.preventDefault();
+    const pointerId = event.pointerId;
     paletteZIndex += 1;
     palette.style.zIndex = String(paletteZIndex);
     const start = palette.getBoundingClientRect();
@@ -50,18 +51,20 @@ export function createFloatingPalette(label, content, { x, y, onClose }) {
     const offsetY = event.clientY - start.top;
 
     function move(moveEvent) {
+      if (moveEvent.pointerId !== pointerId) return;
       placeAt(moveEvent.clientX - offsetX, moveEvent.clientY - offsetY);
     }
 
-    function end() {
+    function end(endEvent) {
+      if (endEvent.pointerId !== pointerId) return;
       document.removeEventListener("pointermove", move);
       document.removeEventListener("pointerup", end);
       document.removeEventListener("pointercancel", end);
     }
 
     document.addEventListener("pointermove", move);
-    document.addEventListener("pointerup", end, { once: true });
-    document.addEventListener("pointercancel", end, { once: true });
+    document.addEventListener("pointerup", end);
+    document.addEventListener("pointercancel", end);
   }
 
   header.addEventListener("pointerdown", beginWindowDrag);
@@ -90,12 +93,14 @@ export function makePaletteHeadingDetachable(heading, onDragStateChange, onDetac
 
   heading.addEventListener("pointerdown", (event) => {
     if (event.button !== 0 || event.pointerType === "touch") return;
+    const pointerId = event.pointerId;
     const startX = event.clientX;
     const startY = event.clientY;
     let detachedPalette = null;
     onDragStateChange(true);
 
     function move(moveEvent) {
+      if (moveEvent.pointerId !== pointerId) return;
       const deltaX = moveEvent.clientX - startX;
       const deltaY = moveEvent.clientY - startY;
       if (!detachedPalette && Math.hypot(deltaX, deltaY) > 28) {
@@ -110,7 +115,8 @@ export function makePaletteHeadingDetachable(heading, onDragStateChange, onDetac
       }
     }
 
-    function end() {
+    function end(endEvent) {
+      if (endEvent.pointerId !== pointerId) return;
       document.removeEventListener("pointermove", move);
       document.removeEventListener("pointerup", end);
       document.removeEventListener("pointercancel", end);
@@ -119,7 +125,7 @@ export function makePaletteHeadingDetachable(heading, onDragStateChange, onDetac
     }
 
     document.addEventListener("pointermove", move);
-    document.addEventListener("pointerup", end, { once: true });
-    document.addEventListener("pointercancel", end, { once: true });
+    document.addEventListener("pointerup", end);
+    document.addEventListener("pointercancel", end);
   });
 }
