@@ -1,0 +1,65 @@
+.frame-layout {
+  transition:
+    grid-template-columns 420ms cubic-bezier(.2, .8, .2, 1),
+    gap 420ms cubic-bezier(.2, .8, .2, 1),
+    padding 420ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.app-frame {
+  transition: border-radius 420ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.content-column {
+  transition: transform 420ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.app-frame--organization,
+.app-frame--directory {
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-12px);
+  transition:
+    opacity 240ms ease,
+    transform 420ms cubic-bezier(.2, .8, .2, 1);
+}
+
+:root[data-view="directory-view"] .app-frame--organization,
+:root[data-view="directory-view"] .app-frame--directory {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.content-titlebar {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -6px);
+  transition:
+    opacity 200ms ease,
+    transform 240ms cubic-bezier(.2, .8, .2, 1),
+    visibility 0s linear 200ms;
+}
+
+:root[data-view="directory-view"] .content-titlebar {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+  transition:
+    opacity 200ms ease,
+    transform 240ms cubic-bezier(.2, .8, .2, 1),
+    visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame-layout,
+  .app-frame,
+  .app-frame--organization,
+  .app-frame--directory,
+  .content-titlebar {
+    transition-duration: 0.01ms;
+  }
+
+  .content-column {
+    transition-duration: 0.01ms;
+  }
+}

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Maps Proto</title>
+  <link rel="stylesheet" href="../styles/frame-layout.css">
+  <link rel="stylesheet" href="../styles/components/page-list.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=build,explore,home,settings&display=block">
+  <link rel="stylesheet" href="../styles/frames/material-plain.css">
+  <link rel="stylesheet" href="../styles/frames/material-bare.css">
+  <link rel="stylesheet" href="../styles/frames/material-floating-window.css">
+  <link rel="stylesheet" href="../styles/frames/animations.css">
+  <script>
+    (() => {
+      try {
+        const theme = localStorage.getItem("fovea-theme") || "dark";
+        const systemIsLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
+        if (theme === "light" || (theme === "auto" && systemIsLight)) {
+          document.documentElement.dataset.theme = "light";
+        }
+      } catch (_) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="frame-layout" id="frame-layout" data-directory-src="./directory.json">
+    <template id="app-frame-template">
+      <section class="app-frame" role="region">
+        <div class="app-frame__content"></div>
+      </section>
+    </template>
+  </div>
+  <button class="view-toggle" id="view-toggle" type="button" aria-pressed="false">Open directory</button>
+  <script type="module" src="./scripts/index.js"></script>
+</body>
+</html>

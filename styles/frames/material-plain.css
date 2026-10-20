@@ -1,0 +1,32 @@
+:root {
+  --shade0: #000;
+  --shade1: #1a1a1a;
+  --control-surface: rgba(255, 255, 255, 0.12);
+  --control-text: #fff;
+}
+
+:root[data-theme="light"] {
+  --shade0: #fff;
+  --shade1: #e5e7eb;
+  --control-surface: rgba(0, 0, 0, 0.08);
+  --control-text: #111827;
+}
+
+.frame-material--plain,
+.map-stage {
+  background: var(--shade1);
+}
+
+.frame-material--plain {
+  border-radius: 0;
+}
+
+:root[data-view="directory-view"] .frame-material--plain {
+  border-radius: 24px;
+}
+
+@media (max-width: 700px) {
+  :root[data-view="directory-view"] .frame-material--plain {
+    border-radius: 16px;
+  }
+}

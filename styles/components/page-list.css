@@ -1,0 +1,193 @@
+.page-list {
+  padding: 20px 12px;
+  color: var(--control-text);
+  font-family: system-ui, sans-serif;
+}
+
+.page-list__title {
+  margin: 0 8px 30px;
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.page-list__section + .page-list__section {
+  margin-top: 24px;
+}
+
+.page-list__heading {
+  margin: 0 8px 10px;
+  color: currentColor;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  opacity: 0.64;
+}
+
+.page-list__items {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.page-list__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.page-list__icon {
+  flex: 0 0 auto;
+  font-size: 19px;
+  font-weight: 300;
+  font-variation-settings: "FILL" 0, "wght" 300, "GRAD" -25, "opsz" 24;
+  line-height: 1;
+}
+
+.page-list__item[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="light"] .page-list__item[aria-current="page"] {
+  background: rgba(0, 0, 0, 0.07);
+}
+
+.page-list__section[data-view="tiles"] .page-list__items {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.page-list__tile-viewport {
+  position: relative;
+}
+
+.page-list__edge-fade {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 6px;
+  width: 30px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.page-list__edge-fade--left {
+  left: 0;
+  background: linear-gradient(to right, var(--shade0), transparent);
+}
+
+.page-list__edge-fade--right {
+  right: 0;
+  background: linear-gradient(to left, var(--shade0), transparent);
+}
+
+.page-list__tile-viewport.has-overflow-left .page-list__edge-fade--left,
+.page-list__tile-viewport.has-overflow-right .page-list__edge-fade--right {
+  opacity: 1;
+}
+
+.page-list__scroll {
+  position: absolute;
+  z-index: 2;
+  top: calc(50% - 3px);
+  display: grid;
+  width: 24px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--control-text);
+  font: 30px/1 system-ui, sans-serif;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-50%);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+  transition: opacity 160ms ease, visibility 160ms ease;
+}
+
+.page-list__scroll--left { left: 0; }
+.page-list__scroll--right { right: 0; }
+
+.page-list__tile-viewport.has-overflow-left .page-list__scroll--left,
+.page-list__tile-viewport.has-overflow-right .page-list__scroll--right {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 700px) {
+  .page-list__scroll {
+    display: none;
+  }
+}
+
+.page-list__section[data-view="tiles"] .page-list__items > li {
+  flex: 0 0 136px;
+}
+
+.page-list__section[data-view="tiles"] .page-list__item {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  padding: 0;
+  border-radius: 12px;
+  background: var(--shade1);
+  color: #fff;
+  text-align: left;
+}
+
+.page-list__section[data-view="tiles"] .page-list__thumbnail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.page-list__section[data-view="tiles"] .page-list__label {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 28px 9px 9px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.78));
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.page-list__section[data-view="tiles"] .page-list__item:focus-visible {
+  outline: 2px solid var(--control-text);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-list__section[data-view="tiles"] .page-list__items {
+    scroll-behavior: auto;
+  }
+
+  .page-list__edge-fade,
+  .page-list__scroll {
+    transition-duration: 0.01ms;
+  }
+}
