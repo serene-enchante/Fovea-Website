@@ -41,6 +41,8 @@ test('records the active-dataset and tile request startup baseline', async ({ pa
 
     const navigationStartedAt = Date.now();
     await openMap(page, '/maps/?feature=eugene&zone=04');
+    expect(await page.evaluate(() => performance.getEntriesByType('mark')
+        .some(entry => entry.name.startsWith('fovea-map:')))).toBe(false);
     const mapReadyMs = Date.now() - navigationStartedAt;
     await page.waitForTimeout(1500);
 
@@ -56,6 +58,29 @@ test('records the active-dataset and tile request startup baseline', async ({ pa
         };
     });
     console.log(`Map startup baseline (desktop Chromium): ready=${mapReadyMs}ms; same-origin JS=${scriptBytes.count} resources, ${scriptBytes.transferBytes} transfer bytes, ${scriptBytes.decodedBytes} decoded bytes; after 1.5s: ${datasetRequests.length} GeoJSON request(s), ${tileRequests.length} CARTO/Esri tile request(s).`);
+});
+
+test('reports opt-in map startup timing marks', async ({ page }) => {
+    await openMap(page, '/maps/?feature=circles&fovea-perf=1');
+
+    await expect.poll(() => page.evaluate(() => performance.getEntriesByType('mark')
+        .map(entry => entry.name)
+        .filter(name => name.startsWith('fovea-map:')))).toEqual(expect.arrayContaining([
+        'fovea-map:startup-start',
+        'fovea-map:dataset-ready',
+        'fovea-map:map-created',
+        'fovea-map:first-render',
+        'fovea-map:map-load',
+        'fovea-map:first-idle',
+        'fovea-map:labels-ready',
+        'fovea-map:page-ready'
+    ]));
+
+    const timings = await page.evaluate(() => performance.getEntriesByType('mark')
+        .filter(entry => entry.name.startsWith('fovea-map:'))
+        .map(({ name, startTime }) => `${name}=${Math.round(startTime)}ms`));
+    expect(timings.filter(entry => entry.startsWith('fovea-map:page-ready=')).length).toBe(1);
+    console.log(`Opt-in map startup marks (desktop Chromium): ${timings.join(', ')}`);
 });
 
 test('clears legacy deep-link parameters while selecting Eugene, circles, and Florence', async ({ page }) => {

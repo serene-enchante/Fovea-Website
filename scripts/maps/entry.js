@@ -176,7 +176,7 @@ selectBirdHandler = createBirdSelectionController({
 // This gives true per-segment glow — only the line pixels within the gradient radius
 // are revealed, rather than MapLibre's per-feature opacity which affects whole zones.
 
-// HTML label overlay — repositions div labels on every map render
+// HTML label overlay behavior is managed by the map-layer lifecycle.
 
 function initializeMap() {
     return initializeMapRuntime({

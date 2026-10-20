@@ -1,6 +1,7 @@
 import { addZoneFeatureLayers, buildZoneFeatureData, rebuildHtmlLabels } from './map-layers.js';
 import { setupMapHoverEvents } from './map-events.js';
 import { setupProximityGlowCanvas, setupProximityTracking } from './map-proximity.js';
+import { markMapStartup } from './map-startup-metrics.js';
 
 export function createMapLayerLifecycle({
     state,
@@ -50,6 +51,7 @@ export function createMapLayerLifecycle({
             setupProximityTracker();
             setupProximityGlow();
             updateLabelZoomVisibility();
+            markMapStartup('labels-ready');
             setupHoverEvents({ map: state.map, state, onFeatureClick });
         }
 

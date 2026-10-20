@@ -1,3 +1,5 @@
+import { markMapStartup } from './map-startup-metrics.js';
+
 export async function runMapPageStartup({
     state,
     storageObject = globalThis.localStorage,
@@ -14,8 +16,15 @@ export async function runMapPageStartup({
     updateHeader,
     logError = (...args) => console.error(...args)
 }) {
+    markMapStartup('startup-start');
+    let pageReadyMarked = false;
+
     const triggerEntrance = () => {
         documentObject.body.classList.remove('is-transitioning');
+        if (!pageReadyMarked) {
+            markMapStartup('page-ready');
+            pageReadyMarked = true;
+        }
 
         if (state.map) {
             state.map.resize();
@@ -43,11 +52,15 @@ export async function runMapPageStartup({
         const initialId = getInitialId();
         const initialFeature = state.isCirclesFeature ? 'circles' : state.currentFeature;
         state.allFeatures = await loadFeatures(initialFeature);
+        markMapStartup('dataset-ready');
 
         renderSidebarList();
         initializeMap();
+        markMapStartup('map-initialized');
         setupPageUi();
+        markMapStartup('page-ui-ready');
         selectSubject(initialId, true, false);
+        markMapStartup('initial-selection-ready');
 
         if (initialId === 'Oakridge' || initialId === 'Cottage Grove') {
             schedule(() => notify('There is no data for this count circle'), 800);

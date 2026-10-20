@@ -6,6 +6,7 @@ import { setupMapStyleControl } from './map-style-control.js';
 import { setupMapEffectsAndFullscreen } from './map-viewport.js';
 import { MAP_PROVIDER_URLS } from '../config/map-provider-config.js';
 import { createMapProviderErrorHandler } from './map-provider-errors.js';
+import { markMapStartup } from './map-startup-metrics.js';
 
 export function initializeMapRuntime({
     maplibregl,
@@ -51,6 +52,10 @@ export function initializeMapRuntime({
         zoom: 11,
         attributionControl: false
     });
+    markMapStartup('map-created');
+    state.map.once('render', () => markMapStartup('first-render'));
+    state.map.once('load', () => markMapStartup('map-load'));
+    state.map.once('idle', () => markMapStartup('first-idle'));
     state.map.on('error', createMapProviderErrorHandler({
         getActiveBaseLayer: () => state.currentBaseLayer || 'default',
         notify
@@ -121,5 +126,6 @@ export function initializeMapRuntime({
         documentObject
     });
 
+    markMapStartup('map-runtime-ready');
     return state.map;
 }
