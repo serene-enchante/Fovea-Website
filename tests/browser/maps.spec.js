@@ -10,6 +10,37 @@ async function openMap(page, path = '/maps/') {
     await expect(page.locator('#header-title')).not.toHaveText('Loading...');
 }
 
+test('loads the local Alice font without a missing WOFF2 request', async ({ page }) => {
+    const fontResponses = [];
+    page.on('response', response => {
+        if (response.url().includes('Alice-Regular-webfont.')) {
+            fontResponses.push({ url: response.url(), status: response.status() });
+        }
+    });
+
+    await openMap(page);
+
+    const fontState = await page.evaluate(async () => {
+        const faces = await document.fonts.load('16px Aliceregular');
+        return {
+            faces: faces.map(face => ({ family: face.family, status: face.status })),
+            check: document.fonts.check('16px Aliceregular')
+        };
+    });
+    expect(fontState.faces.length).toBeGreaterThan(0);
+    expect(fontState.check, JSON.stringify({ fontState, fontResponses })).toBe(true);
+    expect(fontResponses).toEqual([
+        expect.objectContaining({ url: expect.stringMatching(/Alice-Regular-webfont\.woff$/), status: 200 })
+    ]);
+
+    const fontDisplayIsSwap = await page.evaluate(async () => {
+        const response = await fetch('../styles/page-maps-tile.bundle.css');
+        const css = await response.text();
+        return /font-display:\s*swap/.test(css) && !/Alice-Regular-webfont\.woff2/.test(css);
+    });
+    expect(fontDisplayIsSwap).toBe(true);
+});
+
 test('avoids duplicate sidebar and header rendering during map startup', async ({ page }) => {
     await page.addInitScript(() => {
         window.__sidebarOverviewMounts = 0;

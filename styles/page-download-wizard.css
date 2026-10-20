@@ -2,10 +2,10 @@
 
 @font-face {
     font-family: 'Aliceregular';
-    src: url('../fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff2') format('woff2'),
-         url('../fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff') format('woff');
+    src: url('../fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff') format('woff');
     font-weight: normal;
     font-style: normal;
+    font-display: swap;
 }
 
 :root {
