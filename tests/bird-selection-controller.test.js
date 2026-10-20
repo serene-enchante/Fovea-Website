@@ -74,6 +74,45 @@ test('loads and maps observations for the selected zone and updates the active s
     assert.equal(backButton.disabled, false);
 });
 
+test('loads Turf only when needed and keeps the observation polygon filter', async () => {
+    let turfLoadCount = 0;
+    const state = {
+        map: { getSource: () => ({ setData() {} }) },
+        allFeatures: [{ properties: { zid: '04' }, geometry: { type: 'Polygon' } }],
+        currentId: '04',
+        activeTab: 'birds'
+    };
+    const controller = createBirdSelectionController({
+        state,
+        fetchObservations: async () => ({
+            results: [
+                { id: 1, location: '44,-123', photos: [] },
+                { id: 2, location: '45,-122', photos: [] }
+            ]
+        }),
+        fetchDefaultPhoto: async () => null,
+        getBbox: () => null,
+        updateHeader() {},
+        renderSidebarList() {},
+        updateSidebarBirdPanel() {},
+        setupObservationsLayer() {},
+        documentObject: { getElementById: () => null },
+        turfObject: null,
+        loadTurfLibrary: async () => {
+            turfLoadCount += 1;
+            return {
+                point: coordinates => coordinates,
+                booleanPointInPolygon: point => point[0] === -123
+            };
+        }
+    });
+
+    await controller.selectBird('Osprey');
+
+    assert.equal(turfLoadCount, 1);
+    assert.deepEqual(state.selectedBirdObservations.map(feature => feature.properties.id), [1]);
+});
+
 test('aborts old observation requests when the selected bird changes', async () => {
     const pendingSignals = new Map();
     const updatedPanels = [];

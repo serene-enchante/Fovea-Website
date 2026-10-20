@@ -1,3 +1,5 @@
+import { loadJsPdfLibrary, loadJsZipLibrary } from '../map/map-vendor-loader.js';
+
 export function createToolbarDownloadActions({
     state,
     getSelectedGeoJSONData,
@@ -13,8 +15,29 @@ export function createToolbarDownloadActions({
     documentObject = globalThis.document,
     windowObject = globalThis.window,
     BlobConstructor = globalThis.Blob,
-    zipConstructor = globalThis.JSZip
+    zipConstructor = globalThis.JSZip,
+    loadJsPdf = loadJsPdfLibrary,
+    loadJsZip = loadJsZipLibrary
 }) {
+    async function getZipConstructor() {
+        if (typeof zipConstructor === 'function') return zipConstructor;
+        if (typeof windowObject?.JSZip === 'function') return windowObject.JSZip;
+        try {
+            return await loadJsZip();
+        } catch {
+            return null;
+        }
+    }
+
+    async function getJsPdfConstructor() {
+        if (windowObject?.jspdf?.jsPDF) return windowObject.jspdf.jsPDF;
+        try {
+            return (await loadJsPdf()).jsPDF;
+        } catch {
+            return null;
+        }
+    }
+
     function setupSpatialDownloadButtons({
         shareFile: share = shareFile,
         notify: notifyUser = notify,
@@ -38,9 +61,10 @@ export function createToolbarDownloadActions({
                 const geojson = getSelectedGeoJSONData();
                 const filename = getFilename('kmz');
                 const kmlContent = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ''));
+                const Zip = await getZipConstructor();
                 let blob;
-                if (typeof zipConstructor === 'function') {
-                    const zip = new zipConstructor();
+                if (typeof Zip === 'function') {
+                    const zip = new Zip();
                     zip.file('doc.kml', kmlContent);
                     blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.google-earth.kmz' });
                 } else {
@@ -81,7 +105,7 @@ export function createToolbarDownloadActions({
                 currentFeature: state.currentFeature,
                 isCirclesFeature: state.isCirclesFeature
             });
-            const jsPDF = windowObject.jspdf?.jsPDF;
+            const jsPDF = await getJsPdfConstructor();
             if (jsPDF) {
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 297, 210);
@@ -116,8 +140,9 @@ export function createToolbarDownloadActions({
 
         if (formatKey === 'kmz') {
             const kmlContent = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ''));
-            if (typeof zipConstructor === 'function') {
-                const zip = new zipConstructor();
+            const Zip = await getZipConstructor();
+            if (typeof Zip === 'function') {
+                const zip = new Zip();
                 zip.file('doc.kml', kmlContent);
                 return {
                     blob: await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.google-earth.kmz' }),

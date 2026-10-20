@@ -1,4 +1,5 @@
 import { renderMapLayoutCanvas } from './map/map-rendering.js';
+import { loadJsPdfLibrary, loadJsZipLibrary } from './map/map-vendor-loader.js';
 import { canvasToTiffBlob } from './services/format-converters.js';
 import { geojsonToGpx, geojsonToKml } from './services/download-wizard-formatters.js';
 import { APP_INSTRUCTION_CONFIGS, COUNT_CIRCLES } from './config/download-wizard-config.js';
@@ -308,8 +309,13 @@ async function generateGeoPdfBlob(targetBtn = null, silent = false) {
         const canvas = await getOrRenderWizardCanvas();
         const filename = getDownloadFilename("pdf");
 
-        if (window.jspdf && window.jspdf.jsPDF) {
-            const { jsPDF } = window.jspdf;
+        let jsPDF = window.jspdf?.jsPDF;
+        if (!jsPDF) {
+            try {
+                jsPDF = (await loadJsPdfLibrary()).jsPDF;
+            } catch {}
+        }
+        if (jsPDF) {
             const pdf = new jsPDF({
                 orientation: "landscape",
                 unit: "mm",
@@ -389,8 +395,14 @@ function setupDirectDownloadButtons() {
             const filename = getDownloadFilename("kmz");
             const kmlContent = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ""));
 
-            if (typeof JSZip !== "undefined") {
-                const zip = new JSZip();
+            let Zip = typeof JSZip !== "undefined" ? JSZip : window.JSZip;
+            if (!Zip) {
+                try {
+                    Zip = await loadJsZipLibrary();
+                } catch {}
+            }
+            if (typeof Zip === "function") {
+                const zip = new Zip();
                 zip.file("doc.kml", kmlContent);
                 const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
                 downloadBlob(blob, filename);

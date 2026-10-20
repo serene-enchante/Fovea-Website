@@ -3,6 +3,7 @@ import { canvasToTiffBlob } from '../services/format-converters.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { showToast } from '../components/toast-view.js';
 import { renderMapLayoutCanvas } from './map-layout-renderer.js';
+import { loadJsPdfLibrary } from './map-vendor-loader.js';
 
 export { renderHeadlessMap, renderMapLayoutCanvas } from './map-layout-renderer.js';
 export { polylabel, getFeatureCenter } from '../utils/map-print-geometry.js';
@@ -185,8 +186,13 @@ export async function downloadGeoPdf(filename, triggerButton = null) {
 
         const canvas = await getOrRenderLayoutCanvas(options);
         
-        if (window.jspdf && window.jspdf.jsPDF) {
-            const { jsPDF } = window.jspdf;
+        let jsPDF = window.jspdf?.jsPDF;
+        if (!jsPDF) {
+            try {
+                jsPDF = (await loadJsPdfLibrary()).jsPDF;
+            } catch {}
+        }
+        if (jsPDF) {
             const pdf = new jsPDF({
                 orientation: "landscape",
                 unit: "mm",

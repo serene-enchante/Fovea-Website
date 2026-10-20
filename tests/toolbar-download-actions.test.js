@@ -92,3 +92,26 @@ test('spatial download controls share generated files and delegate PDF/TIFF acti
         ['tiff', h.buttons['download-geotiff']]
     ]);
 });
+
+test('loads JSZip only when the KMZ export action is invoked', async () => {
+    let loadCount = 0;
+    class FakeZip {
+        file() {}
+        async generateAsync() { return new Blob(['kmz'], { type: 'application/vnd.google-earth.kmz' }); }
+    }
+    const h = makeHarness({
+        loadJsZip: async () => {
+            loadCount += 1;
+            return FakeZip;
+        }
+    });
+
+    const withoutCompression = await h.actions.generateAppSpatialBlob('geojson');
+    assert.equal(withoutCompression.filename, 'map.geojson');
+    assert.equal(loadCount, 0);
+
+    const compressed = await h.actions.generateAppSpatialBlob('kmz');
+    assert.equal(loadCount, 1);
+    assert.equal(compressed.filename, 'map.kmz');
+    assert.equal(compressed.blob.type, 'application/vnd.google-earth.kmz');
+});

@@ -11,12 +11,22 @@ test('the map page loads the map application as an ES module', async () => {
 
     assert.match(page, /<script type="module" src="\.\.\/scripts\/maps\/entry\.js\?v=248"><\/script>/);
     assert.match(page, /page-maps-tile\.bundle\.css\?v=1/);
+    assert.doesNotMatch(page, /(?:jspdf\.umd|jszip\.min|qrcode\.min|turf\.min\.js)/, 'optional vendor libraries load on demand');
     const entry = await readFile(mapEntryPath, 'utf8');
     assert.match(entry, /import \{ state \} from '\.\.\/state\.js';/);
     const compatibility = await readFile(mapCompatibilityPath, 'utf8');
     assert.match(compatibility, /import '\.\/maps\/entry\.js\?v=248';/);
     assert.match(page, /maplibre-gl\.js/);
-    assert.match(page, /turf\.min\.js/);
+    const vendorLoader = await readFile(new URL('../scripts/map/map-vendor-loader.js', import.meta.url), 'utf8');
+    assert.match(vendorLoader, /turf\.min\.js/);
+    assert.match(vendorLoader, /jspdf\.umd\.min\.js/);
+    assert.match(vendorLoader, /jszip\.min\.js/);
+    assert.match(vendorLoader, /qrcode\.min\.js/);
+
+    for (const file of ['maps/index.html', 'download-wizard/index.html', 'tools/download-wizard/index.html']) {
+        const html = await readFile(new URL(`../${file}`, import.meta.url), 'utf8');
+        assert.doesNotMatch(html, /(?:jspdf\.umd|jszip\.min|qrcode\.min|turf\.min\.js)/, `${file} defers optional vendors`);
+    }
 });
 
 test('the map application uses the shared GeoJSON repository', async () => {
@@ -130,7 +140,7 @@ test('PDF and TIFF layout exports use the shared download action controller', as
     assert.match(source, /shareFile: handleSpatialFileShare/);
     assert.match(downloads, /export function createMapLayoutDownloadActions\(/);
     assert.match(downloads, /convertCanvasToTiff\(canvas\)/);
-    assert.match(downloads, /windowObject\.jspdf\?\.jsPDF/);
+    assert.match(downloads, /loadJsPdfLibrary/);
 });
 
 test('the map application reads Florence zone guide content from config', async () => {

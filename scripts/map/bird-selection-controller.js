@@ -1,6 +1,7 @@
 import { normalizeZoneId } from '../utils/format-utils.js';
 import { state as sharedState } from '../state.js';
 import { clearBirdObservationPopup } from '../components/bird-observation-view.js';
+import { loadTurfLibrary as loadTurfLibraryDefault } from './map-vendor-loader.js';
 
 const activeBirdRequests = new WeakMap();
 
@@ -32,6 +33,7 @@ export function createBirdSelectionController({
     setupObservationsLayer,
     documentObject = globalThis.document,
     turfObject = globalThis.turf,
+    loadTurfLibrary = loadTurfLibraryDefault,
     AbortControllerConstructor = globalThis.AbortController,
     onError = (...args) => console.error(...args)
 }) {
@@ -63,8 +65,12 @@ export function createBirdSelectionController({
 
         try {
             const requestOptions = { signal: requestController.signal };
+            const turfPromise = turfObject
+                ? Promise.resolve(turfObject)
+                : loadTurfLibrary().catch(() => null);
             const data = await fetchObservations(birdName, getBbox(targetFeature), requestOptions);
             if (requestController.signal.aborted || state.selectedBird !== birdName) return;
+            const spatialLibrary = await turfPromise;
 
             const results = data.results || [];
             const features = [];
@@ -75,8 +81,8 @@ export function createBirdSelectionController({
 
                 let isInside = true;
                 try {
-                    if (turfObject?.booleanPointInPolygon && turfObject.point) {
-                        isInside = turfObject.booleanPointInPolygon(turfObject.point([lng, lat]), targetFeature);
+                    if (spatialLibrary?.booleanPointInPolygon && spatialLibrary.point) {
+                        isInside = spatialLibrary.booleanPointInPolygon(spatialLibrary.point([lng, lat]), targetFeature);
                     }
                 } catch {
                     isInside = true;

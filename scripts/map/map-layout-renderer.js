@@ -1,4 +1,5 @@
 import { state } from '../state.js';
+import { loadQrCodeLibrary } from './map-vendor-loader.js';
 import { displayZoneId, normalizeZoneId } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { getLayoutScaleBar } from '../utils/map-print-math.js';
@@ -194,6 +195,8 @@ export async function renderMapLayoutCanvas({
     isCirclesFeature,
     pageUrl
 } = {}) {
+    const qrCodeLibraryPromise = loadQrCodeLibrary().catch(() => null);
+
     // Resolve defaults from state if not provided (backward compatibility)
     const allFeatures = features || state.allFeatures || [];
     const featureId = targetFeatureId !== undefined ? targetFeatureId : state.currentId;
@@ -436,14 +439,15 @@ export async function renderMapLayoutCanvas({
     ctx.strokeRect(qrX, qrY, qrBoxW, qrBoxH);
 
     let qrDrawn = false;
-    if (typeof QRCode !== "undefined") {
+    const QRCodeLibrary = await qrCodeLibraryPromise;
+    if (QRCodeLibrary) {
         try {
             const qrContainer = document.createElement("div");
-            new QRCode(qrContainer, {
+            new QRCodeLibrary(qrContainer, {
                 text: qrUrl,
                 width: 200,
                 height: 200,
-                correctLevel: QRCode.CorrectLevel.M
+                correctLevel: QRCodeLibrary.CorrectLevel.M
             });
             const qrCanvas = qrContainer.querySelector("canvas");
             const qrImg = qrContainer.querySelector("img");

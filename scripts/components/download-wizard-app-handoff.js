@@ -1,3 +1,5 @@
+import { loadJsZipLibrary } from '../map/map-vendor-loader.js';
+
 export function createDownloadWizardAppHandoff({
     state,
     appInstructions,
@@ -11,11 +13,22 @@ export function createDownloadWizardAppHandoff({
     showToast,
     resolveAssetPath = path => path,
     zipConstructor = globalThis.JSZip,
+    loadJsZip = loadJsZipLibrary,
     BlobConstructor = globalThis.Blob,
     documentObject = globalThis.document,
     windowObject = globalThis.window,
     consoleObject = globalThis.console
 }) {
+    async function getZipConstructor() {
+        if (typeof zipConstructor === 'function') return zipConstructor;
+        if (typeof windowObject?.JSZip === 'function') return windowObject.JSZip;
+        try {
+            return await loadJsZip();
+        } catch {
+            return null;
+        }
+    }
+
     function createExportPromise(config, filename, geojson) {
         if (config.formatKey === 'geopdf' || config.ext === 'pdf') return generateGeoPdfBlob(null, true);
         if (config.formatKey === 'geotiff' || config.ext === 'tif') return generateGeoTiffBlob(null, true);
@@ -23,8 +36,9 @@ export function createDownloadWizardAppHandoff({
         if (config.formatKey === 'kmz') {
             return (async () => {
                 const kmlContent = geojsonToKml(geojson, filename.replace(/\.kmz$/i, ''));
-                if (typeof zipConstructor === 'function') {
-                    const zip = new zipConstructor();
+                const Zip = await getZipConstructor();
+                if (typeof Zip === 'function') {
+                    const zip = new Zip();
                     zip.file('doc.kml', kmlContent);
                     const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.google-earth.kmz' });
                     return { blob, filename };

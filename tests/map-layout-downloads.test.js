@@ -28,6 +28,30 @@ test('exports a cached layout as a PDF through the injected legacy share callbac
     assert.deepEqual(calls.at(-1), ['notify', 'Exported map.pdf']);
 });
 
+test('loads jsPDF only when the PDF export action is invoked', async () => {
+    const calls = [];
+    class FakePdf {
+        constructor() { calls.push('construct'); }
+        addImage() {}
+        setProperties() {}
+        output() { return 'lazy-pdf-blob'; }
+    }
+    const actions = createMapLayoutDownloadActions({
+        hasCachedLayout: () => true,
+        renderLayout: async () => ({ toDataURL: () => 'data:image/jpeg;base64,map' }),
+        getFilename: extension => `map.${extension}`,
+        convertCanvasToTiff: () => null,
+        shareFile: async (_event, blob) => calls.push(blob),
+        notify() {},
+        windowObject: {},
+        loadJsPdf: async () => ({ jsPDF: FakePdf })
+    });
+
+    await actions.downloadGeoPdf();
+
+    assert.deepEqual(calls, ['construct', 'lazy-pdf-blob']);
+});
+
 test('exports TIFF using the injected converter and notifies when rendering is required', async () => {
     const calls = [];
     const canvas = {};

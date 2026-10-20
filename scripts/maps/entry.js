@@ -40,6 +40,7 @@ import { renderMapFeatureList } from '../components/map-feature-list.js';
 import { renderSidebarOverview } from '../components/sidebar-overview-view.js';
 import { createSidebarController } from '../components/sidebar-controller.js';
 import { clearBirdObservations, createBirdSelectionController } from '../map/bird-selection-controller.js';
+import { loadTurfLibrary } from '../map/map-vendor-loader.js';
 import { setupBirdObservationsLayer, updateBirdObservationsLayerStyles } from '../map/bird-observation-layers.js';
 import { showToast } from '../components/toast-view.js';
 import { toggleFullscreen, getActiveDownloadFilename } from '../components/toolbar-actions.js';
@@ -167,7 +168,8 @@ selectBirdHandler = createBirdSelectionController({
     updateHeader,
     renderSidebarList,
     updateSidebarBirdPanel: sidebarController.updateBirdPanel,
-    setupObservationsLayer: setupBirdObservationsLayer
+    setupObservationsLayer: setupBirdObservationsLayer,
+    loadTurfLibrary
 }).selectBird;
 
 // Cursor proximity glow: set feature-state 'proximity' (0–1) based on

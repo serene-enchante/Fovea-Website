@@ -31,9 +31,13 @@ for (const { circle, zone, expectedTitle } of [
 test('records the active-dataset and tile request startup baseline', async ({ page }) => {
     const datasetRequests = [];
     const tileRequests = [];
+    const optionalVendorRequests = [];
     page.on('request', request => {
         const url = request.url();
         if (/\/geojson\/[^/]+\.geojson(?:\?|$)/i.test(url)) datasetRequests.push(url);
+        if (/cdn\.jsdelivr\.net\/npm\/@turf\/turf|cdnjs\.cloudflare\.com\/ajax\/libs\/(?:jspdf|jszip|qrcodejs)/i.test(url)) {
+            optionalVendorRequests.push(url);
+        }
         if (/(?:cartocdn\.com|arcgisonline\.com)/i.test(url) && /\/\d+\/\d+\/\d+(?:\.[a-z0-9]+)?(?:\?|$)/i.test(url)) {
             tileRequests.push(url);
         }
@@ -43,6 +47,7 @@ test('records the active-dataset and tile request startup baseline', async ({ pa
     await openMap(page, '/maps/?feature=eugene&zone=04');
     expect(await page.evaluate(() => performance.getEntriesByType('mark')
         .some(entry => entry.name.startsWith('fovea-map:')))).toBe(false);
+    expect(optionalVendorRequests).toEqual([]);
     const mapReadyMs = Date.now() - navigationStartedAt;
     await page.waitForTimeout(1500);
 
@@ -63,6 +68,55 @@ test('records the active-dataset and tile request startup baseline', async ({ pa
         .map(name => name.replace(location.origin, '').split('?')[0]));
     expect(mapStylesheets).toEqual(['/styles/page-maps-tile.bundle.css']);
     console.log(`Map startup baseline (desktop Chromium): ready=${mapReadyMs}ms; same-origin JS=${scriptBytes.count} resources, ${scriptBytes.transferBytes} transfer bytes, ${scriptBytes.decodedBytes} decoded bytes; after 1.5s: ${datasetRequests.length} GeoJSON request(s), ${tileRequests.length} CARTO/Esri tile request(s).`);
+});
+
+test('loads optional map vendors asynchronously only when needed', async ({ page }) => {
+    const vendorScripts = [
+        {
+            url: 'https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js',
+            body: 'window.turf = { point: coordinates => coordinates, booleanPointInPolygon: () => true };'
+        },
+        {
+            url: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+            body: 'window.jspdf = { jsPDF: function jsPDF() {} };'
+        },
+        {
+            url: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+            body: 'window.JSZip = function JSZip() {};'
+        },
+        {
+            url: 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+            body: 'window.QRCode = Object.assign(function QRCode() {}, { CorrectLevel: { M: 1 } });'
+        }
+    ];
+    let requestCount = 0;
+    for (const vendor of vendorScripts) {
+        await page.route(vendor.url, async route => {
+            requestCount += 1;
+            await route.fulfill({ status: 200, contentType: 'application/javascript', body: vendor.body });
+        });
+    }
+    await openMap(page, '/maps/');
+    expect(requestCount).toBe(0);
+
+    const loaded = await page.evaluate(async () => {
+        const loader = await import('/scripts/map/map-vendor-loader.js');
+        const [turf, jspdf, jszip, qrcode] = await Promise.all([
+            loader.loadTurfLibrary(),
+            loader.loadJsPdfLibrary(),
+            loader.loadJsZipLibrary(),
+            loader.loadQrCodeLibrary()
+        ]);
+        return [
+            typeof turf.booleanPointInPolygon === 'function',
+            typeof jspdf.jsPDF === 'function',
+            typeof jszip === 'function',
+            typeof qrcode === 'function'
+        ];
+    });
+
+    expect(loaded).toEqual([true, true, true, true]);
+    expect(requestCount).toBe(vendorScripts.length);
 });
 
 test('reports opt-in map startup timing marks', async ({ page }) => {

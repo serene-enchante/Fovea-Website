@@ -1,3 +1,5 @@
+import { loadJsPdfLibrary } from './map-vendor-loader.js';
+
 export function createMapLayoutDownloadActions({
     hasCachedLayout,
     renderLayout,
@@ -5,14 +7,24 @@ export function createMapLayoutDownloadActions({
     convertCanvasToTiff,
     shareFile,
     notify,
-    windowObject = globalThis.window
+    windowObject = globalThis.window,
+    loadJsPdf = loadJsPdfLibrary
 }) {
+    async function getJsPdfConstructor() {
+        if (windowObject?.jspdf?.jsPDF) return windowObject.jspdf.jsPDF;
+        try {
+            return (await loadJsPdf()).jsPDF;
+        } catch {
+            return null;
+        }
+    }
+
     async function downloadGeoPdf(triggerButton = null) {
         if (!hasCachedLayout()) notify('Rendering map layout...');
 
         const canvas = await renderLayout();
         const filename = getFilename('pdf');
-        const jsPDF = windowObject.jspdf?.jsPDF;
+        const jsPDF = await getJsPdfConstructor();
 
         if (jsPDF) {
             const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
