@@ -1,14 +1,38 @@
 .page-list {
+  --page-list-inline-padding: 12px;
   padding: var(--directory-content-top-padding, 20px) 12px;
   color: var(--control-text);
   font-family: system-ui, sans-serif;
 }
 
 .page-list__title {
-  margin: 0 8px 30px;
+  --title-fade-size: 24px;
+  position: sticky;
+  z-index: 3;
+  top: var(--directory-content-top-padding, 20px);
+  margin: 0 calc(-1 * var(--page-list-inline-padding))
+    calc(30px - var(--title-fade-size));
+  padding: 0 calc(var(--page-list-inline-padding) + 8px) var(--title-fade-size);
+  background: linear-gradient(
+    to bottom,
+    var(--shade0) 0%,
+    var(--shade0) calc(100% - var(--title-fade-size)),
+    color-mix(in srgb, var(--shade0) 0%, transparent) 100%
+  );
   font-size: 18px;
   font-weight: 650;
   line-height: 1.25;
+}
+
+.page-list__title::before {
+  position: absolute;
+  z-index: -1;
+  top: calc(-1 * var(--directory-content-top-padding, 20px));
+  right: 0;
+  left: 0;
+  height: var(--directory-content-top-padding, 20px);
+  background: var(--shade0);
+  content: "";
 }
 
 .page-list__section + .page-list__section {
@@ -216,12 +240,15 @@
 
 @media (max-width: 700px) {
   .page-list {
+    --page-list-mobile-inline-padding: clamp(16px, 5vw, 24px);
+    --page-list-inline-padding: var(--page-list-mobile-inline-padding);
     padding: var(--directory-content-top-padding, clamp(22px, 6vw, 30px))
-      clamp(16px, 5vw, 24px);
+      var(--page-list-mobile-inline-padding);
   }
 
   .page-list__title {
-    margin: 0 8px clamp(28px, 8vw, 38px);
+    margin: 0 calc(-1 * var(--page-list-inline-padding))
+      calc(clamp(28px, 8vw, 38px) - var(--title-fade-size));
     font-size: clamp(20px, 5.6vw, 24px);
   }
 
@@ -290,9 +317,17 @@
 }
 
 @media (max-width: 700px) {
+  .page-list__edge-fade {
+    display: none;
+  }
+
   .page-list__section[data-view="tiles"] .page-list__items {
     gap: 12px;
     padding-bottom: 8px;
+  }
+
+  .page-list__section[data-view="tiles"] .page-list__tile-viewport {
+    margin-right: calc(-1 * var(--page-list-mobile-inline-padding));
   }
 
   .page-list__section[data-view="tiles"] .page-list__items > li {

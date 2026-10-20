@@ -54,7 +54,7 @@ export function createUserProfile({ name = "User", image } = {}) {
 
 function updateThemeToggle(button, currentTheme) {
   const nextTheme = currentTheme === "light" ? "dark" : "light";
-  button.replaceChildren(createIcon(currentTheme === "light" ? "dark_mode" : "light_mode"));
+  button.replaceChildren(createIcon(currentTheme === "light" ? "light_mode" : "dark_mode"));
   button.setAttribute("aria-label", `Switch to ${nextTheme} mode`);
   button.setAttribute("aria-pressed", String(currentTheme === "light"));
 }
