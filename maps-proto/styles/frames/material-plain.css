@@ -1,13 +1,15 @@
 :root {
   --shade0: #000;
-  --shade1: #1a1a1a;
+  --shade1: #111;
+  --shade2: #1a1a1a;
   --control-surface: rgba(255, 255, 255, 0.12);
   --control-text: #fff;
 }
 
 :root[data-theme="light"] {
   --shade0: #fff;
-  --shade1: #e5e7eb;
+  --shade1: #d1d5db;
+  --shade2: #e5e7eb;
   --control-surface: rgba(0, 0, 0, 0.08);
   --control-text: #111827;
 }

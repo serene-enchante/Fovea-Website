@@ -8,7 +8,7 @@ export function createPageList({ label, title, sections }, dataUrl) {
   directoryTitle.textContent = title;
   navigation.append(directoryTitle);
 
-  sections.forEach(({ id, title, view = "list", items }) => {
+  sections.forEach(({ id, title, view = "list", items, selectable = false }) => {
     const section = document.createElement("section");
     section.className = "page-list__section";
     section.dataset.view = view;
@@ -20,6 +20,7 @@ export function createPageList({ label, title, sections }, dataUrl) {
 
     const list = document.createElement("ul");
     list.className = "page-list__items";
+    if (selectable) list.classList.add("page-list__items--selectable");
     if (view === "tiles") {
       list.tabIndex = 0;
       list.setAttribute("aria-label", `${title} items`);
@@ -53,7 +54,7 @@ export function createPageList({ label, title, sections }, dataUrl) {
       label.className = "page-list__label";
       label.textContent = itemLabel;
       let tabLabel = null;
-      if (id === "pages" && currentTab) {
+      if (currentTab) {
         label.textContent = "";
         const pageName = document.createElement("span");
         pageName.className = "page-list__page-name";
@@ -72,20 +73,17 @@ export function createPageList({ label, title, sections }, dataUrl) {
       }
       link.append(label);
       if (selected) link.setAttribute("aria-current", "page");
-      if (id === "pages") {
-        link.addEventListener("click", () => {
-          list.querySelectorAll('[aria-current="page"]').forEach((current) => {
-            current.removeAttribute("aria-current");
-            const currentTab = current.querySelector(".page-list__tab");
-            if (currentTab) currentTab.hidden = true;
-          });
-          link.setAttribute("aria-current", "page");
-          if (tabLabel) tabLabel.hidden = false;
-        });
-      }
       item.append(link);
       list.append(item);
     });
+
+    if (selectable) {
+      const highlight = document.createElement("span");
+      highlight.className = "page-list__selection-highlight";
+      highlight.setAttribute("aria-hidden", "true");
+      highlight.hidden = true;
+      list.append(highlight);
+    }
 
     section.setAttribute("aria-labelledby", heading.id);
     section.append(heading);
@@ -163,5 +161,50 @@ export function initializeTileStrips(root) {
       window.addEventListener("resize", updateEdges);
     }
     requestAnimationFrame(updateEdges);
+  });
+}
+
+export function initializePageSelection(root) {
+  root.querySelectorAll(".page-list__items--selectable").forEach((list) => {
+    const highlight = list.querySelector(".page-list__selection-highlight");
+
+    function moveHighlight(button, animate = true) {
+      if (!button || !highlight) return;
+      const item = button.closest("li");
+      if (!item) return;
+
+      if (!animate) highlight.style.transition = "none";
+      highlight.hidden = false;
+      highlight.style.height = `${button.offsetHeight}px`;
+      highlight.style.transform = `translateY(${item.offsetTop}px)`;
+      if (!animate) {
+        requestAnimationFrame(() => highlight.style.removeProperty("transition"));
+      }
+    }
+
+    const selected = list.querySelector('.page-list__item[aria-current="page"]');
+    moveHighlight(selected, false);
+
+    list.addEventListener("click", (event) => {
+      const button = event.target.closest(".page-list__item");
+      if (!button || !list.contains(button)) return;
+
+      list.querySelectorAll('.page-list__item[aria-current="page"]').forEach((current) => {
+        current.removeAttribute("aria-current");
+        const tab = current.querySelector(".page-list__tab");
+        if (tab) tab.hidden = true;
+      });
+      button.setAttribute("aria-current", "page");
+      const tab = button.querySelector(".page-list__tab");
+      if (tab) tab.hidden = false;
+      moveHighlight(button);
+    });
+
+    if ("ResizeObserver" in window) {
+      const observer = new ResizeObserver(() => {
+        moveHighlight(list.querySelector('.page-list__item[aria-current="page"]'), false);
+      });
+      observer.observe(list);
+    }
   });
 }

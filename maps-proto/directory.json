@@ -18,6 +18,7 @@
       "id": "pages",
       "title": "Pages",
       "view": "list",
+      "selectable": true,
       "items": [
         { "id": "home", "label": "Home", "icon": "home", "selected": true, "currentTab": "New tab" },
         { "id": "explorer", "label": "Explorer", "icon": "explore", "currentTab": "New tab" },

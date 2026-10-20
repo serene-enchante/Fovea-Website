@@ -1,10 +1,9 @@
 :root {
-  --context-frame-bg: rgba(24, 24, 24, 0.82);
+  --context-frame-bg: color-mix(in srgb, var(--shade0) 68%, transparent);
   --context-frame-border: rgba(255, 255, 255, 0.14);
 }
 
 :root[data-theme="light"] {
-  --context-frame-bg: rgba(249, 250, 251, 0.86);
   --context-frame-border: rgba(0, 0, 0, 0.12);
 }
 
@@ -13,8 +12,8 @@
   border-radius: 20px;
   background: var(--context-frame-bg);
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  backdrop-filter: blur(24px) saturate(1.2);
 }
 
 @media (max-width: 700px) {

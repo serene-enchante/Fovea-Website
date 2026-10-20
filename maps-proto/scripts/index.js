@@ -1,5 +1,5 @@
 import { createAppFrame, initializeFrameLayout } from "./layout/frame-layout.js";
-import { createPageList, initializeTileStrips } from "./components/page-list.js";
+import { createPageList, initializePageSelection, initializeTileStrips } from "./components/page-list.js";
 import { createOrganizationRail } from "./components/organization-rail.js";
 import { loadDirectoryData } from "./data/load-directory-data.js";
 
@@ -65,6 +65,7 @@ if (frameLayout) {
   loadDirectoryData(frameLayout.dataset.directorySrc)
     .then(({ data, dataUrl }) => {
       directoryContent.replaceChildren(createPageList(data, dataUrl));
+      initializePageSelection(directoryContent);
       organizationContent.replaceChildren(
         createOrganizationRail(data.organizations, data.organizationActions, dataUrl),
       );

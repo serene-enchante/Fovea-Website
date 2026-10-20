@@ -24,12 +24,30 @@
     transform 420ms cubic-bezier(.2, .8, .2, 1);
 }
 
+.app-frame--organization {
+  transform: translateX(-24px);
+}
+
 :root[data-view="directory-view"] .app-frame--organization,
 :root[data-view="directory-view"] .app-frame--directory,
 :root[data-view="directory-view"] .app-frame--user {
   pointer-events: auto;
   opacity: 1;
   transform: translateX(0);
+}
+
+@media (max-width: 700px) {
+  :root .app-frame {
+    border-radius: 32px;
+  }
+
+  :root[data-view="content-view"] .app-frame--content {
+    border-radius: 0;
+  }
+
+  :root[data-view="directory-view"] .app-frame.frame-material--plain {
+    border-radius: 32px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
