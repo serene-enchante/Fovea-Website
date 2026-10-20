@@ -62,6 +62,36 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+.page-list__section[data-view="list"] .page-list__label {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.page-list__page-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.page-list__tab {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: color-mix(in srgb, currentColor 58%, transparent);
+}
+
+.page-list__tab[hidden] {
+  display: none;
+}
+
+.page-list__separator {
+  display: inline-block;
+  width: 20px;
+  flex: 0 0 20px;
+  text-align: center;
+}
+
 :root[data-theme="light"] .page-list__item[aria-current="page"] {
   background: rgba(0, 0, 0, 0.07);
 }

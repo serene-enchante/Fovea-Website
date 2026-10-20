@@ -104,22 +104,6 @@ body {
   min-height: 0;
 }
 
-.content-titlebar {
-  position: absolute;
-  z-index: 2;
-  top: 12px;
-  left: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 0 16px;
-  font: 600 14px/1.4 system-ui, sans-serif;
-  text-align: center;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
 .map-stage {
   position: relative;
   width: 100%;

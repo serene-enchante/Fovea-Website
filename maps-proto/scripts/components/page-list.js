@@ -25,7 +25,7 @@ export function createPageList({ label, title, sections }, dataUrl) {
       list.setAttribute("aria-label", `${title} items`);
     }
 
-    items.forEach(({ id: itemId, label: itemLabel, icon, image, selected }) => {
+    items.forEach(({ id: itemId, label: itemLabel, icon, image, selected, currentTab }) => {
       const item = document.createElement("li");
       const link = document.createElement("button");
       link.className = "page-list__item";
@@ -52,8 +52,37 @@ export function createPageList({ label, title, sections }, dataUrl) {
       const label = document.createElement("span");
       label.className = "page-list__label";
       label.textContent = itemLabel;
+      let tabLabel = null;
+      if (id === "pages" && currentTab) {
+        label.textContent = "";
+        const pageName = document.createElement("span");
+        pageName.className = "page-list__page-name";
+        pageName.textContent = itemLabel;
+        tabLabel = document.createElement("span");
+        tabLabel.className = "page-list__tab";
+        const separator = document.createElement("span");
+        separator.className = "page-list__separator";
+        separator.textContent = "·";
+        const tabName = document.createElement("span");
+        tabName.className = "page-list__tab-name";
+        tabName.textContent = currentTab;
+        tabLabel.hidden = !selected;
+        tabLabel.append(separator, tabName);
+        label.append(pageName, tabLabel);
+      }
       link.append(label);
       if (selected) link.setAttribute("aria-current", "page");
+      if (id === "pages") {
+        link.addEventListener("click", () => {
+          list.querySelectorAll('[aria-current="page"]').forEach((current) => {
+            current.removeAttribute("aria-current");
+            const currentTab = current.querySelector(".page-list__tab");
+            if (currentTab) currentTab.hidden = true;
+          });
+          link.setAttribute("aria-current", "page");
+          if (tabLabel) tabLabel.hidden = false;
+        });
+      }
       item.append(link);
       list.append(item);
     });

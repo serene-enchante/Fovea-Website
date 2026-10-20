@@ -22,8 +22,6 @@ export function initializeFrameLayout() {
   const directoryFrames = document.querySelectorAll(
     ".app-frame--organization, .app-frame--directory, .app-frame--user",
   );
-  const contentTitlebar = document.querySelector(".content-titlebar");
-
   function renderViewState({ state }) {
     const isDirectoryView = state === appStateMachine.states.DIRECTORY_VIEW;
     document.documentElement.dataset.view = state;
@@ -33,10 +31,6 @@ export function initializeFrameLayout() {
       frame.inert = !isDirectoryView;
     });
 
-    if (contentTitlebar) {
-      contentTitlebar.setAttribute("aria-hidden", String(!isDirectoryView));
-      contentTitlebar.inert = !isDirectoryView;
-    }
   }
 
   appStateMachine.subscribe(renderViewState);

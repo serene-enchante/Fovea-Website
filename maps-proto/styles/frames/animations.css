@@ -32,33 +32,12 @@
   transform: translateX(0);
 }
 
-.content-titlebar {
-  opacity: 0;
-  visibility: hidden;
-  transform: translate(-50%, -6px);
-  transition:
-    opacity 200ms ease,
-    transform 240ms cubic-bezier(.2, .8, .2, 1),
-    visibility 0s linear 200ms;
-}
-
-:root[data-view="directory-view"] .content-titlebar {
-  opacity: 1;
-  visibility: visible;
-  transform: translate(-50%, 0);
-  transition:
-    opacity 200ms ease,
-    transform 240ms cubic-bezier(.2, .8, .2, 1),
-    visibility 0s;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .frame-layout,
   .app-frame,
   .app-frame--organization,
   .app-frame--directory,
   .app-frame--user,
-  .content-titlebar,
   .organization-rail__item--selected::before {
     transition-duration: 0.01ms;
   }

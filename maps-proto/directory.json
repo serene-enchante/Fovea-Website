@@ -19,10 +19,10 @@
       "title": "Pages",
       "view": "list",
       "items": [
-        { "id": "home", "label": "Home", "icon": "home", "selected": true },
-        { "id": "explorer", "label": "Explorer", "icon": "explore" },
-        { "id": "settings", "label": "Settings", "icon": "settings" },
-        { "id": "tools", "label": "Tools", "icon": "build" }
+        { "id": "home", "label": "Home", "icon": "home", "selected": true, "currentTab": "New tab" },
+        { "id": "explorer", "label": "Explorer", "icon": "explore", "currentTab": "New tab" },
+        { "id": "settings", "label": "Settings", "icon": "settings", "currentTab": "New tab" },
+        { "id": "tools", "label": "Tools", "icon": "build", "currentTab": "New tab" }
       ]
     },
     {

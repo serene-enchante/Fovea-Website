@@ -1,13 +1,9 @@
 :root {
-  --title-glass-bg: rgba(20, 20, 20, 0.72);
-  --title-glass-border: rgba(255, 255, 255, 0.16);
   --context-frame-bg: rgba(24, 24, 24, 0.82);
   --context-frame-border: rgba(255, 255, 255, 0.14);
 }
 
 :root[data-theme="light"] {
-  --title-glass-bg: rgba(255, 255, 255, 0.72);
-  --title-glass-border: rgba(0, 0, 0, 0.1);
   --context-frame-bg: rgba(249, 250, 251, 0.86);
   --context-frame-border: rgba(0, 0, 0, 0.12);
 }
@@ -19,16 +15,6 @@
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-}
-
-.content-titlebar {
-  border: 1px solid var(--title-glass-border);
-  border-radius: 999px;
-  background: var(--title-glass-bg);
-  color: var(--control-text);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.24);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
 }
 
 @media (max-width: 700px) {

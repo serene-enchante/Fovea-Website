@@ -12,9 +12,6 @@ if (frameLayout) {
 
   const contentColumn = document.createElement("div");
   contentColumn.className = "content-column";
-  const titlebar = document.createElement("header");
-  titlebar.className = "content-titlebar";
-  titlebar.textContent = "new tab";
 
   const mapStage = document.createElement("div");
   mapStage.className = "map-stage";
@@ -31,7 +28,6 @@ if (frameLayout) {
   mapStage.append(mapContainer, contextFrame);
 
   contentColumn.append(
-    titlebar,
     createAppFrame({
       id: "content-frame",
       variant: "content",
