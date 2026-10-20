@@ -7,6 +7,18 @@ export function createContextPane() {
   element.setAttribute("aria-live", "polite");
   let renderVersion = 0;
   let disposeTileStrips = () => {};
+  let sectionFrame = null;
+  let underlayFrame = null;
+  let activeContext = null;
+  let activeDataUrl = document.baseURI;
+
+  function restoreUnderlay() {
+    if (!underlayFrame) return;
+    underlayFrame.classList.remove("is-context-underlay");
+    underlayFrame.removeAttribute("aria-hidden");
+    underlayFrame.inert = false;
+    underlayFrame = null;
+  }
 
   function setSheetState(state) {
     const frame = element.closest(".app-frame--context");
@@ -37,12 +49,18 @@ export function createContextPane() {
 
   async function setContext(context, dataUrl = document.baseURI) {
     const version = ++renderVersion;
+    activeContext = context;
+    activeDataUrl = dataUrl;
     const content = buildContext(context, dataUrl);
+    sectionFrame?.remove();
+    sectionFrame = null;
+    restoreUnderlay();
     element.dispatchEvent(new CustomEvent("contextopen", { bubbles: true }));
     setSheetState("half");
     element.classList.add("is-changing");
     await waitForTransition(element);
     if (version !== renderVersion) return;
+    sectionFrame = null;
     disposeTileStrips();
     element.replaceChildren(content);
     disposeTileStrips = initializeTileStrips(element);
@@ -50,6 +68,112 @@ export function createContextPane() {
       if (version === renderVersion) element.classList.remove("is-changing");
     });
   }
+
+  function setSection(section, dataUrl = document.baseURI) {
+    if (sectionFrame) {
+      sectionFrame.remove();
+      sectionFrame = null;
+      restoreUnderlay();
+    }
+    const baseFrame = element.closest(".app-frame--context");
+    const stage = baseFrame?.parentElement;
+    if (!baseFrame || !stage) return;
+
+    const openingFrame = baseFrame.cloneNode(false);
+    openingFrame.id = "context-section-frame";
+    openingFrame.setAttribute("aria-label", section.title);
+    openingFrame.removeAttribute("aria-hidden");
+    openingFrame.removeAttribute("inert");
+    openingFrame.inert = false;
+    [
+      "is-closed",
+      "is-context-dragging",
+      "is-sheet-dragging",
+    ].forEach((className) => openingFrame.classList.remove(className));
+    openingFrame.classList.add("app-frame--context-section", "is-context-section-entering");
+    const frameContent = document.createElement("div");
+    frameContent.className = "app-frame__content";
+    const contextTitle = element.querySelector(".context-pane__hero-title")?.textContent?.trim() || "Context";
+    frameContent.append(buildSectionContext(contextTitle, section, dataUrl));
+    openingFrame.append(frameContent);
+    sectionFrame = openingFrame;
+    underlayFrame = baseFrame;
+    baseFrame.classList.add("is-context-underlay");
+    baseFrame.setAttribute("aria-hidden", "true");
+    baseFrame.inert = true;
+    element.dispatchEvent(new CustomEvent("contextopen", { bubbles: true }));
+    stage.append(openingFrame);
+    enableFrameDrag(openingFrame, ".context-pane__section-header");
+    openingFrame.addEventListener("click", (event) => {
+      const close = event.target.closest("[data-context-close]");
+      if (close) {
+        closeSection();
+        return;
+      }
+
+      const item = event.target.closest("[data-page-id]");
+      if (item) {
+        openingFrame.dispatchEvent(new CustomEvent("contextitemselect", {
+          bubbles: true,
+          detail: { contextId: element.dataset.contextId, itemId: item.dataset.pageId },
+        }));
+      }
+    });
+    openingFrame.getBoundingClientRect();
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      openingFrame.classList.remove("is-context-section-entering");
+    }));
+  }
+
+  function closeSection() {
+    if (!sectionFrame) return;
+    const closingFrame = sectionFrame;
+    sectionFrame = null;
+    restoreUnderlay();
+    closingFrame.classList.add("is-context-section-closing");
+    const finish = (event) => {
+      if (event && (event.target !== closingFrame || event.propertyName !== "transform")) return;
+      clearTimeout(timeout);
+      closingFrame.removeEventListener("transitionend", finish);
+      closingFrame.remove();
+    };
+    closingFrame.addEventListener("transitionend", finish);
+    const timeout = window.setTimeout(finish, 460);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) finish();
+  }
+
+  element.addEventListener("sectionexpand", (event) => {
+    if (!element.contains(event.target)) return;
+    setSection(event.detail.section, event.detail.dataUrl);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+    const target = event.target;
+    if (target instanceof HTMLElement && (
+      target.isContentEditable || target.closest("input, textarea, select")
+    )) return;
+
+    const frame = element.closest(".app-frame--context");
+    if (!frame || frame.classList.contains("is-closed")) return;
+
+    if (event.key === "Delete" || event.key === "Backspace") {
+      event.preventDefault();
+      if (sectionFrame) {
+        closeSection();
+      } else {
+        element.dispatchEvent(new CustomEvent("contextclose", { bubbles: true }));
+      }
+      return;
+    }
+
+    if (/^[1-9]$/.test(event.key)) {
+      const section = activeContext?.sections?.[Number(event.key) - 1];
+      if (!section) return;
+      event.preventDefault();
+      setSection(section, activeDataUrl);
+    }
+  });
 
   element.addEventListener("click", (event) => {
     const close = event.target.closest("[data-context-close]");
@@ -76,78 +200,7 @@ export function createContextPane() {
     }
   });
 
-  element.addEventListener("pointerdown", (event) => {
-    if (window.matchMedia("(max-width: 700px)").matches
-      || event.button !== 0
-      || !event.target.closest(".context-pane__hero")
-      || event.target.closest("button")) return;
-
-    const frame = element.closest(".app-frame--context");
-    const stage = frame?.parentElement;
-    if (!frame || !stage) return;
-
-    event.preventDefault();
-    const frameRect = frame.getBoundingClientRect();
-    const stageRect = stage.getBoundingClientRect();
-    const pointerId = event.pointerId;
-    const offsetX = event.clientX - frameRect.left;
-    const offsetY = event.clientY - frameRect.top;
-    let dragging = false;
-
-    function getTopBounds() {
-      const maxTop = Math.max(0, stage.clientHeight - frame.offsetHeight);
-      const padding = Math.min(16, maxTop / 2);
-      return { maxTop, padding };
-    }
-
-    function move(moveEvent) {
-      if (moveEvent.pointerId !== pointerId) return;
-      const deltaX = moveEvent.clientX - event.clientX;
-      const deltaY = moveEvent.clientY - event.clientY;
-      if (!dragging && Math.hypot(deltaX, deltaY) < 4) return;
-
-      if (!dragging) {
-        dragging = true;
-        frame.style.right = "auto";
-        frame.style.bottom = "auto";
-        frame.classList.add("is-context-positioned");
-        frame.classList.add("is-context-dragging");
-      }
-
-      moveEvent.preventDefault();
-      const maxLeft = Math.max(0, stage.clientWidth - frame.offsetWidth);
-      const left = Math.max(0, Math.min(maxLeft, moveEvent.clientX - stageRect.left - offsetX));
-      const { maxTop } = getTopBounds();
-      const top = Math.max(0, Math.min(maxTop, moveEvent.clientY - stageRect.top - offsetY));
-      frame.style.left = `${left}px`;
-      frame.style.top = `${top}px`;
-    }
-
-    function end(endEvent) {
-      if (endEvent.pointerId !== pointerId) return;
-      document.removeEventListener("pointermove", move);
-      document.removeEventListener("pointerup", end);
-      document.removeEventListener("pointercancel", end);
-      if (!dragging) return;
-
-      const maxLeft = Math.max(0, stage.clientWidth - frame.offsetWidth);
-      const frameRect = frame.getBoundingClientRect();
-      const stageRect = stage.getBoundingClientRect();
-      const frameCenter = frameRect.left + frameRect.width / 2;
-      const snapLeft = frameCenter < stageRect.left + stageRect.width / 2
-        ? Math.min(16, maxLeft)
-        : Math.max(0, maxLeft - 16);
-      const { maxTop, padding } = getTopBounds();
-      const top = Math.max(padding, Math.min(maxTop - padding, frameRect.top - stageRect.top));
-      frame.style.left = `${snapLeft}px`;
-      frame.style.top = `${top}px`;
-      frame.classList.remove("is-context-dragging");
-    }
-
-    document.addEventListener("pointermove", move);
-    document.addEventListener("pointerup", end);
-    document.addEventListener("pointercancel", end);
-  });
+  enableFrameDrag(element, ".context-pane__hero");
 
   let wheelDistance = 0;
   let wheelHandled = false;
@@ -262,7 +315,83 @@ export function createContextPane() {
 
   element.addEventListener("touchcancel", finishSheetDrag, { passive: true });
 
-  return { element, setContext };
+  return { element, setContext, setSection };
+}
+
+function enableFrameDrag(target, handleSelector) {
+  target.addEventListener("pointerdown", (event) => {
+    if (window.matchMedia("(max-width: 700px)").matches
+      || event.button !== 0
+      || !event.target.closest(handleSelector)
+      || event.target.closest("button")) return;
+
+    const frame = target.matches(".app-frame--context")
+      ? target
+      : target.closest(".app-frame--context");
+    const stage = frame?.parentElement;
+    if (!frame || !stage) return;
+
+    event.preventDefault();
+    const frameRect = frame.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+    const pointerId = event.pointerId;
+    const offsetX = event.clientX - frameRect.left;
+    const offsetY = event.clientY - frameRect.top;
+    let dragging = false;
+
+    function getTopBounds() {
+      const maxTop = Math.max(0, stage.clientHeight - frame.offsetHeight);
+      const padding = Math.min(16, maxTop / 2);
+      return { maxTop, padding };
+    }
+
+    function move(moveEvent) {
+      if (moveEvent.pointerId !== pointerId) return;
+      const deltaX = moveEvent.clientX - event.clientX;
+      const deltaY = moveEvent.clientY - event.clientY;
+      if (!dragging && Math.hypot(deltaX, deltaY) < 4) return;
+
+      if (!dragging) {
+        dragging = true;
+        frame.style.right = "auto";
+        frame.style.bottom = "auto";
+        frame.classList.add("is-context-positioned", "is-context-dragging");
+      }
+
+      moveEvent.preventDefault();
+      const maxLeft = Math.max(0, stage.clientWidth - frame.offsetWidth);
+      const left = Math.max(0, Math.min(maxLeft, moveEvent.clientX - stageRect.left - offsetX));
+      const { maxTop } = getTopBounds();
+      const top = Math.max(0, Math.min(maxTop, moveEvent.clientY - stageRect.top - offsetY));
+      frame.style.left = `${left}px`;
+      frame.style.top = `${top}px`;
+    }
+
+    function end(endEvent) {
+      if (endEvent.pointerId !== pointerId) return;
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", end);
+      document.removeEventListener("pointercancel", end);
+      if (!dragging) return;
+
+      const maxLeft = Math.max(0, stage.clientWidth - frame.offsetWidth);
+      const draggedRect = frame.getBoundingClientRect();
+      const currentStageRect = stage.getBoundingClientRect();
+      const frameCenter = draggedRect.left + draggedRect.width / 2;
+      const snapLeft = frameCenter < currentStageRect.left + currentStageRect.width / 2
+        ? Math.min(16, maxLeft)
+        : Math.max(0, maxLeft - 16);
+      const { maxTop, padding } = getTopBounds();
+      const top = Math.max(padding, Math.min(maxTop - padding, draggedRect.top - currentStageRect.top));
+      frame.style.left = `${snapLeft}px`;
+      frame.style.top = `${top}px`;
+      frame.classList.remove("is-context-dragging");
+    }
+
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", end);
+    document.addEventListener("pointercancel", end);
+  });
 }
 
 function buildContext(context, dataUrl) {
@@ -312,6 +441,30 @@ function buildContext(context, dataUrl) {
   }, dataUrl);
   zones.classList.add("context-pane__zones");
   content.append(hero, actions, zones);
+  return content;
+}
+
+function buildSectionContext(contextTitle, section, dataUrl) {
+  const content = document.createElement("div");
+  content.className = "context-pane__content context-pane__section-content";
+
+  const header = document.createElement("header");
+  header.className = "context-pane__section-header";
+  const title = document.createElement("h2");
+  title.textContent = contextTitle;
+  const close = createControlButton("close", "Close context");
+  close.dataset.contextClose = "true";
+  header.append(title, close);
+
+  const sectionTitle = document.createElement("h3");
+  sectionTitle.className = "context-pane__section-title";
+  sectionTitle.textContent = section.title;
+  const list = createPageList({
+    label: `${section.title} items`,
+    sections: [{ ...section, view: "list", selectable: false, expandable: false }],
+  }, dataUrl);
+  list.classList.add("context-pane__section-list");
+  content.append(header, sectionTitle, list);
   return content;
 }
 

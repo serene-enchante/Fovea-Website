@@ -48,10 +48,18 @@ export function initializeFrameLayout() {
     const isEditing = target instanceof HTMLElement && (
       target.isContentEditable || target.matches("input, textarea, select")
     );
+    if (isEditing || event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
+
+    if (event.key === "Escape") {
+      if (appStateMachine.getState() === appStateMachine.states.CONTENT_VIEW) {
+        event.preventDefault();
+        appStateMachine.transition(appStateMachine.states.DIRECTORY_VIEW);
+      }
+      return;
+    }
 
     if (
-      event.key.toLowerCase() !== "f" || event.repeat || event.altKey || event.ctrlKey ||
-      event.metaKey || isEditing
+      event.key.toLowerCase() !== "f"
     ) return;
 
     event.preventDefault();

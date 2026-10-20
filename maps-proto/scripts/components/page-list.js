@@ -12,7 +12,7 @@ export function createPageList({ label, title, sections }, dataUrl) {
     navigation.append(directoryTitle);
   }
 
-  sections.forEach(({ id, title, view = "list", items, selectable = false }) => {
+  sections.forEach(({ id, title, view = "list", items, selectable = false, expandable = true }) => {
     const section = document.createElement("section");
     section.className = "page-list__section";
     section.dataset.view = view;
@@ -20,7 +20,18 @@ export function createPageList({ label, title, sections }, dataUrl) {
     const heading = document.createElement("h2");
     heading.className = "page-list__heading";
     heading.id = `page-list-${id}`;
-    heading.textContent = title;
+    if (expandable) {
+      const headingButton = document.createElement("button");
+      headingButton.className = "page-list__heading-button";
+      headingButton.type = "button";
+      headingButton.dataset.expandSection = id;
+      const headingLabel = document.createElement("span");
+      headingLabel.textContent = title;
+      headingButton.append(headingLabel, createMaterialIcon("chevron_right", "page-list__heading-arrow"));
+      heading.append(headingButton);
+    } else {
+      heading.textContent = title;
+    }
 
     const list = document.createElement("ul");
     list.className = "page-list__items";
@@ -109,6 +120,17 @@ export function createPageList({ label, title, sections }, dataUrl) {
     }
 
     navigation.append(section);
+  });
+
+  navigation.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-expand-section]");
+    if (!button || !navigation.contains(button)) return;
+    const section = sections.find(({ id }) => id === button.dataset.expandSection);
+    if (!section) return;
+    navigation.dispatchEvent(new CustomEvent("sectionexpand", {
+      bubbles: true,
+      detail: { section, dataUrl },
+    }));
   });
 
   return navigation;

@@ -5,6 +5,7 @@ import { createOrganizationRail } from "./components/organization-rail.js";
 import { createToolbar } from "./components/toolbar.js";
 import { createUserProfile } from "./components/user-profile.js";
 import { loadJsonData } from "./data/load-json-data.js";
+import appStateMachine from "./state/app-state.js";
 
 const frameLayout = document.getElementById("frame-layout");
 
@@ -76,6 +77,15 @@ if (frameLayout) {
   );
 
   initializeFrameLayout();
+
+  directoryContent.addEventListener("sectionexpand", (event) => {
+    const { section, dataUrl } = event.detail || {};
+    if (!section) return;
+    if (window.matchMedia("(max-width: 700px)").matches) {
+      appStateMachine.transition(appStateMachine.states.CONTENT_VIEW);
+    }
+    contextPane.setSection(section, dataUrl);
+  });
 
   function showContext(context, dataUrl) {
     contextPane.element.dataset.contextId = context.id || "";

@@ -50,6 +50,38 @@
   opacity: 0.64;
 }
 
+.page-list__heading-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.page-list__heading-button:hover {
+  opacity: 0.82;
+}
+
+.page-list__heading-arrow {
+  flex: 0 0 auto;
+  font-size: 18px;
+  font-weight: 300;
+  font-variation-settings: "FILL" 0, "wght" 300, "GRAD" -25, "opsz" 20;
+  transition: transform 160ms ease;
+}
+
+.page-list__heading-button:hover .page-list__heading-arrow {
+  transform: translateX(2px);
+}
+
 .page-list__items {
   display: grid;
   gap: 4px;
