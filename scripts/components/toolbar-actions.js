@@ -14,6 +14,7 @@ import { getShareQrCodeImageUrl } from '../services/qr-image-service.js';
 import { setupMapToolbarModalLayout } from './map-toolbar-modal-layout.js';
 import { createToolbarDownloadActions } from './toolbar-download-actions.js';
 import { toggleMapFullscreen } from '../map/map-viewport.js';
+import { activateDeferredImages } from '../utils/deferred-images.js';
 
 export {
     MAP_VIEWER_APPS,
@@ -351,6 +352,7 @@ export function setupActionButtons({
             const isOpen = downloadModal.getAttribute("aria-hidden") === "false";
             closeAllModals();
             if (!isOpen) {
+                activateDeferredImages(downloadModal);
                 downloadModal.setAttribute("aria-hidden", "false");
                 downloadModal.classList.add("is-open");
                 // Wait 0.5s after user clicks downloads view button before beginning preemptive rendering

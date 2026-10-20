@@ -4,6 +4,7 @@ import { displayZoneId, normalizeZoneId } from '../utils/format-utils.js';
 import { closeAllModals } from './modal-view.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { setupAllAppsLiveSearch } from '../map/map-search.js';
+import { activateDeferredImages } from '../utils/deferred-images.js';
 
 export const MAP_VIEWER_APPS = [
     {
@@ -137,6 +138,7 @@ export function setupSuggestedAppCards({ onOpenApp = () => {} } = {}) {
             e.stopPropagation();
             closeAllModals();
             updateAllAppsModalHeaderTitle();
+            activateDeferredImages(allAppsModal);
             allAppsModal.setAttribute("aria-hidden", "false");
             allAppsModal.classList.add("is-open");
             const searchInput = document.getElementById("all-apps-search-input");

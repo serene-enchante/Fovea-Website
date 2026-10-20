@@ -165,6 +165,23 @@ test('loads only the right-sized circles logo on the initial map view', async ({
     expect(logoRequests).toEqual(['/images/whiteLane-Audubon-favicon.webp']);
 });
 
+test('defers app launcher icons until the download modal opens', async ({ page }) => {
+    const appIconRequests = [];
+    page.on('request', request => {
+        const pathname = new URL(request.url()).pathname;
+        if (pathname.startsWith('/images/app_icons/')) appIconRequests.push(pathname);
+    });
+
+    await openMap(page, '/maps/?feature=circles');
+    await page.waitForTimeout(250);
+    expect(appIconRequests).toEqual([]);
+
+    await page.locator('#btn-download-files').click();
+    await expect(page.locator('#downloads-modal')).toHaveAttribute('aria-hidden', 'false');
+    await expect.poll(() => new Set(appIconRequests).size).toBe(4);
+    await expect(page.locator('#downloads-modal .suggested-app-icon').first()).toHaveJSProperty('naturalWidth', 104);
+});
+
 for (const { circle, zone, expectedTitle } of [
     { circle: 'eugene', zone: '04', expectedTitle: 'Zone 04' },
     { circle: 'florence', zone: '01', expectedTitle: 'Zone 01' }

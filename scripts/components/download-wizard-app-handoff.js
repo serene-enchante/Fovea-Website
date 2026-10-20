@@ -91,6 +91,7 @@ export function createDownloadWizardAppHandoff({
         const appIcon = documentObject.getElementById('avenza-modal-app-icon');
         if (appIcon) {
             appIcon.src = resolveAssetPath(config.iconSrc);
+            appIcon.removeAttribute?.('data-src');
             appIcon.alt = config.appName;
         }
 

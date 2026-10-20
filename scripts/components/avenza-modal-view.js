@@ -4,6 +4,7 @@ import { CIRCLE_ID } from '../config/app-config.js';
 import { getAppStoreUrl, launchAppWithStoreFallback } from '../services/app-launch-service.js';
 import { resolveAppInstructionConfig } from '../services/app-instruction-config.js';
 import { getAppSelectionTitle, getSelectionThumbnail } from '../map/app-selection-presentation.js';
+import { activateDeferredImages } from '../utils/deferred-images.js';
 
 export { getAppStoreUrl, launchAppWithStoreFallback };
 
@@ -106,6 +107,7 @@ export async function openAppInstructionModal(appKeyOrName, mapFileUrlOrBlob = n
 
   const avenzaModal = document.getElementById("avenza-instruction-modal");
   if (avenzaModal) {
+    activateDeferredImages(avenzaModal);
     avenzaModal.setAttribute("aria-hidden", "false");
     avenzaModal.classList.add("is-open");
     document.body.classList.add("has-active-modal", "has-avenza-modal");

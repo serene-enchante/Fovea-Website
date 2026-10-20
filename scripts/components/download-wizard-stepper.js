@@ -1,3 +1,5 @@
+import { activateDeferredImages } from '../utils/deferred-images.js';
+
 export function createDownloadWizardStepper({
     state,
     disposeRasterCache = () => {},
@@ -13,7 +15,10 @@ export function createDownloadWizardStepper({
 
         documentObject.querySelectorAll('.wizard-step-view').forEach(view => view.classList.remove('is-visible'));
         const targetView = documentObject.getElementById(`step-${stepNum}-view`);
-        if (targetView) targetView.classList.add('is-visible');
+        if (targetView) {
+            targetView.classList.add('is-visible');
+            if (stepNum === 3) activateDeferredImages(targetView);
+        }
 
         updateStepperUI();
         windowObject.scrollTo({ top: 0, behavior: 'smooth' });
