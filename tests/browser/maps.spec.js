@@ -233,7 +233,13 @@ test('records the active-dataset and tile request startup baseline', async ({ pa
         .map(entry => entry.name)
         .filter(name => name.includes('page-maps-tile'))
         .map(name => name.replace(location.origin, '').split('?')[0]));
+    const sameOriginStylesheets = await page.evaluate(() => performance.getEntriesByType('resource')
+        .map(entry => new URL(entry.name, location.href))
+        .filter(url => url.origin === location.origin && url.pathname.startsWith('/styles/'))
+        .map(url => url.pathname));
     expect(mapStylesheets).toEqual(['/styles/page-maps-tile.bundle.css']);
+    expect(sameOriginStylesheets).not.toContain('/styles/cards.css');
+    expect(sameOriginStylesheets).not.toContain('/styles/layout.css');
     console.log(`Map startup baseline (desktop Chromium): ready=${mapReadyMs}ms; same-origin JS=${scriptBytes.count} resources, ${scriptBytes.transferBytes} transfer bytes, ${scriptBytes.decodedBytes} decoded bytes; after 1.5s: ${datasetRequests.length} GeoJSON request(s), ${tileRequests.length} CARTO/Esri tile request(s).`);
 });
 
