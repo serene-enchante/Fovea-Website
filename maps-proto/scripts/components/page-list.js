@@ -103,17 +103,9 @@ export function createPageList({ label, title, sections }, dataUrl) {
       const viewport = document.createElement("div");
       viewport.className = "page-list__tile-viewport";
 
-      const leftFade = document.createElement("span");
-      leftFade.className = "page-list__edge-fade page-list__edge-fade--left";
-      leftFade.setAttribute("aria-hidden", "true");
-
-      const rightFade = document.createElement("span");
-      rightFade.className = "page-list__edge-fade page-list__edge-fade--right";
-      rightFade.setAttribute("aria-hidden", "true");
-
       const previous = createScrollButton("left", title);
       const next = createScrollButton("right", title);
-      viewport.append(list, leftFade, rightFade, previous, next);
+      viewport.append(list, previous, next);
       section.append(viewport);
     } else {
       section.append(list);
@@ -199,6 +191,8 @@ export function initializeTileStrips(root) {
 }
 
 export function initializePageSelection(root) {
+  const cleanups = [];
+
   root.querySelectorAll(".page-list__items--selectable").forEach((list) => {
     const highlight = list.querySelector(".page-list__selection-highlight");
 
@@ -219,7 +213,7 @@ export function initializePageSelection(root) {
     const selected = list.querySelector('.page-list__item[aria-current="page"]');
     moveHighlight(selected, false);
 
-    list.addEventListener("click", (event) => {
+    const handleClick = (event) => {
       const button = event.target.closest(".page-list__item");
       if (!button || !list.contains(button)) return;
 
@@ -232,15 +226,29 @@ export function initializePageSelection(root) {
       const tab = button.querySelector(".page-list__tab");
       if (tab) tab.hidden = false;
       moveHighlight(button);
-    });
+    };
+    list.addEventListener("click", handleClick);
 
+    let observer;
     if ("ResizeObserver" in window) {
-      const observer = new ResizeObserver(() => {
-        moveHighlight(list.querySelector('.page-list__item[aria-current="page"]'), false);
-      });
+      observer = new ResizeObserver(updateHighlight);
       observer.observe(list);
+    } else {
+      window.addEventListener("resize", updateHighlight);
     }
+
+    function updateHighlight() {
+      moveHighlight(list.querySelector('.page-list__item[aria-current="page"]'), false);
+    }
+
+    cleanups.push(() => {
+      list.removeEventListener("click", handleClick);
+      observer?.disconnect();
+      if (!observer) window.removeEventListener("resize", updateHighlight);
+    });
   });
+
+  return () => cleanups.forEach((cleanup) => cleanup());
 }
 
 export function updatePageTabNames(root, title) {

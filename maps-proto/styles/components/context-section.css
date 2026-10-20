@@ -1,0 +1,116 @@
+.app-frame--context-section {
+  z-index: 5;
+}
+
+.context-pane__section-content {
+  color: var(--control-text);
+  font-family: system-ui, sans-serif;
+}
+
+.context-pane__section-header {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--shade0);
+}
+
+.app-frame--context.is-context-underlay {
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-110%) scale(0.82);
+}
+
+.app-frame--context.app-frame--context-section.is-context-positioned {
+  z-index: 5;
+  transform: none;
+}
+
+.app-frame--context.app-frame--context-section.is-context-section-entering,
+.app-frame--context.app-frame--context-section.is-context-section-closing {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(110%) scale(0.82);
+}
+
+.context-pane__section-header h2 {
+  overflow: hidden;
+  margin: 0;
+  color: var(--control-text);
+  font-size: 20px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.context-pane__section-title {
+  margin: 20px 24px 10px;
+  color: var(--control-text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  opacity: 0.64;
+}
+
+.context-pane__section-list .page-list__heading {
+  display: none;
+}
+
+.context-pane__section-list.page-list {
+  padding-top: 0;
+}
+
+.context-pane__section-list .page-list__section[data-view="list"] .page-list__thumbnail {
+  position: static;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.context-pane__section-list .page-list__section[data-view="list"] .page-list__item {
+  min-height: 48px;
+  gap: 12px;
+}
+
+@media (min-width: 701px) {
+  .app-frame--context.app-frame--context-section.is-context-section-entering,
+  .app-frame--context.app-frame--context-section.is-context-section-closing {
+    transform: translateX(110%) translateY(-50%) scale(0.82);
+  }
+
+  .app-frame--context.app-frame--context-section.is-context-positioned.is-context-section-entering,
+  .app-frame--context.app-frame--context-section.is-context-positioned.is-context-section-closing {
+    transform: translateX(110%) scale(0.82);
+  }
+
+  .app-frame--context.is-context-underlay {
+    transform: translateX(-110%) translateY(-50%) scale(0.82);
+  }
+
+  .app-frame--context.is-context-positioned.is-context-underlay {
+    z-index: 1;
+    transform: translateX(-110%) scale(0.82);
+  }
+}
+
+@media (max-width: 700px) {
+  .app-frame--context.is-context-underlay {
+    transform: translateY(-110%) scale(0.88);
+  }
+
+  .app-frame--context.app-frame--context-section.is-context-section-entering,
+  .app-frame--context.app-frame--context-section.is-context-section-closing,
+  .app-frame--context.app-frame--context-section.is-context-positioned.is-context-section-entering,
+  .app-frame--context.app-frame--context-section.is-context-positioned.is-context-section-closing {
+    transform: translateY(110%) scale(0.88);
+  }
+}

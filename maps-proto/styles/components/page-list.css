@@ -200,39 +200,35 @@
 }
 
 .page-list__tile-viewport {
+  --page-list-edge-fade-size: 60px;
+  --page-list-mask-start: #000 0%;
+  --page-list-mask-end: #000 100%;
   position: relative;
 }
 
-.page-list__edge-fade {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  bottom: 6px;
-  width: 30px;
-  opacity: 0;
-  pointer-events: none;
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  transition: opacity 160ms ease;
+.page-list__section[data-view="tiles"] .page-list__items {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    var(--page-list-mask-start),
+    #000 var(--page-list-edge-fade-size, 60px),
+    #000 calc(100% - var(--page-list-edge-fade-size, 60px)),
+    var(--page-list-mask-end)
+  );
+  mask-image: linear-gradient(
+    to right,
+    var(--page-list-mask-start),
+    #000 var(--page-list-edge-fade-size, 60px),
+    #000 calc(100% - var(--page-list-edge-fade-size, 60px)),
+    var(--page-list-mask-end)
+  );
 }
 
-.page-list__edge-fade--left {
-  left: 0;
-  background: linear-gradient(to right, var(--shade0), transparent);
-  -webkit-mask-image: linear-gradient(to right, #000, transparent);
-  mask-image: linear-gradient(to right, #000, transparent);
+.page-list__tile-viewport.has-overflow-left {
+  --page-list-mask-start: transparent 0%;
 }
 
-.page-list__edge-fade--right {
-  right: 0;
-  background: linear-gradient(to left, var(--shade0), transparent);
-  -webkit-mask-image: linear-gradient(to left, #000, transparent);
-  mask-image: linear-gradient(to left, #000, transparent);
-}
-
-.page-list__tile-viewport.has-overflow-left .page-list__edge-fade--left,
-.page-list__tile-viewport.has-overflow-right .page-list__edge-fade--right {
-  opacity: 1;
+.page-list__tile-viewport.has-overflow-right {
+  --page-list-mask-end: transparent 100%;
 }
 
 .page-list__scroll {
@@ -349,13 +345,14 @@
 }
 
 @media (max-width: 700px) {
-  .page-list__edge-fade {
-    display: none;
-  }
-
   .page-list__section[data-view="tiles"] .page-list__items {
     gap: 12px;
     padding-bottom: 8px;
+  }
+
+  .page-list__tile-viewport {
+    --page-list-mask-start: #000 0%;
+    --page-list-mask-end: #000 100%;
   }
 
   .page-list__section[data-view="tiles"] .page-list__tile-viewport {
@@ -385,7 +382,6 @@
     scroll-behavior: auto;
   }
 
-  .page-list__edge-fade,
   .page-list__scroll {
     transition-duration: 0.01ms;
   }

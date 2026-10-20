@@ -21,6 +21,7 @@ if (frameLayout) {
   const userContent = createUserProfile({ name: "User" });
   const contextPane = createContextPane();
   let tabsFrame;
+  let disposeDirectoryEnhancements = () => {};
 
   const contentColumn = document.createElement("div");
   contentColumn.className = "content-column";
@@ -131,13 +132,18 @@ if (frameLayout) {
     });
   loadJsonData(frameLayout.dataset.directorySrc)
     .then(({ data, dataUrl }) => {
+      disposeDirectoryEnhancements();
       directoryContent.replaceChildren(createPageList(data, dataUrl));
-      initializePageSelection(directoryContent);
+      const disposePageSelection = initializePageSelection(directoryContent);
       updatePageTabNames(directoryContent, activeContextTitle);
       organizationContent.replaceChildren(
         createOrganizationRail(data.organizations, data.organizationActions, dataUrl),
       );
-      initializeTileStrips(directoryContent);
+      const disposeTileStrips = initializeTileStrips(directoryContent);
+      disposeDirectoryEnhancements = () => {
+        disposePageSelection();
+        disposeTileStrips();
+      };
     })
     .catch((error) => {
       console.error("Unable to load directory data", error);
