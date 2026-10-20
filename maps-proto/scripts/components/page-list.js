@@ -41,12 +41,13 @@ export function createPageList({ label, title, sections }, dataUrl) {
       list.setAttribute("aria-label", `${title} items`);
     }
 
-    items.forEach(({ id: itemId, label: itemLabel, icon, image, selected, currentTab }) => {
+    items.forEach(({ id: itemId, label: itemLabel, icon, image, downloadFormat, selected, currentTab }) => {
       const item = document.createElement("li");
       const link = document.createElement("button");
       link.className = "page-list__item";
       link.type = "button";
       link.dataset.pageId = itemId;
+      if (downloadFormat) link.dataset.downloadFormat = downloadFormat;
 
       if (icon) {
         link.append(createMaterialIcon(icon, "page-list__icon"));

@@ -8,6 +8,33 @@
     { "id": "suggest", "label": "Suggest", "icon": "lightbulb" },
     { "id": "contact", "label": "Contact", "icon": "mail" }
   ],
+  "suggest": {
+    "body": "Choose a feature type to suggest a change to the map.",
+    "options": [
+      { "id": "point", "label": "Point" },
+      { "id": "line", "label": "Line" },
+      { "id": "polygon", "label": "Polygon" }
+    ]
+  },
+  "downloads": [
+    {
+      "id": "raster-formats",
+      "title": "Raster formats",
+      "items": [
+        { "id": "geopdf", "label": "GeoPDF" },
+        { "id": "geotiff", "label": "GeoTIFF" }
+      ]
+    },
+    {
+      "id": "vector-formats",
+      "title": "Vector formats",
+      "items": [
+        { "id": "geojson", "label": "GeoJSON" },
+        { "id": "kmz", "label": "KMZ" },
+        { "id": "gpx", "label": "GPX" }
+      ]
+    }
+  ],
   "sections": [
     {
       "id": "circle-zones",

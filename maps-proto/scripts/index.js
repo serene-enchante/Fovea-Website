@@ -6,7 +6,6 @@ import {
   updatePageTabNames,
 } from "./components/page-list.js";
 import { createContextPane } from "./components/context-pane.js";
-import { createTabsFrame } from "./components/tabs-frame.js";
 import { createOrganizationRail } from "./components/organization-rail.js";
 import { createToolbar } from "./components/toolbar.js";
 import { createUserProfile } from "./components/user-profile.js";
@@ -20,7 +19,6 @@ if (frameLayout) {
   const directoryContent = document.createElement("div");
   const userContent = createUserProfile({ name: "User" });
   const contextPane = createContextPane();
-  let tabsFrame;
   let disposeDirectoryEnhancements = () => {};
 
   const contentColumn = document.createElement("div");
@@ -45,21 +43,19 @@ if (frameLayout) {
     contextFrame.inert = true;
     activeContextTitle = "New tab";
     updatePageTabNames(directoryContent, activeContextTitle);
-    tabsFrame.setCurrentContext(null);
   });
   contextFrame.addEventListener("contextopen", () => {
     contextFrame.classList.remove("is-closed");
     contextFrame.removeAttribute("aria-hidden");
     contextFrame.inert = false;
   });
+  contextFrame.addEventListener("contextaction", (event) => {
+    if (event.detail?.actionId === "download") contextPane.setDownloads();
+    if (event.detail?.actionId === "suggest") contextPane.setSuggest();
+  });
   contextFrame.addEventListener("contexttitlechange", (event) => {
     activeContextTitle = event.detail?.title || "New tab";
     updatePageTabNames(directoryContent, activeContextTitle);
-    tabsFrame.setCurrentContext(
-      event.detail?.context,
-      event.detail?.dataUrl || document.baseURI,
-      contextFrame,
-    );
   });
   mapStage.append(mapContainer, contextFrame);
 
@@ -70,7 +66,6 @@ if (frameLayout) {
     content: mapStage,
   });
   contentColumn.append(contentFrame);
-  tabsFrame = createTabsFrame();
 
   frameLayout.append(
     createAppFrame({
@@ -96,7 +91,6 @@ if (frameLayout) {
     }),
     contentColumn,
   );
-  document.body.append(tabsFrame.element);
   initializeFrameLayout();
 
   directoryContent.addEventListener("sectionexpand", (event) => {
@@ -167,8 +161,4 @@ if (frameLayout) {
     .catch((error) => {
       console.error("Unable to load toolbar data", error);
     });
-
-  loadJsonData(frameLayout.dataset.tabsSrc)
-    .then(({ data, dataUrl }) => tabsFrame.setItems(data.items, dataUrl))
-    .catch((error) => console.error("Unable to load tabs data", error));
 }

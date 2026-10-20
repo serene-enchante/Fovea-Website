@@ -9,18 +9,30 @@ export function createContextPane() {
   element.setAttribute("aria-live", "polite");
   let renderVersion = 0;
   let disposeTileStrips = () => {};
-  let sectionFrame = null;
-  let underlayFrame = null;
+  const overlayFrames = [];
+  let overlaySequence = 0;
   let activeContext = null;
   let activeDataUrl = document.baseURI;
   const sheet = createContextSheetController(element);
 
-  function restoreUnderlay() {
-    if (!underlayFrame) return;
-    underlayFrame.classList.remove("is-context-underlay");
-    underlayFrame.removeAttribute("aria-hidden");
-    underlayFrame.inert = false;
-    underlayFrame = null;
+  function setFrameUnderlay(frame, isUnderlay) {
+    if (!frame) return;
+    frame.classList.toggle("is-context-underlay", isUnderlay);
+    if (isUnderlay) {
+      frame.setAttribute("aria-hidden", "true");
+      frame.inert = true;
+    } else {
+      frame.removeAttribute("aria-hidden");
+      frame.inert = false;
+    }
+  }
+
+  function clearOverlayFrames() {
+    overlayFrames.splice(0).forEach(({ frame, disposeTileStrips }) => {
+      disposeTileStrips();
+      frame.remove();
+    });
+    setFrameUnderlay(element.closest(".app-frame--context"), false);
   }
 
   async function setContext(context, dataUrl = document.baseURI) {
@@ -28,9 +40,7 @@ export function createContextPane() {
     activeContext = context;
     activeDataUrl = dataUrl;
     const content = createContextContent(context, dataUrl);
-    sectionFrame?.remove();
-    sectionFrame = null;
-    restoreUnderlay();
+    clearOverlayFrames();
     element.dispatchEvent(new CustomEvent("contexttitlechange", {
       bubbles: true,
       detail: { title: context.title, context, dataUrl },
@@ -40,7 +50,6 @@ export function createContextPane() {
     element.classList.add("is-changing");
     await waitForTransition(element);
     if (version !== renderVersion) return;
-    sectionFrame = null;
     disposeTileStrips();
     element.replaceChildren(content);
     disposeTileStrips = initializeTileStrips(element);
@@ -50,54 +59,99 @@ export function createContextPane() {
   }
 
   function setSection(section, dataUrl = document.baseURI) {
-    if (sectionFrame) {
-      sectionFrame.remove();
-      sectionFrame = null;
-      restoreUnderlay();
-    }
+    const contextTitle = activeContext?.title || "Context";
+    openOverlayFrame(
+      section.title,
+      buildSectionContext(contextTitle, section, dataUrl),
+    );
+  }
+
+  function setDownloads() {
+    if (!activeContext) return;
+    const downloadSections = Array.isArray(activeContext.downloads) ? activeContext.downloads : [];
+    openOverlayFrame(
+      "Downloads",
+      buildDownloadsContext(activeContext.title, downloadSections, activeDataUrl),
+    );
+  }
+
+  function setSuggest() {
+    if (!activeContext?.suggest) return;
+    openOverlayFrame(
+      "Suggest",
+      buildSuggestContext(activeContext.title, activeContext.suggest),
+    );
+  }
+
+  function openOverlayFrame(title, content) {
     const baseFrame = element.closest(".app-frame--context");
     const stage = baseFrame?.parentElement;
     if (!baseFrame || !stage) return;
 
+    const previousFrame = overlayFrames.at(-1)?.frame || baseFrame;
+    setFrameUnderlay(previousFrame, true);
     const openingFrame = baseFrame.cloneNode(false);
-    openingFrame.id = "context-section-frame";
-    openingFrame.setAttribute("aria-label", section.title);
+    openingFrame.id = `context-child-frame-${++overlaySequence}`;
+    openingFrame.setAttribute("aria-label", title);
     openingFrame.removeAttribute("aria-hidden");
     openingFrame.removeAttribute("inert");
     openingFrame.inert = false;
     [
       "is-closed",
+      "is-context-underlay",
       "is-context-dragging",
       "is-sheet-dragging",
     ].forEach((className) => openingFrame.classList.remove(className));
     openingFrame.classList.add("app-frame--context-section", "is-context-section-entering");
     const frameContent = document.createElement("div");
     frameContent.className = "app-frame__content";
-    const contextTitle = element.querySelector(".context-pane__hero-title")?.textContent?.trim() || "Context";
-    frameContent.append(buildSectionContext(contextTitle, section, dataUrl));
+    frameContent.append(content);
     openingFrame.append(frameContent);
-    sectionFrame = openingFrame;
-    underlayFrame = baseFrame;
-    baseFrame.classList.add("is-context-underlay");
-    baseFrame.setAttribute("aria-hidden", "true");
-    baseFrame.inert = true;
     element.dispatchEvent(new CustomEvent("contextopen", { bubbles: true }));
     stage.append(openingFrame);
+    const disposeTileStrips = initializeTileStrips(openingFrame);
+    overlayFrames.push({ frame: openingFrame, disposeTileStrips });
     enableContextFrameDrag(openingFrame, ".context-pane__section-header");
     openingFrame.addEventListener("click", (event) => {
       const close = event.target.closest("[data-context-close]");
       if (close) {
-        closeSection();
+        closeOverlayFrame();
         return;
       }
 
       const item = event.target.closest("[data-page-id]");
       if (item) {
+        if (item.dataset.downloadFormat) {
+          openingFrame.dispatchEvent(new CustomEvent("contextdownload", {
+            bubbles: true,
+            detail: {
+              contextId: element.dataset.contextId,
+              format: item.dataset.downloadFormat,
+              itemId: item.dataset.pageId,
+            },
+          }));
+          return;
+        }
         openingFrame.dispatchEvent(new CustomEvent("contextitemselect", {
           bubbles: true,
           detail: { contextId: element.dataset.contextId, itemId: item.dataset.pageId },
         }));
       }
+
+      const geometry = event.target.closest("[data-suggest-geometry]");
+      if (geometry && openingFrame.contains(geometry)) {
+        openingFrame.dispatchEvent(new CustomEvent("contextsuggest", {
+          bubbles: true,
+          detail: {
+            contextId: element.dataset.contextId,
+            geometry: geometry.dataset.suggestGeometry,
+          },
+        }));
+      }
+    });
+    openingFrame.addEventListener("sectionexpand", (event) => {
+      const { section, dataUrl: sectionDataUrl } = event.detail || {};
+      if (section) setSection(section, sectionDataUrl || activeDataUrl);
     });
     openingFrame.getBoundingClientRect();
     requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -105,11 +159,13 @@ export function createContextPane() {
     }));
   }
 
-  function closeSection() {
-    if (!sectionFrame) return;
-    const closingFrame = sectionFrame;
-    sectionFrame = null;
-    restoreUnderlay();
+  function closeOverlayFrame() {
+    const current = overlayFrames.pop();
+    if (!current) return;
+    const { frame: closingFrame, disposeTileStrips } = current;
+    disposeTileStrips();
+    const previousFrame = overlayFrames.at(-1)?.frame || element.closest(".app-frame--context");
+    setFrameUnderlay(previousFrame, false);
     closingFrame.classList.add("is-context-section-closing");
     const finish = (event) => {
       if (event && (event.target !== closingFrame || event.propertyName !== "transform")) return;
@@ -139,8 +195,8 @@ export function createContextPane() {
 
     if (event.key === "Delete" || event.key === "Backspace") {
       event.preventDefault();
-      if (sectionFrame) {
-        closeSection();
+      if (overlayFrames.length) {
+        closeOverlayFrame();
       } else {
         element.dispatchEvent(new CustomEvent("contextclose", { bubbles: true }));
       }
@@ -186,6 +242,8 @@ export function createContextPane() {
     element,
     setContext,
     setSection,
+    setDownloads,
+    setSuggest,
   };
 }
 
@@ -241,6 +299,108 @@ export function createContextContent(context, dataUrl, { includeSections = true 
 }
 
 function buildSectionContext(contextTitle, section, dataUrl) {
+  const content = createChildContextContent(contextTitle);
+
+  const sectionTitle = document.createElement("h3");
+  sectionTitle.className = "context-pane__section-title";
+  sectionTitle.textContent = section.title;
+  const list = createPageList({
+    label: `${section.title} items`,
+    sections: [{ ...section, view: "list", selectable: false, expandable: false }],
+  }, dataUrl);
+  list.classList.add("context-pane__section-list");
+  content.append(sectionTitle, list);
+  return content;
+}
+
+function buildDownloadsContext(contextTitle, downloadSections, dataUrl) {
+  const content = createChildContextContent(contextTitle);
+  if (!downloadSections?.length) {
+    const empty = document.createElement("p");
+    empty.className = "context-pane__downloads-empty";
+    empty.textContent = "No downloads available.";
+    content.append(empty);
+    return content;
+  }
+
+  const formats = createPageList({
+    label: `${contextTitle} downloads`,
+    sections: downloadSections.map((section) => ({
+      ...section,
+      view: "tiles",
+      selectable: false,
+      expandable: true,
+      items: section.items.map((format) => ({
+        ...format,
+        downloadFormat: format.downloadFormat || format.id,
+      })),
+    })),
+  }, dataUrl);
+  formats.classList.add("context-pane__download-formats");
+  content.append(formats);
+  return content;
+}
+
+function buildSuggestContext(contextTitle, suggestion) {
+  const content = createChildContextContent(contextTitle);
+  const body = document.createElement("p");
+  body.className = "context-pane__suggestion-body";
+  body.textContent = suggestion.body || "Choose a feature type to suggest a change to the map.";
+
+  const actions = document.createElement("div");
+  actions.className = "context-pane__suggestion-actions";
+  actions.setAttribute("aria-label", "Feature types");
+  (suggestion.options || []).forEach(({ id, label }) => {
+    const button = document.createElement("button");
+    button.className = "context-pane__action";
+    button.type = "button";
+    button.dataset.suggestGeometry = id;
+    button.append(createGeometryIcon(id));
+    const text = document.createElement("span");
+    text.textContent = label;
+    button.append(text);
+    actions.append(button);
+  });
+
+  content.append(body, actions);
+  return content;
+}
+
+function createGeometryIcon(type) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.classList.add("context-pane__geometry-icon");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "1.8");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.setAttribute("aria-hidden", "true");
+
+  if (type === "point") {
+    const pin = document.createElementNS(svg.namespaceURI, "path");
+    pin.setAttribute("d", "M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z");
+    const center = document.createElementNS(svg.namespaceURI, "circle");
+    center.setAttribute("cx", "12");
+    center.setAttribute("cy", "10");
+    center.setAttribute("r", "2");
+    svg.append(pin, center);
+  } else if (type === "line") {
+    const line = document.createElementNS(svg.namespaceURI, "path");
+    line.setAttribute("d", "M5 19 19 5");
+    const endpoints = document.createElementNS(svg.namespaceURI, "path");
+    endpoints.setAttribute("d", "M3.5 19h3M17.5 5h3");
+    svg.append(line, endpoints);
+  } else if (type === "polygon") {
+    const polygon = document.createElementNS(svg.namespaceURI, "polygon");
+    polygon.setAttribute("points", "12,3 21,8 19,18 11,21 4,14 5,7");
+    svg.append(polygon);
+  }
+
+  return svg;
+}
+
+function createChildContextContent(contextTitle) {
   const content = document.createElement("div");
   content.className = "context-pane__content context-pane__section-content";
 
@@ -251,16 +411,7 @@ function buildSectionContext(contextTitle, section, dataUrl) {
   const close = createControlButton("close", "Close context");
   close.dataset.contextClose = "true";
   header.append(title, close);
-
-  const sectionTitle = document.createElement("h3");
-  sectionTitle.className = "context-pane__section-title";
-  sectionTitle.textContent = section.title;
-  const list = createPageList({
-    label: `${section.title} items`,
-    sections: [{ ...section, view: "list", selectable: false, expandable: false }],
-  }, dataUrl);
-  list.classList.add("context-pane__section-list");
-  content.append(header, sectionTitle, list);
+  content.append(header);
   return content;
 }
 
