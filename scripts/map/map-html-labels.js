@@ -29,10 +29,18 @@ export function rebuildHtmlLabels() {
         (state.currentBaseLayer === 'default' && isLightModeTheme);
 
     // Remove labels that no longer match current feature set
-    const currentIds = new Set(state.labelData.map(d => d.id));
+    const labelsById = new Map();
     const existing = overlay.querySelectorAll('.map-zone-label');
     existing.forEach(el => {
-        if (!currentIds.has(el.dataset.labelId)) el.remove();
+        labelsById.set(el.dataset.labelId, el);
+    });
+
+    const currentIds = new Set(state.labelData.map(d => String(d.id)));
+    labelsById.forEach((el, id) => {
+        if (!currentIds.has(id)) {
+            el.remove();
+            labelsById.delete(id);
+        }
     });
 
     state.labelData.forEach(d => {
@@ -64,15 +72,15 @@ export function rebuildHtmlLabels() {
 
         // Project geo coords to screen pixel coords
         const pt = state.map.project([lng, lat]);
-        const canvas = state.map.getCanvas();
 
-        let el = overlay.querySelector(`.map-zone-label[data-label-id="${id}"]`);
+        let el = labelsById.get(String(id));
         if (!el) {
             el = document.createElement('div');
             el.className = 'map-zone-label';
             el.dataset.labelId = id;
             el.textContent = text;
             overlay.appendChild(el);
+            labelsById.set(String(id), el);
         }
 
         // Font size: interpolate with zoom
@@ -85,20 +93,23 @@ export function rebuildHtmlLabels() {
             else fontSize = isCircle ? 22 : 20;
         }
 
-        el.style.left = `${pt.x}px`;
-        el.style.top = `${pt.y}px`;
-        el.style.fontSize = `${fontSize}px`;
-        el.style.opacity = fontSize > 0 ? '1' : '0';
-        el.style.pointerEvents = 'none';
-        el.style.color = isLightBasemap ? '#000000' : '#c8c8c8';
-        el.style.textShadow = isLightBasemap
+        setStyleIfChanged(el, 'left', `${pt.x}px`);
+        setStyleIfChanged(el, 'top', `${pt.y}px`);
+        setStyleIfChanged(el, 'fontSize', `${fontSize}px`);
+        setStyleIfChanged(el, 'opacity', fontSize > 0 ? '1' : '0');
+        setStyleIfChanged(el, 'pointerEvents', 'none');
+        setStyleIfChanged(el, 'color', isLightBasemap ? '#000000' : '#c8c8c8');
+        setStyleIfChanged(el, 'textShadow', isLightBasemap
             ? 'none'
-            : '0 0 4px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)';
+            : '0 0 4px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)');
     });
 }
 
-// HTML label overlay — repositions div labels on every map render
+function setStyleIfChanged(element, property, value) {
+    if (element.style[property] !== value) element.style[property] = value;
+}
+
+// Refresh labels after map camera or presentation state changes.
 export function updateLabelZoomVisibility() {
     rebuildHtmlLabels();
 }
-

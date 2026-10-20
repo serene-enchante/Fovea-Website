@@ -5,6 +5,7 @@ import { createMapLayerLifecycle } from '../scripts/map/map-layer-lifecycle.js';
 test('builds map layers, binds them once, and delegates map feature clicks', () => {
     const calls = [];
     const listeners = [];
+    const scheduledFrames = [];
     let source = null;
     let hoverOptions;
     const map = {
@@ -18,6 +19,7 @@ test('builds map layers, binds them once, and delegates map feature clicks', () 
         buildFeatureData: (...args) => { calls.push(['build', ...args]); return { geojsonData: { features: [] }, labelData: ['label'] }; },
         addFeatureLayers: (targetMap, data) => { calls.push(['add-layers', targetMap, data]); source = { setData: data => calls.push(['set-data', data]) }; },
         renderHtmlLabels: () => calls.push(['labels']),
+        requestFrame: callback => scheduledFrames.push(callback),
         updateLabelZoomVisibility: () => calls.push(['label-zoom']),
         updateFeatureStyles: () => calls.push(['styles']),
         updateLocationZone: value => calls.push(['location', value]),
@@ -30,8 +32,15 @@ test('builds map layers, binds them once, and delegates map feature clicks', () 
     lifecycle.rebuildGeoJsonLayer();
     assert.deepEqual(state.labelData, ['label']);
     assert.equal('_labelListenersAttached' in state, false);
-    assert.deepEqual(listeners.map(([name]) => name), ['move', 'zoom', 'render']);
+    assert.deepEqual(listeners.map(([name]) => name), ['move', 'zoom']);
     assert.deepEqual(calls.map(([name]) => name), ['build', 'add-layers', 'proximity', 'glow', 'label-zoom', 'hover', 'location', 'styles']);
+    listeners[0][1]();
+    listeners[1][1]();
+    assert.equal(scheduledFrames.length, 1, 'move and zoom in one frame schedule one label render');
+    scheduledFrames[0]();
+    assert.equal(calls.filter(([name]) => name === 'labels').length, 1);
+    listeners[0][1]();
+    assert.equal(scheduledFrames.length, 2, 'a later frame can schedule another label render');
     const click = { feature: { properties: { cid: 'Eugene' } }, featureId: '04' };
     hoverOptions.onFeatureClick(click);
     assert.deepEqual(calls.at(-1), ['click', click]);

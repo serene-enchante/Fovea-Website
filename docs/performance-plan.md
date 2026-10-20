@@ -1,0 +1,130 @@
+# Fovea website performance plan
+
+Updated: 2026-10-19
+Baseline snapshot: `main` at `57bf1f1` (`Remove unused large image assets`)
+Scope: public home (`/`) and map app (`/maps/`), with mobile Lighthouse as the primary target.
+
+## Progress log
+
+- **P0 code slice implemented in the current working tree:** camera `move` and `zoom` events now coalesce into at most one HTML-label refresh per animation frame; the broad MapLibre `render` listener is removed. Label elements are indexed once per refresh, stale nodes are removed from that index, existing nodes are reused, unchanged styles are not reassigned, and the unused `getCanvas()` call is gone.
+- **Verification:** `npm test` passes (222 tests), and `npm run test:browser` passes (10 tests), including desktop deep links and mobile-navigation coverage. `git diff --check` is clean. The browser suite's startup timing is desktop Chromium and is not comparable to the attached mobile Lighthouse run.
+- **Still needed for P0:** re-run a comparable Lighthouse/CPU trace after the change is deployed; the CLI is not installed in this checkout. Confirm label alignment and visibility during physical-device pan/zoom when a phone is available. No score or real-device improvement is claimed yet.
+- The mobile device is not needed to continue code-level work or automated checks. It is only needed for the plan's final physical-device validation.
+
+## Audit snapshot
+
+The attached Lighthouse Metrics report confirms the low-30 scores on the production map route. It tested `https://getfovea.org/maps/?feature=circles` on mobile with Lighthouse 13.5.0 from six regions. Scores were **30–32**; the US West result was 32, US East 30, and the other four regions 32. The US West report gives FCP 3.2 s, LCP 10.0 s, TBT 19.9 s, CLS 0, 151 requests, 2.3 MB transferred, and 5.54 MB of resources. [Open the linked US West Lighthouse report](https://lighthouse-metrics.com/lighthouse/checks/256da865-4d2f-4008-9d7d-9fab15c96164/runs/7a4e7879-f838-4876-9eb9-090871197104).
+
+For comparison, one local mobile Lighthouse run on the same date scored 79 on `/` and 65 on `/maps/`, with TBT under 100 ms. These are not contradictory enough to dismiss the production report: they used different machines and test regions, and the attached report exposes multi-second main-thread tasks that the local run did not reproduce. Use the attached production-route run as the priority baseline; repeat local and regional runs after fixes.
+
+| Route | Performance | FCP | LCP | TBT | CLS |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `/` | 79 | 3.8 s | 4.0 s | 60 ms | 0 |
+| `/maps/` | 65 | 3.3 s | 7.7 s | 70 ms | 0 |
+
+One cold run per route was taken on 2026-10-19 with Lighthouse CLI 13.5.0, Chrome 154, mobile emulation, and simulated throttling. Scores vary with network, cache, and audit conditions; repeat measurements before treating these as a stable baseline. Google PageSpeed Insights' API was quota-limited during this audit.
+
+The most actionable evidence from the attached US West audit:
+
+- TBT is **19.9 s** in US West (and remains 7.9–17.1 s in the other five regions). The audit reports 27.6 s main-thread work, including 6.5 s script evaluation and 19.9 s categorized as “Other.” `map-html-labels.js` is attributed 12.5 s total CPU time and appears repeatedly among the longest tasks, including one **2.48 s** task and many 0.9–1.2 s tasks.
+- This matches the code path: `map-layer-lifecycle.js` subscribes `rebuildHtmlLabels` to MapLibre's `render` event, while [map-html-labels.js](../scripts/map/map-html-labels.js) loops over every label, projects coordinates, queries the overlay DOM, and writes multiple styles each time. Tile/render activity can therefore trigger repeated full overlay work. This is the strongest specific code-level lead for the 30s score.
+- Lighthouse estimates render-blocking savings of about **1.84 s** on `/maps/?feature=circles`.
+- It estimates **335 KiB** of unused JavaScript on maps. The largest listed sources include Turf (about 128 KiB), MapLibre (about 119 KiB), and jsPDF. These libraries have features the app uses; the finding supports deferring them until needed, not deleting them.
+- The map route has an estimated **344 KiB** image-delivery opportunity. `Google_satellite-02.png` is 148 KB for a roughly 64×48 CSS-pixel map-style thumbnail. Other findings include the 132.5 KB `wetlands.webp` shown around 81×54 in the Avenza badge, the small logo, and app icons.
+- The map route's estimated cache-lifetime opportunity is **618 KiB**. Lighthouse found a 600,000 ms (10 minute) TTL on site assets, including map thumbnails and WebP images. This is a repeat-visit issue; it cannot account for 19.9 s TBT on the measured load.
+- The attached report's LCP is the map header title, with a **3.29 s element-render delay** after a 0.20 s TTFB. The canvas is not the candidate. The delay plus very high TBT points to main-thread starvation/render work, not a slow Pages origin.
+
+## GitHub Pages / hosting diagnosis
+
+**No evidence currently points to a GitHub Pages outage or DNS/TLS misconfiguration as the cause of the low first-load Lighthouse result.** Read-only checks on 2026-10-19 found:
+
+- `getfovea.org` resolves to all four GitHub Pages apex IPv4 addresses (`185.199.108.153`, `.109.153`, `.110.153`, `.111.153`). `www.getfovea.org` aliases to `serene-enchante.github.io` and resolves to the same addresses, matching GitHub's documented setup for a custom apex and `www` domain.
+- HTTPS is valid for both `getfovea.org` and `www.getfovea.org`. The certificate was issued by Let's Encrypt and was in-date during the check.
+- The root, map page, and map entry JavaScript returned HTTP 200 from `server: GitHub.com`; the Pages response included a GitHub edge region and Varnish cache headers. The alternate `serene-enchante.github.io/Fovea-Website/` URL redirects to the custom domain.
+- The HTML is served with gzip: 94,785 source bytes transferred as 16,535 bytes. This rules out a missing HTML compression configuration as a likely cause.
+- The checked HTML and JavaScript responses advertise `Cache-Control: max-age=600` (10 minutes). This is a real repeat-visit optimization opportunity, consistent with Lighthouse's cache-lifetime finding, but does not explain the render-blocking and LCP delays on a cold load. GitHub Pages does not expose per-site custom response-header configuration; a GitHub community response confirms an external CDN/proxy is the workaround for custom cache policy. That adds another service and should be evaluated only if repeat-visit transfer size justifies it.
+- A single-run TTFB was about 165 ms for `/` and 263 ms for `/maps/`, while FCP was 3.3–3.8 s and map LCP was 7.7 s. This points more strongly to front-end critical-path and map-startup work than origin response latency. TTFB is region- and run-dependent, so collect field data before making a host decision.
+- The public repository metadata reports Pages enabled, but the unauthenticated Pages configuration endpoint returned 404. The live site and headers still positively identify GitHub Pages; the endpoint response means this audit could not independently confirm the repository's configured publishing source via the API.
+
+GitHub documents the same apex A records and `www` CNAME target in [custom-domain setup](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site). GitHub's response in [the custom-header discussion](https://github.com/orgs/community/discussions/54257) says Pages does not support custom headers; [another answer](https://github.com/orgs/community/discussions/60087) suggests an external proxy such as Cloudflare when a different cache policy is required. The published repository/site is nowhere near the documented 1 GB Pages site size limit; GitHub's [Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits) are not implicated by the current response behavior.
+
+**Hosting conclusion:** stay on GitHub Pages while completing P1–P3. Reconsider a CDN/proxy or another host only if repeated geographic TTFB/availability checks show a server/network bottleneck after the blocking requests and map-ready path are improved, or if more control over cache headers becomes a measurable business requirement. If trialing a proxy, compare the cold-load and warm-load metrics against direct Pages; its cache policy can only help repeat visits if it is configured to cache safely versioned static assets.
+
+## Prioritized work
+
+### P0 — Fix and verify the HTML map-label render hot path
+
+1. Re-run a CPU profile/trace on the same `?feature=circles` route and count `state.labelData` entries to confirm the reported hotspot under a comparable mobile CPU profile.
+2. **Implemented:** removed the per-`render` subscription and coalesced camera movement/zoom refreshes to one animation frame. Feature-set, theme, and basemap refreshes still use the direct refresh path.
+3. **Implemented in part:** build an ID-to-element map from one overlay query per refresh, remove stale nodes, reuse existing nodes, skip unchanged style assignments, and remove the unused per-label `getCanvas()` call. Offscreen-label culling and further read/write batching remain unimplemented; profile first to determine whether they are worthwhile.
+4. Consider MapLibre symbol layers or a canvas overlay only if the simpler event/throttling/cache changes do not remove the long tasks; compare visual placement, collision behavior, hit testing, mobile zoom/pan, and accessibility first.
+5. Compare Lighthouse TBT and `map-html-labels.js` task time after each change. Do not accept a score-only improvement if labels lag behind the camera or change appearance.
+
+**Done when:** the repeated multi-second label tasks disappear, TBT falls substantially across regional/mobile runs, and labels remain synchronized while panning and zooming.
+
+### P1 — Establish the repeatable baseline and map-ready metric
+
+1. Run at least three cold-cache Lighthouse mobile audits on `/maps/?feature=circles` and `/`, recording medians for score, FCP, LCP, TBT, CLS, and top opportunities. Keep Lighthouse/Chrome versions, throttling, region, URL, and date. Repeat the `?feature=circles` route from more than one region if available.
+2. Add temporary `performance.mark()` measurements around startup: navigation start, dataset fetch/parse completion, MapLibre construction, first map `render`, `load`, first `idle`, and label-overlay completion. Compare with the Lighthouse trace and a manual screenshot; remove temporary instrumentation or keep only a small reusable diagnostic hook.
+3. Measure app success separately from LCP: for `/maps/`, measure time until usable basemap plus count-circle/zone content appears. Keep an intentional lightweight loading state while that work happens.
+
+**Done when:** runs are comparable and the map-ready timing shows whether remaining delay is style/tile loading, dataset work, or rendering.
+
+### P2 — Remove render-blocking work from the initial viewport
+
+1. **Home:** `index.html` loads MapLibre's 239 KB JavaScript synchronously in `<head>`. Keep the initial title/search UI renderable without waiting for that download. Load the globe through an ordered loader after first paint (or on intersection/idle), with an intentional static globe placeholder and a safe error fallback. Preserve the visible home experience and reduced-motion preferences.
+2. **Maps:** `maps/index.html` loads qrcodejs, jsPDF, JSZip, Turf, and MapLibre as parser-blocking classic scripts. Keep MapLibre on the critical path only to the extent needed to show the map; load QR, PDF, ZIP, and spatial-analysis code on first use through cached dynamic loaders. Preserve the current globals/feature behavior while changing load timing.
+3. Compile the 12 ordered `page-maps-tile` CSS partials into one production stylesheet while retaining the partials as editable sources. The current `@import` entry adds a stylesheet discovery/request chain, and all map CSS blocks first render. Preserve the existing cascade and relative asset paths; add a reproducibility check for generated output.
+4. Audit the remaining common styles and bottom-nav script for first-paint necessity. Defer only code that is not needed for the first screen; avoid delaying the map's essential controls.
+
+Chrome's guidance is to defer non-critical render-blocking requests and reduce JavaScript that executes before it is needed. See [render-blocking requests](https://developer.chrome.com/docs/performance/insights/render-blocking/) and [reduce JavaScript execution time](https://developer.chrome.com/docs/lighthouse/performance/bootup-time/).
+
+**Done when:** render-blocking savings fall substantially, the home shell paints before MapLibre is ready, and maps' non-map vendor libraries are absent from the initial request waterfall until their feature is invoked.
+
+### P3 — Deliver map images at the size actually used
+
+1. Convert `Google_satellite-02.png` into a compact WebP thumbnail at roughly 2× its largest CSS display size; check its visual clarity against the current 64×48 style preview.
+2. Generate small WebP variants for modal thumbnails and app icons at roughly 2× their largest CSS display size, and select them with `srcset`/`sizes` or purpose-specific URLs. Continue with the 1920×1279 `wetlands.webp` thumbnail and the 400×400 app icons displayed near 40×40.
+3. Avoid fetching images for unopened dialogs or panels. Assign the selected-image source when a modal opens; use native lazy loading for offscreen content. Keep true first-viewport/LCP assets eager, since lazy-loading an LCP candidate delays it.
+4. Add intrinsic dimensions or aspect ratios for image slots that do not already reserve space. CLS is currently 0 in both samples, so treat this as a regression guard rather than the main score fix.
+
+See [responsive image delivery and LCP discovery](https://web.dev/articles/optimize-lcp) and [browser-level lazy loading](https://web.dev/articles/browser-level-image-lazy-loading).
+
+**Done when:** Lighthouse no longer flags the oversized thumbnail/icon transfers, and initial page loads do not fetch assets belonging exclusively to unopened UI.
+
+### P4 — Reduce map startup latency without changing map behavior
+
+1. Profile the existing startup sequence: `runMapPageStartup()` awaits the selected GeoJSON dataset before it constructs the map. Separate a useful map shell/loading state from dataset readiness where the lifecycle permits; avoid presenting a blank canvas while waiting.
+2. Measure data transfer size after compression, JSON parse/validation duration, MapLibre style load, tile load, and `idle` independently. The active Eugene dataset is about 137 KB on disk, so do not jump directly to vector tiling without evidence that transfer or parsing is material.
+3. If traces show data transfer/parse or GeoJSON rendering is dominant, test (one at a time) lower coordinate precision, property reduction, geometry simplification, or vector tiling. Check geometry fidelity and interaction correctness against Eugene-05 before adopting a transformation.
+4. Audit map layer count, symbol collision/overlap work, source updates, and repeated render listeners using MapLibre's own load/idle/render metrics. Optimize only demonstrated hot paths.
+
+MapLibre recommends shrinking unnecessary GeoJSON properties/precision, simplifying geometry, and considering chunking or vector tiles for larger data. Its [GeoJSON performance guide](https://maplibre.org/maplibre-gl-js/docs/guides/large-data/) and [map performance metrics example](https://maplibre.org/maplibre-gl-js/docs/examples/display-performance-metrics/) are useful references.
+
+**Done when:** map-ready time is lower without regressing feature hit-testing, labels, route restoration, layer styling, or mobile interactions.
+
+### P5 — Improve repeat-visit caching and external-resource reliability
+
+1. Record response headers and repeat-visit transfer sizes for HTML, scripts, CSS, fonts, images, GeoJSON, and third-party bundles. Identify exactly which requests produce Lighthouse's 401 KiB cache opportunity.
+2. GitHub Pages does not support custom response headers. After P0–P3, decide whether a CDN/proxy in front of Pages is worthwhile for longer browser cache lifetimes; do not assume a checked-in `_headers` file changes GitHub Pages behavior.
+3. Keep library versions pinned and avoid relying on several CDNs for critical startup. If critical vendor code is moved or bundled locally, compare compression, cacheability, update workflow, and licensing before switching.
+4. Keep font loading bounded to the families/weights used above the fold. Ensure local `@font-face` rules specify an intentional `font-display` and retain a metrically compatible fallback; do not preload every font weight.
+
+**Done when:** repeat visits transfer materially fewer unchanged bytes, and critical UI remains usable if an optional third-party library or font is slow or unavailable.
+
+## Release and verification gates
+
+- After each slice, run the existing unit and browser checks; verify home search/globe, map initial view, feature switching, sidebar, basemap changes, dialogs, QR sharing, PDF/ZIP downloads, and mobile bottom navigation.
+- Re-run the same three-run mobile Lighthouse matrix after each high-impact slice. Track medians, regional spread, TBT, top regressions, and label render task time; do not optimize only the score if real map readiness or interactions get worse.
+- Targets for the primary mobile profile: LCP ≤2.5 s, FCP ≤1.8 s, CLS ≤0.1, TBT ≤200 ms, with a repeatable median performance score ≥90 as a directional goal. Treat the app-level map-ready time as a separate gate.
+- Repeat on a physical mobile device when available; Lighthouse emulation is useful for comparable lab measurements but does not replace device/network field measurements.
+
+## References
+
+- [Chrome: render-blocking requests](https://developer.chrome.com/docs/performance/insights/render-blocking/)
+- [Chrome: reduce JavaScript execution time](https://developer.chrome.com/docs/lighthouse/performance/bootup-time/)
+- [web.dev: optimize Largest Contentful Paint](https://web.dev/articles/optimize-lcp)
+- [web.dev: browser-level image lazy loading](https://web.dev/articles/browser-level-image-lazy-loading)
+- [web.dev: preload critical assets](https://web.dev/articles/preload-critical-assets)
+- [MapLibre: optimizing large GeoJSON datasets](https://maplibre.org/maplibre-gl-js/docs/guides/large-data/)
+- [MapLibre: display map performance metrics](https://maplibre.org/maplibre-gl-js/docs/examples/display-performance-metrics/)

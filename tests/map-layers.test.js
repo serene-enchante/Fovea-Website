@@ -160,10 +160,13 @@ test('renders HTML labels with the production light-theme default-basemap colors
     const stateKeys = ['map', 'labelData', 'isCirclesFeature', 'currentFeature', 'currentBaseLayer'];
     const originalState = Object.fromEntries(stateKeys.map(key => [key, state[key]]));
     const label = { style: {}, dataset: { labelId: '04' } };
+    const labels = [];
+    let createCount = 0;
+    let projectionCount = 0;
     const overlay = {
-        querySelectorAll: () => [],
-        querySelector: () => label,
-        appendChild: () => {}
+        querySelectorAll: () => labels,
+        querySelector: () => { throw new Error('labels should be looked up from the overlay cache'); },
+        appendChild: element => labels.push(element)
     };
 
     try {
@@ -171,11 +174,15 @@ test('renders HTML labels with the production light-theme default-basemap colors
             body: { classList: { contains: () => false } },
             documentElement: { getAttribute: name => name === 'data-theme' ? 'light' : null },
             getElementById: () => overlay,
-            createElement: () => label
+            createElement: () => { createCount += 1; return label; }
         };
         globalThis.window = { innerWidth: 1024 };
         Object.assign(state, {
-            map: { getZoom: () => 10, project: () => ({ x: 20, y: 30 }), getCanvas: () => ({}) },
+            map: {
+                getZoom: () => 10,
+                project: () => ({ x: 20 + projectionCount++, y: 30 }),
+                getCanvas: () => { throw new Error('label layout does not need the map canvas'); }
+            },
             labelData: [{ id: '04', lng: 0, lat: 0, text: '04', degWidth: 1, textLen: 2, isCircle: false }],
             isCirclesFeature: false,
             currentFeature: 'eugene',
@@ -186,6 +193,9 @@ test('renders HTML labels with the production light-theme default-basemap colors
 
         assert.equal(label.style.color, '#000000');
         assert.equal(label.style.textShadow, 'none');
+        rebuildHtmlLabels();
+        assert.equal(createCount, 1, 'existing label elements are reused across updates');
+        assert.equal(label.style.left, '21px', 'reused labels receive the new projected position');
     } finally {
         for (const key of stateKeys) {
             if (originalState[key] === undefined) delete state[key];

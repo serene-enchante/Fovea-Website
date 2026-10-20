@@ -11,11 +11,22 @@ export function createMapLayerLifecycle({
     buildFeatureData = buildZoneFeatureData,
     addFeatureLayers = addZoneFeatureLayers,
     renderHtmlLabels = rebuildHtmlLabels,
+    requestFrame = callback => globalThis.requestAnimationFrame(callback),
     setupHoverEvents = setupMapHoverEvents,
     setupProximityTracker = setupProximityTracking,
     setupProximityGlow = setupProximityGlowCanvas
 }) {
     let labelListenersAttached = false;
+    let labelRenderScheduled = false;
+
+    function scheduleHtmlLabelRender() {
+        if (labelRenderScheduled) return;
+        labelRenderScheduled = true;
+        requestFrame(() => {
+            labelRenderScheduled = false;
+            renderHtmlLabels();
+        });
+    }
 
     function rebuildGeoJsonLayer() {
         if (!state.map) return;
@@ -31,9 +42,10 @@ export function createMapLayerLifecycle({
 
             if (!labelListenersAttached) {
                 labelListenersAttached = true;
-                state.map.on('move', renderHtmlLabels);
-                state.map.on('zoom', renderHtmlLabels);
-                state.map.on('render', renderHtmlLabels);
+                // MapLibre can emit move and zoom for the same camera frame. Coalesce
+                // those events and avoid running label work for unrelated map renders.
+                state.map.on('move', scheduleHtmlLabelRender);
+                state.map.on('zoom', scheduleHtmlLabelRender);
             }
             setupProximityTracker();
             setupProximityGlow();
