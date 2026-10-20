@@ -3,6 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    document.documentElement.dataset.view = window.matchMedia("(min-width: 701px)").matches
+      ? "directory-view"
+      : "content-view";
+
+    try {
+      const theme = localStorage.getItem("fovea-theme") || "dark";
+      const systemIsLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
+      if (theme === "light" || (theme === "auto" && systemIsLight)) {
+        document.documentElement.dataset.theme = "light";
+      }
+    } catch (_) {}
+  </script>
   <title>Maps Proto</title>
   <link rel="stylesheet" href="./styles/frame-layout.css">
   <link rel="stylesheet" href="./assets/google-icons/material-symbols-rounded.css">
@@ -14,17 +27,6 @@
   <link rel="stylesheet" href="./styles/frames/material-floating-window.css">
   <link rel="stylesheet" href="./styles/frames/animations.css">
   <link rel="stylesheet" href="./styles/components/toolbar.css">
-  <script>
-    (() => {
-      try {
-        const theme = localStorage.getItem("fovea-theme") || "dark";
-        const systemIsLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
-        if (theme === "light" || (theme === "auto" && systemIsLight)) {
-          document.documentElement.dataset.theme = "light";
-        }
-      } catch (_) {}
-    })();
-  </script>
 </head>
 <body>
   <div class="frame-layout" id="frame-layout" data-directory-src="./directory.json" data-toolbar-src="./toolbar.json">

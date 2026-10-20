@@ -9,13 +9,11 @@
 .toolbar {
   color: var(--control-text);
   font-family: system-ui, sans-serif;
+  width: max-content;
+  max-width: 100%;
 }
 
 .app-frame.app-frame--toolbar {
-  border-radius: 999px;
-}
-
-.app-frame.app-frame--toolbar[data-toolbar-open="true"] {
   border-radius: 20px;
 }
 
@@ -24,7 +22,7 @@
   align-items: center;
   gap: 4px;
   min-height: 32px;
-  padding: 2px 4px;
+  padding: 2px 12px 2px 4px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -50,6 +48,17 @@
   white-space: nowrap;
   cursor: pointer;
   transition: background-color 160ms ease;
+}
+
+.toolbar__menu-item--view-toggle {
+  gap: 8px;
+  min-height: 28px;
+  padding-inline: 10px;
+  font-size: 16px;
+}
+
+.toolbar__menu-item--view-toggle .toolbar__icon {
+  font-size: 20px;
 }
 
 .toolbar__menu-item-label--serif {
@@ -103,16 +112,33 @@
 
 .toolbar__panel-inner {
   min-height: 0;
+  width: max-content;
+  max-width: 100%;
   overflow: hidden;
-  border-top: 1px solid color-mix(in srgb, var(--control-text) 12%, transparent);
 }
 
 .toolbar__groups {
   display: flex;
   align-items: stretch;
   gap: 8px;
+  width: max-content;
   min-height: 112px;
   padding: 12px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition:
+    opacity 680ms ease 50ms,
+    transform 850ms cubic-bezier(.2, .8, .2, 1) 50ms;
+}
+
+.toolbar[data-open="true"] .toolbar__groups {
+  opacity: 1;
+  transform: translateY(0);
+  animation: toolbar-content-slide-in 850ms cubic-bezier(.2, .8, .2, 1) 50ms both;
+}
+
+.toolbar[data-open="true"] .toolbar__groups[data-transition="horizontal"] {
+  animation: none;
 }
 
 .toolbar__group {
@@ -121,10 +147,6 @@
   gap: 6px;
   min-width: 110px;
   padding: 0 8px;
-}
-
-.toolbar__group + .toolbar__group {
-  border-left: 1px solid color-mix(in srgb, var(--control-text) 12%, transparent);
 }
 
 .toolbar__group-title {
@@ -143,9 +165,22 @@
 }
 
 .toolbar__option {
-  min-height: 32px;
-  padding-inline: 10px;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 76px;
+  min-height: 68px;
+  padding: 8px 10px;
   font-size: 13px;
+}
+
+.toolbar__option-icon {
+  font-size: 28px;
+  line-height: 1;
+  font-variation-settings: "FILL" 0, "wght" 300, "GRAD" -25, "opsz" 28;
+}
+
+.toolbar__option-label {
+  text-align: center;
 }
 
 .toolbar__menu-item:focus-visible,
@@ -161,6 +196,7 @@
 
   .toolbar__groups {
     gap: 4px;
+    max-width: 100%;
     min-height: 100px;
     padding: 10px;
     overflow-x: auto;
@@ -174,9 +210,26 @@
 
 @media (prefers-reduced-motion: reduce) {
   .toolbar__panel,
+  .toolbar__groups,
   .toolbar__menu-item,
   .toolbar__option,
   .toolbar__icon--directional {
     transition-duration: 0.01ms;
+  }
+
+  .toolbar[data-open="true"] .toolbar__groups {
+    animation: none;
+  }
+}
+
+@keyframes toolbar-content-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

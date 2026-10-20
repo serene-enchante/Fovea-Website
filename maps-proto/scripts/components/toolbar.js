@@ -29,7 +29,78 @@ export function createToolbar(items = []) {
   let renderedItem = null;
   let hoverSuppressed = false;
   let hoverUnlockTimer = null;
+  let ribbonTransition = 0;
   const menuButtons = [];
+
+  async function switchRibbon(item, previousItem, direction, transitionId) {
+    const previousGroups = panelInner.querySelector(".toolbar__groups");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const duration = reducedMotion ? 0.01 : 200;
+
+    if (previousGroups) {
+      previousGroups.getAnimations().forEach((animation) => animation.cancel());
+      try {
+        await previousGroups.animate(
+          [
+            { opacity: 1, transform: "translateX(0)" },
+            { opacity: 0, transform: `translateX(${-direction * 28}px)` },
+          ],
+          { duration, easing: "cubic-bezier(.4, 0, .8, .3)", fill: "forwards" },
+        ).finished;
+      } catch {
+        return;
+      }
+    }
+
+    const currentItem = hoveredItem || pinnedItem;
+    if (transitionId !== ribbonTransition || toolbar.dataset.open !== "true" || currentItem !== item) return;
+
+    panel.setAttribute("aria-label", `${item.label} options`);
+    const groups = createToolbarGroups(item);
+    panelInner.replaceChildren(groups);
+    renderedItem = item;
+    requestAnimationFrame(updateFrameWidth);
+
+    if (previousItem) {
+      groups.dataset.transition = "horizontal";
+      const animation = groups.animate(
+        [
+          { opacity: 0, transform: `translateX(${direction * 28}px)` },
+          { opacity: 1, transform: "translateX(0)" },
+        ],
+        { duration, easing: "cubic-bezier(.2, .8, .2, 1)", fill: "both" },
+      );
+      animation.finished.then(() => {
+        animation.cancel();
+      }).catch(() => {});
+    }
+  }
+
+  function updateFrameWidth() {
+    const frame = toolbar.closest(".app-frame");
+    if (!frame) return;
+
+    const menuStyle = getComputedStyle(menu);
+    const menuItemsWidth = Array.from(menu.children)
+      .reduce((total, button) => total + button.getBoundingClientRect().width, 0);
+    const menuGap = Number.parseFloat(menuStyle.columnGap) || 0;
+    const menuPadding = (Number.parseFloat(menuStyle.paddingLeft) || 0) +
+      (Number.parseFloat(menuStyle.paddingRight) || 0);
+    const menuWidth = menuItemsWidth + Math.max(0, menu.children.length - 1) * menuGap + menuPadding;
+    const panelWidth = toolbar.dataset.open === "true" ? panelInner.scrollWidth : 0;
+    const width = `${Math.ceil(Math.max(menuWidth, panelWidth) + 2)}px`;
+
+    if (frame.dataset.widthReady !== "true") {
+      frame.style.transition = "none";
+      frame.style.width = width;
+      frame.getBoundingClientRect();
+      frame.style.removeProperty("transition");
+      frame.dataset.widthReady = "true";
+      return;
+    }
+
+    frame.style.width = width;
+  }
 
   function renderMenu(activeItem = hoveredItem || pinnedItem) {
     const isOpen = Boolean(activeItem);
@@ -46,10 +117,22 @@ export function createToolbar(items = []) {
     });
 
     if (isOpen && renderedItem !== activeItem) {
-      panel.setAttribute("aria-label", `${activeItem.label} options`);
-      panelInner.replaceChildren(createToolbarGroups(activeItem));
-      renderedItem = activeItem;
+      const previousItem = renderedItem;
+      const direction = previousItem && items.indexOf(activeItem) > items.indexOf(previousItem) ? 1 : -1;
+      const transitionId = ++ribbonTransition;
+
+      if (previousItem) {
+        switchRibbon(activeItem, previousItem, direction, transitionId);
+      } else {
+        panel.setAttribute("aria-label", `${activeItem.label} options`);
+        panelInner.replaceChildren(createToolbarGroups(activeItem));
+        renderedItem = activeItem;
+      }
+    } else if (!isOpen) {
+      ribbonTransition += 1;
     }
+
+    requestAnimationFrame(updateFrameWidth);
   }
 
   function suppressHoverDuringTransition() {
@@ -146,6 +229,7 @@ export function createToolbar(items = []) {
     renderMenu();
   });
   toolbar.append(menu, panel);
+  requestAnimationFrame(updateFrameWidth);
   return toolbar;
 }
 
@@ -170,7 +254,11 @@ function createToolbarGroups(item) {
       const button = document.createElement("button");
       button.className = "toolbar__option";
       button.type = "button";
-      button.textContent = option.label;
+      if (option.icon) button.append(createMaterialIcon(option.icon, "toolbar__option-icon"));
+      const label = document.createElement("span");
+      label.className = "toolbar__option-label";
+      label.textContent = option.label;
+      button.append(label);
       button.addEventListener("click", () => {
         groups.dispatchEvent(new CustomEvent("toolbaraction", {
           bubbles: true,

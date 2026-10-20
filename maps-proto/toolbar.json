@@ -9,47 +9,47 @@
     },
     {
       "id": "edit",
-      "label": "edit",
+      "label": "Edit",
       "groups": [
         {
           "label": "History",
           "options": [
-            { "id": "undo", "label": "Undo" },
-            { "id": "redo", "label": "Redo" }
+            { "id": "undo", "label": "Undo", "icon": "undo" },
+            { "id": "redo", "label": "Redo", "icon": "redo" }
           ]
         },
         {
           "label": "Selection",
           "options": [
-            { "id": "select-all", "label": "Select all" },
-            { "id": "clear-selection", "label": "Clear selection" }
+            { "id": "select-all", "label": "Select all", "icon": "select_all" },
+            { "id": "clear-selection", "label": "Clear selection", "icon": "deselect" }
           ]
         }
       ]
     },
     {
       "id": "view",
-      "label": "view",
+      "label": "View",
       "groups": [
         {
           "label": "Map view",
           "options": [
-            { "id": "zoom-in", "label": "Zoom in" },
-            { "id": "zoom-out", "label": "Zoom out" },
-            { "id": "reset-view", "label": "Reset view" }
+            { "id": "zoom-in", "label": "Zoom in", "icon": "add" },
+            { "id": "zoom-out", "label": "Zoom out", "icon": "remove" },
+            { "id": "reset-view", "label": "Reset view", "icon": "restart_alt" }
           ]
         }
       ]
     },
     {
       "id": "help",
-      "label": "help",
+      "label": "Help",
       "groups": [
         {
           "label": "Support",
           "options": [
-            { "id": "help-center", "label": "Help center" },
-            { "id": "shortcuts", "label": "Keyboard shortcuts" }
+            { "id": "help-center", "label": "Help center", "icon": "help" },
+            { "id": "shortcuts", "label": "Keyboard shortcuts", "icon": "keyboard" }
           ]
         }
       ]

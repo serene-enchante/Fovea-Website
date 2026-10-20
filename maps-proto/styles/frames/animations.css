@@ -15,6 +15,10 @@
     transform 420ms cubic-bezier(.2, .8, .2, 1);
 }
 
+.frame-layout--toolbar[data-width-ready="true"] {
+  transition: width 320ms cubic-bezier(.2, .8, .2, 1);
+}
+
 .content-column {
   transition: transform 420ms cubic-bezier(.2, .8, .2, 1);
 }
@@ -72,6 +76,7 @@
   .frame-layout,
   .app-frame,
   .app-frame--content,
+  .frame-layout--toolbar,
   .app-frame--organization,
   .app-frame--directory,
   .app-frame--user,

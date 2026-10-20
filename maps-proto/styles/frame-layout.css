@@ -147,9 +147,9 @@ body {
   z-index: 2;
   top: 16px;
   left: 16px;
-  width: min(720px, calc(100% - 32px));
+  width: max-content;
+  max-width: min(720px, calc(100vw - 32px));
   flex: none;
-  overflow: visible;
 }
 
 .app-frame--toolbar {
@@ -226,7 +226,7 @@ body {
   .frame-layout--toolbar {
     top: 12px;
     left: 12px;
-    width: calc(100% - 24px);
+    max-width: calc(100vw - 24px);
   }
 
   .app-frame--context.frame-layout--floating {

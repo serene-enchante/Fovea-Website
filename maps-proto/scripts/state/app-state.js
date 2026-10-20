@@ -8,7 +8,7 @@ const ALLOWED_TRANSITIONS = Object.freeze({
   [STATES.DIRECTORY_VIEW]: new Set([STATES.CONTENT_VIEW]),
 });
 
-let currentState = window.matchMedia("(min-width: 701px)").matches
+let currentState = document.documentElement.dataset.view === STATES.DIRECTORY_VIEW
   ? STATES.DIRECTORY_VIEW
   : STATES.CONTENT_VIEW;
 const listeners = new Set();
