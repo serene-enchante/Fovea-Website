@@ -57,6 +57,25 @@ test('renders the home shell while the non-critical Nunito stylesheet is delayed
     releaseFonts();
 });
 
+test('renders a usable map while its non-critical Google Fonts stylesheet is delayed', async ({ page }) => {
+    let releaseFonts;
+    let notifyFontsRequested;
+    const fontsRequested = new Promise(resolve => { notifyFontsRequested = resolve; });
+
+    await page.route(/^https:\/\/fonts\.googleapis\.com\/css2\?family=Roboto/, async route => {
+        notifyFontsRequested();
+        await new Promise(resolve => { releaseFonts = resolve; });
+        await route.fulfill({ contentType: 'text/css', body: '' });
+    });
+
+    await page.goto('/maps/', { waitUntil: 'domcontentloaded' });
+    await fontsRequested;
+    await expect(page.locator('#tile-map canvas.maplibregl-canvas')).toBeVisible();
+    await expect(page.locator('#header-title')).not.toHaveText('Loading...');
+    releaseFonts();
+    await expect(page.locator('link[rel="stylesheet"][href^="https://fonts.googleapis.com/"]')).toHaveAttribute('media', 'all');
+});
+
 test('keeps a visible globe placeholder when the deferred map stylesheet fails', async ({ page }) => {
     await page.route('https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css', route => route.abort());
     await page.goto('/', { waitUntil: 'domcontentloaded' });

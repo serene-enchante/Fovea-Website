@@ -17,7 +17,11 @@
 
     <!-- MapLibre & Fonts -->
     <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&family=Nunito:wght@400;600;700&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.onload=null;this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
     <link rel="icon" type="image/png" href="../images/logo-fav.png">
     <script>
         (function() {
