@@ -111,7 +111,7 @@ const mapLayerLifecycle = createMapLayerLifecycle({
     onFeatureClick: featureNavigation.handleMapFeatureClick
 });
 
-function selectSubject(id, triggerMapZoom = true, animate = true) {
+function selectSubject(id, triggerMapZoom = true, animate = true, options = {}) {
     return mapSelectionController.selectSubject(id, triggerMapZoom, animate, {
         state,
         documentObject: document,
@@ -132,7 +132,7 @@ function selectSubject(id, triggerMapZoom = true, animate = true) {
             displayZoneId,
             findFeatureByZoneId
         })
-    });
+    }, options);
 }
 
 let selectBirdHandler;
@@ -216,7 +216,6 @@ async function init() {
         schedule: setTimeout,
         getInitialId: getInitialIdFromUrl,
         loadFeatures: loadFeaturesForMapView,
-        renderSidebarList,
         initializeMap,
         setupPageUi: () => setupMapPageUi({
             state,

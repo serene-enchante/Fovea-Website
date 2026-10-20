@@ -116,12 +116,12 @@ function _getHierarchyLevel(id, appState) {
 export function createMapSelectionController() {
     const selectionState = { currentHierarchyLevel: 0 };
     return {
-        selectSubject: (id, triggerMapZoom = true, animate = true, callbacks = {}) =>
-            runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState)
+        selectSubject: (id, triggerMapZoom = true, animate = true, callbacks = {}, options = {}) =>
+            runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState, options)
     };
 }
 
-function runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState) {
+function runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState, { renderSidebar: shouldRenderSidebar = true } = {}) {
     const {
         state: appState,
         documentObject,
@@ -177,7 +177,7 @@ function runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState)
                 backBtn.removeAttribute("title");
                 backBtn.removeAttribute("aria-label");
             }
-            renderSidebar();
+            if (shouldRenderSidebar) renderSidebar();
             updateUrl?.(id);
             if (triggerMapZoom && appState.map) {
                 appState.map.fitBounds(getBbox(appState.allFeatures), {
@@ -220,7 +220,7 @@ function runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState)
             }
         }
 
-        renderSidebar();
+        if (shouldRenderSidebar) renderSidebar();
         updateStyles();
 
         if (triggerMapZoom && appState.map) {

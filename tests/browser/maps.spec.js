@@ -10,6 +10,27 @@ async function openMap(page, path = '/maps/') {
     await expect(page.locator('#header-title')).not.toHaveText('Loading...');
 }
 
+test('renders the initial circles overview once during map startup', async ({ page }) => {
+    await page.addInitScript(() => {
+        window.__sidebarOverviewMounts = 0;
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar-zone-list');
+            new MutationObserver(records => {
+                for (const record of records) {
+                    for (const node of record.addedNodes) {
+                        if (node.nodeType === Node.ELEMENT_NODE && node.matches('.sidebar-about-wrapper')) {
+                            window.__sidebarOverviewMounts += 1;
+                        }
+                    }
+                }
+            }).observe(sidebar, { childList: true });
+        });
+    });
+
+    await openMap(page);
+    await expect.poll(() => page.evaluate(() => window.__sidebarOverviewMounts)).toBe(1);
+});
+
 test('renders the home shell while the deferred globe dependencies are still loading', async ({ page }) => {
     let releaseStyles;
     let releaseScript;

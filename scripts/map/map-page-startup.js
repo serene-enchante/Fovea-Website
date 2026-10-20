@@ -8,7 +8,6 @@ export async function runMapPageStartup({
     schedule = globalThis.setTimeout,
     getInitialId,
     loadFeatures,
-    renderSidebarList,
     initializeMap,
     setupPageUi,
     selectSubject,
@@ -18,23 +17,35 @@ export async function runMapPageStartup({
 }) {
     markMapStartup('startup-start');
     let pageReadyMarked = false;
+    let mapResizedForEntrance = false;
+    let selectionRestoredAfterMapLoad = false;
 
     const triggerEntrance = () => {
-        documentObject.body.classList.remove('is-transitioning');
-        if (!pageReadyMarked) {
+        const revealPage = !pageReadyMarked;
+        if (revealPage) {
+            documentObject.body.classList.remove('is-transitioning');
             markMapStartup('page-ready');
             pageReadyMarked = true;
         }
 
         if (state.map) {
-            state.map.resize();
-            selectSubject(state.currentId, true, false);
+            const mapIsLoaded = typeof state.map.loaded === 'function' && state.map.loaded();
+            if (!mapResizedForEntrance || (mapIsLoaded && !selectionRestoredAfterMapLoad)) {
+                state.map.resize();
+                mapResizedForEntrance = true;
+            }
+            if (mapIsLoaded && !selectionRestoredAfterMapLoad) {
+                selectionRestoredAfterMapLoad = true;
+                selectSubject(state.currentId, true, false, { renderSidebar: false });
+            }
         }
 
-        const overlay = documentObject.getElementById('page-transition-overlay');
-        if (overlay) {
-            overlay.classList.add('is-loaded');
-            overlay.classList.remove('is-active');
+        if (revealPage) {
+            const overlay = documentObject.getElementById('page-transition-overlay');
+            if (overlay) {
+                overlay.classList.add('is-loaded');
+                overlay.classList.remove('is-active');
+            }
         }
     };
 
@@ -54,7 +65,6 @@ export async function runMapPageStartup({
         state.allFeatures = await loadFeatures(initialFeature);
         markMapStartup('dataset-ready');
 
-        renderSidebarList();
         initializeMap();
         markMapStartup('map-initialized');
         setupPageUi();
