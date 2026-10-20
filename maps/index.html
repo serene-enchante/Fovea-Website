@@ -31,6 +31,16 @@
                 if (storedTheme === "light" || (storedTheme === "auto" && isSystemLight)) {
                     document.documentElement.setAttribute("data-theme", "light");
                     document.documentElement.classList.add("theme-light");
+
+                    const themeStylesheet = document.createElement("link");
+                    themeStylesheet.id = "map-theme-stylesheet";
+                    themeStylesheet.rel = "stylesheet";
+                    themeStylesheet.href = "../styles/page-maps-tile-theme.bundle.css?v=1";
+                    window.__foveaMapThemeStylesReady = new Promise(resolve => {
+                        themeStylesheet.addEventListener("load", resolve, { once: true });
+                        themeStylesheet.addEventListener("error", resolve, { once: true });
+                    });
+                    document.head.appendChild(themeStylesheet);
                 }
             } catch(e) {}
         })();

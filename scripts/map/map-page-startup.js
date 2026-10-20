@@ -17,11 +17,12 @@ export async function runMapPageStartup({
 }) {
     markMapStartup('startup-start');
     let pageReadyMarked = false;
+    let themeStylesReady = !windowObject?.__foveaMapThemeStylesReady;
     let mapResizedForEntrance = false;
     let selectionRestoredAfterMapLoad = false;
 
     const triggerEntrance = () => {
-        const revealPage = !pageReadyMarked;
+        const revealPage = !pageReadyMarked && themeStylesReady;
         if (revealPage) {
             documentObject.body.classList.remove('is-transitioning');
             markMapStartup('page-ready');
@@ -48,6 +49,15 @@ export async function runMapPageStartup({
             }
         }
     };
+
+    if (!themeStylesReady) {
+        Promise.resolve(windowObject.__foveaMapThemeStylesReady)
+            .catch(() => {})
+            .then(() => {
+                themeStylesReady = true;
+                if (state.map) triggerEntrance();
+            });
+    }
 
     try {
         const storedTheme = storageObject.getItem('fovea-theme') || 'dark';

@@ -39,6 +39,30 @@ test('avoids duplicate sidebar and header rendering during map startup', async (
     await expect.poll(() => page.evaluate(() => window.__headerTitleMutations)).toBe(1);
 });
 
+test('loads light-theme CSS before revealing the map when light mode is selected', async ({ page }) => {
+    let releaseThemeStyles;
+    let notifyThemeStylesRequested;
+    const themeStylesRequested = new Promise(resolve => { notifyThemeStylesRequested = resolve; });
+
+    await page.addInitScript(() => localStorage.setItem('fovea-theme', 'light'));
+    await page.route(/page-maps-tile-theme\.bundle\.css/, async route => {
+        notifyThemeStylesRequested();
+        await new Promise(resolve => { releaseThemeStyles = resolve; });
+        await route.continue();
+    });
+
+    await page.goto('/maps/?feature=circles', { waitUntil: 'domcontentloaded' });
+    await themeStylesRequested;
+    await expect(page.locator('#tile-map canvas.maplibregl-canvas')).toBeVisible();
+    await expect(page.locator('#page-transition-overlay')).not.toHaveClass(/is-loaded/);
+
+    releaseThemeStyles();
+    await expect(page.locator('#page-transition-overlay')).toHaveClass(/is-loaded/);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await expect.poll(() => page.locator('.maps-tile-sidebar').evaluate(element => getComputedStyle(element).backgroundColor))
+        .toBe('rgb(255, 255, 255)');
+});
+
 test('renders the home shell while the deferred globe dependencies are still loading', async ({ page }) => {
     let releaseStyles;
     let releaseScript;
