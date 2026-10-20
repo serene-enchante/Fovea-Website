@@ -1,0 +1,58 @@
+{
+  "items": [
+    {
+      "id": "fovea",
+      "label": "fovea",
+      "font": "serif",
+      "icon": "north_west",
+      "action": "toggle-view"
+    },
+    {
+      "id": "edit",
+      "label": "edit",
+      "groups": [
+        {
+          "label": "History",
+          "options": [
+            { "id": "undo", "label": "Undo" },
+            { "id": "redo", "label": "Redo" }
+          ]
+        },
+        {
+          "label": "Selection",
+          "options": [
+            { "id": "select-all", "label": "Select all" },
+            { "id": "clear-selection", "label": "Clear selection" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "view",
+      "label": "view",
+      "groups": [
+        {
+          "label": "Map view",
+          "options": [
+            { "id": "zoom-in", "label": "Zoom in" },
+            { "id": "zoom-out", "label": "Zoom out" },
+            { "id": "reset-view", "label": "Reset view" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "help",
+      "label": "help",
+      "groups": [
+        {
+          "label": "Support",
+          "options": [
+            { "id": "help-center", "label": "Help center" },
+            { "id": "shortcuts", "label": "Keyboard shortcuts" }
+          ]
+        }
+      ]
+    }
+  ]
+}

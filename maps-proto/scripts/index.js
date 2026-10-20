@@ -1,8 +1,9 @@
 import { createAppFrame, initializeFrameLayout } from "./layout/frame-layout.js";
 import { createPageList, initializePageSelection, initializeTileStrips } from "./components/page-list.js";
 import { createOrganizationRail } from "./components/organization-rail.js";
+import { createToolbar } from "./components/toolbar.js";
 import { createUserProfile } from "./components/user-profile.js";
-import { loadDirectoryData } from "./data/load-directory-data.js";
+import { loadJsonData } from "./data/load-json-data.js";
 
 const frameLayout = document.getElementById("frame-layout");
 
@@ -63,7 +64,7 @@ if (frameLayout) {
   );
 
   initializeFrameLayout();
-  loadDirectoryData(frameLayout.dataset.directorySrc)
+  loadJsonData(frameLayout.dataset.directorySrc)
     .then(({ data, dataUrl }) => {
       directoryContent.replaceChildren(createPageList(data, dataUrl));
       initializePageSelection(directoryContent);
@@ -76,5 +77,22 @@ if (frameLayout) {
       console.error("Unable to load directory data", error);
       directoryContent.textContent = "Pages unavailable";
       organizationContent.textContent = "Organizations unavailable";
+    });
+
+  loadJsonData(frameLayout.dataset.toolbarSrc)
+    .then(({ data }) => {
+      contentColumn.append(
+        createAppFrame({
+          id: "toolbar-frame",
+          variant: "toolbar",
+          layout: "toolbar",
+          material: "floating",
+          label: "Toolbar",
+          content: createToolbar(data.items),
+        }),
+      );
+    })
+    .catch((error) => {
+      console.error("Unable to load toolbar data", error);
     });
 }

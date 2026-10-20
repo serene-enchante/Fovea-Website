@@ -9,6 +9,12 @@
   transition: border-radius 420ms cubic-bezier(.2, .8, .2, 1);
 }
 
+.app-frame--content {
+  transition:
+    border-radius 420ms cubic-bezier(.2, .8, .2, 1),
+    transform 420ms cubic-bezier(.2, .8, .2, 1);
+}
+
 .content-column {
   transition: transform 420ms cubic-bezier(.2, .8, .2, 1);
 }
@@ -30,6 +36,14 @@
 
 .app-frame--user {
   transform: translate(-24px, 24px);
+}
+
+.app-frame--directory,
+.app-frame--user {
+  transition:
+    width 420ms cubic-bezier(.2, .8, .2, 1),
+    opacity 240ms ease,
+    transform 420ms cubic-bezier(.2, .8, .2, 1);
 }
 
 :root[data-view="directory-view"] .app-frame--organization,
@@ -57,6 +71,7 @@
 @media (prefers-reduced-motion: reduce) {
   .frame-layout,
   .app-frame,
+  .app-frame--content,
   .app-frame--organization,
   .app-frame--directory,
   .app-frame--user,

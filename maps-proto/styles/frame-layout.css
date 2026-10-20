@@ -80,6 +80,17 @@ body {
   flex-direction: column;
 }
 
+:root[data-view="content-view"][data-view-preview="true"] .app-frame--content {
+  transform: scale(0.94);
+  transform-origin: center;
+  border-radius: 24px;
+}
+
+:root[data-view="directory-view"][data-view-preview="true"] .app-frame--content {
+  transform: scale(1.03);
+  transform-origin: center;
+}
+
 .app-frame__content {
   position: relative;
   flex: 1 1 auto;
@@ -131,7 +142,25 @@ body {
   flex: none;
 }
 
+.frame-layout--toolbar {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  left: 16px;
+  width: min(720px, calc(100% - 32px));
+  flex: none;
+  overflow: visible;
+}
+
+.app-frame--toolbar {
+  min-height: 0;
+}
+
 @media (max-width: 700px) {
+  :root[data-view="content-view"][data-view-preview="true"] .app-frame--content {
+    border-radius: 32px;
+  }
+
   .frame-layout,
   :root[data-view="directory-view"] .frame-layout {
     --user-frame-height: 56px;
@@ -192,6 +221,12 @@ body {
     right: 8px;
     bottom: 12px;
     width: min(260px, calc(100% - 16px));
+  }
+
+  .frame-layout--toolbar {
+    top: 12px;
+    left: 12px;
+    width: calc(100% - 24px);
   }
 
   .app-frame--context.frame-layout--floating {

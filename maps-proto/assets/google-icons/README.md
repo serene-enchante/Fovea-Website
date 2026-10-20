@@ -3,7 +3,8 @@
 This folder contains the locally hosted **Material Symbols Rounded** WOFF2
 subset used by the maps prototype. The subset currently includes these ligature
 names: `build`, `explore`, `home`, `settings`, `chevron_left`, `chevron_right`,
-`add`, `account_circle`, `expand_more`, `light_mode`, and `dark_mode`.
+`add`, `account_circle`, `expand_more`, `light_mode`, `dark_mode`, and
+`north_west`.
 
 The font file is served locally to avoid a runtime dependency on Google Fonts.
 `material-symbols-rounded.css` defines the font face with `font-display: swap`
@@ -15,7 +16,7 @@ download the generated WOFF2 file, and replace this subset. Keep the CSS family
 name and the page's `font-variation-settings` axes aligned with the requested
 font axes.
 
-Source: Google Fonts CSS2 API, Material Symbols Rounded, subset `build,explore,home,settings,chevron_left,chevron_right,add,account_circle,expand_more,light_mode,dark_mode`, variable axes `opsz,wght,FILL,GRAD` (Google font version v378).
+Source: Google Fonts CSS2 API, Material Symbols Rounded, subset `build,explore,home,settings,chevron_left,chevron_right,add,account_circle,expand_more,light_mode,dark_mode,north_west`, variable axes `opsz,wght,FILL,GRAD` (Google font version v378).
 
 Material Symbols are provided by Google under the Apache License 2.0. See
 [`LICENSE`](./LICENSE).

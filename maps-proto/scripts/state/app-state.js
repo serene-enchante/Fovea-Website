@@ -8,7 +8,9 @@ const ALLOWED_TRANSITIONS = Object.freeze({
   [STATES.DIRECTORY_VIEW]: new Set([STATES.CONTENT_VIEW]),
 });
 
-let currentState = STATES.CONTENT_VIEW;
+let currentState = window.matchMedia("(min-width: 701px)").matches
+  ? STATES.DIRECTORY_VIEW
+  : STATES.CONTENT_VIEW;
 const listeners = new Set();
 
 const appStateMachine = Object.freeze({
