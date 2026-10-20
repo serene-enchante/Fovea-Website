@@ -94,11 +94,15 @@ function createScrollButton(direction, label) {
   button.className = `page-list__scroll page-list__scroll--${direction}`;
   button.type = "button";
   button.setAttribute("aria-label", `Scroll ${label} ${direction}`);
-  button.textContent = direction === "left" ? "‹" : "›";
+  const icon = document.createElement("span");
+  icon.className = "material-symbols-rounded";
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = direction === "left" ? "chevron_left" : "chevron_right";
+  button.append(icon);
   return button;
 }
 
-function initializeTileStrips(root) {
+export function initializeTileStrips(root) {
   root.querySelectorAll(".page-list__tile-viewport").forEach((viewport) => {
     const list = viewport.querySelector(".page-list__items");
     const previous = viewport.querySelector(".page-list__scroll--left");
@@ -134,18 +138,4 @@ function initializeTileStrips(root) {
     }
     requestAnimationFrame(updateEdges);
   });
-}
-
-export async function loadPageList(target, source) {
-  try {
-    if (!source) throw new Error("Directory source is not configured");
-    const dataUrl = new URL(source, document.baseURI);
-    const response = await fetch(dataUrl);
-    if (!response.ok) throw new Error(`Directory data request failed (${response.status})`);
-    target.replaceChildren(createPageList(await response.json(), dataUrl));
-    initializeTileStrips(target);
-  } catch (error) {
-    console.error("Unable to load directory data", error);
-    target.textContent = "Pages unavailable";
-  }
 }

@@ -1,6 +1,18 @@
 {
   "label": "Directory",
   "title": "Coast to Cascades Bird Alliance",
+  "organizations": [
+    {
+      "id": "coast-to-cascades-bird-alliance",
+      "label": "Coast to Cascades Bird Alliance",
+      "image": "./assets/images/organizations/coast-to-cascades-bird-alliance-icon.png",
+      "selected": true
+    }
+  ],
+  "organizationActions": [
+    { "id": "discover", "label": "Discover", "icon": "explore" },
+    { "id": "create-new", "label": "Create new", "icon": "add" }
+  ],
   "sections": [
     {
       "id": "pages",
@@ -18,15 +30,15 @@
       "title": "Recent",
       "view": "tiles",
       "items": [
-        { "id": "eugene-cbc", "label": "Eugene CBC", "image": "../images/ecbc.webp" },
-        { "id": "florence-cbc", "label": "Florence CBC", "image": "../images/fcbc.webp" },
-        { "id": "eugene-zone-4", "label": "Eugene CBC · Zone 4", "image": "../images/zone-images/z04-01.webp" },
-        { "id": "eugene-zone-5a", "label": "Eugene CBC · Zone 5A", "image": "../images/zone-images/z05A-01.webp" },
-        { "id": "eugene-zone-5b", "label": "Eugene CBC · Zone 5B", "image": "../images/zone-images/z05B-01.webp" },
-        { "id": "eugene-zone-6", "label": "Eugene CBC · Zone 6", "image": "../images/zone-images/z06-01.webp" },
-        { "id": "eugene-zone-7", "label": "Eugene CBC · Zone 7", "image": "../images/zone-images/z07-01.webp" },
-        { "id": "eugene-zone-8a", "label": "Eugene CBC · Zone 8A", "image": "../images/zone-images/z08A-01.webp" },
-        { "id": "eugene-zone-8b", "label": "Eugene CBC · Zone 8B", "image": "../images/zone-images/z08B-01.webp" }
+        { "id": "eugene-cbc", "label": "Eugene CBC", "image": "./assets/images/counts/ecbc.webp" },
+        { "id": "florence-cbc", "label": "Florence CBC", "image": "./assets/images/counts/fcbc.webp" },
+        { "id": "eugene-zone-4", "label": "Eugene CBC · Zone 4", "image": "./assets/images/zones/z04-01.webp" },
+        { "id": "eugene-zone-5a", "label": "Eugene CBC · Zone 5A", "image": "./assets/images/zones/z05A-01.webp" },
+        { "id": "eugene-zone-5b", "label": "Eugene CBC · Zone 5B", "image": "./assets/images/zones/z05B-01.webp" },
+        { "id": "eugene-zone-6", "label": "Eugene CBC · Zone 6", "image": "./assets/images/zones/z06-01.webp" },
+        { "id": "eugene-zone-7", "label": "Eugene CBC · Zone 7", "image": "./assets/images/zones/z07-01.webp" },
+        { "id": "eugene-zone-8a", "label": "Eugene CBC · Zone 8A", "image": "./assets/images/zones/z08A-01.webp" },
+        { "id": "eugene-zone-8b", "label": "Eugene CBC · Zone 8B", "image": "./assets/images/zones/z08B-01.webp" }
       ]
     },
     {
@@ -37,13 +49,13 @@
         {
           "id": "coast-to-cascades-bird-alliance",
           "label": "Coast to Cascades Bird Alliance",
-          "image": "../images/ccba.webp"
+          "image": "./assets/images/organizations/ccba.webp"
         },
-        { "id": "eugene-zone-1", "label": "Eugene CBC · Zone 1", "image": "../images/zone-images/z01-01.webp" },
-        { "id": "eugene-zone-2", "label": "Eugene CBC · Zone 2", "image": "../images/zone-images/z02-01.webp" },
-        { "id": "eugene-zone-3a", "label": "Eugene CBC · Zone 3A", "image": "../images/zone-images/z03A-01.webp" },
-        { "id": "eugene-zone-3b", "label": "Eugene CBC · Zone 3B", "image": "../images/zone-images/z03B-01.webp" },
-        { "id": "eugene-zone-4", "label": "Eugene CBC · Zone 4", "image": "../images/zone-images/z04-01.webp" }
+        { "id": "eugene-zone-1", "label": "Eugene CBC · Zone 1", "image": "./assets/images/zones/z01-01.webp" },
+        { "id": "eugene-zone-2", "label": "Eugene CBC · Zone 2", "image": "./assets/images/zones/z02-01.webp" },
+        { "id": "eugene-zone-3a", "label": "Eugene CBC · Zone 3A", "image": "./assets/images/zones/z03A-01.webp" },
+        { "id": "eugene-zone-3b", "label": "Eugene CBC · Zone 3B", "image": "./assets/images/zones/z03B-01.webp" },
+        { "id": "eugene-zone-4", "label": "Eugene CBC · Zone 4", "image": "./assets/images/zones/z04-01.webp" }
       ]
     }
   ]

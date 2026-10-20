@@ -1,5 +1,7 @@
-import { createAppFrame, initializeFrameLayout } from "../../scripts/frame-layout.js";
-import { loadPageList } from "./page-list.js";
+import { createAppFrame, initializeFrameLayout } from "./layout/frame-layout.js";
+import { createPageList, initializeTileStrips } from "./components/page-list.js";
+import { createOrganizationRail } from "./components/organization-rail.js";
+import { loadDirectoryData } from "./data/load-directory-data.js";
 
 const frameLayout = document.getElementById("frame-layout");
 
@@ -7,9 +9,6 @@ if (frameLayout) {
   const organizationContent = document.createElement("div");
   const directoryContent = document.createElement("div");
   const userContent = document.createElement("div");
-  const organizationDivider = document.createElement("div");
-  organizationDivider.className = "organization-divider";
-  organizationDivider.setAttribute("aria-hidden", "true");
 
   const contentColumn = document.createElement("div");
   contentColumn.className = "content-column";
@@ -49,7 +48,6 @@ if (frameLayout) {
       label: "Organization",
       content: organizationContent,
     }),
-    organizationDivider,
     createAppFrame({
       id: "directory-frame",
       variant: "directory",
@@ -68,5 +66,17 @@ if (frameLayout) {
   );
 
   initializeFrameLayout();
-  loadPageList(directoryContent, frameLayout.dataset.directorySrc);
+  loadDirectoryData(frameLayout.dataset.directorySrc)
+    .then(({ data, dataUrl }) => {
+      directoryContent.replaceChildren(createPageList(data, dataUrl));
+      organizationContent.replaceChildren(
+        createOrganizationRail(data.organizations, data.organizationActions, dataUrl),
+      );
+      initializeTileStrips(directoryContent);
+    })
+    .catch((error) => {
+      console.error("Unable to load directory data", error);
+      directoryContent.textContent = "Pages unavailable";
+      organizationContent.textContent = "Organizations unavailable";
+    });
 }

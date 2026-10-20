@@ -1,4 +1,4 @@
-import appStateMachine from "./app-state.js";
+import appStateMachine from "../state/app-state.js";
 
 export function createAppFrame({ id, variant, layout = "standard", material = "plain", label, content }) {
   const template = document.getElementById("app-frame-template");
