@@ -11,6 +11,9 @@ body {
 
 .frame-layout {
   --layout-padding: 0px;
+  --user-frame-height: 64px;
+  --user-frame-bottom: 24px;
+  --directory-scroll-clearance: 24px;
   position: fixed;
   inset: 0;
   display: grid;
@@ -37,9 +40,9 @@ body {
   grid-column: 1 / 3;
   grid-row: 1;
   right: 0;
-  bottom: 24px;
+  bottom: var(--user-frame-bottom);
   left: 0;
-  height: 64px;
+  height: var(--user-frame-height);
   min-height: 0;
 }
 
@@ -68,6 +71,16 @@ body {
   width: 100%;
   min-width: 0;
   min-height: 0;
+}
+
+.app-frame--directory > .app-frame__content {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  padding-bottom: calc(
+    var(--user-frame-height) + var(--user-frame-bottom) + var(--directory-scroll-clearance)
+  );
 }
 
 .content-column {
@@ -139,7 +152,22 @@ body {
   outline-offset: 3px;
 }
 
+@media (min-width: 701px) {
+  .view-toggle {
+    display: none;
+  }
+}
+
 @media (max-width: 700px) {
+  .frame-layout {
+    --user-frame-height: 56px;
+    --user-frame-bottom: 8px;
+  }
+
+  :root[data-view="directory-view"] .view-toggle {
+    display: none;
+  }
+
   :root[data-view="directory-view"] .frame-layout {
     --layout-padding: 6px;
     grid-template-columns: 44px minmax(0, 1fr) 0;
@@ -167,9 +195,9 @@ body {
   .app-frame.app-frame--user {
     position: fixed;
     right: 6px;
-    bottom: 8px;
+    bottom: var(--user-frame-bottom);
     left: 6px;
-    height: 56px;
+    height: var(--user-frame-height);
   }
 
   .frame-layout--floating {
@@ -192,7 +220,7 @@ body {
 @media (max-width: 420px) {
   :root[data-view="directory-view"] .frame-layout {
     --layout-padding: 5px;
-    grid-template-columns: 38px minmax(0, 1fr) 0;
+    grid-template-columns: 44px minmax(0, 1fr) 0;
     gap: 5px;
     padding: var(--layout-padding);
   }

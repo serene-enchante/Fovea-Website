@@ -1,5 +1,3 @@
-const tileResizeObservers = new WeakMap();
-
 export function createPageList({ label, title, sections }, dataUrl) {
   const navigation = document.createElement("nav");
   navigation.className = "page-list";
@@ -132,7 +130,6 @@ export function initializeTileStrips(root) {
     if ("ResizeObserver" in window) {
       const resizeObserver = new ResizeObserver(updateEdges);
       resizeObserver.observe(list);
-      tileResizeObservers.set(viewport, resizeObserver);
     } else {
       window.addEventListener("resize", updateEdges);
     }

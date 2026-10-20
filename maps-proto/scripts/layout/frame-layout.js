@@ -48,10 +48,26 @@ export function initializeFrameLayout() {
   appStateMachine.subscribe(renderViewState);
   renderViewState({ state: appStateMachine.getState() });
 
-  viewToggle?.addEventListener("click", () => {
+  function toggleView() {
     const nextState = appStateMachine.getState() === appStateMachine.states.CONTENT_VIEW
       ? appStateMachine.states.DIRECTORY_VIEW
       : appStateMachine.states.CONTENT_VIEW;
     appStateMachine.transition(nextState);
+  }
+
+  viewToggle?.addEventListener("click", toggleView);
+  document.addEventListener("keydown", (event) => {
+    const target = event.target;
+    const isEditing = target instanceof HTMLElement && (
+      target.isContentEditable || target.matches("input, textarea, select")
+    );
+
+    if (
+      event.key.toLowerCase() !== "f" || event.repeat || event.altKey || event.ctrlKey ||
+      event.metaKey || isEditing
+    ) return;
+
+    event.preventDefault();
+    toggleView();
   });
 }

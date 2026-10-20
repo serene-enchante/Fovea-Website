@@ -102,11 +102,3 @@
     transition-duration: 0.01ms;
   }
 }
-
-@media (max-width: 420px) {
-  .organization-rail__circle {
-    flex-basis: 34px;
-    width: 34px;
-    height: 34px;
-  }
-}
