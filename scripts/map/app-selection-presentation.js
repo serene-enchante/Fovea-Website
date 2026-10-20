@@ -3,7 +3,7 @@ import { findFeatureByZoneId } from '../services/geo-selection.js';
 
 export function getSelectionThumbnail({ currentFeature, isCirclesFeature }) {
     if (isCirclesFeature || currentFeature === 'circles') return '../images/whiteLane-Audubon-favicon.webp';
-    if (currentFeature === 'florence') return '../images/florence.png';
+    if (currentFeature === 'florence') return '../images/florence.webp';
     return '../images/logo-small.webp';
 }
 

@@ -22,7 +22,7 @@ export function updateHeaderLogo() {
         }
     } else {
         if (state.currentFeature === "florence") {
-            logoImg.src = "../images/florence.png";
+            logoImg.src = "../images/florence.webp";
             logoImg.alt = "Florence Christmas Bird Count";
         } else {
             logoImg.src = "../images/logo-small.webp";

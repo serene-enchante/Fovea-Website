@@ -69,7 +69,7 @@ function makeHarness() {
     };
     const circles = [
         { id: 'eugene', name: 'Eugene & <Friends>', subtitle: 'Oregon', thumbnail: 'eugene.png', hasData: true },
-        { id: 'florence', name: 'Florence', subtitle: 'Coast', thumbnail: 'florence.png', hasData: true }
+        { id: 'florence', name: 'Florence', subtitle: 'Coast', thumbnail: 'florence.webp', hasData: true }
     ];
     const calls = [];
     const state = { selectedCircle: circles[0] };

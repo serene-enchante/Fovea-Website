@@ -38,7 +38,7 @@ export function renderMapFeatureList(listContainer, {
                 thumbImg = '../images/logo-small.webp';
                 isLogo = true;
             } else if (cid === 'Florence') {
-                thumbImg = '../images/florence.png';
+                thumbImg = '../images/florence.webp';
                 isLogo = true;
             } else if (!isNotAvailable) {
                 thumbImg = '../images/wetlands-thumb.webp';

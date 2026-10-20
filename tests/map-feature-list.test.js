@@ -60,7 +60,7 @@ test('sorts count circles and delegates hover and available-circle selection', (
 
     assert.deepEqual(rows.map(row => row['data-id']), ['Eugene', 'Florence', 'Other circle', 'Oakridge']);
     assert.match(rows[3].innerHTML, /tile-zone-item__thumb-placeholder/, 'circles without data do not request a thumbnail');
-    assert.match(rows[1].innerHTML, /florence\.png/);
+    assert.match(rows[1].innerHTML, /florence\.webp/);
     assert.match(rows[2].innerHTML, /wetlands-thumb\.webp/);
     rows[1].listeners.mouseenter();
     rows[1].listeners.click();

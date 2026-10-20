@@ -97,7 +97,7 @@ export function setupMapStyleControl({ topLeft, state, onSelectSubject, onSwitch
             const isFlorence = state.currentFeature === "florence";
             layers.push({
                 id: "circle", name: isFlorence ? "Florence Christmas Bird Count Circle" : "Eugene Christmas Bird Count Circle", isChild: false, 
-                image: isFlorence ? "../images/florence.png" : "../images/logo-small.webp", isLogo: true,
+                image: isFlorence ? "../images/florence.webp" : "../images/logo-small.webp", isLogo: true,
                 action: () => onSelectSubject(CIRCLE_ID, true)
             });
             if (state.currentId && state.currentId !== CIRCLE_ID) {

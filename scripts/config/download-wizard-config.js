@@ -17,7 +17,7 @@ export const COUNT_CIRCLES = [
         subtitle: "Coastal Oregon · 14 Zones",
         totalZones: 14,
         geojsonPath: `geojson/${MAP_DATASETS.florence.fileName}`,
-        thumbnail: "images/florence.png",
+        thumbnail: "images/florence.webp",
         hasData: true
     },
     {

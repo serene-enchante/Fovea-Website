@@ -197,6 +197,23 @@ test('loads only the right-sized circles logo on the initial map view', async ({
     expect(logoRequests).toEqual(['/images/whiteLane-Audubon-favicon.webp']);
 });
 
+test('uses the optimized Florence WebP logo on the Florence route', async ({ page }) => {
+    const requests = [];
+    page.on('request', request => {
+        if (/\/images\/florence\.(?:png|webp)(?:\?|$)/i.test(request.url())) {
+            requests.push(new URL(request.url()).pathname);
+        }
+    });
+
+    await openMap(page, '/maps/?feature=florence');
+
+    const headerLogo = page.locator('.logo--header');
+    await expect(headerLogo).toHaveAttribute('src', '../images/florence.webp');
+    await expect.poll(() => headerLogo.evaluate(image => image.naturalWidth)).toBe(160);
+    expect(requests).toContain('/images/florence.webp');
+    expect(requests).not.toContain('/images/florence.png');
+});
+
 test('defers app launcher icons until the download modal opens', async ({ page }) => {
     const appIconRequests = [];
     page.on('request', request => {
