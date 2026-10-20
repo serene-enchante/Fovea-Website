@@ -14,7 +14,8 @@
 }
 
 .app-frame--organization,
-.app-frame--directory {
+.app-frame--directory,
+.app-frame--user {
   pointer-events: none;
   opacity: 0;
   transform: translateX(-12px);
@@ -24,7 +25,8 @@
 }
 
 :root[data-view="directory-view"] .app-frame--organization,
-:root[data-view="directory-view"] .app-frame--directory {
+:root[data-view="directory-view"] .app-frame--directory,
+:root[data-view="directory-view"] .app-frame--user {
   pointer-events: auto;
   opacity: 1;
   transform: translateX(0);
@@ -55,6 +57,7 @@
   .app-frame,
   .app-frame--organization,
   .app-frame--directory,
+  .app-frame--user,
   .content-titlebar {
     transition-duration: 0.01ms;
   }
