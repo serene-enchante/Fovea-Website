@@ -140,44 +140,11 @@ body {
   flex: none;
 }
 
-.view-toggle {
-  position: fixed;
-  z-index: 3;
-  top: max(16px, env(safe-area-inset-top));
-  right: max(16px, env(safe-area-inset-right));
-  min-height: 40px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--control-surface);
-  color: var(--control-text);
-  font: 600 14px/1 system-ui, sans-serif;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.view-toggle:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 3px;
-}
-
-@media (min-width: 701px) {
-  .view-toggle {
-    display: none;
-  }
-}
-
 @media (max-width: 700px) {
-  .frame-layout {
+  .frame-layout,
+  :root[data-view="directory-view"] .frame-layout {
     --user-frame-height: 56px;
     --user-frame-bottom: 8px;
-  }
-
-  :root[data-view="directory-view"] .view-toggle {
-    display: none;
-  }
-
-  :root[data-view="directory-view"] .frame-layout {
     --layout-padding: 6px;
     grid-template-columns: 44px minmax(0, 1fr) 0;
     gap: 6px;
@@ -188,11 +155,25 @@ body {
     position: fixed;
     inset: 0 auto 0 0;
     width: 100vw;
-    transform: translateX(0);
+    transform: translateX(var(--content-drag-offset, 0px));
   }
 
   :root[data-view="directory-view"] .content-column {
-    transform: translateX(100vw);
+    transform: translateX(calc(100vw + var(--content-drag-offset, 0px)));
+  }
+
+  :root[data-view="content-view"][data-view-dragging="true"] .app-frame--organization,
+  :root[data-view="content-view"][data-view-dragging="true"] .app-frame--directory,
+  :root[data-view="content-view"][data-view-dragging="true"] .app-frame--user {
+    opacity: var(--view-drag-progress, 0);
+    transform: translateX(var(--directory-drag-offset, -12px));
+  }
+
+  :root[data-view-dragging="true"] .content-column,
+  :root[data-view-dragging="true"] .app-frame--organization,
+  :root[data-view-dragging="true"] .app-frame--directory,
+  :root[data-view-dragging="true"] .app-frame--user {
+    transition: none;
   }
 
   :root[data-view="directory-view"] .app-frame--context {
@@ -231,6 +212,7 @@ body {
 }
 
 @media (max-width: 420px) {
+  .frame-layout,
   :root[data-view="directory-view"] .frame-layout {
     --layout-padding: 5px;
     grid-template-columns: 44px minmax(0, 1fr) 0;
