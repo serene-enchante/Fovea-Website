@@ -39,6 +39,24 @@ test('renders the home shell while the deferred globe dependencies are still loa
     await expect(page.locator('#home-globe canvas.maplibregl-canvas')).toBeVisible();
 });
 
+test('renders the home shell while the non-critical Nunito stylesheet is delayed', async ({ page }) => {
+    let releaseFonts;
+    let notifyFontsRequested;
+    const fontsRequested = new Promise(resolve => { notifyFontsRequested = resolve; });
+
+    await page.route(/^https:\/\/fonts\.googleapis\.com\/css2\?family=Nunito/, async route => {
+        notifyFontsRequested();
+        await new Promise(resolve => { releaseFonts = resolve; });
+        await route.abort();
+    });
+
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await fontsRequested;
+    await expect(page.locator('.logo-title')).toBeVisible();
+    await expect(page.locator('#home-search-input')).toBeVisible();
+    releaseFonts();
+});
+
 test('keeps a visible globe placeholder when the deferred map stylesheet fails', async ({ page }) => {
     await page.route('https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css', route => route.abort());
     await page.goto('/', { waitUntil: 'domcontentloaded' });
