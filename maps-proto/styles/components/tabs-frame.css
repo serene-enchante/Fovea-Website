@@ -1,0 +1,125 @@
+.tabs-frame {
+  position: fixed;
+  z-index: 12;
+  font-family: system-ui, sans-serif;
+  top: calc(50% - 44px);
+  right: 0;
+  width: 16px;
+  height: 88px;
+}
+
+.tabs-frame__trigger {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--control-text);
+  cursor: pointer;
+}
+
+.tabs-frame__trigger-icon {
+  font-size: 18px;
+  font-variation-settings: "FILL" 0, "wght" 350, "GRAD" 0, "opsz" 20;
+  opacity: 0.72;
+  transition: transform 240ms ease;
+}
+
+.tabs-frame[data-open="true"] .tabs-frame__trigger-icon {
+  transform: rotate(180deg);
+}
+
+.tabs-frame__trigger:focus-visible {
+  outline: 2px solid var(--accent-primary, var(--accent-color, #64b5f6));
+  outline-offset: 2px;
+}
+
+.tabs-frame__panel {
+  position: fixed;
+  inset-block: 0;
+  height: 100dvh;
+  /* Keep the scrollport's shadow gutter inside the viewport. */
+  right: 48px;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  width: min(340px, 100vw);
+  min-height: 0;
+  overflow: visible;
+  padding: 0 28px 0 18px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  color: var(--control-text);
+  opacity: 0;
+  transform: translateX(calc(100% - 16px)) scale(0.98);
+  transition: opacity 180ms ease, transform 260ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.tabs-frame[data-open="true"] .tabs-frame__panel {
+  opacity: 1;
+  transform: none;
+}
+
+.tabs-frame__cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: max-content;
+  align-content: start;
+  max-height: none;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  margin: 0 -48px;
+  padding: 48px;
+  gap: 24px;
+}
+
+.tabs-frame__card {
+  position: relative;
+  align-self: start;
+  width: 100%;
+  height: max-content;
+  min-height: max-content;
+  overflow: hidden;
+  flex: none;
+}
+
+.tabs-frame__card > .app-frame__content {
+  flex: 0 0 auto;
+}
+
+.tabs-frame__card .context-pane,
+.tabs-frame__card .context-pane__content {
+  height: auto;
+}
+
+.tabs-frame__card .context-pane__actions {
+  padding-bottom: 12px;
+}
+
+@media (max-width: 700px) {
+  .tabs-frame__panel {
+    right: 48px;
+    width: min(320px, calc(100vw - 48px));
+  }
+
+  :root[data-view="directory-view"] .tabs-frame .app-frame--context {
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabs-frame,
+  .tabs-frame__panel,
+  .tabs-frame__trigger-icon {
+    transition-duration: 0.01ms;
+  }
+}

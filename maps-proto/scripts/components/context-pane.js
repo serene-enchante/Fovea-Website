@@ -13,7 +13,6 @@ export function createContextPane() {
   let underlayFrame = null;
   let activeContext = null;
   let activeDataUrl = document.baseURI;
-  let showingDirectorySearch = false;
   const sheet = createContextSheetController(element);
 
   function restoreUnderlay() {
@@ -28,11 +27,14 @@ export function createContextPane() {
     const version = ++renderVersion;
     activeContext = context;
     activeDataUrl = dataUrl;
-    showingDirectorySearch = false;
-    const content = buildContext(context, dataUrl);
+    const content = createContextContent(context, dataUrl);
     sectionFrame?.remove();
     sectionFrame = null;
     restoreUnderlay();
+    element.dispatchEvent(new CustomEvent("contexttitlechange", {
+      bubbles: true,
+      detail: { title: context.title, context, dataUrl },
+    }));
     element.dispatchEvent(new CustomEvent("contextopen", { bubbles: true }));
     sheet.setState("half");
     element.classList.add("is-changing");
@@ -45,23 +47,6 @@ export function createContextPane() {
     requestAnimationFrame(() => {
       if (version === renderVersion) element.classList.remove("is-changing");
     });
-  }
-
-  function setDirectorySearch(title, sections, dataUrl = document.baseURI) {
-    ++renderVersion;
-    activeContext = null;
-    activeDataUrl = dataUrl;
-    showingDirectorySearch = true;
-    element.dataset.contextId = "";
-    sectionFrame?.remove();
-    sectionFrame = null;
-    restoreUnderlay();
-    disposeTileStrips();
-    element.replaceChildren(buildDirectorySearch(title, sections, dataUrl));
-    disposeTileStrips = initializeTileStrips(element);
-    sheet.setState("half");
-    element.classList.remove("is-changing");
-    element.dispatchEvent(new CustomEvent("contextopen", { bubbles: true }));
   }
 
   function setSection(section, dataUrl = document.baseURI) {
@@ -200,13 +185,11 @@ export function createContextPane() {
   return {
     element,
     setContext,
-    setDirectorySearch,
     setSection,
-    isDirectorySearch: () => showingDirectorySearch,
   };
 }
 
-function buildContext(context, dataUrl) {
+export function createContextContent(context, dataUrl, { includeSections = true } = {}) {
   const content = document.createElement("div");
   content.className = "context-pane__content";
 
@@ -245,12 +228,15 @@ function buildContext(context, dataUrl) {
     actions.append(button);
   });
 
-  const zones = createPageList({
-    label: `${context.title} context`,
-    sections: context.sections,
-  }, dataUrl);
-  zones.classList.add("context-pane__zones");
-  content.append(hero, actions, zones);
+  content.append(hero, actions);
+  if (includeSections) {
+    const zones = createPageList({
+      label: `${context.title} context`,
+      sections: context.sections,
+    }, dataUrl);
+    zones.classList.add("context-pane__zones");
+    content.append(zones);
+  }
   return content;
 }
 
@@ -275,49 +261,6 @@ function buildSectionContext(contextTitle, section, dataUrl) {
   }, dataUrl);
   list.classList.add("context-pane__section-list");
   content.append(header, sectionTitle, list);
-  return content;
-}
-
-function buildDirectorySearch(title, sections, dataUrl) {
-  const content = document.createElement("div");
-  content.className = "context-pane__content context-pane__directory-search";
-
-  const header = document.createElement("header");
-  header.className = "context-pane__search-header";
-  const heading = document.createElement("h2");
-  heading.textContent = title;
-  const search = document.createElement("input");
-  search.className = "context-pane__search-input";
-  search.type = "search";
-  search.placeholder = "Search";
-  search.setAttribute("aria-label", `Search ${title}`);
-  header.append(heading, search);
-
-  const items = [...new Map((sections || [])
-    .flatMap(({ items: sectionItems = [] }) => sectionItems)
-    .map((item) => [item.id, item])).values()];
-  const results = createPageList({
-    label: `${title} search results`,
-    sections: [{
-      id: "context-search-results",
-      title: "Results",
-      view: "list",
-      selectable: false,
-      expandable: false,
-      items,
-    }],
-  }, dataUrl);
-  results.classList.add("context-pane__search-results");
-  results.hidden = true;
-  search.addEventListener("input", () => {
-    const query = search.value.trim().toLocaleLowerCase();
-    const resultItems = [...results.querySelectorAll(".page-list__items > li")];
-    results.hidden = !query;
-    resultItems.forEach((item) => {
-      item.hidden = !item.textContent.toLocaleLowerCase().includes(query);
-    });
-  });
-  content.append(header, results);
   return content;
 }
 

@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "id": "eugene-cbc",
+      "title": "Eugene CBC",
+      "image": "./assets/images/counts/ecbc.webp",
+      "actions": [
+        { "id": "download", "label": "Download", "icon": "download" },
+        { "id": "suggest", "label": "Suggest", "icon": "lightbulb" },
+        { "id": "contact", "label": "Contact", "icon": "mail" }
+      ]
+    },
+    {
+      "id": "eugene-cbc-zone-2",
+      "title": "Eugene CBC · Zone 2",
+      "image": "./assets/images/zones/z02-01.webp",
+      "actions": [
+        { "id": "download", "label": "Download", "icon": "download" },
+        { "id": "suggest", "label": "Suggest", "icon": "lightbulb" },
+        { "id": "contact", "label": "Contact", "icon": "mail" }
+      ]
+    }
+  ]
+}

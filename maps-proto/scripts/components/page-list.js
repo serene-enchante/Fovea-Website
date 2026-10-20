@@ -242,3 +242,9 @@ export function initializePageSelection(root) {
     }
   });
 }
+
+export function updatePageTabNames(root, title) {
+  root.querySelectorAll(".page-list__tab-name").forEach((tabName) => {
+    tabName.textContent = title;
+  });
+}

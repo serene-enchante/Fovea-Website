@@ -1,6 +1,12 @@
 import { createAppFrame, initializeFrameLayout } from "./layout/frame-layout.js";
-import { createPageList, initializePageSelection, initializeTileStrips } from "./components/page-list.js";
+import {
+  createPageList,
+  initializePageSelection,
+  initializeTileStrips,
+  updatePageTabNames,
+} from "./components/page-list.js";
 import { createContextPane } from "./components/context-pane.js";
+import { createTabsFrame } from "./components/tabs-frame.js";
 import { createOrganizationRail } from "./components/organization-rail.js";
 import { createToolbar } from "./components/toolbar.js";
 import { createUserProfile } from "./components/user-profile.js";
@@ -14,6 +20,7 @@ if (frameLayout) {
   const directoryContent = document.createElement("div");
   const userContent = createUserProfile({ name: "User" });
   const contextPane = createContextPane();
+  let tabsFrame;
 
   const contentColumn = document.createElement("div");
   contentColumn.className = "content-column";
@@ -30,39 +37,39 @@ if (frameLayout) {
     label: "Context",
     content: contextPane.element,
   });
-  let directoryData = null;
-  let directoryDataUrl = document.baseURI;
-  let showSearchAfterDirectoryLoad = false;
+  let activeContextTitle = "New tab";
   contextFrame.addEventListener("contextclose", () => {
     contextFrame.classList.add("is-closed");
     contextFrame.setAttribute("aria-hidden", "true");
     contextFrame.inert = true;
-    if (contextPane.isDirectorySearch()) return;
-    if (directoryData) {
-      window.setTimeout(() => {
-        if (contextFrame.classList.contains("is-closed")) {
-          contextPane.setDirectorySearch(directoryData.title, directoryData.sections, directoryDataUrl);
-        }
-      }, 440);
-    } else {
-      showSearchAfterDirectoryLoad = true;
-    }
+    activeContextTitle = "New tab";
+    updatePageTabNames(directoryContent, activeContextTitle);
+    tabsFrame.setCurrentContext(null);
   });
   contextFrame.addEventListener("contextopen", () => {
     contextFrame.classList.remove("is-closed");
     contextFrame.removeAttribute("aria-hidden");
     contextFrame.inert = false;
   });
+  contextFrame.addEventListener("contexttitlechange", (event) => {
+    activeContextTitle = event.detail?.title || "New tab";
+    updatePageTabNames(directoryContent, activeContextTitle);
+    tabsFrame.setCurrentContext(
+      event.detail?.context,
+      event.detail?.dataUrl || document.baseURI,
+      contextFrame,
+    );
+  });
   mapStage.append(mapContainer, contextFrame);
 
-  contentColumn.append(
-    createAppFrame({
-      id: "content-frame",
-      variant: "content",
-      label: "Content",
-      content: mapStage,
-    }),
-  );
+  const contentFrame = createAppFrame({
+    id: "content-frame",
+    variant: "content",
+    label: "Content",
+    content: mapStage,
+  });
+  contentColumn.append(contentFrame);
+  tabsFrame = createTabsFrame();
 
   frameLayout.append(
     createAppFrame({
@@ -88,7 +95,7 @@ if (frameLayout) {
     }),
     contentColumn,
   );
-
+  document.body.append(tabsFrame.element);
   initializeFrameLayout();
 
   directoryContent.addEventListener("sectionexpand", (event) => {
@@ -124,18 +131,13 @@ if (frameLayout) {
     });
   loadJsonData(frameLayout.dataset.directorySrc)
     .then(({ data, dataUrl }) => {
-      directoryData = data;
-      directoryDataUrl = dataUrl;
       directoryContent.replaceChildren(createPageList(data, dataUrl));
       initializePageSelection(directoryContent);
+      updatePageTabNames(directoryContent, activeContextTitle);
       organizationContent.replaceChildren(
         createOrganizationRail(data.organizations, data.organizationActions, dataUrl),
       );
       initializeTileStrips(directoryContent);
-      if (showSearchAfterDirectoryLoad) {
-        showSearchAfterDirectoryLoad = false;
-        contextPane.setDirectorySearch(data.title, data.sections, dataUrl);
-      }
     })
     .catch((error) => {
       console.error("Unable to load directory data", error);
@@ -159,4 +161,8 @@ if (frameLayout) {
     .catch((error) => {
       console.error("Unable to load toolbar data", error);
     });
+
+  loadJsonData(frameLayout.dataset.tabsSrc)
+    .then(({ data, dataUrl }) => tabsFrame.setItems(data.items, dataUrl))
+    .catch((error) => console.error("Unable to load tabs data", error));
 }
