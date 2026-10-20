@@ -76,6 +76,79 @@ export function createContextPane() {
     }
   });
 
+  element.addEventListener("pointerdown", (event) => {
+    if (window.matchMedia("(max-width: 700px)").matches
+      || event.button !== 0
+      || !event.target.closest(".context-pane__hero")
+      || event.target.closest("button")) return;
+
+    const frame = element.closest(".app-frame--context");
+    const stage = frame?.parentElement;
+    if (!frame || !stage) return;
+
+    event.preventDefault();
+    const frameRect = frame.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+    const pointerId = event.pointerId;
+    const offsetX = event.clientX - frameRect.left;
+    const offsetY = event.clientY - frameRect.top;
+    let dragging = false;
+
+    function getTopBounds() {
+      const maxTop = Math.max(0, stage.clientHeight - frame.offsetHeight);
+      const padding = Math.min(16, maxTop / 2);
+      return { maxTop, padding };
+    }
+
+    function move(moveEvent) {
+      if (moveEvent.pointerId !== pointerId) return;
+      const deltaX = moveEvent.clientX - event.clientX;
+      const deltaY = moveEvent.clientY - event.clientY;
+      if (!dragging && Math.hypot(deltaX, deltaY) < 4) return;
+
+      if (!dragging) {
+        dragging = true;
+        frame.style.right = "auto";
+        frame.style.bottom = "auto";
+        frame.classList.add("is-context-positioned");
+        frame.classList.add("is-context-dragging");
+      }
+
+      moveEvent.preventDefault();
+      const maxLeft = Math.max(0, stage.clientWidth - frame.offsetWidth);
+      const left = Math.max(0, Math.min(maxLeft, moveEvent.clientX - stageRect.left - offsetX));
+      const { maxTop } = getTopBounds();
+      const top = Math.max(0, Math.min(maxTop, moveEvent.clientY - stageRect.top - offsetY));
+      frame.style.left = `${left}px`;
+      frame.style.top = `${top}px`;
+    }
+
+    function end(endEvent) {
+      if (endEvent.pointerId !== pointerId) return;
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", end);
+      document.removeEventListener("pointercancel", end);
+      if (!dragging) return;
+
+      const maxLeft = Math.max(0, stage.clientWidth - frame.offsetWidth);
+      const frameRect = frame.getBoundingClientRect();
+      const stageRect = stage.getBoundingClientRect();
+      const frameCenter = frameRect.left + frameRect.width / 2;
+      const snapLeft = frameCenter < stageRect.left + stageRect.width / 2
+        ? Math.min(16, maxLeft)
+        : Math.max(0, maxLeft - 16);
+      const { maxTop, padding } = getTopBounds();
+      const top = Math.max(padding, Math.min(maxTop - padding, frameRect.top - stageRect.top));
+      frame.style.left = `${snapLeft}px`;
+      frame.style.top = `${top}px`;
+      frame.classList.remove("is-context-dragging");
+    }
+
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", end);
+    document.addEventListener("pointercancel", end);
+  });
+
   let wheelDistance = 0;
   let wheelHandled = false;
   let wheelResetTimer;
@@ -203,14 +276,6 @@ function buildContext(context, dataUrl) {
   image.src = new URL(context.image, dataUrl).href;
   image.alt = context.imageAlt || "";
   image.loading = "lazy";
-  let logo;
-  if (context.logo) {
-    logo = document.createElement("img");
-    logo.className = "context-pane__hero-logo";
-    logo.src = new URL(context.logo, dataUrl).href;
-    logo.alt = "";
-    logo.decoding = "async";
-  }
   const title = document.createElement("h2");
   title.className = "context-pane__hero-title";
   const titleText = document.createElement("span");
@@ -223,7 +288,6 @@ function buildContext(context, dataUrl) {
   close.dataset.contextClose = "true";
   controls.append(share, close);
   hero.append(image);
-  if (logo) hero.append(logo);
   hero.append(title, controls);
 
   const actions = document.createElement("div");

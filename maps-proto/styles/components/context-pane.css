@@ -16,8 +16,13 @@
   transform-origin: center right;
   transition: opacity 320ms cubic-bezier(.2, .8, .2, 1),
     transform 420ms cubic-bezier(.2, .8, .2, 1),
+    left 360ms cubic-bezier(.2, .8, .2, 1),
     top 360ms cubic-bezier(.2, .8, .2, 1),
     bottom 360ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.app-frame.app-frame--context.is-context-dragging {
+  transition: none;
 }
 
 .app-frame--context.is-closed {
@@ -44,6 +49,12 @@
   aspect-ratio: 4 / 3;
   overflow: hidden;
   background: var(--shade2);
+  cursor: grab;
+  user-select: none;
+}
+
+.is-context-dragging .context-pane__hero {
+  cursor: grabbing;
 }
 
 .context-pane__hero::after {
@@ -78,11 +89,6 @@
 .context-pane__hero-title {
   position: absolute;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 6px;
   right: 16px;
   bottom: 14px;
   left: 16px;
@@ -93,17 +99,6 @@
   font-weight: 700;
   line-height: 1.2;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-}
-
-.context-pane__hero-logo {
-  position: absolute;
-  z-index: 1;
-  top: 24px;
-  left: 50%;
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  transform: translateX(-50%);
 }
 
 .context-pane__controls {
@@ -157,7 +152,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  padding: 14px 16px 6px;
+  padding: 14px 16px 24px;
 }
 
 .context-pane__action {
@@ -221,6 +216,43 @@
 
 .context-pane__zones .page-list__section[data-view="tiles"] .page-list__item {
   border-radius: 12px;
+}
+
+@media (min-width: 701px) {
+  .app-frame--context.frame-layout--floating {
+    top: 50%;
+    bottom: auto;
+    height: auto;
+    max-height: calc(100% - 32px);
+    transform: translateY(-50%);
+  }
+
+  .app-frame--context.is-context-positioned {
+    z-index: 3;
+    transform: none;
+  }
+
+  .app-frame--context > .app-frame__content {
+    flex: 0 1 auto;
+  }
+
+  .app-frame--context .context-pane {
+    height: auto;
+    max-height: calc(100vh - 32px);
+  }
+
+  .app-frame--context .context-pane__content {
+    height: auto;
+    max-height: calc(100vh - 34px);
+  }
+
+  .app-frame--context.is-closed {
+    transform: translateX(110%) translateY(-50%) scale(0.82);
+  }
+
+  .app-frame--context.is-context-positioned.is-closed {
+    transform: translateX(110%) scale(0.82);
+  }
 }
 
 @media (max-width: 700px) {
@@ -303,10 +335,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .app-frame--context.is-sheet-collapsed .context-pane__hero-logo {
-    display: none;
   }
 
   .app-frame--context.is-sheet-collapsed .context-pane__controls {

@@ -2,7 +2,6 @@
   "id": "florence-cbc",
   "title": "Florence CBC",
   "image": "./assets/images/counts/fcbc.webp",
-  "logo": "./assets/images/counts/florence.webp",
   "imageAlt": "Florence Christmas Bird Count",
   "actions": [
     { "id": "download", "label": "Download", "icon": "download" },
