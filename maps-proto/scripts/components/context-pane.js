@@ -1,5 +1,7 @@
 import { createMaterialIcon } from "./material-icon.js";
 import { createPageList, initializeTileStrips } from "./page-list.js";
+import { enableContextFrameDrag } from "./context-frame-drag.js";
+import { createContextSheetController } from "./context-sheet-interactions.js";
 
 export function createContextPane() {
   const element = document.createElement("div");
@@ -11,6 +13,8 @@ export function createContextPane() {
   let underlayFrame = null;
   let activeContext = null;
   let activeDataUrl = document.baseURI;
+  let showingDirectorySearch = false;
+  const sheet = createContextSheetController(element);
 
   function restoreUnderlay() {
     if (!underlayFrame) return;
@@ -20,43 +24,17 @@ export function createContextPane() {
     underlayFrame = null;
   }
 
-  function setSheetState(state) {
-    const frame = element.closest(".app-frame--context");
-    if (!frame) return;
-    frame.classList.remove("is-sheet-dragging");
-    frame.style.removeProperty("top");
-    frame.classList.remove("is-sheet-expanded", "is-sheet-half", "is-sheet-collapsed");
-    if (!window.matchMedia("(max-width: 700px)").matches) return;
-    if (state === "expanded") frame.classList.add("is-sheet-expanded");
-    if (state === "half") frame.classList.add("is-sheet-half");
-    if (state === "collapsed") frame.classList.add("is-sheet-collapsed");
-  }
-
-  function stepSheet(direction) {
-    const frame = element.closest(".app-frame--context");
-    if (!frame || !window.matchMedia("(max-width: 700px)").matches) return;
-
-    const state = frame.classList.contains("is-sheet-expanded")
-      ? "expanded"
-      : frame.classList.contains("is-sheet-collapsed")
-        ? "collapsed"
-        : "half";
-    const states = ["collapsed", "half", "expanded"];
-    const currentIndex = states.indexOf(state);
-    const nextIndex = Math.max(0, Math.min(states.length - 1, currentIndex + direction));
-    setSheetState(states[nextIndex]);
-  }
-
   async function setContext(context, dataUrl = document.baseURI) {
     const version = ++renderVersion;
     activeContext = context;
     activeDataUrl = dataUrl;
+    showingDirectorySearch = false;
     const content = buildContext(context, dataUrl);
     sectionFrame?.remove();
     sectionFrame = null;
     restoreUnderlay();
     element.dispatchEvent(new CustomEvent("contextopen", { bubbles: true }));
-    setSheetState("half");
+    sheet.setState("half");
     element.classList.add("is-changing");
     await waitForTransition(element);
     if (version !== renderVersion) return;
@@ -67,6 +45,23 @@ export function createContextPane() {
     requestAnimationFrame(() => {
       if (version === renderVersion) element.classList.remove("is-changing");
     });
+  }
+
+  function setDirectorySearch(title, sections, dataUrl = document.baseURI) {
+    ++renderVersion;
+    activeContext = null;
+    activeDataUrl = dataUrl;
+    showingDirectorySearch = true;
+    element.dataset.contextId = "";
+    sectionFrame?.remove();
+    sectionFrame = null;
+    restoreUnderlay();
+    disposeTileStrips();
+    element.replaceChildren(buildDirectorySearch(title, sections, dataUrl));
+    disposeTileStrips = initializeTileStrips(element);
+    sheet.setState("half");
+    element.classList.remove("is-changing");
+    element.dispatchEvent(new CustomEvent("contextopen", { bubbles: true }));
   }
 
   function setSection(section, dataUrl = document.baseURI) {
@@ -103,7 +98,7 @@ export function createContextPane() {
     baseFrame.inert = true;
     element.dispatchEvent(new CustomEvent("contextopen", { bubbles: true }));
     stage.append(openingFrame);
-    enableFrameDrag(openingFrame, ".context-pane__section-header");
+    enableContextFrameDrag(openingFrame, ".context-pane__section-header");
     openingFrame.addEventListener("click", (event) => {
       const close = event.target.closest("[data-context-close]");
       if (close) {
@@ -200,198 +195,15 @@ export function createContextPane() {
     }
   });
 
-  enableFrameDrag(element, ".context-pane__hero");
+  enableContextFrameDrag(element, ".context-pane__hero");
 
-  let wheelDistance = 0;
-  let wheelHandled = false;
-  let wheelResetTimer;
-  element.addEventListener("wheel", (event) => {
-    if (!window.matchMedia("(max-width: 700px)").matches) return;
-    const frame = element.closest(".app-frame--context");
-    const content = element.querySelector(".context-pane__content");
-    wheelDistance += event.deltaY;
-    clearTimeout(wheelResetTimer);
-    wheelResetTimer = window.setTimeout(() => {
-      wheelDistance = 0;
-      wheelHandled = false;
-    }, 180);
-    if (!wheelHandled && wheelDistance >= 36 && !frame?.classList.contains("is-sheet-expanded")) {
-      stepSheet(1);
-      wheelHandled = true;
-    } else if (!wheelHandled && wheelDistance <= -36 && content?.scrollTop <= 1) {
-      stepSheet(-1);
-      wheelHandled = true;
-    }
-  }, { passive: true });
-
-  let touchStart = null;
-  let pendingTop = null;
-  let dragFrame = null;
-  let dragFrameId = 0;
-  element.addEventListener("touchstart", (event) => {
-    if (!window.matchMedia("(max-width: 700px)").matches || event.touches.length !== 1) {
-      touchStart = null;
-      dragFrame = null;
-      return;
-    }
-    const touch = event.touches[0];
-    dragFrame = element.closest(".app-frame--context");
-    if (!dragFrame) return;
-    const bounds = dragFrame.getBoundingClientRect();
-    const content = element.querySelector(".context-pane__content");
-    touchStart = {
-      identifier: touch.identifier,
-      x: touch.clientX,
-      y: touch.clientY,
-      top: bounds.top,
-      anchorY: touch.clientY,
-      anchorTop: bounds.top,
-      scrollTop: content?.scrollTop || 0,
-      maxTop: Math.max(0, dragFrame.parentElement.clientHeight - 68),
-      startState: dragFrame.classList.contains("is-sheet-collapsed")
-        ? "collapsed"
-        : dragFrame.classList.contains("is-sheet-expanded")
-          ? "expanded"
-          : "half",
-      dragging: false,
-    };
-  }, { passive: true });
-
-  element.addEventListener("touchmove", (event) => {
-    if (!touchStart || !window.matchMedia("(max-width: 700px)").matches) return;
-    const touch = Array.from(event.touches).find(({ identifier }) => identifier === touchStart.identifier)
-      || event.touches[0];
-    const deltaX = touch.clientX - touchStart.x;
-    const deltaY = touch.clientY - touchStart.y;
-    if (Math.abs(deltaY) <= 6 || Math.abs(deltaY) <= Math.abs(deltaX) * 1.25) return;
-
-    const content = element.querySelector(".context-pane__content");
-    const isMovingDown = deltaY > 0;
-    if (!touchStart.dragging) {
-      if (isMovingDown && content?.scrollTop > 1) return;
-      if (!isMovingDown && touchStart.startState === "expanded") return;
-
-      const reachedScrollTopDuringGesture = isMovingDown && touchStart.scrollTop > 1;
-      touchStart.anchorY = reachedScrollTopDuringGesture ? touch.clientY : touchStart.y;
-      touchStart.anchorTop = reachedScrollTopDuringGesture
-        ? dragFrame.getBoundingClientRect().top
-        : touchStart.top;
-      touchStart.dragging = true;
-      dragFrame.classList.add("is-sheet-dragging");
-    }
-    if (touchStart.dragging) {
-      event.preventDefault();
-      pendingTop = Math.max(
-        0,
-        Math.min(touchStart.maxTop, touchStart.anchorTop + touch.clientY - touchStart.anchorY),
-      );
-      if (!dragFrameId) {
-        dragFrameId = requestAnimationFrame(() => {
-          dragFrame.style.top = `${pendingTop}px`;
-          dragFrameId = 0;
-        });
-      }
-    }
-  }, { passive: false });
-
-  function finishSheetDrag() {
-    if (!touchStart?.dragging || !dragFrame) {
-      touchStart = null;
-      dragFrame = null;
-      return;
-    }
-    if (dragFrameId) cancelAnimationFrame(dragFrameId);
-    dragFrameId = 0;
-    const progress = dragFrame.parentElement.clientHeight > 68
-      ? 1 - (pendingTop ?? touchStart.top) / (dragFrame.parentElement.clientHeight - 68)
-      : 0.5;
-    setSheetState(resolveDraggedSheetState(progress, touchStart.startState));
-    touchStart = null;
-    dragFrame = null;
-    pendingTop = null;
-  }
-
-  element.addEventListener("touchend", finishSheetDrag, { passive: true });
-
-  element.addEventListener("touchcancel", finishSheetDrag, { passive: true });
-
-  return { element, setContext, setSection };
-}
-
-function enableFrameDrag(target, handleSelector) {
-  target.addEventListener("pointerdown", (event) => {
-    if (window.matchMedia("(max-width: 700px)").matches
-      || event.button !== 0
-      || !event.target.closest(handleSelector)
-      || event.target.closest("button")) return;
-
-    const frame = target.matches(".app-frame--context")
-      ? target
-      : target.closest(".app-frame--context");
-    const stage = frame?.parentElement;
-    if (!frame || !stage) return;
-
-    event.preventDefault();
-    const frameRect = frame.getBoundingClientRect();
-    const stageRect = stage.getBoundingClientRect();
-    const pointerId = event.pointerId;
-    const offsetX = event.clientX - frameRect.left;
-    const offsetY = event.clientY - frameRect.top;
-    let dragging = false;
-
-    function getTopBounds() {
-      const maxTop = Math.max(0, stage.clientHeight - frame.offsetHeight);
-      const padding = Math.min(16, maxTop / 2);
-      return { maxTop, padding };
-    }
-
-    function move(moveEvent) {
-      if (moveEvent.pointerId !== pointerId) return;
-      const deltaX = moveEvent.clientX - event.clientX;
-      const deltaY = moveEvent.clientY - event.clientY;
-      if (!dragging && Math.hypot(deltaX, deltaY) < 4) return;
-
-      if (!dragging) {
-        dragging = true;
-        frame.style.right = "auto";
-        frame.style.bottom = "auto";
-        frame.classList.add("is-context-positioned", "is-context-dragging");
-      }
-
-      moveEvent.preventDefault();
-      const maxLeft = Math.max(0, stage.clientWidth - frame.offsetWidth);
-      const left = Math.max(0, Math.min(maxLeft, moveEvent.clientX - stageRect.left - offsetX));
-      const { maxTop } = getTopBounds();
-      const top = Math.max(0, Math.min(maxTop, moveEvent.clientY - stageRect.top - offsetY));
-      frame.style.left = `${left}px`;
-      frame.style.top = `${top}px`;
-    }
-
-    function end(endEvent) {
-      if (endEvent.pointerId !== pointerId) return;
-      document.removeEventListener("pointermove", move);
-      document.removeEventListener("pointerup", end);
-      document.removeEventListener("pointercancel", end);
-      if (!dragging) return;
-
-      const maxLeft = Math.max(0, stage.clientWidth - frame.offsetWidth);
-      const draggedRect = frame.getBoundingClientRect();
-      const currentStageRect = stage.getBoundingClientRect();
-      const frameCenter = draggedRect.left + draggedRect.width / 2;
-      const snapLeft = frameCenter < currentStageRect.left + currentStageRect.width / 2
-        ? Math.min(16, maxLeft)
-        : Math.max(0, maxLeft - 16);
-      const { maxTop, padding } = getTopBounds();
-      const top = Math.max(padding, Math.min(maxTop - padding, draggedRect.top - currentStageRect.top));
-      frame.style.left = `${snapLeft}px`;
-      frame.style.top = `${top}px`;
-      frame.classList.remove("is-context-dragging");
-    }
-
-    document.addEventListener("pointermove", move);
-    document.addEventListener("pointerup", end);
-    document.addEventListener("pointercancel", end);
-  });
+  return {
+    element,
+    setContext,
+    setDirectorySearch,
+    setSection,
+    isDirectorySearch: () => showingDirectorySearch,
+  };
 }
 
 function buildContext(context, dataUrl) {
@@ -413,9 +225,7 @@ function buildContext(context, dataUrl) {
   const controls = document.createElement("div");
   controls.className = "context-pane__controls";
   const share = createControlButton("ios_share", "Share", "share");
-  const close = createControlButton("close", "Close context");
-  close.dataset.contextClose = "true";
-  controls.append(share, close);
+  controls.append(share);
   hero.append(image);
   hero.append(title, controls);
 
@@ -468,19 +278,47 @@ function buildSectionContext(contextTitle, section, dataUrl) {
   return content;
 }
 
-function resolveDraggedSheetState(progress, startState) {
-  const releaseStep = 0.03;
-  if (startState === "collapsed") {
-    if (progress >= 0.52) return "expanded";
-    return progress >= releaseStep ? "half" : "collapsed";
-  }
-  if (startState === "expanded") {
-    if (progress <= 0.48) return "collapsed";
-    return progress <= 1 - releaseStep ? "half" : "expanded";
-  }
-  if (progress >= 0.5 + releaseStep) return "expanded";
-  if (progress <= 0.5 - releaseStep) return "collapsed";
-  return "half";
+function buildDirectorySearch(title, sections, dataUrl) {
+  const content = document.createElement("div");
+  content.className = "context-pane__content context-pane__directory-search";
+
+  const header = document.createElement("header");
+  header.className = "context-pane__search-header";
+  const heading = document.createElement("h2");
+  heading.textContent = title;
+  const search = document.createElement("input");
+  search.className = "context-pane__search-input";
+  search.type = "search";
+  search.placeholder = "Search";
+  search.setAttribute("aria-label", `Search ${title}`);
+  header.append(heading, search);
+
+  const items = [...new Map((sections || [])
+    .flatMap(({ items: sectionItems = [] }) => sectionItems)
+    .map((item) => [item.id, item])).values()];
+  const results = createPageList({
+    label: `${title} search results`,
+    sections: [{
+      id: "context-search-results",
+      title: "Results",
+      view: "list",
+      selectable: false,
+      expandable: false,
+      items,
+    }],
+  }, dataUrl);
+  results.classList.add("context-pane__search-results");
+  results.hidden = true;
+  search.addEventListener("input", () => {
+    const query = search.value.trim().toLocaleLowerCase();
+    const resultItems = [...results.querySelectorAll(".page-list__items > li")];
+    results.hidden = !query;
+    resultItems.forEach((item) => {
+      item.hidden = !item.textContent.toLocaleLowerCase().includes(query);
+    });
+  });
+  content.append(header, results);
+  return content;
 }
 
 function createControlButton(iconName, label, action) {

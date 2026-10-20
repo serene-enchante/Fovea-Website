@@ -30,10 +30,23 @@ if (frameLayout) {
     label: "Context",
     content: contextPane.element,
   });
+  let directoryData = null;
+  let directoryDataUrl = document.baseURI;
+  let showSearchAfterDirectoryLoad = false;
   contextFrame.addEventListener("contextclose", () => {
     contextFrame.classList.add("is-closed");
     contextFrame.setAttribute("aria-hidden", "true");
     contextFrame.inert = true;
+    if (contextPane.isDirectorySearch()) return;
+    if (directoryData) {
+      window.setTimeout(() => {
+        if (contextFrame.classList.contains("is-closed")) {
+          contextPane.setDirectorySearch(directoryData.title, directoryData.sections, directoryDataUrl);
+        }
+      }, 440);
+    } else {
+      showSearchAfterDirectoryLoad = true;
+    }
   });
   contextFrame.addEventListener("contextopen", () => {
     contextFrame.classList.remove("is-closed");
@@ -111,12 +124,18 @@ if (frameLayout) {
     });
   loadJsonData(frameLayout.dataset.directorySrc)
     .then(({ data, dataUrl }) => {
+      directoryData = data;
+      directoryDataUrl = dataUrl;
       directoryContent.replaceChildren(createPageList(data, dataUrl));
       initializePageSelection(directoryContent);
       organizationContent.replaceChildren(
         createOrganizationRail(data.organizations, data.organizationActions, dataUrl),
       );
       initializeTileStrips(directoryContent);
+      if (showSearchAfterDirectoryLoad) {
+        showSearchAfterDirectoryLoad = false;
+        contextPane.setDirectorySearch(data.title, data.sections, dataUrl);
+      }
     })
     .catch((error) => {
       console.error("Unable to load directory data", error);
