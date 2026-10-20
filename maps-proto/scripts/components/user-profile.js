@@ -1,3 +1,5 @@
+import { createMaterialIcon } from "./material-icon.js";
+
 export function createUserProfile({ name = "User", image } = {}) {
   const profile = document.createElement("div");
   profile.className = "user-profile";
@@ -13,15 +15,14 @@ export function createUserProfile({ name = "User", image } = {}) {
     portrait.alt = "";
     avatar.append(portrait);
   } else {
-    const personIcon = createIcon("account_circle");
+    const personIcon = createMaterialIcon("account_circle");
     avatar.append(personIcon);
   }
 
   const username = document.createElement("span");
   username.className = "user-profile__name";
   username.textContent = name;
-  const dropdown = createIcon("expand_more");
-  dropdown.classList.add("user-profile__dropdown");
+  const dropdown = createMaterialIcon("expand_more", "user-profile__dropdown");
   identity.append(avatar, username, dropdown);
 
   const actions = document.createElement("div");
@@ -41,11 +42,10 @@ export function createUserProfile({ name = "User", image } = {}) {
   updateThemeToggle(themeToggle, document.documentElement.dataset.theme || "dark");
 
   const settings = document.createElement("button");
-  settings.className = "user-profile__settings";
-  settings.classList.add("user-profile__action");
+  settings.className = "user-profile__action user-profile__settings";
   settings.type = "button";
   settings.setAttribute("aria-label", "User settings");
-  settings.append(createIcon("settings"));
+  settings.append(createMaterialIcon("settings"));
   actions.append(themeToggle, settings);
   profile.append(identity, actions);
 
@@ -54,15 +54,8 @@ export function createUserProfile({ name = "User", image } = {}) {
 
 function updateThemeToggle(button, currentTheme) {
   const nextTheme = currentTheme === "light" ? "dark" : "light";
-  button.replaceChildren(createIcon(currentTheme === "light" ? "light_mode" : "dark_mode"));
+  const icon = currentTheme === "light" ? "light_mode" : "dark_mode";
+  button.replaceChildren(createMaterialIcon(icon));
   button.setAttribute("aria-label", `Switch to ${nextTheme} mode`);
   button.setAttribute("aria-pressed", String(currentTheme === "light"));
-}
-
-function createIcon(name) {
-  const icon = document.createElement("span");
-  icon.className = "material-symbols-rounded";
-  icon.setAttribute("aria-hidden", "true");
-  icon.textContent = name;
-  return icon;
 }

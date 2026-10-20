@@ -1,3 +1,5 @@
+import { createMaterialIcon } from "./material-icon.js";
+
 export function createOrganizationRail(organizations = [], actions = [], dataUrl) {
   const rail = document.createElement("nav");
   rail.className = "organization-rail";
@@ -49,11 +51,7 @@ export function createOrganizationRail(organizations = [], actions = [], dataUrl
       button.dataset.actionId = id;
       button.setAttribute("aria-label", label);
 
-      const symbol = document.createElement("span");
-      symbol.className = "material-symbols-rounded organization-rail__icon";
-      symbol.setAttribute("aria-hidden", "true");
-      symbol.textContent = icon;
-      button.append(symbol);
+      button.append(createMaterialIcon(icon, "organization-rail__icon"));
 
       item.append(button);
       actionList.append(item);

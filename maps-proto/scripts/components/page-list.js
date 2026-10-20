@@ -1,3 +1,5 @@
+import { createMaterialIcon } from "./material-icon.js";
+
 export function createPageList({ label, title, sections }, dataUrl) {
   const navigation = document.createElement("nav");
   navigation.className = "page-list";
@@ -34,11 +36,7 @@ export function createPageList({ label, title, sections }, dataUrl) {
       link.dataset.pageId = itemId;
 
       if (icon) {
-        const pageIcon = document.createElement("span");
-        pageIcon.className = "material-symbols-rounded page-list__icon";
-        pageIcon.setAttribute("aria-hidden", "true");
-        pageIcon.textContent = icon;
-        link.append(pageIcon);
+        link.append(createMaterialIcon(icon, "page-list__icon"));
       }
 
       if (image) {
@@ -119,11 +117,7 @@ function createScrollButton(direction, label) {
   button.className = `page-list__scroll page-list__scroll--${direction}`;
   button.type = "button";
   button.setAttribute("aria-label", `Scroll ${label} ${direction}`);
-  const icon = document.createElement("span");
-  icon.className = "material-symbols-rounded";
-  icon.setAttribute("aria-hidden", "true");
-  icon.textContent = direction === "left" ? "chevron_left" : "chevron_right";
-  button.append(icon);
+  button.append(createMaterialIcon(direction === "left" ? "chevron_left" : "chevron_right"));
   return button;
 }
 
