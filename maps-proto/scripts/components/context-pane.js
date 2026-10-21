@@ -83,9 +83,14 @@ export function createContextPane() {
     );
   }
 
+  function setShare() {
+    if (!activeContext) return;
+    openOverlayFrame(activeContext.title, buildShareContext(activeContext));
+  }
+
   function openOverlayFrame(title, content) {
     const baseFrame = element.closest(".app-frame--context");
-    const stage = baseFrame?.parentElement;
+    const stage = baseFrame?.closest(".map-stage") || baseFrame?.parentElement;
     if (!baseFrame || !stage) return;
 
     const previousFrame = overlayFrames.at(-1)?.frame || baseFrame;
@@ -244,7 +249,32 @@ export function createContextPane() {
     setSection,
     setDownloads,
     setSuggest,
+    setShare,
   };
+}
+
+function buildShareContext(context) {
+  const content = createChildContextContent(context.title);
+  content.classList.add("context-pane__share-view");
+
+  const shareUrl = new URL(window.location.href);
+  const url = document.createElement("a");
+  url.className = "context-pane__share-url";
+  url.href = shareUrl.href;
+  url.textContent = shareUrl.href;
+  url.title = shareUrl.href;
+
+  const qr = document.createElement("img");
+  qr.className = "context-pane__share-qr";
+  qr.alt = `QR code linking to ${context.title}`;
+  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=640x640&format=png&color=777777&bgcolor=ffffff&qzone=4&margin=1&data=${encodeURIComponent(shareUrl.href)}`;
+  qr.referrerPolicy = "no-referrer";
+
+  const shareContent = document.createElement("div");
+  shareContent.className = "context-pane__share-content";
+  shareContent.append(qr, url);
+  content.append(shareContent);
+  return content;
 }
 
 export function createContextContent(context, dataUrl, { includeSections = true } = {}) {

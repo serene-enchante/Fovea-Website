@@ -52,11 +52,13 @@ if (frameLayout) {
   contextFrame.addEventListener("contextaction", (event) => {
     if (event.detail?.actionId === "download") contextPane.setDownloads();
     if (event.detail?.actionId === "suggest") contextPane.setSuggest();
+    if (event.detail?.actionId === "share") contextPane.setShare();
   });
   contextFrame.addEventListener("contexttitlechange", (event) => {
     activeContextTitle = event.detail?.title || "New tab";
     updatePageTabNames(directoryContent, activeContextTitle);
   });
+
   mapStage.append(mapContainer, contextFrame);
 
   const contentFrame = createAppFrame({

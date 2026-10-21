@@ -3,6 +3,7 @@
 }
 
 .context-pane__section-content {
+  background: transparent;
   color: var(--control-text);
   font-family: system-ui, sans-serif;
 }
@@ -16,7 +17,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: var(--shade0);
+  background: transparent;
 }
 
 .app-frame--context.is-context-underlay {

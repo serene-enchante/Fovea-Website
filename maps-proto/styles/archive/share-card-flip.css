@@ -1,0 +1,130 @@
+/*
+ * Archived share-card flip treatment.
+ * This is intentionally not linked from index.html. The share view now uses
+ * the standard context-section overlay transition.
+ */
+.context-frame-flip {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  perspective: 1400px;
+  pointer-events: none;
+}
+
+.context-frame-flip__inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 500ms cubic-bezier(.2, .8, .2, 1);
+  pointer-events: none;
+}
+
+.context-frame-flip__face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  pointer-events: none;
+}
+
+.context-frame-flip__face--front {
+  transform: rotateY(0deg);
+}
+
+.context-frame-flip__face--back {
+  transform: rotateY(180deg);
+  visibility: hidden;
+}
+
+.context-frame-flip.is-share-flipped .context-frame-flip__inner {
+  transform: rotateY(180deg);
+}
+
+.context-frame-flip__front-frame {
+  pointer-events: auto;
+}
+
+.context-frame-flip.is-share-card-sized .context-frame-flip__front-frame,
+.context-frame-flip.is-share-card-sized .context-frame-flip__back-frame {
+  inset: 0;
+  width: auto;
+  height: auto;
+}
+
+.context-frame-flip.is-share-card-sized .context-frame-flip__front-frame {
+  max-height: none;
+  transform: none;
+  transition: none;
+}
+
+.context-frame-flip.is-share-resetting .context-frame-flip__front-frame {
+  transform: translateY(-50%);
+  transition: none;
+}
+
+.context-frame-flip.is-share-resetting .context-frame-flip__front-frame.is-context-positioned {
+  transform: none;
+}
+
+.context-frame-flip.is-share-back-visible .context-frame-flip__face--front {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.context-frame-flip.is-share-back-visible .context-frame-flip__face--back {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.context-frame-flip__back-frame {
+  position: absolute;
+  right: auto;
+  bottom: auto;
+  flex: none;
+  overflow: hidden;
+  transform: none;
+  transform-origin: center;
+  pointer-events: auto;
+}
+
+.context-frame-flip__share-content {
+  display: flex;
+  height: 100%;
+  flex: 1 1 auto;
+  overflow: hidden;
+  padding: 0;
+}
+
+.context-pane__share-face {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  flex-direction: column;
+  background: transparent;
+  color: var(--control-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .context-frame-flip__inner {
+    transition-duration: 0.01ms;
+  }
+
+  .context-frame-flip.is-share-flipped .context-frame-flip__inner {
+    transform: none;
+  }
+
+  .context-frame-flip__face--back {
+    display: none;
+    transform: none;
+  }
+
+  .context-frame-flip.is-share-back-visible .context-frame-flip__face--front {
+    display: none;
+  }
+
+  .context-frame-flip.is-share-back-visible .context-frame-flip__face--back {
+    display: block;
+    visibility: visible;
+  }
+}

@@ -8,6 +8,7 @@ export function enableContextFrameDrag(target, handleSelector) {
     const frame = target.matches(".app-frame--context")
       ? target
       : target.closest(".app-frame--context");
+    const positionTarget = frame;
     const stage = frame?.parentElement;
     if (!frame || !stage) return;
 
@@ -33,8 +34,8 @@ export function enableContextFrameDrag(target, handleSelector) {
 
       if (!dragging) {
         dragging = true;
-        frame.style.right = "auto";
-        frame.style.bottom = "auto";
+        positionTarget.style.right = "auto";
+        positionTarget.style.bottom = "auto";
         frame.classList.add("is-context-positioned", "is-context-dragging");
       }
 
@@ -43,8 +44,8 @@ export function enableContextFrameDrag(target, handleSelector) {
       const left = Math.max(0, Math.min(maxLeft, moveEvent.clientX - stageRect.left - offsetX));
       const { maxTop } = getTopBounds();
       const top = Math.max(0, Math.min(maxTop, moveEvent.clientY - stageRect.top - offsetY));
-      frame.style.left = `${left}px`;
-      frame.style.top = `${top}px`;
+      positionTarget.style.left = `${left}px`;
+      positionTarget.style.top = `${top}px`;
     }
 
     function end(endEvent) {
@@ -63,8 +64,8 @@ export function enableContextFrameDrag(target, handleSelector) {
         : Math.max(0, maxLeft - 16);
       const { maxTop, padding } = getTopBounds();
       const top = Math.max(padding, Math.min(maxTop - padding, draggedRect.top - currentStageRect.top));
-      frame.style.left = `${snapLeft}px`;
-      frame.style.top = `${top}px`;
+      positionTarget.style.left = `${snapLeft}px`;
+      positionTarget.style.top = `${top}px`;
       frame.classList.remove("is-context-dragging");
     }
 
