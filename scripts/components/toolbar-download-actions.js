@@ -1,4 +1,5 @@
 import { loadJsPdfLibrary, loadJsZipLibrary } from '../map/map-vendor-loader.js';
+import { geojsonToShapefileFiles, zipShapefileFiles } from '../services/shapefile-exporter.js';
 
 export function createToolbarDownloadActions({
     state,
@@ -55,6 +56,23 @@ export function createToolbarDownloadActions({
             });
         }
 
+        const shapefileBtn = documentObject.getElementById('download-shapefile');
+        if (shapefileBtn) {
+            shapefileBtn.addEventListener('click', async event => {
+                try {
+                    const filename = getFilename('zip');
+                    const files = geojsonToShapefileFiles(getSelectedGeoJSONData());
+                    const Zip = await getZipConstructor();
+                    const blob = await zipShapefileFiles(files, filename, Zip);
+                    await share(event, blob, filename, shapefileBtn);
+                    notifyUser(`Exported ${filename}`);
+                } catch (error) {
+                    console.error('Shapefile export failed:', error);
+                    notifyUser('Error generating Shapefile archive.');
+                }
+            });
+        }
+
         const kmzBtn = documentObject.getElementById('download-kmz');
         if (kmzBtn) {
             kmzBtn.addEventListener('click', async event => {
@@ -97,6 +115,16 @@ export function createToolbarDownloadActions({
     async function generateAppSpatialBlob(formatKey) {
         const geojson = getSelectedGeoJSONData();
         const filename = getFilename(formatKey === 'geopdf' ? 'pdf' : formatKey);
+
+        if (formatKey === 'shapefile' || formatKey === 'shp') {
+            const archiveFilename = getFilename('zip');
+            const files = geojsonToShapefileFiles(geojson);
+            const Zip = await getZipConstructor();
+            return {
+                blob: await zipShapefileFiles(files, archiveFilename, Zip),
+                filename: archiveFilename
+            };
+        }
 
         if (formatKey === 'geopdf') {
             const canvas = await renderLayout({

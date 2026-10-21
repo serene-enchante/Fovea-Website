@@ -125,7 +125,7 @@ export function geojsonToGpx(geojson, docName = "Map Data") {
 </gpx>`;
 }
 
-export function canvasToTiffBlob(canvas) {
+export function canvasToTiffBlob(canvas, geoReference = canvas.geoReference) {
     const width = canvas.width;
     const height = canvas.height;
     const ctx = canvas.getContext("2d");
@@ -141,9 +141,19 @@ export function canvasToTiffBlob(canvas) {
     }
 
     const imageByteCount = rgb.length;
+    const hasGeoReference = Boolean(
+        geoReference
+        && Array.isArray(geoReference.modelPixelScale)
+        && geoReference.modelPixelScale.length === 3
+        && geoReference.modelPixelScale.every(Number.isFinite)
+        && Array.isArray(geoReference.modelTiepoint)
+        && geoReference.modelTiepoint.length === 6
+        && geoReference.modelTiepoint.every(Number.isFinite)
+        && Number.isInteger(geoReference.projectedCrs)
+    );
     const headerSize = 8;
     const ifdOffset = headerSize + imageByteCount;
-    const numEntries = 12;
+    const numEntries = hasGeoReference ? 15 : 12;
     const ifdSize = 2 + (numEntries * 12) + 4;
     const valueDataOffset = ifdOffset + ifdSize;
 
@@ -151,8 +161,12 @@ export function canvasToTiffBlob(canvas) {
     const bitsOffset = valueDataOffset; // 6 bytes (3 * uint16)
     const xResOffset = bitsOffset + 6;  // 8 bytes (2 * uint32: 400, 1)
     const yResOffset = xResOffset + 8;  // 8 bytes (2 * uint32: 400, 1)
+    const geoDataOffset = yResOffset + 8;
+    const pixelScaleOffset = geoDataOffset;
+    const tiepointOffset = pixelScaleOffset + (hasGeoReference ? 24 : 0);
+    const geoKeyDirectoryOffset = tiepointOffset + (hasGeoReference ? 48 : 0);
 
-    const totalSize = yResOffset + 8;
+    const totalSize = geoKeyDirectoryOffset + (hasGeoReference ? 32 : 0);
     const buffer = new ArrayBuffer(totalSize);
     const view = new DataView(buffer);
     const u8 = new Uint8Array(buffer);
@@ -178,6 +192,18 @@ export function canvasToTiffBlob(canvas) {
     view.setUint32(yResOffset, 400, true);
     view.setUint32(yResOffset + 4, 1, true);
 
+    if (hasGeoReference) {
+        geoReference.modelPixelScale.forEach((value, index) => {
+            view.setFloat64(pixelScaleOffset + (index * 8), value, true);
+        });
+        geoReference.modelTiepoint.forEach((value, index) => {
+            view.setFloat64(tiepointOffset + (index * 8), value, true);
+        });
+        // ModelType=Projected, RasterType=PixelIsArea, and the projected CRS.
+        [1, 1, 0, 3, 1024, 0, 1, 1, 1025, 0, 1, 1, 3072, 0, 1, geoReference.projectedCrs]
+            .forEach((value, index) => view.setUint16(geoKeyDirectoryOffset + (index * 2), value, true));
+    }
+
     // IFD Tags
     let p = ifdOffset;
     view.setUint16(p, numEntries, true); p += 2;
@@ -202,6 +228,11 @@ export function canvasToTiffBlob(canvas) {
     writeTag(282, 5, 1, xResOffset);          // XResolution (400 DPI)
     writeTag(283, 5, 1, yResOffset);          // YResolution (400 DPI)
     writeTag(296, 3, 1, 2);                   // ResolutionUnit = 2 (Inch)
+    if (hasGeoReference) {
+        writeTag(33550, 12, 3, pixelScaleOffset);       // ModelPixelScaleTag
+        writeTag(33922, 12, 6, tiepointOffset);         // ModelTiepointTag
+        writeTag(34735, 3, 16, geoKeyDirectoryOffset);  // GeoKeyDirectoryTag
+    }
 
     view.setUint32(p, 0, true);
 

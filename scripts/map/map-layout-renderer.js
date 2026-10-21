@@ -21,6 +21,15 @@ const OFFSCREEN_MAP_HEIGHT = 2500;
 // Final layout canvas dimensions (4:3 ratio, 4000×3000 high-res print layout)
 const LAYOUT_WIDTH = 4000;
 const LAYOUT_HEIGHT = 3000;
+const WEB_MERCATOR_RADIUS = 6378137;
+
+function toWebMercator({ lng, lat }) {
+    const clampedLat = Math.max(-85.0511287798066, Math.min(85.0511287798066, lat));
+    return {
+        x: WEB_MERCATOR_RADIUS * lng * Math.PI / 180,
+        y: WEB_MERCATOR_RADIUS * Math.log(Math.tan(Math.PI / 4 + clampedLat * Math.PI / 360))
+    };
+}
 
 /**
  * Create a headless offscreen MapLibre GL instance, render Esri Topo tiles
@@ -156,6 +165,18 @@ export async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom =
 
         // 9. Grab the WebGL canvas
         const mapCanvas = offscreenMap.getCanvas();
+        const mapNorthwest = toWebMercator(offscreenMap.unproject([0, 0]));
+        const mapSoutheast = toWebMercator(offscreenMap.unproject([
+            OFFSCREEN_MAP_WIDTH,
+            OFFSCREEN_MAP_HEIGHT
+        ]));
+        const geoReference = {
+            minX: mapNorthwest.x,
+            maxX: mapSoutheast.x,
+            minY: mapSoutheast.y,
+            maxY: mapNorthwest.y,
+            projectedCrs: 3857
+        };
 
         // 10. Copy the canvas pixels to a new standalone canvas before destroying the map
         const resultCanvas = document.createElement("canvas");
@@ -167,7 +188,7 @@ export async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom =
         // 11. Destroy the headless map instance
         offscreenMap.remove();
 
-        return { canvas: resultCanvas, zoneLabels: zoneLabels };
+        return { canvas: resultCanvas, zoneLabels: zoneLabels, geoReference };
     } finally {
         // Always clean up the offscreen container
         if (container.parentNode) {
@@ -228,7 +249,11 @@ export async function renderMapLayoutCanvas({
     const maxZoom = (isCircle || !targetFeature) ? 20 : 18;
 
     // Render the headless map at 3800×2500
-    const { canvas: mapCanvas, zoneLabels } = await renderHeadlessMap(targetBounds, overlayGeojson, maxZoom);
+    const { canvas: mapCanvas, zoneLabels, geoReference: mapGeoReference } = await renderHeadlessMap(
+        targetBounds,
+        overlayGeojson,
+        maxZoom
+    );
 
     // Build the final layout canvas (4000 × 3000)
     const layoutCanvas = document.createElement("canvas");
@@ -251,6 +276,15 @@ export async function renderMapLayoutCanvas({
     const mapY = mapMargin + headerHeight;
     const mapW = width - (mapMargin * 2);
     const mapH = height - mapY - footerHeight - mapMargin;
+    layoutCanvas.geoReference = mapGeoReference && {
+        modelPixelScale: [
+            (mapGeoReference.maxX - mapGeoReference.minX) / mapW,
+            (mapGeoReference.maxY - mapGeoReference.minY) / mapH,
+            0
+        ],
+        modelTiepoint: [mapX, mapY, 0, mapGeoReference.minX, mapGeoReference.maxY, 0],
+        projectedCrs: mapGeoReference.projectedCrs
+    };
 
     // Background for map box (clean off-white for topo rendering)
     ctx.fillStyle = "#f9fafb";

@@ -2,6 +2,7 @@ import { renderMapLayoutCanvas } from './map/map-rendering.js';
 import { loadJsPdfLibrary, loadJsZipLibrary } from './map/map-vendor-loader.js';
 import { canvasToTiffBlob } from './services/format-converters.js';
 import { geojsonToGpx, geojsonToKml } from './services/download-wizard-formatters.js';
+import { geojsonToShapefileFiles, zipShapefileFiles } from './services/shapefile-exporter.js';
 import { APP_INSTRUCTION_CONFIGS, COUNT_CIRCLES } from './config/download-wizard-config.js';
 import { createDownloadWizardRasterCache } from './map/download-wizard-raster-cache.js';
 import { loadGeoDataset } from './services/geo-data-repository.js';
@@ -384,6 +385,23 @@ function setupDirectDownloadButtons() {
             const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
             downloadBlob(blob, filename);
             showToast(`Downloaded ${filename}`);
+        });
+    }
+
+    const shapefileBtn = document.getElementById("download-format-shapefile");
+    if (shapefileBtn) {
+        shapefileBtn.addEventListener("click", async () => {
+            try {
+                const filename = getDownloadFilename("zip");
+                const files = geojsonToShapefileFiles(getExportGeoJSON());
+                const Zip = typeof JSZip !== "undefined" ? JSZip : window.JSZip || await loadJsZipLibrary();
+                const blob = await zipShapefileFiles(files, filename, Zip);
+                downloadBlob(blob, filename);
+                showToast(`Downloaded ${filename}`);
+            } catch (error) {
+                console.error("Shapefile download error:", error);
+                showToast("Error generating Shapefile archive.");
+            }
         });
     }
 
