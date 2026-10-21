@@ -139,7 +139,11 @@ export function createContextPane() {
         }
         openingFrame.dispatchEvent(new CustomEvent("contextitemselect", {
           bubbles: true,
-          detail: { contextId: element.dataset.contextId, itemId: item.dataset.pageId },
+          detail: {
+            contextId: element.dataset.contextId,
+            itemId: item.dataset.pageId,
+            selection: findContextItemSelection(activeContext, item.dataset.pageId),
+          },
         }));
       }
 
@@ -236,7 +240,11 @@ export function createContextPane() {
     if (item && element.contains(item)) {
       element.dispatchEvent(new CustomEvent("contextitemselect", {
         bubbles: true,
-        detail: { contextId: element.dataset.contextId, itemId: item.dataset.pageId },
+        detail: {
+          contextId: element.dataset.contextId,
+          itemId: item.dataset.pageId,
+          selection: findContextItemSelection(activeContext, item.dataset.pageId),
+        },
       }));
     }
   });
@@ -341,6 +349,25 @@ function buildSectionContext(contextTitle, section, dataUrl) {
   list.classList.add("context-pane__section-list");
   content.append(sectionTitle, list);
   return content;
+}
+
+function createContextItemSelection(section, itemId) {
+  const item = section?.items?.find(({ id }) => String(id) === itemId);
+  if (!item) return null;
+  return {
+    id: item.id,
+    label: item.label,
+    image: item.image || "",
+    type: section.id === "circle-zones" ? "zone" : "context-item",
+  };
+}
+
+function findContextItemSelection(context, itemId) {
+  for (const section of context?.sections || []) {
+    const selection = createContextItemSelection(section, itemId);
+    if (selection) return selection;
+  }
+  return null;
 }
 
 function buildDownloadsContext(contextTitle, downloadSections, dataUrl) {

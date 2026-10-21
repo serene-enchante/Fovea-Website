@@ -64,6 +64,11 @@ if (frameLayout) {
     if (event.detail?.actionId === "suggest") contextPane.setSuggest();
     if (event.detail?.actionId === "share") contextPane.setShare();
   });
+  mapStage.addEventListener("contextitemselect", (event) => {
+    if (event.detail?.selection?.type === "zone") {
+      appStateMachine.selectZone(event.detail.selection);
+    }
+  });
 
   mapStage.append(mapContainer, contextFrame);
 
@@ -176,7 +181,7 @@ if (frameLayout) {
         disposeTileStrips();
       };
       const initialPage = data.sections.flatMap(({ items }) => items)
-        .find(({ id }) => id === "florence-cbc")
+        .find(({ id }) => id === "eugene-cbc")
         || data.sections.flatMap(({ items }) => items).find(({ selected }) => selected);
       if (initialPage) {
         appStateMachine.select({

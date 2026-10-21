@@ -63,7 +63,7 @@ const appStateMachine = Object.freeze({
     }
     const previousSelection = currentSelection;
     if (previousSelection?.id === selection.id) return false;
-    currentSelection = Object.freeze({ ...selection });
+    currentSelection = Object.freeze({ ...selection, type: selection.type || "page" });
     const change = Object.freeze({
       selection: currentSelection,
       previousSelection,
@@ -72,6 +72,36 @@ const appStateMachine = Object.freeze({
     selectionListeners.forEach((listener) => listener(change));
     window.dispatchEvent(new CustomEvent("appselectionchange", { detail: change }));
     return true;
+  },
+
+  selectZone(zone) {
+    if (!zone || typeof zone.id !== "string" || !zone.id) {
+      throw new TypeError("A zone selection must have an id");
+    }
+    if (!currentSelection) {
+      throw new Error("A parent selection is required before selecting a zone");
+    }
+    const parentSelection = currentSelection.type === "zone" && currentSelection.parent
+      ? { ...currentSelection, id: currentSelection.parent.id, label: currentSelection.parent.label }
+      : currentSelection;
+    const zoneId = zone.id.toUpperCase();
+    const parentMap = { ...(parentSelection.map || {}) };
+    delete parentMap.featureFilter;
+    return this.select({
+      id: `${parentSelection.id}/zone/${zoneId}`,
+      type: "zone",
+      zoneId,
+      label: zone.label || `Zone ${zone.id}`,
+      image: zone.image || "",
+      contextSrc: parentSelection.contextSrc || "",
+      content: parentSelection.content || {},
+      map: {
+        ...parentMap,
+        featureFilter: { property: "zid", value: zoneId },
+      },
+      dataUrl: parentSelection.dataUrl,
+      parent: Object.freeze({ id: parentSelection.id, label: parentSelection.label }),
+    });
   },
 
   transition(nextState) {

@@ -18,6 +18,14 @@
   },
   "downloads": [
     {
+      "id": "raster-formats",
+      "title": "Raster formats",
+      "items": [
+        { "id": "geopdf", "label": "GeoPDF" },
+        { "id": "geotiff", "label": "GeoTIFF" }
+      ]
+    },
+    {
       "id": "vector-formats",
       "title": "Vector formats",
       "items": [

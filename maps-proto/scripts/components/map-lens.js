@@ -115,8 +115,21 @@ export function createMapLens() {
       })
       .then((geoJson) => {
         if (version !== selectionVersion) return;
-        setBoundaryData(geoJson);
-        const bounds = getBounds(geoJson);
+        const featureFilter = mapSettings.featureFilter;
+        const displayedGeoJson = featureFilter
+          ? {
+            ...geoJson,
+            features: (geoJson.features || []).filter((feature) => (
+              String(feature.properties?.[featureFilter.property]) === String(featureFilter.value)
+            )),
+          }
+          : geoJson;
+        setBoundaryData(displayedGeoJson);
+        if (featureFilter && !displayedGeoJson.features.length) {
+          setStatus("No boundary found for the selected zone.");
+          return;
+        }
+        const bounds = getBounds(displayedGeoJson);
         if (bounds && active) {
           const rightPadding = Math.min(360, Math.max(24, canvas.clientWidth * 0.38));
           map.fitBounds(bounds, {
