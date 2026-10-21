@@ -31,8 +31,8 @@
       "title": "Recent",
       "view": "tiles",
       "items": [
-        { "id": "eugene-cbc", "label": "Eugene CBC", "image": "./assets/images/counts/ecbc.webp" },
-        { "id": "florence-cbc", "label": "Florence CBC", "image": "./assets/images/counts/fcbc.webp" },
+        { "id": "eugene-cbc", "label": "Eugene CBC", "image": "./assets/images/counts/ecbc.webp", "contextSrc": "./context-eugene.json", "map": { "center": [-123.086, 44.05], "zoom": 9, "geojsonSrc": "./assets/geojson/eugene-cbc-zones.geojson" } },
+        { "id": "florence-cbc", "label": "Florence CBC", "image": "./assets/images/counts/fcbc.webp", "contextSrc": "./context.json", "map": { "center": [-124.106, 43.982], "zoom": 9, "geojsonSrc": "./assets/geojson/florence-cbc-zones.geojson" } },
         { "id": "eugene-zone-4", "label": "Eugene CBC · Zone 4", "image": "./assets/images/zones/z04-01.webp" },
         { "id": "eugene-zone-5a", "label": "Eugene CBC · Zone 5A", "image": "./assets/images/zones/z05A-01.webp" },
         { "id": "eugene-zone-5b", "label": "Eugene CBC · Zone 5B", "image": "./assets/images/zones/z05B-01.webp" },

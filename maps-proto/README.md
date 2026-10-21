@@ -23,12 +23,13 @@ maps-proto/
   index.html                 Page shell and explicit stylesheet/module entrypoints
   *.json                     Pluggable directory, context, toolbar, and dormant tab data
   assets/google-icons/       Locally hosted Material Symbols Rounded subset and license
+  assets/geojson/            Local Eugene and Florence CBC boundary data
   scripts/
     index.js                 Composition root: load data, create and connect the UI
     components/              UI pieces and their interactions
     data/                    Data loading helpers
     layout/                  Shared frame layout/state-to-layout behavior
-    state/                   Global prototype state machine
+    state/                   Global view and selected-page state engine
   styles/
     frame-layout.css         Overall frame geometry and layout
     components/              Component-specific styles
@@ -36,6 +37,10 @@ maps-proto/
 ```
 
 The composition root should remain the place where components are assembled. Components should receive the data and callbacks they need; avoid having them reach into unrelated DOM, fetch their own global configuration, or depend on implicit site-wide globals.
+
+`scripts/state/app-state.js` owns both the current page view and current selection. Directory items emit a page-selection event; the composition root commits it to the state engine and updates the map content, context data, and selected tab name from that one selection. Add selection-specific context paths to directory item data rather than coupling components to particular pages.
+
+The same state engine owns the active content lens (`image`, `maps`, `people`, or `graph`), defaulting to `maps`. Lens changes rerender the content frame without changing the selected item or its context. Directory items can supply optional `content.people` records (`name`, optional `role`) and `content.results` records (`label`, numeric `value`) for the people and graph lenses; the lenses show an empty state when those data are not present. The maps lens loads MapLibre on demand and uses optional per-item map settings such as a center, zoom, and GeoJSON boundary source.
 
 ## Content data
 
@@ -54,7 +59,7 @@ When extending a JSON shape, keep the renderer generic, make optional fields gen
 - `index.html` lists stylesheet entrypoints explicitly. Add a stylesheet there when introducing a new file, and keep the order intentional when one layer depends on another.
 - The former share-card flip treatment is retained but inactive in `styles/archive/share-card-flip.css`; the live Share view uses the same overlay-frame transition as other context sections.
 - Keep page assets local where practical. The Material Symbols subset is vendored under `assets/google-icons/`; its README and license describe the asset. Avoid adding a CDN dependency for assets already available locally. The current QR image flow uses the external `api.qrserver.com` service; account for that network dependency if changing QR generation or offline behavior.
-- MapLibre has not yet been added to this page. Keep any future map library integration scoped to `maps-proto` and load it only where the map experience needs it.
+- The Maps lens loads MapLibre GL JS on demand from unpkg and uses CARTO's Positron style and tiles. Those services require a network connection. Keep the integration page-scoped and load the library only when the Maps lens is opened.
 
 ## File size and maintenance
 

@@ -3,9 +3,12 @@ import {
   createPageList,
   initializePageSelection,
   initializeTileStrips,
+  updatePageSelection,
   updatePageTabNames,
 } from "./components/page-list.js";
 import { createContextPane } from "./components/context-pane.js";
+import { createContentLenses } from "./components/content-lenses.js";
+import { createMapLens } from "./components/map-lens.js";
 import { createOrganizationRail } from "./components/organization-rail.js";
 import { createToolbar } from "./components/toolbar.js";
 import { createUserProfile } from "./components/user-profile.js";
@@ -28,6 +31,16 @@ if (frameLayout) {
   mapStage.className = "map-stage";
   const mapContainer = document.createElement("div");
   mapContainer.id = "map";
+  const mapPreview = document.createElement("img");
+  mapPreview.className = "map-stage__preview";
+  mapPreview.hidden = true;
+  mapContainer.append(mapPreview);
+  const mapLens = createMapLens();
+  mapContainer.append(mapLens.element);
+  const contentLenses = createContentLenses((lens) => {
+    appStateMachine.setContentLens(lens);
+  }, mapLens);
+  mapContainer.append(contentLenses.element);
   const contextFrame = createAppFrame({
     id: "context-frame",
     variant: "context",
@@ -36,13 +49,10 @@ if (frameLayout) {
     label: "Context",
     content: contextPane.element,
   });
-  let activeContextTitle = "New tab";
   contextFrame.addEventListener("contextclose", () => {
     contextFrame.classList.add("is-closed");
     contextFrame.setAttribute("aria-hidden", "true");
     contextFrame.inert = true;
-    activeContextTitle = "New tab";
-    updatePageTabNames(directoryContent, activeContextTitle);
   });
   contextFrame.addEventListener("contextopen", () => {
     contextFrame.classList.remove("is-closed");
@@ -53,10 +63,6 @@ if (frameLayout) {
     if (event.detail?.actionId === "download") contextPane.setDownloads();
     if (event.detail?.actionId === "suggest") contextPane.setSuggest();
     if (event.detail?.actionId === "share") contextPane.setShare();
-  });
-  contextFrame.addEventListener("contexttitlechange", (event) => {
-    activeContextTitle = event.detail?.title || "New tab";
-    updatePageTabNames(directoryContent, activeContextTitle);
   });
 
   mapStage.append(mapContainer, contextFrame);
@@ -95,6 +101,58 @@ if (frameLayout) {
   );
   initializeFrameLayout();
 
+  directoryContent.addEventListener("pageselect", (event) => {
+    appStateMachine.select(event.detail);
+  });
+
+  appStateMachine.subscribeSelection(({ selection, tabName }) => {
+    updatePageSelection(directoryContent, selection);
+    updatePageTabNames(directoryContent, tabName);
+    mapPreview.hidden = appStateMachine.getContentLens() !== "image" || !selection.image;
+    mapPreview.removeAttribute("src");
+    mapPreview.alt = selection.label ? `${selection.label} image` : "Selected image";
+    if (selection.image) {
+      mapPreview.src = new URL(selection.image, selection.dataUrl).href;
+    } else {
+      mapPreview.alt = selection.label || "Selected image";
+    }
+    contentLenses.setState({
+      lens: appStateMachine.getContentLens(),
+      selection,
+    });
+
+    const fallbackContext = {
+      id: selection.id,
+      title: selection.label || "New tab",
+      actions: [],
+      sections: [],
+    };
+    if (!selection.contextSrc) {
+      contextPane.element.dataset.contextId = selection.id;
+      contextPane.setContext(fallbackContext, selection.dataUrl || document.baseURI);
+      return;
+    }
+
+    const contextUrl = new URL(selection.contextSrc, selection.dataUrl || document.baseURI);
+    loadJsonData(contextUrl.href)
+      .then(({ data, dataUrl }) => {
+        if (appStateMachine.getSelection()?.id !== selection.id) return;
+        contextPane.element.dataset.contextId = data.id || selection.id;
+        contextPane.setContext(data, dataUrl);
+      })
+      .catch((error) => {
+        console.error("Unable to load selected context", error);
+        if (appStateMachine.getSelection()?.id === selection.id) {
+          contextPane.setContext(fallbackContext, selection.dataUrl || document.baseURI);
+        }
+      });
+  });
+
+  appStateMachine.subscribeContentLens(({ lens, selection }) => {
+    contentLenses.setState({ lens, selection });
+    mapPreview.hidden = lens !== "image" || !selection?.image;
+  });
+
   directoryContent.addEventListener("sectionexpand", (event) => {
     const { section, dataUrl } = event.detail || {};
     if (!section) return;
@@ -104,34 +162,11 @@ if (frameLayout) {
     contextPane.setSection(section, dataUrl);
   });
 
-  function showContext(context, dataUrl) {
-    contextPane.element.dataset.contextId = context.id || "";
-    contextPane.setContext(context, dataUrl);
-  }
-
-  frameLayout.addEventListener("contextchange", (event) => {
-    const { context, source } = event.detail || {};
-    if (context) {
-      showContext(context, source ? new URL(source, document.baseURI) : document.baseURI);
-    } else if (source) {
-      loadJsonData(source)
-        .then(({ data, dataUrl }) => showContext(data, dataUrl))
-        .catch((error) => console.error("Unable to load context data", error));
-    }
-  });
-
-  loadJsonData(frameLayout.dataset.contextSrc)
-    .then(({ data, dataUrl }) => showContext(data, dataUrl))
-    .catch((error) => {
-      console.error("Unable to load context data", error);
-      contextPane.element.textContent = "Context unavailable";
-    });
   loadJsonData(frameLayout.dataset.directorySrc)
     .then(({ data, dataUrl }) => {
       disposeDirectoryEnhancements();
       directoryContent.replaceChildren(createPageList(data, dataUrl));
       const disposePageSelection = initializePageSelection(directoryContent);
-      updatePageTabNames(directoryContent, activeContextTitle);
       organizationContent.replaceChildren(
         createOrganizationRail(data.organizations, data.organizationActions, dataUrl),
       );
@@ -140,6 +175,20 @@ if (frameLayout) {
         disposePageSelection();
         disposeTileStrips();
       };
+      const initialPage = data.sections.flatMap(({ items }) => items)
+        .find(({ id }) => id === "florence-cbc")
+        || data.sections.flatMap(({ items }) => items).find(({ selected }) => selected);
+      if (initialPage) {
+        appStateMachine.select({
+          id: initialPage.id,
+          label: initialPage.label,
+          image: initialPage.image || "",
+          contextSrc: initialPage.contextSrc || "",
+          content: initialPage.content || {},
+          map: initialPage.map || {},
+          dataUrl,
+        });
+      }
     })
     .catch((error) => {
       console.error("Unable to load directory data", error);

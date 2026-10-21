@@ -1,6 +1,7 @@
 import { createMaterialIcon } from "./material-icon.js";
 
 export function createPageList({ label, title, sections }, dataUrl) {
+  const pageItems = new Map(sections.flatMap(({ items }) => items.map((item) => [item.id, item])));
   const navigation = document.createElement("nav");
   navigation.className = "page-list";
   navigation.setAttribute("aria-label", label);
@@ -41,12 +42,15 @@ export function createPageList({ label, title, sections }, dataUrl) {
       list.setAttribute("aria-label", `${title} items`);
     }
 
-    items.forEach(({ id: itemId, label: itemLabel, icon, image, downloadFormat, selected, currentTab }) => {
+    items.forEach(({ id: itemId, label: itemLabel, icon, image, downloadFormat, selected, currentTab, contextSrc }) => {
       const item = document.createElement("li");
       const link = document.createElement("button");
       link.className = "page-list__item";
       link.type = "button";
       link.dataset.pageId = itemId;
+      link.dataset.pageLabel = itemLabel;
+      if (image) link.dataset.pageImage = image;
+      if (contextSrc) link.dataset.contextSrc = contextSrc;
       if (downloadFormat) link.dataset.downloadFormat = downloadFormat;
 
       if (icon) {
@@ -116,6 +120,22 @@ export function createPageList({ label, title, sections }, dataUrl) {
   });
 
   navigation.addEventListener("click", (event) => {
+    const page = event.target.closest("[data-page-id]");
+    if (page && navigation.contains(page)) {
+      navigation.dispatchEvent(new CustomEvent("pageselect", {
+        bubbles: true,
+        detail: {
+          id: page.dataset.pageId,
+          label: page.dataset.pageLabel,
+          image: page.dataset.pageImage || "",
+          contextSrc: page.dataset.contextSrc || "",
+          content: pageItems.get(page.dataset.pageId)?.content || {},
+          map: pageItems.get(page.dataset.pageId)?.map || {},
+          dataUrl,
+        },
+      }));
+    }
+
     const button = event.target.closest("[data-expand-section]");
     if (!button || !navigation.contains(button)) return;
     const section = sections.find(({ id }) => id === button.dataset.expandSection);
@@ -255,5 +275,28 @@ export function initializePageSelection(root) {
 export function updatePageTabNames(root, title) {
   root.querySelectorAll(".page-list__tab-name").forEach((tabName) => {
     tabName.textContent = title;
+  });
+}
+
+export function updatePageSelection(root, selection) {
+  root.querySelectorAll(".page-list__items--selectable").forEach((list) => {
+    const matchesSelection = Array.from(list.querySelectorAll("[data-page-id]"))
+      .find((button) => button.dataset.pageId === selection?.id);
+    if (!matchesSelection) return;
+    list.querySelectorAll('.page-list__item[aria-current="page"]').forEach((button) => {
+      button.removeAttribute("aria-current");
+    });
+    matchesSelection.setAttribute("aria-current", "page");
+    list.querySelectorAll(".page-list__tab").forEach((tab) => {
+      tab.hidden = !matchesSelection.contains(tab);
+    });
+    const selected = list.querySelector('.page-list__item[aria-current="page"]');
+    const highlight = list.querySelector(".page-list__selection-highlight");
+    if (highlight) highlight.hidden = !selected;
+    if (selected && highlight) {
+      highlight.hidden = false;
+      highlight.style.height = `${selected.offsetHeight}px`;
+      highlight.style.transform = `translateY(${selected.closest("li").offsetTop}px)`;
+    }
   });
 }
