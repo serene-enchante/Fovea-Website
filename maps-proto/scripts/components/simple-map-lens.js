@@ -57,15 +57,17 @@ export function createSimpleMapLens() {
   let map = null;
   let active = false;
   let selectionId = null;
+  let currentSelection = null;
+  let initializationScheduled = false;
 
-  async function initialize(selection) {
+  async function initialize() {
     status.textContent = "Loading map…";
     status.hidden = false;
     try {
       const maplibregl = await loadMapLibre();
       if (!active || map) return;
 
-      const settings = selection?.map || {};
+      const settings = currentSelection?.map || {};
       map = new maplibregl.Map({
         container: canvas,
         style: document.documentElement.dataset.theme === "light"
@@ -85,14 +87,36 @@ export function createSimpleMapLens() {
     }
   }
 
+  function scheduleInitialization() {
+    if (initializationScheduled || map) return;
+    initializationScheduled = true;
+    status.textContent = "Preparing map…";
+    status.hidden = false;
+
+    const start = () => {
+      initializationScheduled = false;
+      if (active && !map) initialize();
+    };
+    const afterPaint = () => {
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(start, { timeout: 2000 });
+      } else {
+        window.setTimeout(start, 300);
+      }
+    };
+
+    window.requestAnimationFrame(() => window.requestAnimationFrame(afterPaint));
+  }
+
   function setState({ active: isActive, selection }) {
     active = isActive;
+    currentSelection = selection;
     element.hidden = !active;
     if (!active) return;
 
     const settings = selection?.map || {};
     if (!map) {
-      initialize(selection);
+      scheduleInitialization();
       selectionId = selection?.id || null;
       return;
     }
