@@ -45,6 +45,26 @@
   display: none;
 }
 
+.simple-map-lens__load {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 12px;
+  background: var(--context-frame-bg, rgba(20, 22, 25, 0.9));
+  color: var(--control-text, #fff);
+  font: 600 14px/1.2 system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.simple-map-lens__load[hidden] {
+  display: none;
+}
+
 .content-lenses__toolbar {
   position: absolute;
   z-index: 2;

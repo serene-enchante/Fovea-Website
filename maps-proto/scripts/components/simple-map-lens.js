@@ -52,20 +52,33 @@ export function createSimpleMapLens() {
   status.className = "simple-map-lens__status";
   status.setAttribute("role", "status");
   status.hidden = true;
-  element.append(canvas, status);
+
+  const loadButton = document.createElement("button");
+  loadButton.className = "simple-map-lens__load";
+  loadButton.type = "button";
+  loadButton.textContent = "Load interactive map";
+  element.append(canvas, status, loadButton);
 
   let map = null;
   let active = false;
   let selectionId = null;
   let currentSelection = null;
-  let initializationScheduled = false;
+  let mapLoading = false;
 
   async function initialize() {
+    if (map || mapLoading) return;
+    mapLoading = true;
+    loadButton.hidden = true;
     status.textContent = "Loading map…";
     status.hidden = false;
     try {
       const maplibregl = await loadMapLibre();
-      if (!active || map) return;
+      if (map) return;
+      if (!active) {
+        loadButton.hidden = false;
+        status.hidden = true;
+        return;
+      }
 
       const settings = currentSelection?.map || {};
       map = new maplibregl.Map({
@@ -84,29 +97,14 @@ export function createSimpleMapLens() {
     } catch (error) {
       console.error("Unable to initialize the simple map lens", error);
       status.textContent = "Map could not be loaded. Check your network connection.";
+      loadButton.textContent = "Retry loading map";
+      loadButton.hidden = false;
+    } finally {
+      mapLoading = false;
     }
   }
 
-  function scheduleInitialization() {
-    if (initializationScheduled || map) return;
-    initializationScheduled = true;
-    status.textContent = "Preparing map…";
-    status.hidden = false;
-
-    const start = () => {
-      initializationScheduled = false;
-      if (active && !map) initialize();
-    };
-    const afterPaint = () => {
-      if (typeof window.requestIdleCallback === "function") {
-        window.requestIdleCallback(start, { timeout: 2000 });
-      } else {
-        window.setTimeout(start, 300);
-      }
-    };
-
-    window.requestAnimationFrame(() => window.requestAnimationFrame(afterPaint));
-  }
+  loadButton.addEventListener("click", initialize);
 
   function setState({ active: isActive, selection }) {
     active = isActive;
@@ -116,7 +114,6 @@ export function createSimpleMapLens() {
 
     const settings = selection?.map || {};
     if (!map) {
-      scheduleInitialization();
       selectionId = selection?.id || null;
       return;
     }
