@@ -36,7 +36,7 @@ if (frameLayout) {
   mapPreview.hidden = true;
   mapContainer.append(mapPreview);
   const mapLens = createSimpleMapLens();
-  mapContainer.append(mapLens.element);
+  frameLayout.insertBefore(mapLens.element, frameLayout.firstChild);
   const contentLenses = createContentLenses((lens) => {
     appStateMachine.setContentLens(lens);
   }, mapLens);
@@ -102,6 +102,14 @@ if (frameLayout) {
       label: "User",
       content: userContent,
     }),
+    contentColumn,
+  );
+  mapLens.setFrameMask(
+    contentFrame,
+    () => [
+      ...document.querySelectorAll(".app-frame--context"),
+      document.getElementById("toolbar-frame"),
+    ],
     contentColumn,
   );
   initializeFrameLayout();
