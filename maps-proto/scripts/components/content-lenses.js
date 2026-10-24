@@ -2,12 +2,11 @@ import { createMaterialIcon } from "./material-icon.js";
 
 const LENSES = [
   { id: "image", label: "Image" },
-  { id: "maps", label: "Maps" },
   { id: "people", label: "People" },
   { id: "graph", label: "Graph" },
 ];
 
-export function createContentLenses(onChange, mapLens) {
+export function createContentLenses(onChange) {
   const root = document.createElement("div");
   root.className = "content-lenses";
   const toolbar = document.createElement("div");
@@ -94,15 +93,9 @@ export function createContentLenses(onChange, mapLens) {
       button.setAttribute("aria-pressed", String(id === lens));
       button.classList.toggle("is-active", id === lens);
     });
-    mapLens?.setState({ active: lens === "maps", selection });
     view.replaceChildren();
 
     if (lens === "image" && selection?.image) {
-      view.hidden = true;
-      return;
-    }
-
-    if (lens === "maps") {
       view.hidden = true;
       return;
     }
@@ -114,12 +107,10 @@ export function createContentLenses(onChange, mapLens) {
     const subject = selection?.label || "this selection";
     view.append(heading);
 
-    if (lens === "maps" || lens === "image") {
+    if (lens === "image") {
       const message = document.createElement("p");
       message.className = "content-lenses__empty-state";
-      message.textContent = lens === "maps"
-        ? `Map view is not available for ${subject} yet.`
-        : `No image is available for ${subject}.`;
+      message.textContent = `No image is available for ${subject}.`;
       view.append(message);
       return;
     }

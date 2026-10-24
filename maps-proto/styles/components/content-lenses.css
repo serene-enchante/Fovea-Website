@@ -4,53 +4,6 @@
   pointer-events: none;
 }
 
-.map-lens {
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  background: #e8edf1;
-}
-
-.map-lens[hidden] {
-  display: none;
-}
-
-.map-lens__canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* MapLibre adds .maplibregl-map to this node after initialization. Keep the
-   full-frame sizing rule more specific than MapLibre's base map container. */
-.map-lens > .map-lens__canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.map-lens__status {
-  position: absolute;
-  z-index: 1;
-  top: 60px;
-  left: 16px;
-  max-width: calc(100% - 32px);
-  margin: 0;
-  padding: 8px 12px;
-  border: 1px solid var(--context-frame-border, rgba(255, 255, 255, 0.14));
-  border-radius: 12px;
-  background: var(--context-frame-bg, rgba(20, 22, 25, 0.88));
-  color: var(--control-text, #fff);
-  font: 13px/1.4 system-ui, sans-serif;
-  pointer-events: none;
-}
-
-.map-lens__status[hidden] {
-  display: none;
-}
-
 .content-lenses__toolbar {
   position: absolute;
   z-index: 2;

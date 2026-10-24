@@ -4,7 +4,6 @@ const STATES = Object.freeze({
 });
 const CONTENT_LENSES = Object.freeze({
   IMAGE: "image",
-  MAPS: "maps",
   PEOPLE: "people",
   GRAPH: "graph",
 });
@@ -21,7 +20,7 @@ const listeners = new Set();
 const selectionListeners = new Set();
 const lensListeners = new Set();
 let currentSelection = null;
-let currentLens = CONTENT_LENSES.MAPS;
+let currentLens = CONTENT_LENSES.IMAGE;
 
 const appStateMachine = Object.freeze({
   states: STATES,
