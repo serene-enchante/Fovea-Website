@@ -3,6 +3,7 @@ const STATES = Object.freeze({
   DIRECTORY_VIEW: "directory-view",
 });
 const CONTENT_LENSES = Object.freeze({
+  MAPS: "maps",
   IMAGE: "image",
   PEOPLE: "people",
   GRAPH: "graph",
@@ -20,7 +21,7 @@ const listeners = new Set();
 const selectionListeners = new Set();
 const lensListeners = new Set();
 let currentSelection = null;
-let currentLens = CONTENT_LENSES.IMAGE;
+let currentLens = CONTENT_LENSES.MAPS;
 
 const appStateMachine = Object.freeze({
   states: STATES,

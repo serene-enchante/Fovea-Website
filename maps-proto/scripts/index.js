@@ -8,6 +8,7 @@ import {
 } from "./components/page-list.js";
 import { createContextPane } from "./components/context-pane.js";
 import { createContentLenses } from "./components/content-lenses.js";
+import { createSimpleMapLens } from "./components/simple-map-lens.js";
 import { createOrganizationRail } from "./components/organization-rail.js";
 import { createToolbar } from "./components/toolbar.js";
 import { createUserProfile } from "./components/user-profile.js";
@@ -34,9 +35,11 @@ if (frameLayout) {
   mapPreview.className = "map-stage__preview";
   mapPreview.hidden = true;
   mapContainer.append(mapPreview);
+  const mapLens = createSimpleMapLens();
+  mapContainer.append(mapLens.element);
   const contentLenses = createContentLenses((lens) => {
     appStateMachine.setContentLens(lens);
-  });
+  }, mapLens);
   mapContainer.append(contentLenses.element);
   const contextFrame = createAppFrame({
     id: "context-frame",

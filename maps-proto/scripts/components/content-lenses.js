@@ -1,12 +1,13 @@
 import { createMaterialIcon } from "./material-icon.js";
 
 const LENSES = [
+  { id: "maps", label: "Maps" },
   { id: "image", label: "Image" },
   { id: "people", label: "People" },
   { id: "graph", label: "Graph" },
 ];
 
-export function createContentLenses(onChange) {
+export function createContentLenses(onChange, mapLens) {
   const root = document.createElement("div");
   root.className = "content-lenses";
   const toolbar = document.createElement("div");
@@ -93,7 +94,13 @@ export function createContentLenses(onChange) {
       button.setAttribute("aria-pressed", String(id === lens));
       button.classList.toggle("is-active", id === lens);
     });
+    mapLens?.setState({ active: lens === "maps", selection });
     view.replaceChildren();
+
+    if (lens === "maps") {
+      view.hidden = true;
+      return;
+    }
 
     if (lens === "image" && selection?.image) {
       view.hidden = true;
