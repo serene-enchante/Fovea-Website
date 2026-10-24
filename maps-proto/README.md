@@ -40,7 +40,7 @@ The composition root should remain the place where components are assembled. Com
 
 `scripts/state/app-state.js` owns both the current page view and current selection. Directory items emit a page-selection event; the composition root commits it to the state engine and updates the map content, context data, and selected tab name from that one selection. Add selection-specific context paths to directory item data rather than coupling components to particular pages.
 
-The same state engine owns the active content lens (`maps`, `image`, `people`, or `graph`), defaulting to `maps`. The Maps lens shows a lightweight prompt and loads its small MapLibre GL JS component with CARTO vector basemap styles only when the user requests the interactive map. Lens changes rerender the content frame without changing the selected item or its context. Directory items can supply optional `content.people` records (`name`, optional `role`) and `content.results` records (`label`, numeric `value`) for the people and graph lenses; the lenses show an empty state when those data are not present.
+The same state engine owns the active content lens (`maps`, `image`, `people`, or `graph`), defaulting to `maps`. The Maps lens shows an animated placeholder, then automatically loads its small MapLibre GL JS component with CARTO vector basemap styles after the page load settles. Lens changes rerender the content frame without changing the selected item or its context. Directory items can supply optional `content.people` records (`name`, optional `role`) and `content.results` records (`label`, numeric `value`) for the people and graph lenses; the lenses show an empty state when those data are not present.
 
 ## Content data
 

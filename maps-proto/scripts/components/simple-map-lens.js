@@ -5,6 +5,7 @@ const VECTOR_STYLES = {
   light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
   dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
 };
+const AUTO_LOAD_DELAY_MS = 5000;
 
 let mapLibrePromise;
 
@@ -53,29 +54,25 @@ export function createSimpleMapLens() {
   status.setAttribute("role", "status");
   status.hidden = true;
 
-  const loadButton = document.createElement("button");
-  loadButton.className = "simple-map-lens__load";
-  loadButton.type = "button";
-  loadButton.textContent = "Load interactive map";
-  element.append(canvas, status, loadButton);
+  element.append(canvas, status);
 
   let map = null;
   let active = false;
   let selectionId = null;
   let currentSelection = null;
   let mapLoading = false;
+  let autoLoadTimer = null;
 
   async function initialize() {
     if (map || mapLoading) return;
     mapLoading = true;
-    loadButton.hidden = true;
     status.textContent = "Loading map…";
+    status.dataset.state = "loading";
     status.hidden = false;
     try {
       const maplibregl = await loadMapLibre();
       if (map) return;
       if (!active) {
-        loadButton.hidden = false;
         status.hidden = true;
         return;
       }
@@ -90,30 +87,58 @@ export function createSimpleMapLens() {
         zoom: settings.zoom || 9,
         attributionControl: true,
       });
-      map.once("load", () => { status.hidden = true; });
+      map.once("load", () => {
+        status.hidden = true;
+        delete status.dataset.state;
+      });
       map.on("error", (event) => {
-        if (event.error && !map.loaded()) status.textContent = "Map tiles could not be loaded.";
+        if (event.error && !map.loaded()) {
+          status.dataset.state = "error";
+          status.textContent = "Map tiles could not be loaded.";
+        }
       });
     } catch (error) {
       console.error("Unable to initialize the simple map lens", error);
+      status.dataset.state = "error";
       status.textContent = "Map could not be loaded. Check your network connection.";
-      loadButton.textContent = "Retry loading map";
-      loadButton.hidden = false;
     } finally {
       mapLoading = false;
     }
   }
 
-  loadButton.addEventListener("click", initialize);
+  function scheduleAutoLoad() {
+    if (autoLoadTimer !== null || map || mapLoading) return;
+    const waitForPageLoad = () => {
+      if (!active || autoLoadTimer !== null || map) return;
+      autoLoadTimer = window.setTimeout(() => {
+        autoLoadTimer = null;
+        if (active && !map) initialize();
+      }, AUTO_LOAD_DELAY_MS);
+    };
+
+    if (document.readyState === "complete") waitForPageLoad();
+    else window.addEventListener("load", waitForPageLoad, { once: true });
+  }
 
   function setState({ active: isActive, selection }) {
     active = isActive;
     currentSelection = selection;
     element.hidden = !active;
-    if (!active) return;
+    if (!active) {
+      if (autoLoadTimer !== null) {
+        window.clearTimeout(autoLoadTimer);
+        autoLoadTimer = null;
+      }
+      status.hidden = true;
+      return;
+    }
 
     const settings = selection?.map || {};
     if (!map) {
+      status.textContent = "Preparing interactive map…";
+      status.dataset.state = "loading";
+      status.hidden = false;
+      scheduleAutoLoad();
       selectionId = selection?.id || null;
       return;
     }

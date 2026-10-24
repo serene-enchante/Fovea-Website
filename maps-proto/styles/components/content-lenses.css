@@ -29,9 +29,12 @@
 .simple-map-lens__status {
   position: absolute;
   z-index: 1;
-  top: 60px;
-  left: 16px;
-  max-width: calc(100% - 32px);
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 40px);
   margin: 0;
   padding: 8px 12px;
   border-radius: 12px;
@@ -39,30 +42,32 @@
   color: var(--control-text, #fff);
   font: 13px/1.4 system-ui, sans-serif;
   pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.simple-map-lens__status[data-state="loading"]::before {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  content: "";
+  animation: simple-map-lens-spin 800ms linear infinite;
+}
+
+@keyframes simple-map-lens-spin {
+  to { transform: rotate(360deg); }
 }
 
 .simple-map-lens__status[hidden] {
   display: none;
 }
 
-.simple-map-lens__load {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  min-height: 44px;
-  padding: 10px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 12px;
-  background: var(--context-frame-bg, rgba(20, 22, 25, 0.9));
-  color: var(--control-text, #fff);
-  font: 600 14px/1.2 system-ui, sans-serif;
-  cursor: pointer;
-}
-
-.simple-map-lens__load[hidden] {
-  display: none;
+@media (prefers-reduced-motion: reduce) {
+  .simple-map-lens__status[data-state="loading"]::before {
+    animation: none;
+  }
 }
 
 .content-lenses__toolbar {
