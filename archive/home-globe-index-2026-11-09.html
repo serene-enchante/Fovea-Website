@@ -1,0 +1,2483 @@
+<!-- Archived homepage source before removing the dynamic globe on 2026-11-09. -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>fovea</title>
+    <meta name="description" content="Fovea - Spatial mapping and count circle data engine. Search and access Christmas Bird Count circles.">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.onload=null;this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
+    <link rel="icon" type="image/png" href="images/logo-fav.png">
+
+    <script>
+        (function() {
+            try {
+                const storedTheme = localStorage.getItem("fovea-theme") || "dark";
+                const isSystemLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+                if (storedTheme === "light" || (storedTheme === "auto" && isSystemLight)) {
+                    document.documentElement.setAttribute("data-theme", "light");
+                    document.documentElement.classList.add("theme-light");
+                }
+            } catch(e) {}
+        })();
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'Aliceregular';
+            src: url('fonts/alice-fontfacekit/web%20fonts/alice_regular_macroman/Alice-Regular-webfont.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --subtext-color: rgba(255, 255, 255, 0.45);
+            --border-color: rgba(255, 255, 255, 0.12);
+            --box-bg: rgba(255, 255, 255, 0.05);
+            --box-hover-bg: rgba(255, 255, 255, 0.09);
+
+            --accent-color: #64b5f6;
+            --accent-light: #91cfff;
+            --accent-hover: #79c1f8;
+            --accent-rgb: 100, 181, 246;
+
+            --accent-primary: var(--accent-color);
+            --accent-green: var(--accent-color);
+
+            --font-serif: 'Aliceregular', 'Alice', Georgia, serif;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        [data-theme="light"],
+        html.theme-light,
+        body.theme-light {
+            --bg-color: #ffffff;
+            --text-color: #111827;
+            --subtext-color: #6b7280;
+            --border-color: rgba(0, 0, 0, 0.12);
+            --box-bg: #f9fafb;
+            --box-hover-bg: #f3f4f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .home-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding-top: clamp(170px, 30vh, 280px); /* Centered vertically by default */
+            padding-bottom: clamp(170px, 30vh, 260px);
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+            position: relative;
+            z-index: 10;
+            pointer-events: none; /* Let clicks pass through empty spaces to globe container underneath */
+            transition: padding-top 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .home-container.search-active {
+            padding-top: clamp(80px, 13vh, 140px); /* Shifts upwards to make room for suggestions dropdown */
+        }
+
+        /* Ambient Glow Effect */
+        .ambient-glow {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: clamp(300px, 50vw, 600px);
+            height: clamp(300px, 50vw, 600px);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.035) 0%, rgba(0, 0, 0, 0) 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Logo Title & Dataset Dropdown Wrapper */
+        .logo-wrapper {
+            position: relative;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-end;
+            margin-bottom: 1.6rem;
+            user-select: none;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInLogo 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.1s;
+            pointer-events: auto;
+            z-index: 50; /* Stacking context above search-wrapper (z-index: 20) */
+        }
+
+        .logo-wrapper.is-open {
+            z-index: 1000 !important; /* Floats popup above search bar and other UI */
+        }
+
+        .logo-title {
+            font-family: var(--font-serif);
+            font-size: clamp(4.5rem, 11vw, 8.5rem);
+            font-weight: 400;
+            color: var(--text-color);
+            text-transform: lowercase;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        /* Dataset Selector Dropdown (Right-aligned below fovea logo) */
+        .dataset-dropdown-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            margin-top: -0.85rem;
+            margin-right: -0.85rem;
+            z-index: 100;
+        }
+
+        .dataset-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.1rem 0.3rem;
+            background: transparent;
+            border: none;
+            outline: none;
+            border-radius: 6px;
+            color: var(--accent-color);
+            font-family: var(--font-sans);
+            font-size: 0.88rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            line-height: 1;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .dataset-toggle-btn:hover {
+            color: var(--accent-light, #91cfff);
+            background: rgba(var(--accent-rgb, 100, 181, 246), 0.1);
+        }
+
+        .dataset-toggle-chevron {
+            width: 11px;
+            height: 11px;
+            stroke: var(--accent-color);
+            stroke-width: 2.5;
+            transition: transform 0.2s ease, stroke 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .dataset-toggle-btn:hover .dataset-toggle-chevron {
+            stroke: var(--accent-light, #91cfff);
+        }
+
+        .dataset-toggle-btn[aria-expanded="true"] .dataset-toggle-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Floating Options Dropdown Popup Menu (Matching Settings Page) */
+        .dataset-select-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0 !important;
+            left: auto !important;
+            z-index: 99999 !important;
+            min-width: 215px;
+            background: #000000 !important;
+            border: 1px solid #333333 !important;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.95), 0 4px 16px rgba(0, 0, 0, 0.8) !important;
+            border-radius: 12px !important;
+            padding: 0.35rem !important;
+            display: none;
+            flex-direction: column;
+            gap: 0.15rem;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .dataset-select-menu[aria-hidden="false"] {
+            display: flex !important;
+            animation: datasetMenuFadeIn 0.15s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes datasetMenuFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dataset-menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            color: #e4e4e7 !important;
+            font-family: var(--font-sans);
+            font-size: 0.86rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            gap: 1rem;
+        }
+
+        .dataset-menu-item__left {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            min-width: 0;
+        }
+
+        .dataset-menu-item:hover:not(.is-disabled) {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff !important;
+        }
+
+        .dataset-menu-item.is-active {
+            color: var(--accent-color) !important;
+            font-weight: 600;
+        }
+
+        .dataset-menu-item.is-active .dataset-menu-item__icon,
+        .dataset-menu-item.is-active .dataset-menu-item__check {
+            stroke: var(--accent-color);
+        }
+
+        .dataset-menu-item__icon {
+            width: 14px;
+            height: 14px;
+            stroke: #a1a1aa;
+            stroke-width: 2.2;
+            flex-shrink: 0;
+            transition: stroke 0.2s ease;
+        }
+
+        .dataset-menu-item:hover:not(.is-disabled) .dataset-menu-item__icon {
+            stroke: #ffffff;
+        }
+
+        .dataset-menu-item__check {
+            stroke: var(--accent-color);
+            stroke-width: 2.5;
+            flex-shrink: 0;
+        }
+
+        .dataset-menu-item.is-disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .dataset-menu-item__badge {
+            font-size: 0.72rem;
+            font-weight: 500;
+            padding: 0.15rem 0.45rem;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.02em;
+            margin-left: 0.25rem;
+            white-space: nowrap;
+        }
+
+        @keyframes fadeInLogo {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Search Form Wrapper */
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 440px;
+            z-index: 20;
+            opacity: 0;
+            transform: translateY(12px);
+            animation: fadeInSearch 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.25s;
+            pointer-events: auto; /* Restore interactivity for search and autocomplete dropdown */
+        }
+
+        @keyframes fadeInSearch {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: #000000 !important;
+            border: 1px solid var(--border-color);
+            border-radius: 9999px;
+            padding: 0.75rem 1.25rem;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            position: relative; /* Relative positioning for glow pseudo-elements */
+            overflow: visible; /* Allows outline highlight to extend slightly outside bounds */
+        }
+
+        /* Proximity Border Highlight Outline for Search Box */
+        .search-box::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 10000px;
+            padding: 1px;
+            background: radial-gradient(
+                var(--spotlight-size, 240px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(255, 255, 255, 0.35) 0%,
+                rgba(255, 255, 255, 0.1) 40%,
+                transparent 75%
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: var(--glow-opacity, 0);
+            transition: opacity 0.1s linear;
+            z-index: 1;
+        }
+
+        .search-box:focus-within {
+            background: rgba(255, 255, 255, 0.09) !important;
+            border-color: rgba(255, 255, 255, 0.28);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15);
+        }
+
+        .search-icon {
+            position: relative;
+            z-index: 2;
+            color: rgba(255, 255, 255, 0.4);
+            flex-shrink: 0;
+            transition: color 0.2s ease;
+        }
+
+        .search-box:focus-within .search-icon {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .search-input {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-family: var(--font-sans);
+            font-weight: 400;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .search-clear {
+            position: relative;
+            z-index: 2;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+
+        .search-clear:hover {
+            color: #ffffff;
+        }
+
+        /* Home Shortcut Below Search */
+        .home-shortcuts {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+            z-index: 10;
+            position: relative;
+            animation: fadeInSearch 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.35s;
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .home-shortcut-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 9999px;
+            color: rgba(255, 255, 255, 0.75);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 0.82rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .home-shortcut-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+
+        .home-shortcut-btn svg {
+            color: var(--accent-color, #64b5f6);
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+
+        .home-shortcut-btn:hover svg {
+            transform: translateY(1px);
+        }
+
+        [data-theme="light"] .home-shortcut-btn,
+        html.theme-light .home-shortcut-btn,
+        body.theme-light .home-shortcut-btn {
+            background: rgba(0, 0, 0, 0.04);
+            border: none;
+            color: #374151;
+        }
+
+        [data-theme="light"] .home-shortcut-btn:hover,
+        html.theme-light .home-shortcut-btn:hover,
+        body.theme-light .home-shortcut-btn:hover {
+            background: rgba(0, 0, 0, 0.08);
+            color: #111827;
+        }
+
+        /* Globe Interactive Markers */
+        .marker-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background-color: #ffffff;
+            box-shadow: none; /* No glow */
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* Hover/Keyboard highlight status colors */
+        .marker-dot.is-active {
+            background-color: var(--accent-color, #00d5a4);
+            box-shadow: none; /* No glow */
+            transform: scale(1.3);
+        }
+
+        /* Autocomplete Dropdown */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: #000000 !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
+            z-index: 50;
+            padding: 0.4rem;
+            display: none;
+            overflow: visible !important;
+            --mouse-x: 50%;
+            --mouse-y: 50%;
+            --glow-opacity: 0;
+            --spotlight-size: 240px;
+        }
+
+        .autocomplete-scroll-container {
+            max-height: 272px;
+            overflow-y: auto;
+            border-radius: 12px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Proximity Glow for Autocomplete Dropdown */
+        .autocomplete-dropdown::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: var(--glow-opacity, 0);
+            transition: opacity 0.1s linear;
+            z-index: 0;
+            background: radial-gradient(
+                var(--spotlight-size) circle at var(--mouse-x) var(--mouse-y),
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                transparent 75%
+            );
+        }
+
+        .autocomplete-dropdown::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 17px;
+            padding: 1px;
+            background: radial-gradient(
+                var(--spotlight-size) circle at var(--mouse-x) var(--mouse-y),
+                rgba(255, 255, 255, 0.35) 0%,
+                rgba(255, 255, 255, 0.1) 40%,
+                transparent 75%
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: var(--glow-opacity, 0);
+            transition: opacity 0.1s linear;
+            z-index: 1;
+        }
+
+        .autocomplete-item {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.75rem 0.95rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.15s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.is-selected {
+            background: rgba(255, 255, 255, 0.10);
+        }
+
+        .autocomplete-item__icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #000000;
+            border-radius: 6px;
+            padding: 3px;
+            box-sizing: border-box;
+            color: rgba(255, 255, 255, 0.7);
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        .autocomplete-item:hover .autocomplete-item__icon {
+            color: var(--accent-green);
+        }
+
+        .autocomplete-item__info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            min-width: 0;
+        }
+
+        .autocomplete-item__title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .autocomplete-item__subtitle {
+            font-size: 0.76rem;
+            color: var(--subtext-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .no-results {
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.84rem;
+            color: var(--subtext-color);
+        }
+        /* Top Right Controls (About Info) */
+        .top-right-controls {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            z-index: 500;
+            pointer-events: auto;
+            opacity: 0;
+            animation: fadeInSearch 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.4s;
+        }
+
+        .settings-btn,
+        .info-btn {
+            background: none;
+            border: none;
+            padding: 8px;
+            margin: 0;
+            cursor: pointer;
+            color: var(--subtext-color);
+            transition: color 0.25s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            position: relative;
+            z-index: 501;
+            pointer-events: auto;
+            border-radius: 50%;
+        }
+
+        .settings-btn:hover {
+            color: #ffffff;
+            transform: rotate(45deg);
+        }
+
+        .info-btn:hover {
+            color: #ffffff;
+            transform: scale(1.1);
+        }
+
+
+        /* Toast Popup Notification */
+        .toast-notification {
+            position: fixed;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(30, 33, 40, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+            padding: 0.75rem 1.4rem;
+            border-radius: 9999px;
+            font-size: 0.86rem;
+            font-weight: 500;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            white-space: nowrap;
+        }
+
+        .toast-notification.is-visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Fade Overlay for transition */
+        .fade-overlay {
+            position: fixed;
+            inset: 0;
+            background: #000000;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 1.0s cubic-bezier(0.76, 0, 0.24, 1);
+        }
+        .fade-overlay.is-active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Globe Container (positioned at the bottom to show upper half) */
+        .globe-container {
+            position: fixed;
+            left: 50%;
+            bottom: -315px; /* Brought up from screen bottom */
+            transform: translateX(-50%) translateY(0);
+            width: 736px;
+            height: 736px;
+            border-radius: 50%;
+            -webkit-clip-path: circle(50% at 50% 50%);
+            clip-path: circle(50% at 50% 50%);
+            cursor: default;
+            z-index: 5; /* Lowered z-index so autocomplete dropdown sits on top */
+            background: transparent;
+            box-shadow: none;
+            overflow: hidden;
+            transform-origin: center bottom; /* Scales upwards from screen bottom boundary */
+            transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform;
+            contain: paint;
+        }
+
+        .globe-container * {
+            pointer-events: none !important;
+        }
+
+        .globe-container.is-hovered {
+            cursor: pointer;
+            transform: translateX(-50%) translateY(-28px);
+            box-shadow: none;
+        }
+
+        .globe-container.is-flying {
+            transform: translateX(-50%) translateY(-120vh) !important;
+            transition: transform 1.2s cubic-bezier(0.76, 0, 0.24, 1) !important;
+            pointer-events: none;
+        }
+
+        .home-globe-map,
+        .home-globe-map .maplibregl-canvas-container,
+        .home-globe-map .maplibregl-canvas,
+        .home-globe-map canvas {
+            width: 100% !important;
+            height: 100% !important;
+            background: transparent;
+            border-radius: 50% !important;
+            overflow: hidden !important;
+        }
+
+        .home-globe-map {
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        /* Keep a lightweight globe placeholder visible while the map library loads. */
+        .home-globe-map:not(.is-loaded) {
+            opacity: 1;
+            background: radial-gradient(ellipse at 36% 30%, #416071 0%, #1d303b 42%, #0b1117 74%);
+        }
+
+        .home-globe-map.is-loaded {
+            opacity: 1;
+        }
+
+        /* Globe Loading Shimmer Overlay */
+        .globe-overlay-shimmer {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.4) 100%);
+            transition: opacity 0.8s ease;
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        .globe-overlay-shimmer::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.04),
+                transparent
+            );
+            transform: translateX(-100%);
+            animation: globe-shimmer 2.0s infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .globe-container,
+            .globe-container.is-flying,
+            .globe-container.is-hovered,
+            .home-globe-map,
+            .globe-overlay-shimmer,
+            .globe-overlay-shimmer::before {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+        @keyframes globe-shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .globe-container.loaded .globe-overlay-shimmer {
+            opacity: 0;
+        }
+
+        /* Responsive scaling and spacing for the globe container & home container */
+        @media (max-width: 768px) {
+            .home-container {
+                padding-bottom: 170px !important;
+            }
+            .globe-container {
+                bottom: -175px !important;
+                width: 420px !important;
+                height: 420px !important;
+                transform: translateX(-50%) translateY(0) !important;
+            }
+            .globe-container.is-hovered {
+                transform: translateX(-50%) translateY(-15px) !important;
+            }
+            .globe-container.is-flying {
+                transform: translateX(-50%) translateY(-120vh) !important;
+            }
+            .corner-nav-btn {
+                display: none !important;
+            }
+        }
+
+        /* Corner Navigation Text Buttons (About & Tools as Full-Height viewport slivers) */
+        .corner-nav-btn {
+            position: fixed;
+            top: 5rem;
+            bottom: 0;
+            width: 100px;
+            font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--subtext-color);
+            text-decoration: none;
+            z-index: 100;
+            user-select: none;
+            pointer-events: auto;
+            display: flex;
+            align-items: flex-end;
+            padding-bottom: 2.2rem;
+            transition: color 0.25s ease;
+        }
+
+        /* Side frame panel that slides in/out from the viewport edge */
+        .corner-nav-btn::before {
+            content: '';
+            position: absolute;
+            top: calc(50% - 2.5rem);
+            height: 70vh; /* Floating edge panel height */
+            width: 100px;
+            pointer-events: none;
+            opacity: 0;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                        opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            background: #0f0f0f; /* Same premium grey as the top frame on maps page */
+            z-index: -1;
+        }
+
+        .corner-nav-btn span {
+            display: inline-block;
+            transition: transform 0.25s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .corner-nav-left {
+            left: 0;
+            padding-left: 1.5rem;
+            justify-content: flex-start;
+        }
+
+        .corner-nav-left::before {
+            left: 0;
+            transform: translateY(-50%) translateX(-100%);
+            border-radius: 0 36px 36px 0;
+        }
+
+        .corner-nav-left:hover {
+            color: #ffffff;
+        }
+
+        .corner-nav-left:hover::before {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
+        }
+
+        .corner-nav-left:hover span {
+            transform: translateX(-4px);
+        }
+
+        .corner-nav-right {
+            right: 0;
+            padding-right: 1.5rem;
+            justify-content: flex-end;
+        }
+
+        .corner-nav-right::before {
+            right: 0;
+            transform: translateY(-50%) translateX(100%);
+            border-radius: 36px 0 0 36px;
+        }
+
+        .corner-nav-right:hover {
+            color: #ffffff;
+        }
+
+        .corner-nav-right:hover::before {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
+        }
+
+        .corner-nav-right:hover span {
+            transform: translateX(4px);
+        }
+
+        /* Centered Hover Arrow Button (No capsule outline/fill) */
+        .corner-arrow-circle {
+            position: absolute;
+            top: calc(50% - 2.5rem);
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #72767d; /* Solid grey to prevent transparency overlap artifacts */
+            transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        color 0.25s ease,
+                        left 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        right 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .corner-nav-left .corner-arrow-circle {
+            left: 0;
+            transform: translateY(-50%) translateX(-120%);
+        }
+
+        .corner-nav-left:hover .corner-arrow-circle {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
+            left: 1.5rem;
+        }
+
+        .corner-nav-right .corner-arrow-circle {
+            right: 0;
+            transform: translateY(-50%) translateX(120%);
+        }
+
+        .corner-nav-right:hover .corner-arrow-circle {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
+            right: 1.5rem;
+        }
+
+        /* Active highlight for the arrow circle when hovered */
+        .corner-nav-btn:hover .corner-arrow-circle {
+            color: #bfc1c5; /* Solid light grey to prevent transparency overlap artifacts */
+        }
+
+        /* Page Transition Animations */
+        body.is-transitioning-left,
+        body.is-transitioning-right {
+            background-color: #000000 !important;
+            overflow: hidden !important;
+        }
+
+        /* Prevent pointer events on the page during transitions */
+        body[class*="is-transitioning-"] {
+            pointer-events: none !important;
+        }
+
+        /* But allow pointer events inside the coming soon screen when it's active */
+        body[class*="is-transitioning-"] .coming-soon-screen {
+            pointer-events: auto !important;
+        }
+
+        /* Left side panel zoom and center */
+        body.is-transitioning-left .corner-nav-left::before {
+            transform: translateY(-50%) translateX(calc(50vw - 50px)) scale(30) !important;
+            border-radius: 0 !important;
+            opacity: 1 !important;
+            z-index: 99999 !important;
+            transition: transform 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                        border-radius 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                        opacity 0.8s ease !important;
+        }
+
+        /* Right side panel zoom and center */
+        body.is-transitioning-right .corner-nav-right::before {
+            transform: translateY(-50%) translateX(calc(-50vw + 50px)) scale(30) !important;
+            border-radius: 0 !important;
+            opacity: 1 !important;
+            z-index: 99999 !important;
+            transition: transform 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                        border-radius 0.8s cubic-bezier(0.45, 0, 0.55, 1),
+                        opacity 0.8s ease !important;
+        }
+
+        /* Fade out main elements during transition */
+        body[class*="is-transitioning-"] .home-container,
+        body[class*="is-transitioning-"] .intro-header,
+        body[class*="is-transitioning-"] .settings-btn,
+        body[class*="is-transitioning-"] .info-btn,
+        body[class*="is-transitioning-"] .top-right-controls,
+        body[class*="is-transitioning-"] .corner-nav-btn span,
+        body[class*="is-transitioning-"] .corner-arrow-circle {
+            opacity: 0 !important;
+            transition: opacity 0.4s ease !important;
+        }
+
+        /* Keep the transitioning card's parent container visible and in front */
+        body.is-transitioning-left .corner-nav-left,
+        body.is-transitioning-right .corner-nav-right {
+            z-index: 99999 !important;
+        }
+
+        /* Coming Soon Screen style */
+        .coming-soon-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+            text-align: center;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        .coming-soon-screen.is-active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .coming-soon-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .coming-soon-text {
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.55);
+            max-width: 480px;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+
+        .coming-soon-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 9999px;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 0.65rem 1.8rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+        }
+
+        .coming-soon-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            transform: scale(1.02);
+        }
+
+        /* Light Theme Element Overrides */
+        [data-theme="light"] .fade-overlay,
+        html.theme-light .fade-overlay,
+        body.theme-light .fade-overlay {
+            background: #ffffff;
+        }
+
+        [data-theme="light"] .ambient-glow,
+        html.theme-light .ambient-glow,
+        body.theme-light .ambient-glow {
+            background: radial-gradient(circle, rgba(0, 0, 0, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+        }
+
+        [data-theme="light"] .search-box,
+        html.theme-light .search-box,
+        body.theme-light .search-box {
+            background: #ffffff !important;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        [data-theme="light"] .search-box::before,
+        html.theme-light .search-box::before,
+        body.theme-light .search-box::before {
+            background: radial-gradient(
+                var(--spotlight-size, 240px) circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(0, 0, 0, 0.15) 0%,
+                rgba(0, 0, 0, 0.04) 40%,
+                transparent 75%
+            );
+        }
+
+        [data-theme="light"] .search-box:focus-within,
+        html.theme-light .search-box:focus-within,
+        body.theme-light .search-box:focus-within {
+            background: #ffffff !important;
+            border-color: rgba(0, 0, 0, 0.28);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="light"] .search-input,
+        html.theme-light .search-input,
+        body.theme-light .search-input {
+            color: #111827;
+        }
+
+        [data-theme="light"] .search-input::placeholder,
+        html.theme-light .search-input::placeholder,
+        body.theme-light .search-input::placeholder {
+            color: #9ca3af;
+        }
+
+        [data-theme="light"] .search-icon,
+        html.theme-light .search-icon,
+        body.theme-light .search-icon {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .search-box:focus-within .search-icon,
+        html.theme-light .search-box:focus-within .search-icon,
+        body.theme-light .search-box:focus-within .search-icon {
+            color: #111827;
+        }
+
+        [data-theme="light"] .search-clear,
+        html.theme-light .search-clear,
+        body.theme-light .search-clear {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .search-clear:hover,
+        html.theme-light .search-clear:hover,
+        body.theme-light .search-clear:hover {
+            color: #111827;
+        }
+
+        [data-theme="light"] .autocomplete-dropdown,
+        html.theme-light .autocomplete-dropdown,
+        body.theme-light .autocomplete-dropdown {
+            background: #ffffff !important;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12);
+        }
+
+        [data-theme="light"] .autocomplete-dropdown::before,
+        html.theme-light .autocomplete-dropdown::before,
+        body.theme-light .autocomplete-dropdown::before {
+            background: radial-gradient(
+                var(--spotlight-size) circle at var(--mouse-x) var(--mouse-y),
+                rgba(0, 0, 0, 0.15) 0%,
+                rgba(0, 0, 0, 0.04) 40%,
+                transparent 75%
+            );
+        }
+
+        [data-theme="light"] .autocomplete-item,
+        html.theme-light .autocomplete-item,
+        body.theme-light .autocomplete-item {
+            color: #111827;
+        }
+
+        [data-theme="light"] .autocomplete-item:hover,
+        [data-theme="light"] .autocomplete-item.is-selected,
+        html.theme-light .autocomplete-item:hover,
+        html.theme-light .autocomplete-item.is-selected,
+        body.theme-light .autocomplete-item:hover,
+        body.theme-light .autocomplete-item.is-selected {
+            background: #f3f4f6;
+        }
+
+        [data-theme="light"] .autocomplete-item__title,
+        html.theme-light .autocomplete-item__title,
+        body.theme-light .autocomplete-item__title {
+            color: #111827;
+        }
+
+        [data-theme="light"] .autocomplete-item__subtitle,
+        html.theme-light .autocomplete-item__subtitle,
+        body.theme-light .autocomplete-item__subtitle {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .autocomplete-item__icon,
+        html.theme-light .autocomplete-item__icon,
+        body.theme-light .autocomplete-item__icon {
+            background: #000000 !important;
+            border-radius: 6px !important;
+            padding: 3px !important;
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        [data-theme="light"] .autocomplete-item:hover .autocomplete-item__icon,
+        html.theme-light .autocomplete-item:hover .autocomplete-item__icon,
+        body.theme-light .autocomplete-item:hover .autocomplete-item__icon {
+            background: #000000 !important;
+            color: var(--accent-primary) !important;
+        }
+
+        [data-theme="light"] .no-results,
+        html.theme-light .no-results,
+        body.theme-light .no-results {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .corner-nav-btn::before,
+        html.theme-light .corner-nav-btn::before,
+        body.theme-light .corner-nav-btn::before {
+            background: #f3f4f6;
+        }
+
+        [data-theme="light"] .corner-nav-btn,
+        html.theme-light .corner-nav-btn,
+        body.theme-light .corner-nav-btn {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .corner-nav-left:hover,
+        [data-theme="light"] .corner-nav-right:hover,
+        html.theme-light .corner-nav-left:hover,
+        html.theme-light .corner-nav-right:hover,
+        body.theme-light .corner-nav-left:hover,
+        body.theme-light .corner-nav-right:hover {
+            color: #111827;
+        }
+
+        [data-theme="light"] .corner-arrow-circle,
+        html.theme-light .corner-arrow-circle,
+        body.theme-light .corner-arrow-circle {
+            color: #4b5563;
+        }
+
+        [data-theme="light"] .corner-nav-btn:hover .corner-arrow-circle,
+        html.theme-light .corner-nav-btn:hover .corner-arrow-circle,
+        body.theme-light .corner-nav-btn:hover .corner-arrow-circle {
+            color: #111827;
+        }
+
+        [data-theme="light"] .dataset-toggle-btn:hover,
+        html.theme-light .dataset-toggle-btn:hover,
+        body.theme-light .dataset-toggle-btn:hover {
+            background: rgba(var(--accent-rgb, 100, 181, 246), 0.12);
+        }
+
+        [data-theme="light"] .dataset-select-menu,
+        html.theme-light .dataset-select-menu,
+        body.theme-light .dataset-select-menu {
+            background: #ffffff !important;
+            border-color: rgba(0, 0, 0, 0.12) !important;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        [data-theme="light"] .dataset-menu-item,
+        html.theme-light .dataset-menu-item,
+        body.theme-light .dataset-menu-item {
+            color: #374151 !important;
+        }
+
+        [data-theme="light"] .dataset-menu-item:hover:not(.is-disabled),
+        html.theme-light .dataset-menu-item:hover:not(.is-disabled),
+        body.theme-light .dataset-menu-item:hover:not(.is-disabled) {
+            background: rgba(0, 0, 0, 0.05);
+            color: #111827 !important;
+        }
+
+        [data-theme="light"] .dataset-menu-item__icon,
+        html.theme-light .dataset-menu-item__icon,
+        body.theme-light .dataset-menu-item__icon {
+            stroke: #6b7280;
+        }
+
+        [data-theme="light"] .dataset-menu-item:hover:not(.is-disabled) .dataset-menu-item__icon,
+        html.theme-light .dataset-menu-item:hover:not(.is-disabled) .dataset-menu-item__icon,
+        body.theme-light .dataset-menu-item:hover:not(.is-disabled) .dataset-menu-item__icon {
+            stroke: #111827;
+        }
+
+        [data-theme="light"] .dataset-menu-item.is-active,
+        html.theme-light .dataset-menu-item.is-active,
+        body.theme-light .dataset-menu-item.is-active {
+            color: var(--accent-color) !important;
+        }
+
+        [data-theme="light"] .dataset-menu-item__badge,
+        html.theme-light .dataset-menu-item__badge,
+        body.theme-light .dataset-menu-item__badge {
+            background: rgba(0, 0, 0, 0.06);
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .globe-container,
+        html.theme-light .globe-container,
+        body.theme-light .globe-container {
+            background: transparent;
+            box-shadow: none;
+        }
+
+        [data-theme="light"] .globe-container.is-hovered,
+        html.theme-light .globe-container.is-hovered,
+        body.theme-light .globe-container.is-hovered {
+            box-shadow: none;
+        }
+
+        [data-theme="light"] .globe-overlay-shimmer,
+        html.theme-light .globe-overlay-shimmer,
+        body.theme-light .globe-overlay-shimmer {
+            background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.02) 0%, rgba(255, 255, 255, 0.2) 100%);
+        }
+
+        [data-theme="light"] .marker-dot,
+        html.theme-light .marker-dot,
+        body.theme-light .marker-dot {
+            background-color: #111827;
+        }
+
+        [data-theme="light"] .settings-btn,
+        [data-theme="light"] .info-btn,
+        html.theme-light .settings-btn,
+        html.theme-light .info-btn,
+        body.theme-light .settings-btn,
+        body.theme-light .info-btn {
+            color: #6b7280;
+        }
+
+        [data-theme="light"] .settings-btn:hover,
+        [data-theme="light"] .info-btn:hover,
+        html.theme-light .settings-btn:hover,
+        html.theme-light .info-btn:hover,
+        body.theme-light .settings-btn:hover,
+        body.theme-light .info-btn:hover {
+            color: #111827;
+        }
+
+        [data-theme="light"] .toast-notification,
+        html.theme-light .toast-notification,
+        body.theme-light .toast-notification {
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            color: #111827;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10);
+        }
+    </style>
+    <link rel="stylesheet" href="styles/mobile-bottom-nav.css?v=16">
+</head>
+
+<body>
+    <div class="fade-overlay is-active"></div>
+    <div class="ambient-glow"></div>
+    <div id="toast-notification" class="toast-notification"></div>
+
+    <!-- Corner Navigation Buttons (Tools & Settings) -->
+    <a href="tools/" class="corner-nav-btn corner-nav-left" aria-label="Tools">
+        <span>Tools</span>
+        <div class="corner-arrow-circle">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </div>
+    </a>
+    <a href="settings/" class="corner-nav-btn corner-nav-right" aria-label="Settings">
+        <span>Settings</span>
+        <div class="corner-arrow-circle">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+        </div>
+    </a>
+
+    <!-- Top Right Controls (About Info) -->
+    <div class="top-right-controls">
+        <a href="info/" class="info-btn" aria-label="About fovea" title="About">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+        </a>
+    </div>
+
+    <main class="home-container">
+        <div class="logo-wrapper">
+            <h1 class="logo-title">fovea</h1>
+            <div class="dataset-dropdown-wrapper">
+                <button type="button" id="dataset-toggle-btn" class="dataset-toggle-btn" aria-label="Select dataset" aria-expanded="false">
+                    <span class="dataset-toggle-label">Audubon CBC</span>
+                    <svg class="dataset-toggle-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+
+                <!-- Floating Options Dropdown Popup Menu (Matching Settings Page) -->
+                <div id="dataset-menu" class="dataset-select-menu" aria-hidden="true" role="menu">
+                    <div class="dataset-menu-item is-active" data-value="audubon-cbc" role="menuitem">
+                        <div class="dataset-menu-item__left">
+                            <svg class="dataset-menu-item__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                                <path d="M2 12h20"></path>
+                            </svg>
+                            <span>Audubon CBC</span>
+                        </div>
+                        <svg class="dataset-menu-item__check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="dataset-menu-item is-disabled" data-value="add-connection" role="menuitem">
+                        <div class="dataset-menu-item__left">
+                            <svg class="dataset-menu-item__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>Add connection</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="search-wrapper">
+            <div class="search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="home-search-input" class="search-input" placeholder="Search count circles (e.g. Eugene, Florence)..." autocomplete="off" spellcheck="false" />
+                <button type="button" id="home-search-clear" class="search-clear" aria-label="Clear search" style="display: none;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div id="home-autocomplete" class="autocomplete-dropdown"></div>
+        </div>
+
+        <div class="home-shortcuts">
+            <a href="tools/download-wizard/" class="home-shortcut-btn" title="Open Download Wizard">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Download Wizard</span>
+            </a>
+        </div>
+    </main>
+
+    <!-- Globe Portal Container -->
+    <div id="globe-portal-container" class="globe-container is-flying">
+        <div id="home-globe" class="home-globe-map"></div>
+        <div class="globe-overlay-shimmer"></div>
+    </div>
+
+    <script type="module">
+        import { MAP_PROVIDER_URLS } from "./scripts/config/map-provider-config.js";
+        const COUNT_CIRCLES_DATA = [
+            {
+                name: "Eugene",
+                title: "Eugene Count Circle",
+                subtitle: "Lane County, OR, USA",
+                url: "maps/?circle=Eugene",
+                logo: "images/logo-small.webp",
+                hasData: true,
+                coords: [-123.079, 44.052]
+            },
+            {
+                name: "Florence",
+                title: "Florence Count Circle",
+                subtitle: "Lane County, OR, USA",
+                url: "maps/?circle=Florence",
+                logo: "images/florence.webp",
+                hasData: true,
+                coords: [-124.08, 44.01]
+            },
+            {
+                name: "Cottage Grove",
+                title: "Cottage Grove Count Circle",
+                subtitle: "Lane County, OR, USA",
+                url: "maps/?circle=Cottage%20Grove",
+                hasData: false,
+                coords: [-122.99, 43.77]
+            },
+            {
+                name: "Oakridge",
+                title: "Oakridge Count Circle",
+                subtitle: "Lane County, OR, USA",
+                url: "maps/?circle=Oakridge",
+                hasData: false,
+                coords: [-122.46, 43.74]
+            }
+        ];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            const input = document.getElementById("home-search-input");
+            const clearBtn = document.getElementById("home-search-clear");
+            const dropdown = document.getElementById("home-autocomplete");
+            const homeContainer = document.querySelector(".home-container");
+            let selectedIndex = -1;
+            let currentMatches = [];
+            let homeMap = null;
+            let rotationId = null;
+            let isSpinning = true;
+
+            // Updates the WebGL circle markers GeoJSON data inside homeMap
+            function updateMapMarkers(matches, hoveredIndex = -1) {
+                try {
+                    if (!homeMap) return;
+                    const source = homeMap.getSource('search-markers');
+                    if (!source) return;
+
+                    const features = matches.map((circle, index) => ({
+                        type: 'Feature',
+                        properties: {
+                            name: circle.name,
+                            active: (index === hoveredIndex)
+                        },
+                        geometry: {
+                            type: 'Point',
+                            coordinates: circle.coords
+                        }
+                    }));
+
+                    source.setData({
+                        type: 'FeatureCollection',
+                        features: features
+                    });
+                } catch (e) {
+                    console.warn("updateMapMarkers error:", e);
+                }
+            }
+
+            // Proximity Glow Effect for Search Box & Autocomplete Dropdown
+            const setupProximityGlow = (element, threshold = 140, spotlightSize = 240) => {
+                if (!element) return;
+
+                element.style.setProperty("--mouse-x", "50%");
+                element.style.setProperty("--mouse-y", "50%");
+                element.style.setProperty("--glow-opacity", "0");
+                element.style.setProperty("--spotlight-size", `${spotlightSize}px`);
+
+                window.addEventListener("mousemove", (e) => {
+                    if (window.getComputedStyle(element).display === "none") {
+                        element.style.setProperty("--glow-opacity", "0");
+                        return;
+                    }
+
+                    const rect = element.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
+                    const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    element.style.setProperty("--mouse-x", `${x}px`);
+                    element.style.setProperty("--mouse-y", `${y}px`);
+
+                    let opacity = 0;
+                    if (dist <= threshold) {
+                        opacity = Math.pow(1 - dist / threshold, 1.2);
+                    }
+
+                    element.style.setProperty("--glow-opacity", opacity.toFixed(3));
+                });
+            };
+
+            setupProximityGlow(dropdown, 140, 240);
+
+            const searchBox = document.querySelector(".search-box");
+            setupProximityGlow(searchBox, 140, 240);
+
+            // Dataset selector dropdown (Audubon CBC / Add New)
+            const datasetToggleBtn = document.getElementById("dataset-toggle-btn");
+            const datasetMenu = document.getElementById("dataset-menu");
+            if (datasetToggleBtn && datasetMenu) {
+                let isDatasetMenuOpen = false;
+                const logoWrap = document.querySelector(".logo-wrapper");
+
+                function openDatasetMenu() {
+                    isDatasetMenuOpen = true;
+                    if (dropdown) dropdown.style.display = "none";
+                    datasetMenu.setAttribute("aria-hidden", "false");
+                    datasetToggleBtn.setAttribute("aria-expanded", "true");
+                    if (logoWrap) logoWrap.classList.add("is-open");
+                }
+
+                function closeDatasetMenu() {
+                    isDatasetMenuOpen = false;
+                    datasetMenu.setAttribute("aria-hidden", "true");
+                    datasetToggleBtn.setAttribute("aria-expanded", "false");
+                    if (logoWrap) logoWrap.classList.remove("is-open");
+                }
+
+                datasetToggleBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    if (isDatasetMenuOpen) {
+                        closeDatasetMenu();
+                    } else {
+                        openDatasetMenu();
+                    }
+                });
+
+                const datasetItems = datasetMenu.querySelectorAll(".dataset-menu-item");
+                datasetItems.forEach(item => {
+                    item.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        if (item.classList.contains("is-disabled")) {
+                            return;
+                        }
+                        datasetItems.forEach(i => {
+                            i.classList.remove("is-active");
+                            const check = i.querySelector(".dataset-menu-item__check");
+                            if (check) check.style.display = "none";
+                        });
+                        item.classList.add("is-active");
+                        const check = item.querySelector(".dataset-menu-item__check");
+                        if (check) check.style.display = "block";
+
+                        const label = item.querySelector(".dataset-menu-item__left span");
+                        const toggleLabel = document.querySelector(".dataset-toggle-label");
+                        if (label && toggleLabel) {
+                            toggleLabel.textContent = label.textContent;
+                        }
+
+                        closeDatasetMenu();
+                    });
+                });
+
+                document.addEventListener("click", (e) => {
+                    if (isDatasetMenuOpen && !e.target.closest(".dataset-dropdown-wrapper")) {
+                        closeDatasetMenu();
+                    }
+                });
+
+                document.addEventListener("keydown", (e) => {
+                    if (e.key === "Escape" && isDatasetMenuOpen) {
+                        closeDatasetMenu();
+                    }
+                });
+            }
+
+            const renderDropdown = (query) => {
+                const q = query.trim().toLowerCase();
+
+                currentMatches = [];
+                updateMapMarkers([]);
+
+                if (!q) {
+                    dropdown.style.display = "none";
+                    dropdown.innerHTML = "";
+                    clearBtn.style.display = "none";
+                    selectedIndex = -1;
+                    if (homeContainer) {
+                        homeContainer.classList.remove("search-active");
+                    }
+
+                    // Restore automatic horizontal rotation centered at the Equator (0) if paused
+                    if (!isSpinning) {
+                        isSpinning = true;
+                        try {
+                            if (homeMap) {
+                                homeMap.easeTo({
+                                    center: [-123.079, 0],
+                                    duration: prefersReducedMotion ? 0 : 2200,
+                                    easing: (t) => 1 - Math.pow(1 - t, 4)
+                                });
+                            }
+                        } catch (e) {
+                            // Suppress map state errors if map is not fully loaded yet
+                        }
+                        rotateGlobe();
+                    }
+                    return;
+                }
+
+                clearBtn.style.display = "flex";
+                if (homeContainer) {
+                    homeContainer.classList.add("search-active");
+                }
+
+                const matches = COUNT_CIRCLES_DATA.filter(circle =>
+                    circle.name.toLowerCase().includes(q) ||
+                    circle.title.toLowerCase().includes(q) ||
+                    circle.subtitle.toLowerCase().includes(q)
+                );
+
+                currentMatches = matches;
+
+                if (matches.length === 0) {
+                    dropdown.style.display = "block";
+                    dropdown.innerHTML = `<div class="autocomplete-scroll-container"><div class="no-results">No count circle matching "${q}"</div></div>`;
+                    selectedIndex = -1;
+                    return;
+                }
+
+                dropdown.style.display = "block";
+                const itemsHtml = matches.map((circle, index) => {
+                    let iconHtml = "";
+                    if (circle.hasData) {
+                        iconHtml = `<img src="${circle.logo}" alt="${circle.name}" style="width: 100%; height: 100%; object-fit: contain;" />`;
+                    } else {
+                        iconHtml = `
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; opacity: 0.5;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                            </svg>
+                        `;
+                    }
+                    return `
+                        <a href="${circle.url}" class="autocomplete-item" data-index="${index}">
+                            <div class="autocomplete-item__icon">
+                                ${iconHtml}
+                            </div>
+                            <div class="autocomplete-item__info">
+                                <div class="autocomplete-item__title">${circle.title}</div>
+                                <div class="autocomplete-item__subtitle">${circle.subtitle}</div>
+                            </div>
+                        </a>
+                    `;
+                }).join("");
+
+                dropdown.innerHTML = `<div class="autocomplete-scroll-container">${itemsHtml}</div>`;
+                selectedIndex = -1;
+
+                // Stop auto-rotation while viewing search results
+                stopGlobeRotation();
+
+                // Add interactive MapLibre WebGL marker dots for suggested circles
+                updateMapMarkers(matches);
+
+                // Move map camera to focus on suggested markers (average centroid position, no zoom change)
+                if (matches.length > 0 && homeMap) {
+                    const avgLng = matches.reduce((sum, c) => sum + c.coords[0], 0) / matches.length;
+                    const avgLat = matches.reduce((sum, c) => sum + c.coords[1], 0) / matches.length;
+                    try {
+                        homeMap.easeTo({
+                            center: [avgLng, avgLat],
+                            duration: prefersReducedMotion ? 0 : 2200,
+                            easing: (t) => 1 - Math.pow(1 - t, 4)
+                        });
+                    } catch (e) {
+                        // Suppress map state errors
+                    }
+                }
+
+                // Bind hover events to suggestion list links to update WebGL highlights
+                setTimeout(() => {
+                    const items = dropdown.querySelectorAll(".autocomplete-item");
+                    items.forEach(item => {
+                        const idx = parseInt(item.getAttribute("data-index"));
+                        item.addEventListener("mouseenter", () => {
+                            updateMapMarkers(matches, idx);
+                        });
+                        item.addEventListener("mouseleave", () => {
+                            updateMapMarkers(matches, -1);
+                        });
+                    });
+                }, 0);
+            };
+
+            input.addEventListener("input", (e) => {
+                renderDropdown(e.target.value);
+            });
+
+            input.addEventListener("focus", (e) => {
+                if (typeof closeDatasetMenu === "function") closeDatasetMenu();
+                if (e.target.value.trim()) {
+                    renderDropdown(e.target.value);
+                }
+            });
+
+            clearBtn.addEventListener("click", () => {
+                input.value = "";
+                renderDropdown("");
+                input.focus();
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!e.target.closest(".search-wrapper")) {
+                    dropdown.style.display = "none";
+                    currentMatches = [];
+                    updateMapMarkers([]);
+                    if (homeContainer) {
+                        homeContainer.classList.remove("search-active");
+                    }
+                    // Restore spinning centered at the Equator (0) if paused
+                    if (!isSpinning) {
+                        isSpinning = true;
+                        try {
+                            if (homeMap) {
+                                homeMap.easeTo({
+                                    center: [-123.079, 0],
+                                    duration: prefersReducedMotion ? 0 : 2200,
+                                    easing: (t) => 1 - Math.pow(1 - t, 4)
+                                });
+                            }
+                        } catch (err) {}
+                        rotateGlobe();
+                    }
+                }
+            });
+
+            // Keyboard Navigation (Arrow keys + Enter)
+            input.addEventListener("keydown", (e) => {
+                const items = dropdown.querySelectorAll(".autocomplete-item");
+                if (items.length === 0) return;
+
+                if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    selectedIndex = (selectedIndex + 1) % items.length;
+                    highlightItem(items);
+                } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+                    highlightItem(items);
+                } else if (e.key === "Enter") {
+                    if (selectedIndex >= 0 && selectedIndex < items.length) {
+                        e.preventDefault();
+                        items[selectedIndex].click();
+                    } else if (items.length > 0) {
+                        e.preventDefault();
+                        items[0].click();
+                    }
+                }
+            });
+
+            function highlightItem(items) {
+                items.forEach((item, index) => {
+                    if (index === selectedIndex) {
+                        item.classList.add("is-selected");
+                        item.scrollIntoView({ block: "nearest" });
+                    } else {
+                        item.classList.remove("is-selected");
+                    }
+                });
+                updateMapMarkers(currentMatches, selectedIndex);
+            }
+
+            let toastTimer = null;
+            function showComingSoonToast(featureName) {
+                const toast = document.getElementById("toast-notification");
+                if (!toast) return;
+                toast.innerHTML = `
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #00d5a4;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span><strong>${featureName}</strong> will be available soon</span>
+                `;
+                toast.classList.add("is-visible");
+                if (toastTimer) clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toast.classList.remove("is-visible");
+                }, 2800);
+            }
+
+            document.querySelectorAll("[data-coming-soon]").forEach(el => {
+                // Skip corner buttons which use advanced page transitions
+                if (el.classList.contains("corner-nav-btn")) return;
+
+                el.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    const name = el.getAttribute("data-coming-soon");
+                    showComingSoonToast(name);
+                });
+            });
+
+            // Bind click listener for settings button
+            const settingsBtn = document.querySelector(".settings-btn");
+            if (settingsBtn) {
+                settingsBtn.addEventListener("click", () => {
+                    window.location.href = "settings/";
+                });
+            }
+
+            // Globe portal initialization and auto-spinning animation logic
+            const globePortal = document.getElementById("globe-portal-container");
+            const globeDiv = document.getElementById("home-globe");
+            const fadeOverlay = document.querySelector(".fade-overlay");
+
+
+
+            if (globePortal && globeDiv) {
+                const isHomeLight = document.documentElement.getAttribute("data-theme") === "light" || document.body.classList.contains("theme-light");
+                const getGlobeRestZoom = () => (window.innerWidth <= 768 ? 1.37 : 2.18);
+                let mapLibrePromise = null;
+
+                function loadHomeMapLibre() {
+                    if (window.maplibregl) return Promise.resolve(window.maplibregl);
+                    if (mapLibrePromise) return mapLibrePromise;
+
+                    mapLibrePromise = new Promise((resolve, reject) => {
+                        const stylesheet = document.createElement("link");
+                        stylesheet.rel = "stylesheet";
+                        stylesheet.href = "https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css";
+                        stylesheet.onload = () => {
+                            const script = document.createElement("script");
+                            script.src = "https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js";
+                            script.async = true;
+                            script.onload = () => window.maplibregl
+                                ? resolve(window.maplibregl)
+                                : reject(new Error("MapLibre loaded without its global API"));
+                            script.onerror = () => reject(new Error("MapLibre script failed to load"));
+                            document.head.appendChild(script);
+                        };
+                        stylesheet.onerror = () => reject(new Error("MapLibre stylesheet failed to load"));
+                        document.head.appendChild(stylesheet);
+                    });
+                    return mapLibrePromise;
+                }
+
+                function prepareHomeGlobeStyle() {
+                    try {
+                        homeMap.setProjection({ type: 'globe' });
+                        const style = homeMap.getStyle();
+                        if (style && style.layers) {
+                            style.layers.forEach(layer => {
+                                const id = layer.id.toLowerCase();
+                                if (id.includes("label") || id.includes("place") || id.includes("poi") ||
+                                    id.includes("boundary") || id.includes("border") || id.includes("admin")) {
+                                    homeMap.setLayoutProperty(layer.id, "visibility", "none");
+                                }
+                            });
+                        }
+                        addSearchMarkersLayer();
+                    } catch (error) {
+                        console.warn("Home globe style setup failed:", error);
+                    }
+                }
+
+                function initializeHomeGlobe() {
+                    loadHomeMapLibre().then((maplibre) => {
+                        homeMap = new maplibre.Map({
+                            container: 'home-globe',
+                            style: isHomeLight ? MAP_PROVIDER_URLS.carto.lightVectorStyle : MAP_PROVIDER_URLS.carto.darkVectorStyle,
+                            projection: { type: 'globe' },
+                            center: [-123.079, 0], // Centered at the equator to display a true, undistorted 3D sphere
+                            zoom: getGlobeRestZoom(), // 2.18 renders 738.5px globe inside 736px dome with zero gap and zero clipping
+                            minZoom: 0.5,
+                            maxZoom: 3.5,
+                            antialias: true,
+                            attributionControl: false,
+                            interactive: false
+                        });
+
+                        homeMap.on("style.load", prepareHomeGlobeStyle);
+
+                        homeMap.on("load", () => {
+                            prepareHomeGlobeStyle();
+                            globePortal.classList.add("loaded");
+                            globeDiv.classList.add("is-loaded");
+                            if (!prefersReducedMotion && isSpinning) rotateGlobe();
+                        });
+                    }).catch((error) => {
+                        console.warn("Home globe unavailable; keeping static placeholder:", error);
+                        globePortal.classList.add("load-failed");
+                        globeDiv.classList.add("load-failed");
+                    });
+                }
+
+                // Wait until after initial paint, and prefer loading only as the globe approaches view.
+                let globeLoadStarted = false;
+                const startGlobeOnce = () => {
+                    if (globeLoadStarted) return;
+                    globeLoadStarted = true;
+                    if (globeObserver) globeObserver.disconnect();
+                    initializeHomeGlobe();
+                };
+                const globeObserver = "IntersectionObserver" in window
+                    ? new IntersectionObserver((entries) => {
+                        if (entries.some(entry => entry.isIntersecting)) startGlobeOnce();
+                    }, { rootMargin: "120px" })
+                    : null;
+                if (globeObserver) globeObserver.observe(globePortal);
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    if ("requestIdleCallback" in window) {
+                        requestIdleCallback(startGlobeOnce, { timeout: 1600 });
+                    } else {
+                        setTimeout(startGlobeOnce, 100);
+                    }
+                }));
+
+                window.addEventListener("resize", () => {
+                    if (!homeMap) return;
+                    const targetZoom = getGlobeRestZoom();
+                    if (Math.abs(homeMap.getZoom() - targetZoom) > 0.1) {
+                        homeMap.setZoom(targetZoom);
+                    }
+                });
+
+                rotationId = null;
+                isSpinning = true;
+
+                // Reset transitions function for page load / bfcache back navigation
+                function resetTransitions() {
+                    // Force DOM reflow to guarantee the browser registers the initial offscreen state
+                    if (globePortal) {
+                        const reflow = globePortal.offsetHeight;
+                    }
+                    if (fadeOverlay) {
+                        const reflow = fadeOverlay.offsetHeight;
+                    }
+
+                    // Remove transition classes to trigger reverse animation
+                    if (fadeOverlay) {
+                        fadeOverlay.classList.remove("is-active");
+                    }
+                    if (globePortal) {
+                        globePortal.classList.remove("is-flying");
+                    }
+
+                    // Reset search state and clear markers
+                    if (input) input.value = "";
+                    if (dropdown) {
+                        dropdown.style.display = "none";
+                        dropdown.innerHTML = "";
+                    }
+                    if (homeContainer) {
+                        homeContainer.classList.remove("search-active");
+                    }
+                    currentMatches = [];
+                    updateMapMarkers([]);
+
+                    // Reset MapLibre camera to original resting state (pitch: 0, lat: 0)
+                    try {
+                        if (homeMap) {
+                            homeMap.easeTo({
+                                pitch: 0,
+                                zoom: getGlobeRestZoom(), // Restores aligned scale on recovery
+                                center: [homeMap.getCenter().lng, 0],
+                                duration: prefersReducedMotion ? 0 : 1000,
+                                easing: (t) => 1 - Math.pow(1 - t, 4)
+                            });
+                        }
+                    } catch (e) {
+                        // Suppress map state errors if map is not fully loaded yet
+                    }
+
+                    isSpinning = true;
+                    // Restart spinning loop if stopped
+                    if (!rotationId) {
+                        rotateGlobe();
+                    }
+                }
+
+                // Listen for page transition show event (handles regular load & back/forward cache)
+                window.addEventListener("pageshow", (event) => {
+                    resetTransitions();
+                });
+
+                let lastFrameTime = 0;
+
+                function stopGlobeRotation() {
+                    isSpinning = false;
+                    if (rotationId) {
+                        cancelAnimationFrame(rotationId);
+                        rotationId = null;
+                    }
+                }
+
+                function rotateGlobe() {
+                    if (!homeMap || prefersReducedMotion) return;
+                    // Prevent duplicate concurrent animation loops
+                    if (rotationId) {
+                        cancelAnimationFrame(rotationId);
+                        rotationId = null;
+                    }
+                    isSpinning = true;
+                    lastFrameTime = performance.now();
+
+                    function tick(now) {
+                        if (!isSpinning) {
+                            rotationId = null;
+                            return;
+                        }
+
+                        const dt = Math.min((now - lastFrameTime) / 1000, 0.1); // clamp to 100ms
+                        lastFrameTime = now;
+
+                        try {
+                            if (homeMap) {
+                                const center = homeMap.getCenter();
+                                // Stable rotation: 1.2 degrees per second (~0.02 deg/frame at 60fps)
+                                center.lng += 1.2 * dt;
+                                if (center.lng > 180) center.lng -= 360;
+                                homeMap.setCenter(center);
+                            }
+                        } catch (e) {
+                            // Suppress map center errors if page navigates mid-frame
+                        }
+
+                        rotationId = requestAnimationFrame(tick);
+                    }
+
+                    rotationId = requestAnimationFrame(tick);
+                }
+
+                // Helper to initialize search markers WebGL layer
+                function addSearchMarkersLayer() {
+                    try {
+                        if (!homeMap) return;
+                        if (!homeMap.getSource('search-markers')) {
+                            homeMap.addSource('search-markers', {
+                                type: 'geojson',
+                                data: {
+                                    type: 'FeatureCollection',
+                                    features: []
+                                }
+                            });
+                        }
+
+                        // Dynamically query global accent color from CSS variables
+                        const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#00d5a4';
+                        const isLight = document.documentElement.getAttribute("data-theme") === "light" || document.body.classList.contains("theme-light");
+                        const defaultMarkerColor = isLight ? '#000000' : '#ffffff';
+
+                        if (!homeMap.getLayer('search-markers-layer')) {
+                            homeMap.addLayer({
+                                id: 'search-markers-layer',
+                                type: 'circle',
+                                source: 'search-markers',
+                                paint: {
+                                    'circle-radius': [
+                                        'case',
+                                        ['boolean', ['get', 'active'], false],
+                                        3.5,
+                                        2.5
+                                    ],
+                                    'circle-color': [
+                                        'case',
+                                        ['boolean', ['get', 'active'], false],
+                                        accentColor,
+                                        defaultMarkerColor
+                                    ],
+                                    'circle-stroke-width': 0
+                                }
+                            });
+                        }
+                    } catch (err) {
+                        console.warn("addSearchMarkersLayer error:", err);
+                    }
+                }
+
+                // On click transition flight
+                globePortal.addEventListener("click", (e) => {
+                    // Ignore clicks that land in empty space outside the 3D globe surface
+                    if (homeMap) {
+                        const canvas = homeMap.getCanvas();
+                        if (canvas) {
+                            const rect = canvas.getBoundingClientRect();
+                            const mapX = e.clientX - rect.left;
+                            const mapY = e.clientY - rect.top;
+                            try {
+                                let onGlobe = false;
+                                if (homeMap.transform && typeof homeMap.transform.isPointOnMapSurface === "function" && window.maplibregl && maplibregl.Point) {
+                                    onGlobe = homeMap.transform.isPointOnMapSurface(new maplibregl.Point(mapX, mapY));
+                                } else {
+                                    const lngLat = homeMap.unproject([mapX, mapY]);
+                                    onGlobe = !!(lngLat && typeof lngLat.lng === "number" && !isNaN(lngLat.lng));
+                                }
+                                if (!onGlobe) return;
+                            } catch (err) {}
+                        }
+                    }
+
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Stop auto rotation
+                    stopGlobeRotation();
+
+                    // Save origin for back transitions
+                    sessionStorage.setItem("fovea_nav_origin", "maps");
+
+                    // Add transition flight class to container (slides the container straight up with no scale zoom)
+                    globePortal.classList.add("is-flying");
+
+                    // Fade screen to solid black
+                    if (fadeOverlay) {
+                        fadeOverlay.classList.add("is-active");
+                    }
+
+                    // Navigate to maps page after transition
+                    setTimeout(() => {
+                        window.location.href = "maps/";
+                    }, 1000);
+                });
+
+                // MapLibre native 3D planet surface raycast tracking:
+                // Triggers ONLY when cursor ray intersects the actual 3D Earth sphere
+                let isGlobeHovered = false;
+                window.addEventListener("mousemove", (e) => {
+                    if (!globePortal || !homeMap || globePortal.classList.contains("is-flying")) {
+                        if (isGlobeHovered) {
+                            isGlobeHovered = false;
+                            globePortal.classList.remove("is-hovered");
+                        }
+                        return;
+                    }
+                    const canvas = homeMap.getCanvas();
+                    if (!canvas) return;
+                    const rect = canvas.getBoundingClientRect();
+                    const mapX = e.clientX - rect.left;
+                    const mapY = e.clientY - rect.top;
+
+                    let shouldHover = false;
+                    if (mapX >= 0 && mapX <= rect.width && mapY >= 0 && mapY <= rect.height) {
+                        try {
+                            if (homeMap.transform && typeof homeMap.transform.isPointOnMapSurface === "function" && window.maplibregl && maplibregl.Point) {
+                                shouldHover = homeMap.transform.isPointOnMapSurface(new maplibregl.Point(mapX, mapY));
+                            } else {
+                                const lngLat = homeMap.unproject([mapX, mapY]);
+                                shouldHover = !!(lngLat && typeof lngLat.lng === "number" && !isNaN(lngLat.lng) && !isNaN(lngLat.lat));
+                            }
+                        } catch (err) {
+                            shouldHover = false;
+                        }
+                    }
+
+                    if (shouldHover !== isGlobeHovered) {
+                        isGlobeHovered = shouldHover;
+                        globePortal.classList.toggle("is-hovered", isGlobeHovered);
+                    }
+                }, { passive: true });
+
+                document.addEventListener("mouseleave", () => {
+                    if (isGlobeHovered && globePortal) {
+                        isGlobeHovered = false;
+                        globePortal.classList.remove("is-hovered");
+                    }
+                });
+
+                // Bind info button click
+                const infoBtn = document.querySelector(".info-btn");
+                if (infoBtn) {
+                    infoBtn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                    });
+                }
+
+                // Corner Nav Page Transitions
+                const settingsNavBtn = document.querySelector(".corner-nav-right");
+                const toolsNavBtn = document.querySelector(".corner-nav-left");
+
+                if (settingsNavBtn) {
+                    settingsNavBtn.addEventListener("click", (e) => {
+                        if (e.target.closest(".top-right-controls") || e.target.closest(".info-btn")) {
+                            return;
+                        }
+                        e.preventDefault();
+                        if (document.body.className.includes("is-transitioning-")) return;
+
+                        // Stop globe auto rotation
+                        stopGlobeRotation();
+
+                        // Save origin for back transitions
+                        sessionStorage.setItem("fovea_nav_origin", "settings");
+
+                        // Trigger transition
+                        document.body.classList.add("is-transitioning-right");
+                        if (fadeOverlay) {
+                            fadeOverlay.classList.add("is-active");
+                        }
+
+                        // Redirect after transition completes
+                        setTimeout(() => {
+                            window.location.href = settingsNavBtn.getAttribute("href") || "settings/";
+                        }, 800);
+                    });
+                }
+
+                if (toolsNavBtn) {
+                    toolsNavBtn.addEventListener("click", (e) => {
+                        if (e.target.closest(".top-right-controls") || e.target.closest(".info-btn")) {
+                            return;
+                        }
+                        e.preventDefault();
+                        if (document.body.className.includes("is-transitioning-")) return;
+
+                        stopGlobeRotation();
+
+                        document.body.classList.add("is-transitioning-left");
+                        if (fadeOverlay) {
+                            fadeOverlay.classList.add("is-active");
+                        }
+
+                        // Redirect after transition completes
+                        setTimeout(() => {
+                            window.location.href = toolsNavBtn.getAttribute("href") || "tools/";
+                        }, 800);
+                    });
+                }
+
+                const backHomeBtn = document.getElementById("back-home-btn");
+                if (backHomeBtn) {
+                    backHomeBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const csScreen = document.getElementById("tools-coming-soon-screen");
+                        if (csScreen) {
+                            csScreen.classList.remove("is-active");
+                        }
+
+                        // Fly card back to the left side
+                        setTimeout(() => {
+                            document.body.classList.remove("is-transitioning-left");
+                            if (fadeOverlay) {
+                                fadeOverlay.classList.remove("is-active");
+                            }
+                            // Resume spinning after returning
+                            isSpinning = true;
+                            rotateGlobe();
+                        }, 300);
+                    });
+                }
+            }
+
+        });
+
+        // Handle page show event to clear animations and support reverse transition on browser back button
+        window.addEventListener("pageshow", (event) => {
+            const isBackNavigation = event.persisted ||
+                (window.performance && window.performance.navigation.type === 2);
+
+            const origin = sessionStorage.getItem("fovea_nav_origin");
+
+            if (isBackNavigation) {
+                // If we went to the About page, play reverse card zoom animation
+                if (origin === "about") {
+                    document.body.classList.add("is-transitioning-right");
+                    const overlay = document.querySelector(".fade-overlay");
+                    if (overlay) {
+                        overlay.classList.add("is-active");
+                    }
+
+                    // Force layout reflow to register style change before starting transition
+                    void document.body.offsetHeight;
+
+                    // Remove transitioning classes to trigger reverse animation
+                    setTimeout(() => {
+                        document.body.classList.remove("is-transitioning-right");
+                        if (overlay) {
+                            overlay.classList.remove("is-active");
+                        }
+                    }, 50);
+                }
+                // If we went to the Maps page, play reverse globe fly animation
+                else if (origin === "maps") {
+                    const globePortal = document.getElementById("globe-portal-container");
+                    const overlay = document.querySelector(".fade-overlay");
+                    if (globePortal) {
+                        globePortal.classList.add("is-flying");
+                    }
+                    if (overlay) {
+                        overlay.classList.add("is-active");
+                    }
+
+                    void document.body.offsetHeight;
+
+                    setTimeout(() => {
+                        if (globePortal) {
+                            globePortal.classList.remove("is-flying");
+                        }
+                        if (overlay) {
+                            overlay.classList.remove("is-active");
+                        }
+                    }, 50);
+                }
+                // Fallback cleanup if session storage got cleared or unknown origin
+                else {
+                    document.body.classList.remove("is-transitioning-left", "is-transitioning-right");
+                    const globePortal = document.getElementById("globe-portal-container");
+                    if (globePortal) {
+                        globePortal.classList.remove("is-flying");
+                    }
+                    const overlay = document.querySelector(".fade-overlay");
+                    if (overlay) {
+                        overlay.classList.remove("is-active");
+                    }
+                }
+
+                // Clean up sessionStorage
+                sessionStorage.removeItem("fovea_nav_origin");
+            } else {
+                // On regular first load, always clean up stale states
+                document.body.classList.remove("is-transitioning-left", "is-transitioning-right");
+                const globePortal = document.getElementById("globe-portal-container");
+                if (globePortal) {
+                    globePortal.classList.remove("is-flying");
+                }
+                const overlay = document.querySelector(".fade-overlay");
+                if (overlay) {
+                    overlay.classList.remove("is-active");
+                }
+            }
+        });
+    </script>
+
+    <!-- Full-Screen Tools Coming Soon Panel Overlay -->
+    <div id="tools-coming-soon-screen" class="coming-soon-screen">
+        <h2 class="coming-soon-title">Tools</h2>
+        <p class="coming-soon-text">Fovea spatial analytics and dataset management tools are under active development.</p>
+        <button type="button" id="back-home-btn" class="coming-soon-btn">Back to Home</button>
+    </div>
+
+    <script defer src="scripts/mobile-bottom-nav.js?v=1" data-active-page="home" data-root="./"></script>
+</body>
+</html>

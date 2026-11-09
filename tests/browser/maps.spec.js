@@ -114,33 +114,19 @@ test('loads light-theme CSS while the map remains visible in light mode', async 
         .toBe('rgb(255, 255, 255)');
 });
 
-test('renders the home shell while the deferred globe dependencies are still loading', async ({ page }) => {
-    let releaseStyles;
-    let releaseScript;
-    let notifyStylesRequested;
-    let notifyScriptRequested;
-    const stylesRequested = new Promise(resolve => { notifyStylesRequested = resolve; });
-    const scriptRequested = new Promise(resolve => { notifyScriptRequested = resolve; });
-
-    await page.route('https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css', async route => {
-        notifyStylesRequested();
-        await new Promise(resolve => { releaseStyles = resolve; });
-        await route.continue();
-    });
-    await page.route('https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js', async route => {
-        notifyScriptRequested();
-        await new Promise(resolve => { releaseScript = resolve; });
-        await route.continue();
+test('home search works without loading a globe or MapLibre', async ({ page }) => {
+    const mapLibreRequests = [];
+    page.on('request', request => {
+        if (/maplibre-gl\.(?:css|js)/.test(request.url())) mapLibreRequests.push(request.url());
     });
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await stylesRequested;
-    await expect(page.locator('.logo-title')).toBeVisible();
-    releaseStyles();
-    await scriptRequested;
-    await expect(page.locator('.logo-title')).toBeVisible();
-    releaseScript();
-    await expect(page.locator('#home-globe canvas.maplibregl-canvas')).toBeVisible();
+    await expect(page.locator('#home-globe, #globe-portal-container')).toHaveCount(0);
+    await expect(page.locator('#home-search-input')).toBeVisible();
+    await page.locator('#home-search-input').fill('Eugene');
+    await expect(page.locator('.autocomplete-item')).toHaveCount(1);
+    await expect(page.locator('.autocomplete-item')).toHaveAttribute('href', 'maps/?circle=Eugene');
+    expect(mapLibreRequests).toEqual([]);
 });
 
 test('renders the home shell while the non-critical Nunito stylesheet is delayed', async ({ page }) => {
@@ -204,16 +190,6 @@ test('keeps the map canvas and navigation controls usable while MapLibre CSS is 
     releaseStyles();
     await expect(page.locator('link[rel="stylesheet"][href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css"]')).toHaveAttribute('media', 'all');
     await expect(canvas).toBeVisible();
-});
-
-test('keeps a visible globe placeholder when the deferred map stylesheet fails', async ({ page }) => {
-    await page.route('https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css', route => route.abort());
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-
-    await expect(page.locator('#home-globe.load-failed')).toBeVisible();
-    await expect(page.locator('.logo-title')).toBeVisible();
-    await expect(page.locator('#home-search-input')).toBeVisible();
-    await expect(page.locator('#home-globe')).toHaveCSS('opacity', '1');
 });
 
 test('uses the optimized WebP asset for the Satellite basemap preview', async ({ page }) => {

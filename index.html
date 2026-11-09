@@ -97,7 +97,7 @@
             padding-right: 1.5rem;
             position: relative;
             z-index: 10;
-            pointer-events: none; /* Let clicks pass through empty spaces to globe container underneath */
+            pointer-events: none;
             transition: padding-top 1.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -490,25 +490,6 @@
             color: #111827;
         }
 
-        /* Globe Interactive Markers */
-        .marker-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background-color: #ffffff;
-            box-shadow: none; /* No glow */
-            transition: background-color 0.3s ease, transform 0.3s ease;
-            pointer-events: none;
-            z-index: 100;
-        }
-
-        /* Hover/Keyboard highlight status colors */
-        .marker-dot.is-active {
-            background-color: var(--accent-color, #00d5a4);
-            box-shadow: none; /* No glow */
-            transform: scale(1.3);
-        }
-
         /* Autocomplete Dropdown */
         .autocomplete-dropdown {
             position: absolute;
@@ -736,139 +717,6 @@
         .fade-overlay.is-active {
             opacity: 1;
             pointer-events: auto;
-        }
-
-        /* Globe Container (positioned at the bottom to show upper half) */
-        .globe-container {
-            position: fixed;
-            left: 50%;
-            bottom: -315px; /* Brought up from screen bottom */
-            transform: translateX(-50%) translateY(0);
-            width: 736px;
-            height: 736px;
-            border-radius: 50%;
-            -webkit-clip-path: circle(50% at 50% 50%);
-            clip-path: circle(50% at 50% 50%);
-            cursor: default;
-            z-index: 5; /* Lowered z-index so autocomplete dropdown sits on top */
-            background: transparent;
-            box-shadow: none;
-            overflow: hidden;
-            transform-origin: center bottom; /* Scales upwards from screen bottom boundary */
-            transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
-            will-change: transform;
-            contain: paint;
-        }
-
-        .globe-container * {
-            pointer-events: none !important;
-        }
-
-        .globe-container.is-hovered {
-            cursor: pointer;
-            transform: translateX(-50%) translateY(-28px);
-            box-shadow: none;
-        }
-
-        .globe-container.is-flying {
-            transform: translateX(-50%) translateY(-120vh) !important;
-            transition: transform 1.2s cubic-bezier(0.76, 0, 0.24, 1) !important;
-            pointer-events: none;
-        }
-
-        .home-globe-map,
-        .home-globe-map .maplibregl-canvas-container,
-        .home-globe-map .maplibregl-canvas,
-        .home-globe-map canvas {
-            width: 100% !important;
-            height: 100% !important;
-            background: transparent;
-            border-radius: 50% !important;
-            overflow: hidden !important;
-        }
-
-        .home-globe-map {
-            opacity: 0;
-            transition: opacity 0.8s ease;
-        }
-
-        /* Keep a lightweight globe placeholder visible while the map library loads. */
-        .home-globe-map:not(.is-loaded) {
-            opacity: 1;
-            background: radial-gradient(ellipse at 36% 30%, #416071 0%, #1d303b 42%, #0b1117 74%);
-        }
-        
-        .home-globe-map.is-loaded {
-            opacity: 1;
-        }
-
-        /* Globe Loading Shimmer Overlay */
-        .globe-overlay-shimmer {
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.4) 100%);
-            transition: opacity 0.8s ease;
-            pointer-events: none;
-            z-index: 6;
-        }
-        
-        .globe-overlay-shimmer::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.04),
-                transparent
-            );
-            transform: translateX(-100%);
-            animation: globe-shimmer 2.0s infinite;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .globe-container,
-            .globe-container.is-flying,
-            .globe-container.is-hovered,
-            .home-globe-map,
-            .globe-overlay-shimmer,
-            .globe-overlay-shimmer::before {
-                animation: none !important;
-                transition: none !important;
-            }
-        }
-        
-        @keyframes globe-shimmer {
-            100% {
-                transform: translateX(100%);
-            }
-        }
-
-        .globe-container.loaded .globe-overlay-shimmer {
-            opacity: 0;
-        }
-
-        /* Responsive scaling and spacing for the globe container & home container */
-        @media (max-width: 768px) {
-            .home-container {
-                padding-bottom: 170px !important;
-            }
-            .globe-container {
-                bottom: -175px !important;
-                width: 420px !important;
-                height: 420px !important;
-                transform: translateX(-50%) translateY(0) !important;
-            }
-            .globe-container.is-hovered {
-                transform: translateX(-50%) translateY(-15px) !important;
-            }
-            .globe-container.is-flying {
-                transform: translateX(-50%) translateY(-120vh) !important;
-            }
-            .corner-nav-btn {
-                display: none !important;
-            }
         }
 
         /* Corner Navigation Text Buttons (About & Tools as Full-Height viewport slivers) */
@@ -1357,31 +1205,6 @@
             color: #6b7280;
         }
 
-        [data-theme="light"] .globe-container,
-        html.theme-light .globe-container,
-        body.theme-light .globe-container {
-            background: transparent;
-            box-shadow: none;
-        }
-
-        [data-theme="light"] .globe-container.is-hovered,
-        html.theme-light .globe-container.is-hovered,
-        body.theme-light .globe-container.is-hovered {
-            box-shadow: none;
-        }
-
-        [data-theme="light"] .globe-overlay-shimmer,
-        html.theme-light .globe-overlay-shimmer,
-        body.theme-light .globe-overlay-shimmer {
-            background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.02) 0%, rgba(255, 255, 255, 0.2) 100%);
-        }
-
-        [data-theme="light"] .marker-dot,
-        html.theme-light .marker-dot,
-        body.theme-light .marker-dot {
-            background-color: #111827;
-        }
-
         [data-theme="light"] .settings-btn,
         [data-theme="light"] .info-btn,
         html.theme-light .settings-btn,
@@ -1516,14 +1339,7 @@
         </div>
     </main>
 
-    <!-- Globe Portal Container -->
-    <div id="globe-portal-container" class="globe-container is-flying">
-        <div id="home-globe" class="home-globe-map"></div>
-        <div class="globe-overlay-shimmer"></div>
-    </div>
-
     <script type="module">
-        import { MAP_PROVIDER_URLS } from "./scripts/config/map-provider-config.js";
         const COUNT_CIRCLES_DATA = [
             {
                 name: "Eugene",
@@ -1532,7 +1348,6 @@
                 url: "maps/?circle=Eugene",
                 logo: "images/logo-small.webp",
                 hasData: true,
-                coords: [-123.079, 44.052]
             },
             {
                 name: "Florence",
@@ -1541,7 +1356,6 @@
                 url: "maps/?circle=Florence",
                 logo: "images/florence.webp",
                 hasData: true,
-                coords: [-124.08, 44.01]
             },
             {
                 name: "Cottage Grove",
@@ -1549,7 +1363,6 @@
                 subtitle: "Lane County, OR, USA",
                 url: "maps/?circle=Cottage%20Grove",
                 hasData: false,
-                coords: [-122.99, 43.77]
             },
             {
                 name: "Oakridge",
@@ -1557,49 +1370,15 @@
                 subtitle: "Lane County, OR, USA",
                 url: "maps/?circle=Oakridge",
                 hasData: false,
-                coords: [-122.46, 43.74]
             }
         ];
 
         document.addEventListener("DOMContentLoaded", () => {
-            const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
             const input = document.getElementById("home-search-input");
             const clearBtn = document.getElementById("home-search-clear");
             const dropdown = document.getElementById("home-autocomplete");
             const homeContainer = document.querySelector(".home-container");
             let selectedIndex = -1;
-            let currentMatches = [];
-            let homeMap = null;
-            let rotationId = null;
-            let isSpinning = true;
-
-            // Updates the WebGL circle markers GeoJSON data inside homeMap
-            function updateMapMarkers(matches, hoveredIndex = -1) {
-                try {
-                    if (!homeMap) return;
-                    const source = homeMap.getSource('search-markers');
-                    if (!source) return;
-
-                    const features = matches.map((circle, index) => ({
-                        type: 'Feature',
-                        properties: {
-                            name: circle.name,
-                            active: (index === hoveredIndex)
-                        },
-                        geometry: {
-                            type: 'Point',
-                            coordinates: circle.coords
-                        }
-                    }));
-
-                    source.setData({
-                        type: 'FeatureCollection',
-                        features: features
-                    });
-                } catch (e) {
-                    console.warn("updateMapMarkers error:", e);
-                }
-            }
 
             // Proximity Glow Effect for Search Box & Autocomplete Dropdown
             const setupProximityGlow = (element, threshold = 140, spotlightSize = 240) => {
@@ -1714,8 +1493,6 @@
             const renderDropdown = (query) => {
                 const q = query.trim().toLowerCase();
                 
-                currentMatches = [];
-                updateMapMarkers([]);
 
                 if (!q) {
                     dropdown.style.display = "none";
@@ -1724,23 +1501,6 @@
                     selectedIndex = -1;
                     if (homeContainer) {
                         homeContainer.classList.remove("search-active");
-                    }
-
-                    // Restore automatic horizontal rotation centered at the Equator (0) if paused
-                    if (!isSpinning) {
-                        isSpinning = true;
-                        try {
-                            if (homeMap) {
-                                homeMap.easeTo({
-                                    center: [-123.079, 0],
-                                    duration: prefersReducedMotion ? 0 : 2200,
-                                    easing: (t) => 1 - Math.pow(1 - t, 4)
-                                });
-                            }
-                        } catch (e) {
-                            // Suppress map state errors if map is not fully loaded yet
-                        }
-                        rotateGlobe();
                     }
                     return;
                 }
@@ -1756,7 +1516,6 @@
                     circle.subtitle.toLowerCase().includes(q)
                 );
 
-                currentMatches = matches;
 
                 if (matches.length === 0) {
                     dropdown.style.display = "block";
@@ -1793,41 +1552,6 @@
 
                 dropdown.innerHTML = `<div class="autocomplete-scroll-container">${itemsHtml}</div>`;
                 selectedIndex = -1;
-
-                // Stop auto-rotation while viewing search results
-                stopGlobeRotation();
-
-                // Add interactive MapLibre WebGL marker dots for suggested circles
-                updateMapMarkers(matches);
-
-                // Move map camera to focus on suggested markers (average centroid position, no zoom change)
-                if (matches.length > 0 && homeMap) {
-                    const avgLng = matches.reduce((sum, c) => sum + c.coords[0], 0) / matches.length;
-                    const avgLat = matches.reduce((sum, c) => sum + c.coords[1], 0) / matches.length;
-                    try {
-                        homeMap.easeTo({
-                            center: [avgLng, avgLat],
-                            duration: prefersReducedMotion ? 0 : 2200,
-                            easing: (t) => 1 - Math.pow(1 - t, 4)
-                        });
-                    } catch (e) {
-                        // Suppress map state errors
-                    }
-                }
-
-                // Bind hover events to suggestion list links to update WebGL highlights
-                setTimeout(() => {
-                    const items = dropdown.querySelectorAll(".autocomplete-item");
-                    items.forEach(item => {
-                        const idx = parseInt(item.getAttribute("data-index"));
-                        item.addEventListener("mouseenter", () => {
-                            updateMapMarkers(matches, idx);
-                        });
-                        item.addEventListener("mouseleave", () => {
-                            updateMapMarkers(matches, -1);
-                        });
-                    });
-                }, 0);
             };
 
             input.addEventListener("input", (e) => {
@@ -1850,24 +1574,8 @@
             document.addEventListener("click", (e) => {
                 if (!e.target.closest(".search-wrapper")) {
                     dropdown.style.display = "none";
-                    currentMatches = [];
-                    updateMapMarkers([]);
-                    if (homeContainer) {
+                            if (homeContainer) {
                         homeContainer.classList.remove("search-active");
-                    }
-                    // Restore spinning centered at the Equator (0) if paused
-                    if (!isSpinning) {
-                        isSpinning = true;
-                        try {
-                            if (homeMap) {
-                                homeMap.easeTo({
-                                    center: [-123.079, 0],
-                                    duration: prefersReducedMotion ? 0 : 2200,
-                                    easing: (t) => 1 - Math.pow(1 - t, 4)
-                                });
-                            }
-                        } catch (err) {}
-                        rotateGlobe();
                     }
                 }
             });
@@ -1905,7 +1613,6 @@
                         item.classList.remove("is-selected");
                     }
                 });
-                updateMapMarkers(currentMatches, selectedIndex);
             }
 
             let toastTimer = null;
@@ -1946,527 +1653,45 @@
                 });
             }
 
-            // Globe portal initialization and auto-spinning animation logic
-            const globePortal = document.getElementById("globe-portal-container");
-            const globeDiv = document.getElementById("home-globe");
-            const fadeOverlay = document.querySelector(".fade-overlay");
+            const infoBtn = document.querySelector(".info-btn");
+            if (infoBtn) infoBtn.addEventListener("click", event => event.stopPropagation());
 
-
-
-            if (globePortal && globeDiv) {
-                const isHomeLight = document.documentElement.getAttribute("data-theme") === "light" || document.body.classList.contains("theme-light");
-                const getGlobeRestZoom = () => (window.innerWidth <= 768 ? 1.37 : 2.18);
-                let mapLibrePromise = null;
-
-                function loadHomeMapLibre() {
-                    if (window.maplibregl) return Promise.resolve(window.maplibregl);
-                    if (mapLibrePromise) return mapLibrePromise;
-
-                    mapLibrePromise = new Promise((resolve, reject) => {
-                        const stylesheet = document.createElement("link");
-                        stylesheet.rel = "stylesheet";
-                        stylesheet.href = "https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css";
-                        stylesheet.onload = () => {
-                            const script = document.createElement("script");
-                            script.src = "https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js";
-                            script.async = true;
-                            script.onload = () => window.maplibregl
-                                ? resolve(window.maplibregl)
-                                : reject(new Error("MapLibre loaded without its global API"));
-                            script.onerror = () => reject(new Error("MapLibre script failed to load"));
-                            document.head.appendChild(script);
-                        };
-                        stylesheet.onerror = () => reject(new Error("MapLibre stylesheet failed to load"));
-                        document.head.appendChild(stylesheet);
+            const overlay = document.querySelector(".fade-overlay");
+            const settingsNavBtn = document.querySelector(".corner-nav-right");
+            const toolsNavBtn = document.querySelector(".corner-nav-left");
+            [[settingsNavBtn, "is-transitioning-right"], [toolsNavBtn, "is-transitioning-left"]]
+                .forEach(([button, transitionClass]) => {
+                    if (!button) return;
+                    button.addEventListener("click", event => {
+                        if (event.target.closest(".top-right-controls, .info-btn")) return;
+                        event.preventDefault();
+                        if (document.body.className.includes("is-transitioning-")) return;
+                        document.body.classList.add(transitionClass);
+                        if (overlay) overlay.classList.add("is-active");
+                        setTimeout(() => { window.location.href = button.getAttribute("href"); }, 800);
                     });
-                    return mapLibrePromise;
-                }
-
-                function prepareHomeGlobeStyle() {
-                    try {
-                        homeMap.setProjection({ type: 'globe' });
-                        const style = homeMap.getStyle();
-                        if (style && style.layers) {
-                            style.layers.forEach(layer => {
-                                const id = layer.id.toLowerCase();
-                                if (id.includes("label") || id.includes("place") || id.includes("poi") ||
-                                    id.includes("boundary") || id.includes("border") || id.includes("admin")) {
-                                    homeMap.setLayoutProperty(layer.id, "visibility", "none");
-                                }
-                            });
-                        }
-                        addSearchMarkersLayer();
-                    } catch (error) {
-                        console.warn("Home globe style setup failed:", error);
-                    }
-                }
-
-                function initializeHomeGlobe() {
-                    loadHomeMapLibre().then((maplibre) => {
-                        homeMap = new maplibre.Map({
-                            container: 'home-globe',
-                            style: isHomeLight ? MAP_PROVIDER_URLS.carto.lightVectorStyle : MAP_PROVIDER_URLS.carto.darkVectorStyle,
-                            projection: { type: 'globe' },
-                            center: [-123.079, 0], // Centered at the equator to display a true, undistorted 3D sphere
-                            zoom: getGlobeRestZoom(), // 2.18 renders 738.5px globe inside 736px dome with zero gap and zero clipping
-                            minZoom: 0.5,
-                            maxZoom: 3.5,
-                            antialias: true,
-                            attributionControl: false,
-                            interactive: false
-                        });
-
-                        homeMap.on("style.load", prepareHomeGlobeStyle);
-
-                        homeMap.on("load", () => {
-                            prepareHomeGlobeStyle();
-                            globePortal.classList.add("loaded");
-                            globeDiv.classList.add("is-loaded");
-                            if (!prefersReducedMotion && isSpinning) rotateGlobe();
-                        });
-                    }).catch((error) => {
-                        console.warn("Home globe unavailable; keeping static placeholder:", error);
-                        globePortal.classList.add("load-failed");
-                        globeDiv.classList.add("load-failed");
-                    });
-                }
-
-                // Wait until after initial paint, and prefer loading only as the globe approaches view.
-                let globeLoadStarted = false;
-                const startGlobeOnce = () => {
-                    if (globeLoadStarted) return;
-                    globeLoadStarted = true;
-                    if (globeObserver) globeObserver.disconnect();
-                    initializeHomeGlobe();
-                };
-                const globeObserver = "IntersectionObserver" in window
-                    ? new IntersectionObserver((entries) => {
-                        if (entries.some(entry => entry.isIntersecting)) startGlobeOnce();
-                    }, { rootMargin: "120px" })
-                    : null;
-                if (globeObserver) globeObserver.observe(globePortal);
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    if ("requestIdleCallback" in window) {
-                        requestIdleCallback(startGlobeOnce, { timeout: 1600 });
-                    } else {
-                        setTimeout(startGlobeOnce, 100);
-                    }
-                }));
-
-                window.addEventListener("resize", () => {
-                    if (!homeMap) return;
-                    const targetZoom = getGlobeRestZoom();
-                    if (Math.abs(homeMap.getZoom() - targetZoom) > 0.1) {
-                        homeMap.setZoom(targetZoom);
-                    }
                 });
 
-                rotationId = null;
-                isSpinning = true;
-
-                // Reset transitions function for page load / bfcache back navigation
-                function resetTransitions() {
-                    // Force DOM reflow to guarantee the browser registers the initial offscreen state
-                    if (globePortal) {
-                        const reflow = globePortal.offsetHeight;
-                    }
-                    if (fadeOverlay) {
-                        const reflow = fadeOverlay.offsetHeight;
-                    }
-
-                    // Remove transition classes to trigger reverse animation
-                    if (fadeOverlay) {
-                        fadeOverlay.classList.remove("is-active");
-                    }
-                    if (globePortal) {
-                        globePortal.classList.remove("is-flying");
-                    }
-
-                    // Reset search state and clear markers
-                    if (input) input.value = "";
-                    if (dropdown) {
-                        dropdown.style.display = "none";
-                        dropdown.innerHTML = "";
-                    }
-                    if (homeContainer) {
-                        homeContainer.classList.remove("search-active");
-                    }
-                    currentMatches = [];
-                    updateMapMarkers([]);
-                    
-                    // Reset MapLibre camera to original resting state (pitch: 0, lat: 0)
-                    try {
-                        if (homeMap) {
-                            homeMap.easeTo({
-                                pitch: 0,
-                                zoom: getGlobeRestZoom(), // Restores aligned scale on recovery
-                                center: [homeMap.getCenter().lng, 0],
-                                duration: prefersReducedMotion ? 0 : 1000,
-                                easing: (t) => 1 - Math.pow(1 - t, 4)
-                            });
-                        }
-                    } catch (e) {
-                        // Suppress map state errors if map is not fully loaded yet
-                    }
-
-                    isSpinning = true;
-                    // Restart spinning loop if stopped
-                    if (!rotationId) {
-                        rotateGlobe();
-                    }
-                }
-
-                // Listen for page transition show event (handles regular load & back/forward cache)
-                window.addEventListener("pageshow", (event) => {
-                    resetTransitions();
-                });
-
-                let lastFrameTime = 0;
-
-                function stopGlobeRotation() {
-                    isSpinning = false;
-                    if (rotationId) {
-                        cancelAnimationFrame(rotationId);
-                        rotationId = null;
-                    }
-                }
-
-                function rotateGlobe() {
-                    if (!homeMap || prefersReducedMotion) return;
-                    // Prevent duplicate concurrent animation loops
-                    if (rotationId) {
-                        cancelAnimationFrame(rotationId);
-                        rotationId = null;
-                    }
-                    isSpinning = true;
-                    lastFrameTime = performance.now();
-
-                    function tick(now) {
-                        if (!isSpinning) {
-                            rotationId = null;
-                            return;
-                        }
-
-                        const dt = Math.min((now - lastFrameTime) / 1000, 0.1); // clamp to 100ms
-                        lastFrameTime = now;
-
-                        try {
-                            if (homeMap) {
-                                const center = homeMap.getCenter();
-                                // Stable rotation: 1.2 degrees per second (~0.02 deg/frame at 60fps)
-                                center.lng += 1.2 * dt;
-                                if (center.lng > 180) center.lng -= 360;
-                                homeMap.setCenter(center);
-                            }
-                        } catch (e) {
-                            // Suppress map center errors if page navigates mid-frame
-                        }
-
-                        rotationId = requestAnimationFrame(tick);
-                    }
-
-                    rotationId = requestAnimationFrame(tick);
-                }
-
-                // Helper to initialize search markers WebGL layer
-                function addSearchMarkersLayer() {
-                    try {
-                        if (!homeMap) return;
-                        if (!homeMap.getSource('search-markers')) {
-                            homeMap.addSource('search-markers', {
-                                type: 'geojson',
-                                data: {
-                                    type: 'FeatureCollection',
-                                    features: []
-                                }
-                            });
-                        }
-                        
-                        // Dynamically query global accent color from CSS variables
-                        const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#00d5a4';
-                        const isLight = document.documentElement.getAttribute("data-theme") === "light" || document.body.classList.contains("theme-light");
-                        const defaultMarkerColor = isLight ? '#000000' : '#ffffff';
-
-                        if (!homeMap.getLayer('search-markers-layer')) {
-                            homeMap.addLayer({
-                                id: 'search-markers-layer',
-                                type: 'circle',
-                                source: 'search-markers',
-                                paint: {
-                                    'circle-radius': [
-                                        'case',
-                                        ['boolean', ['get', 'active'], false],
-                                        3.5,
-                                        2.5
-                                    ],
-                                    'circle-color': [
-                                        'case',
-                                        ['boolean', ['get', 'active'], false],
-                                        accentColor,
-                                        defaultMarkerColor
-                                    ],
-                                    'circle-stroke-width': 0
-                                }
-                            });
-                        }
-                    } catch (err) {
-                        console.warn("addSearchMarkersLayer error:", err);
-                    }
-                }
-
-                // On click transition flight
-                globePortal.addEventListener("click", (e) => {
-                    // Ignore clicks that land in empty space outside the 3D globe surface
-                    if (homeMap) {
-                        const canvas = homeMap.getCanvas();
-                        if (canvas) {
-                            const rect = canvas.getBoundingClientRect();
-                            const mapX = e.clientX - rect.left;
-                            const mapY = e.clientY - rect.top;
-                            try {
-                                let onGlobe = false;
-                                if (homeMap.transform && typeof homeMap.transform.isPointOnMapSurface === "function" && window.maplibregl && maplibregl.Point) {
-                                    onGlobe = homeMap.transform.isPointOnMapSurface(new maplibregl.Point(mapX, mapY));
-                                } else {
-                                    const lngLat = homeMap.unproject([mapX, mapY]);
-                                    onGlobe = !!(lngLat && typeof lngLat.lng === "number" && !isNaN(lngLat.lng));
-                                }
-                                if (!onGlobe) return;
-                            } catch (err) {}
-                        }
-                    }
-
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    // Stop auto rotation
-                    stopGlobeRotation();
-
-                    // Save origin for back transitions
-                    sessionStorage.setItem("fovea_nav_origin", "maps");
-
-                    // Add transition flight class to container (slides the container straight up with no scale zoom)
-                    globePortal.classList.add("is-flying");
-
-                    // Fade screen to solid black
-                    if (fadeOverlay) {
-                        fadeOverlay.classList.add("is-active");
-                    }
-
-                    // Navigate to maps page after transition
+            const backHomeBtn = document.getElementById("back-home-btn");
+            if (backHomeBtn) {
+                backHomeBtn.addEventListener("click", event => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const screen = document.getElementById("tools-coming-soon-screen");
+                    if (screen) screen.classList.remove("is-active");
                     setTimeout(() => {
-                        window.location.href = "maps/";
-                    }, 1000);
+                        document.body.classList.remove("is-transitioning-left");
+                        if (overlay) overlay.classList.remove("is-active");
+                    }, 300);
                 });
-
-                // MapLibre native 3D planet surface raycast tracking:
-                // Triggers ONLY when cursor ray intersects the actual 3D Earth sphere
-                let isGlobeHovered = false;
-                window.addEventListener("mousemove", (e) => {
-                    if (!globePortal || !homeMap || globePortal.classList.contains("is-flying")) {
-                        if (isGlobeHovered) {
-                            isGlobeHovered = false;
-                            globePortal.classList.remove("is-hovered");
-                        }
-                        return;
-                    }
-                    const canvas = homeMap.getCanvas();
-                    if (!canvas) return;
-                    const rect = canvas.getBoundingClientRect();
-                    const mapX = e.clientX - rect.left;
-                    const mapY = e.clientY - rect.top;
-
-                    let shouldHover = false;
-                    if (mapX >= 0 && mapX <= rect.width && mapY >= 0 && mapY <= rect.height) {
-                        try {
-                            if (homeMap.transform && typeof homeMap.transform.isPointOnMapSurface === "function" && window.maplibregl && maplibregl.Point) {
-                                shouldHover = homeMap.transform.isPointOnMapSurface(new maplibregl.Point(mapX, mapY));
-                            } else {
-                                const lngLat = homeMap.unproject([mapX, mapY]);
-                                shouldHover = !!(lngLat && typeof lngLat.lng === "number" && !isNaN(lngLat.lng) && !isNaN(lngLat.lat));
-                            }
-                        } catch (err) {
-                            shouldHover = false;
-                        }
-                    }
-
-                    if (shouldHover !== isGlobeHovered) {
-                        isGlobeHovered = shouldHover;
-                        globePortal.classList.toggle("is-hovered", isGlobeHovered);
-                    }
-                }, { passive: true });
-
-                document.addEventListener("mouseleave", () => {
-                    if (isGlobeHovered && globePortal) {
-                        isGlobeHovered = false;
-                        globePortal.classList.remove("is-hovered");
-                    }
-                });
-
-                // Bind info button click
-                const infoBtn = document.querySelector(".info-btn");
-                if (infoBtn) {
-                    infoBtn.addEventListener("click", (e) => {
-                        e.stopPropagation();
-                    });
-                }
-
-                // Corner Nav Page Transitions
-                const settingsNavBtn = document.querySelector(".corner-nav-right");
-                const toolsNavBtn = document.querySelector(".corner-nav-left");
-
-                if (settingsNavBtn) {
-                    settingsNavBtn.addEventListener("click", (e) => {
-                        if (e.target.closest(".top-right-controls") || e.target.closest(".info-btn")) {
-                            return;
-                        }
-                        e.preventDefault();
-                        if (document.body.className.includes("is-transitioning-")) return;
-
-                        // Stop globe auto rotation
-                        stopGlobeRotation();
-
-                        // Save origin for back transitions
-                        sessionStorage.setItem("fovea_nav_origin", "settings");
-
-                        // Trigger transition
-                        document.body.classList.add("is-transitioning-right");
-                        if (fadeOverlay) {
-                            fadeOverlay.classList.add("is-active");
-                        }
-
-                        // Redirect after transition completes
-                        setTimeout(() => {
-                            window.location.href = settingsNavBtn.getAttribute("href") || "settings/";
-                        }, 800);
-                    });
-                }
-
-                if (toolsNavBtn) {
-                    toolsNavBtn.addEventListener("click", (e) => {
-                        if (e.target.closest(".top-right-controls") || e.target.closest(".info-btn")) {
-                            return;
-                        }
-                        e.preventDefault();
-                        if (document.body.className.includes("is-transitioning-")) return;
-
-                        stopGlobeRotation();
-
-                        document.body.classList.add("is-transitioning-left");
-                        if (fadeOverlay) {
-                            fadeOverlay.classList.add("is-active");
-                        }
-
-                        // Redirect after transition completes
-                        setTimeout(() => {
-                            window.location.href = toolsNavBtn.getAttribute("href") || "tools/";
-                        }, 800);
-                    });
-                }
-
-                const backHomeBtn = document.getElementById("back-home-btn");
-                if (backHomeBtn) {
-                    backHomeBtn.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        const csScreen = document.getElementById("tools-coming-soon-screen");
-                        if (csScreen) {
-                            csScreen.classList.remove("is-active");
-                        }
-
-                        // Fly card back to the left side
-                        setTimeout(() => {
-                            document.body.classList.remove("is-transitioning-left");
-                            if (fadeOverlay) {
-                                fadeOverlay.classList.remove("is-active");
-                            }
-                            // Resume spinning after returning
-                            isSpinning = true;
-                            rotateGlobe();
-                        }, 300);
-                    });
-                }
             }
 
         });
 
-        // Handle page show event to clear animations and support reverse transition on browser back button
-        window.addEventListener("pageshow", (event) => {
-            const isBackNavigation = event.persisted || 
-                (window.performance && window.performance.navigation.type === 2);
-
-            const origin = sessionStorage.getItem("fovea_nav_origin");
-
-            if (isBackNavigation) {
-                // If we went to the About page, play reverse card zoom animation
-                if (origin === "about") {
-                    document.body.classList.add("is-transitioning-right");
-                    const overlay = document.querySelector(".fade-overlay");
-                    if (overlay) {
-                        overlay.classList.add("is-active");
-                    }
-
-                    // Force layout reflow to register style change before starting transition
-                    void document.body.offsetHeight;
-
-                    // Remove transitioning classes to trigger reverse animation
-                    setTimeout(() => {
-                        document.body.classList.remove("is-transitioning-right");
-                        if (overlay) {
-                            overlay.classList.remove("is-active");
-                        }
-                    }, 50);
-                } 
-                // If we went to the Maps page, play reverse globe fly animation
-                else if (origin === "maps") {
-                    const globePortal = document.getElementById("globe-portal-container");
-                    const overlay = document.querySelector(".fade-overlay");
-                    if (globePortal) {
-                        globePortal.classList.add("is-flying");
-                    }
-                    if (overlay) {
-                        overlay.classList.add("is-active");
-                    }
-
-                    void document.body.offsetHeight;
-
-                    setTimeout(() => {
-                        if (globePortal) {
-                            globePortal.classList.remove("is-flying");
-                        }
-                        if (overlay) {
-                            overlay.classList.remove("is-active");
-                        }
-                    }, 50);
-                }
-                // Fallback cleanup if session storage got cleared or unknown origin
-                else {
-                    document.body.classList.remove("is-transitioning-left", "is-transitioning-right");
-                    const globePortal = document.getElementById("globe-portal-container");
-                    if (globePortal) {
-                        globePortal.classList.remove("is-flying");
-                    }
-                    const overlay = document.querySelector(".fade-overlay");
-                    if (overlay) {
-                        overlay.classList.remove("is-active");
-                    }
-                }
-
-                // Clean up sessionStorage
-                sessionStorage.removeItem("fovea_nav_origin");
-            } else {
-                // On regular first load, always clean up stale states
-                document.body.classList.remove("is-transitioning-left", "is-transitioning-right");
-                const globePortal = document.getElementById("globe-portal-container");
-                if (globePortal) {
-                    globePortal.classList.remove("is-flying");
-                }
-                const overlay = document.querySelector(".fade-overlay");
-                if (overlay) {
-                    overlay.classList.remove("is-active");
-                }
-            }
+        window.addEventListener("pageshow", () => {
+            document.body.classList.remove("is-transitioning-left", "is-transitioning-right");
+            const overlay = document.querySelector(".fade-overlay");
+            if (overlay) overlay.classList.remove("is-active");
         });
     </script>
 
