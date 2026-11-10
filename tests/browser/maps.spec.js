@@ -149,6 +149,15 @@ test('keeps the homepage usable while the bird background modules load', async (
     releaseImports();
 });
 
+test('shows a lightweight flock when WebGPU is unavailable', async ({ page }) => {
+    await page.addInitScript(() => {
+        Object.defineProperty(navigator, 'gpu', { configurable: true, value: undefined });
+    });
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('#home-birds canvas')).toBeVisible();
+    await expect(page.locator('#home-birds')).toHaveClass(/is-ready/);
+});
+
 test('renders the home shell while the non-critical Nunito stylesheet is delayed', async ({ page }) => {
     let releaseFonts;
     let notifyFontsRequested;

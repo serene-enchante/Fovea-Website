@@ -5,8 +5,8 @@ import * as tsl from "three/tsl";
 import WebGPU from "three/addons/capabilities/WebGPU.js";
 
 export async function mountHomeBirds(container) {
-    if (!container || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    if (WebGPU.isAvailable() === false) return;
+    if (!container || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+    if (WebGPU.isAvailable() === false) return false;
 
     const {
         add, cameraProjectionMatrix, cameraViewMatrix, Continue, cos, dot, float, Fn,
@@ -251,6 +251,7 @@ export async function mountHomeBirds(container) {
             renderer.setAnimationLoop(null);
             renderer.dispose();
         }, { once: true });
+        return true;
     } catch (error) {
         renderer?.dispose();
         container.replaceChildren();

@@ -1429,11 +1429,18 @@
             // Start the decorative simulation only after the homepage has had time to render.
             if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
                 const startHomeBirds = () => {
-                    import("./scripts/home-birds.js").then(({ mountHomeBirds }) => {
-                        mountHomeBirds(document.getElementById("home-birds"));
-                    }).catch(error => {
-                        console.info("Homepage bird background unavailable:", error);
-                    });
+                    const container = document.getElementById("home-birds");
+                    const startFallback = () => import("./scripts/home-birds-fallback.js")
+                        .then(({ mountFallbackBirds }) => mountFallbackBirds(container))
+                        .catch(() => {});
+                    if (!navigator.gpu) {
+                        startFallback();
+                        return;
+                    }
+                    import("./scripts/home-birds.js")
+                        .then(({ mountHomeBirds }) => mountHomeBirds(container))
+                        .then(isMounted => { if (!isMounted) startFallback(); })
+                        .catch(startFallback);
                 };
                 if ("requestIdleCallback" in window) {
                     window.requestIdleCallback(startHomeBirds, { timeout: 2400 });
