@@ -114,48 +114,19 @@ test('loads light-theme CSS while the map remains visible in light mode', async 
         .toBe('rgb(255, 255, 255)');
 });
 
-test('home search works without loading a globe or MapLibre', async ({ page }) => {
-    const mapLibreRequests = [];
+test('home search works without loading decorative simulations', async ({ page }) => {
+    const simulationRequests = [];
     page.on('request', request => {
-        if (/maplibre-gl\.(?:css|js)/.test(request.url())) mapLibreRequests.push(request.url());
+        if (/maplibre-gl\.(?:css|js)|three@0\.187/.test(request.url())) simulationRequests.push(request.url());
     });
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('#home-globe, #globe-portal-container')).toHaveCount(0);
+    await expect(page.locator('#home-globe, #globe-portal-container, #home-birds')).toHaveCount(0);
     await expect(page.locator('#home-search-input')).toBeVisible();
     await page.locator('#home-search-input').fill('Eugene');
     await expect(page.locator('.autocomplete-item')).toHaveCount(1);
     await expect(page.locator('.autocomplete-item')).toHaveAttribute('href', 'maps/?circle=Eugene');
-    expect(mapLibreRequests).toEqual([]);
-});
-
-test('keeps the homepage usable while the bird background modules load', async ({ page }) => {
-    let releaseImports;
-    const importHeld = new Promise(resolve => { releaseImports = resolve; });
-    let notifyImportRequested;
-    const importRequested = new Promise(resolve => { notifyImportRequested = resolve; });
-
-    await page.route('https://cdn.jsdelivr.net/npm/three@0.187.0/**', async route => {
-        notifyImportRequested();
-        await importHeld;
-        await route.abort();
-    });
-
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await importRequested;
-    await expect(page.locator('.logo-title')).toBeVisible();
-    await expect(page.locator('#home-search-input')).toBeVisible();
-    await expect(page.locator('#home-birds')).toHaveCSS('opacity', '0');
-    releaseImports();
-});
-
-test('shows a lightweight flock when WebGPU is unavailable', async ({ page }) => {
-    await page.addInitScript(() => {
-        Object.defineProperty(navigator, 'gpu', { configurable: true, value: undefined });
-    });
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('#home-birds canvas')).toBeVisible();
-    await expect(page.locator('#home-birds')).toHaveClass(/is-ready/);
+    expect(simulationRequests).toEqual([]);
 });
 
 test('renders the home shell while the non-critical Nunito stylesheet is delayed', async ({ page }) => {
