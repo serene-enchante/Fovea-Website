@@ -129,6 +129,26 @@ test('home search works without loading a globe or MapLibre', async ({ page }) =
     expect(mapLibreRequests).toEqual([]);
 });
 
+test('keeps the homepage usable while the bird background modules load', async ({ page }) => {
+    let releaseImports;
+    const importHeld = new Promise(resolve => { releaseImports = resolve; });
+    let notifyImportRequested;
+    const importRequested = new Promise(resolve => { notifyImportRequested = resolve; });
+
+    await page.route('https://cdn.jsdelivr.net/npm/three@0.187.0/**', async route => {
+        notifyImportRequested();
+        await importHeld;
+        await route.abort();
+    });
+
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await importRequested;
+    await expect(page.locator('.logo-title')).toBeVisible();
+    await expect(page.locator('#home-search-input')).toBeVisible();
+    await expect(page.locator('#home-birds')).toHaveCSS('opacity', '0');
+    releaseImports();
+});
+
 test('renders the home shell while the non-critical Nunito stylesheet is delayed', async ({ page }) => {
     let releaseFonts;
     let notifyFontsRequested;
