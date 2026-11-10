@@ -47,7 +47,7 @@ export async function mountHomeBirds(container) {
                 0, 0, -15, -span, 0, 5, 0, 0, 15,
                 0, 0, 15, span, 0, 5, 0, 0, -15
             ]);
-            this.scale(0.2, 0.2, 0.2);
+            this.scale(0.32, 0.32, 0.32);
         }
     }
 
@@ -208,7 +208,7 @@ export async function mountHomeBirds(container) {
         const render = () => {
             if (disposed || document.hidden) return;
             const now = performance.now();
-            const deltaTime = Math.min((now - lastFrame) / 1000, 0.08);
+            const deltaTime = Math.min((now - lastFrame) / 1000, 0.08) * 0.6;
             lastFrame = now;
             raycaster.setFromCamera(pointer, camera);
             effect.deltaTime.value = deltaTime;

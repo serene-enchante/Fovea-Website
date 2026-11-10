@@ -88,7 +88,7 @@ export function mountFallbackBirds(container) {
             }
 
             const speed = Math.hypot(bird.vx, bird.vy) || 1;
-            const limitedSpeed = Math.min(2.1, Math.max(0.8, speed));
+            const limitedSpeed = Math.min(1.25, Math.max(0.45, speed));
             bird.vx = bird.vx / speed * limitedSpeed;
             bird.vy = bird.vy / speed * limitedSpeed;
             bird.x = (bird.x + bird.vx * dt + width) % width;
@@ -99,11 +99,11 @@ export function mountFallbackBirds(container) {
             context.rotate(Math.atan2(bird.vy, bird.vx) + Math.PI / 2);
             context.globalAlpha = 0.82;
             context.beginPath();
-            context.moveTo(0, -5);
-            context.quadraticCurveTo(-1, -1, -5, 2);
-            context.quadraticCurveTo(-2, 2, 0, 1);
-            context.quadraticCurveTo(2, 2, 5, 2);
-            context.quadraticCurveTo(1, -1, 0, -5);
+            context.moveTo(0, -7.5);
+            context.quadraticCurveTo(-1.5, -1.5, -7.5, 3);
+            context.quadraticCurveTo(-3, 3, 0, 1.5);
+            context.quadraticCurveTo(3, 3, 7.5, 3);
+            context.quadraticCurveTo(1.5, -1.5, 0, -7.5);
             context.fill();
             context.restore();
         }
