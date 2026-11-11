@@ -31,7 +31,7 @@ export const MAP_DATASETS = Object.freeze({
         fileName: 'Eugene-05-wgs84.geojson',
         sourceFile: 'geojson/Eugene-05-wgs84.qmd',
         bounds: [-123.32828288852082, 43.96024965537785, -123.01206812392554, 44.17750212734705],
-        sha256: '3288bae80190b0dc19cfe0ac6c9cbb54e1dea14dff62f43b00442460e1e4ac91'
+        sha256: '8d8f19381391f75fee84ca41f64ed65bcbcb2687d061e0332d67dd8d50e9cfdf'
     }),
     florence: createDataset({
         id: 'florence',
