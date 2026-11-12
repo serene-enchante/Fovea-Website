@@ -66,14 +66,11 @@ test('adds local water polygons below road layers with light theme styling', () 
     assert.match(map.sources.get('supplemental-surface-water').data, /eugene-lane-surface-water\.geojson$/);
     const layer = map.getLayer('supplemental-surface-water-fill');
     assert.equal(layer.beforeId, 'road_minor_fill');
-    assert.equal(layer.minzoom, 0);
-    assert.equal(layer.maxzoom, 20);
+    assert.equal('minzoom' in layer, false);
+    assert.equal('maxzoom' in layer, false);
     assert.deepEqual(layer.filter, ['>=', ['get', 'area_sq_km'], 1]);
     assert.equal(layer.paint['fill-color'], '#88bdd8');
-    assert.deepEqual(layer.paint['fill-opacity'], [
-        'case', ['==', ['get', 'kind'], 'river'], 0.9,
-        ['interpolate', ['linear'], ['zoom'], 6, 0.92, 10, 0.9, 12, 0.55, 13, 0]
-    ]);
+    assert.equal(layer.paint['fill-opacity'], 0.9);
 });
 
 test('updates the existing water overlay for dark theme without duplicating it', () => {
@@ -84,8 +81,5 @@ test('updates the existing water overlay for dark theme without duplicating it',
     assert.equal(map.sources.size, 1);
     assert.equal(map.layers.length, 1);
     assert.equal(map.paint.get('supplemental-surface-water-fill:fill-color'), '#315d74');
-    assert.deepEqual(map.paint.get('supplemental-surface-water-fill:fill-opacity'), [
-        'case', ['==', ['get', 'kind'], 'river'], 0.9,
-        ['interpolate', ['linear'], ['zoom'], 6, 0.92, 10, 0.9, 12, 0.55, 13, 0]
-    ]);
+    assert.equal(map.paint.get('supplemental-surface-water-fill:fill-opacity'), 0.9);
 });
