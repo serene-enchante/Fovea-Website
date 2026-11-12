@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { addSurfaceWaterLayer, SUPPLEMENTAL_SURFACE_WATER_ENABLED } from '../scripts/map/map-surface-water.js';
 
-test('keeps supplemental water polygons disabled while basemap LOD is evaluated', () => {
-    assert.equal(SUPPLEMENTAL_SURFACE_WATER_ENABLED, false);
+test('enables the major-lake fallback while native basemap detail is absent', () => {
+    assert.equal(SUPPLEMENTAL_SURFACE_WATER_ENABLED, true);
 });
 
 test('ships Fern Ridge Lake without the malformed river-area polygons', () => {
@@ -20,6 +20,8 @@ test('ships Fern Ridge Lake without the malformed river-area polygons', () => {
     assert.ok(countCoordinates(fernRidge.geometry.coordinates) > 1000,
         'expected the detailed shoreline geometry without aggressive simplification');
     assert.ok(collection.features.every(feature => feature.properties.kind === 'waterbody'));
+    assert.equal(collection.features.length, 12);
+    assert.ok(collection.features.every(feature => feature.properties.area_sq_km >= 1));
     const coordinates = [];
     const visitCoordinates = value => {
         if (Array.isArray(value) && typeof value[0] === 'number') coordinates.push(value);
@@ -56,8 +58,13 @@ test('adds local water polygons below road layers with light theme styling', () 
     assert.match(map.sources.get('supplemental-surface-water').data, /eugene-lane-surface-water\.geojson$/);
     const layer = map.getLayer('supplemental-surface-water-fill');
     assert.equal(layer.beforeId, 'road_minor_fill');
-    assert.equal(layer.paint['fill-color'], '#a8cbdf');
-    assert.equal(layer.paint['fill-opacity'], 0.9);
+    assert.equal(layer.minzoom, 6);
+    assert.equal(layer.maxzoom, 14);
+    assert.deepEqual(layer.filter, ['>=', ['get', 'area_sq_km'], 1]);
+    assert.equal(layer.paint['fill-color'], '#88bdd8');
+    assert.deepEqual(layer.paint['fill-opacity'], [
+        'interpolate', ['linear'], ['zoom'], 6, 0.92, 10, 0.9, 12, 0.55, 13, 0
+    ]);
 });
 
 test('updates the existing water overlay for dark theme without duplicating it', () => {
@@ -67,6 +74,8 @@ test('updates the existing water overlay for dark theme without duplicating it',
 
     assert.equal(map.sources.size, 1);
     assert.equal(map.layers.length, 1);
-    assert.equal(map.paint.get('supplemental-surface-water-fill:fill-color'), '#31556b');
-    assert.equal(map.paint.get('supplemental-surface-water-fill:fill-opacity'), 0.88);
+    assert.equal(map.paint.get('supplemental-surface-water-fill:fill-color'), '#315d74');
+    assert.deepEqual(map.paint.get('supplemental-surface-water-fill:fill-opacity'), [
+        'interpolate', ['linear'], ['zoom'], 6, 0.92, 10, 0.9, 12, 0.55, 13, 0
+    ]);
 });
