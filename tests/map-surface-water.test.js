@@ -7,7 +7,7 @@ test('enables the major-lake fallback while native basemap detail is absent', ()
     assert.equal(SUPPLEMENTAL_SURFACE_WATER_ENABLED, true);
 });
 
-test('ships Fern Ridge Lake without the malformed river-area polygons', () => {
+test('ships detailed major lakes and named Willamette and McKenzie channel polygons', () => {
     const collection = JSON.parse(readFileSync(new URL('../geojson/eugene-lane-surface-water.geojson', import.meta.url)));
     const fernRidge = collection.features.find(feature =>
         feature.properties.kind === 'waterbody' && feature.properties.area_sq_km > 20
@@ -19,9 +19,17 @@ test('ships Fern Ridge Lake without the malformed river-area polygons', () => {
         : Array.isArray(value) ? value.reduce((sum, part) => sum + countCoordinates(part), 0) : 0;
     assert.ok(countCoordinates(fernRidge.geometry.coordinates) > 1000,
         'expected the detailed shoreline geometry without aggressive simplification');
-    assert.ok(collection.features.every(feature => feature.properties.kind === 'waterbody'));
-    assert.equal(collection.features.length, 12);
+    const lakes = collection.features.filter(feature => feature.properties.kind === 'waterbody');
+    const rivers = collection.features.filter(feature => feature.properties.kind === 'river');
+    assert.equal(lakes.length, 12);
+    assert.equal(rivers.length, 3);
     assert.ok(collection.features.every(feature => feature.properties.area_sq_km >= 1));
+    assert.deepEqual(rivers.map(feature => feature.properties.name).sort(), [
+        'McKenzie River', 'McKenzie River', 'Willamette River'
+    ]);
+    assert.ok(rivers.every(feature => feature.geometry.type === 'Polygon'));
+    assert.ok(rivers.every(feature => countCoordinates(feature.geometry.coordinates) > 5000),
+        'keep the river channel outlines unsimplified to avoid triangular artifacts');
     const coordinates = [];
     const visitCoordinates = value => {
         if (Array.isArray(value) && typeof value[0] === 'number') coordinates.push(value);
