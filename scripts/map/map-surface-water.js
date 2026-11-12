@@ -1,6 +1,19 @@
 const SOURCE_ID = 'supplemental-surface-water';
 const FILL_LAYER_ID = 'supplemental-surface-water-fill';
+const MAX_MAP_ZOOM = 20;
 export const SUPPLEMENTAL_SURFACE_WATER_ENABLED = true;
+
+const fillOpacity = [
+    'case',
+    ['==', ['get', 'kind'], 'river'],
+    0.9,
+    ['interpolate', ['linear'], ['zoom'],
+        6, 0.92,
+        10, 0.9,
+        12, 0.55,
+        13, 0
+    ]
+];
 
 export function addSurfaceWaterLayer(map, isLightMapMode) {
     if (!map.getSource(SOURCE_ID)) {
@@ -21,27 +34,15 @@ export function addSurfaceWaterLayer(map, isLightMapMode) {
             type: 'fill',
             source: SOURCE_ID,
             minzoom: 6,
-            maxzoom: 14,
+            maxzoom: MAX_MAP_ZOOM,
             filter: ['>=', ['get', 'area_sq_km'], 1],
             paint: {
                 'fill-color': isLightMapMode ? '#88bdd8' : '#315d74',
-                'fill-opacity': [
-                    'interpolate', ['linear'], ['zoom'],
-                    6, 0.92,
-                    10, 0.9,
-                    12, 0.55,
-                    13, 0
-                ]
+                'fill-opacity': fillOpacity
             }
         }, firstRoadLayer?.id);
     } else {
         map.setPaintProperty(FILL_LAYER_ID, 'fill-color', isLightMapMode ? '#88bdd8' : '#315d74');
-        map.setPaintProperty(FILL_LAYER_ID, 'fill-opacity', [
-            'interpolate', ['linear'], ['zoom'],
-            6, 0.92,
-            10, 0.9,
-            12, 0.55,
-            13, 0
-        ]);
+        map.setPaintProperty(FILL_LAYER_ID, 'fill-opacity', fillOpacity);
     }
 }

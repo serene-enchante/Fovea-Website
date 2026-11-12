@@ -1,6 +1,6 @@
 # Eugene and Lane County surface water
 
-`eugene-lane-surface-water.geojson` supplies major lake and river-channel polygons while CARTO's native tiles omit some of them at overview zooms. It contains USGS NHDPlus High Resolution waterbody polygons (`NHDWaterbody`, layer 9) of at least 1 km², plus three `NHDArea` stream-river channel polygons that follow the Willamette and McKenzie corridors through the mapped area. The layer displays from zoom 6 through 13 and fades out as CARTO's native detail becomes available. CARTO's waterway line geometry remains active underneath.
+`eugene-lane-surface-water.geojson` supplies major lake and river-channel polygons while CARTO's native tiles omit some of them at overview zooms. It contains USGS NHDPlus High Resolution waterbody polygons (`NHDWaterbody`, layer 9) of at least 1 km², plus three `NHDArea` stream-river channel polygons that follow the Willamette and McKenzie corridors through the mapped area. The layer displays from zoom 6 through the map's maximum zoom. Lake fills fade out by zoom 13 as CARTO's native detail becomes available; river channel fills remain visible at higher zooms. CARTO's waterway line geometry remains active underneath.
 
 The query envelope was longitude -123.8 to -122.2 and latitude 43.5 to 44.3 (EPSG:4326). Source geometry is retained without simplification to preserve shoreline detail; coordinates are rounded to five decimal places. The layer contains 15 valid polygons: 12 waterbodies and three named river reaches. It supplements the CARTO vector basemap's own water and waterway data.
 
