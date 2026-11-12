@@ -10,6 +10,11 @@ test('ships Fern Ridge Lake without the malformed river-area polygons', () => {
     );
     assert.ok(fernRidge, 'expected a large lake polygon for Fern Ridge');
     assert.equal(fernRidge.geometry.type, 'Polygon');
+    const countCoordinates = value => Array.isArray(value) && typeof value[0] === 'number'
+        ? 1
+        : Array.isArray(value) ? value.reduce((sum, part) => sum + countCoordinates(part), 0) : 0;
+    assert.ok(countCoordinates(fernRidge.geometry.coordinates) > 1000,
+        'expected the detailed shoreline geometry without aggressive simplification');
     assert.ok(collection.features.every(feature => feature.properties.kind === 'waterbody'));
     const coordinates = [];
     const visitCoordinates = value => {
