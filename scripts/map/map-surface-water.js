@@ -9,7 +9,10 @@ export function addSurfaceWaterLayer(map, isLightMapMode) {
         map.addSource(SOURCE_ID, {
             type: 'geojson',
             data: new URL('../../geojson/eugene-lane-surface-water.geojson', import.meta.url).href,
-            attribution: 'Water polygons: USGS NHDPlus High Resolution'
+            attribution: 'Water polygons: USGS NHDPlus High Resolution',
+            // Preserve narrow land gaps inside the detailed river-area polygons
+            // when MapLibre builds low-zoom vector tiles.
+            tolerance: 0
         });
     }
 
