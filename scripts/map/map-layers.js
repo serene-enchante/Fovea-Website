@@ -3,7 +3,7 @@ import { normalizeZoneId } from "../utils/format-utils.js";
 import { state } from '../state.js';
 import { rebuildHtmlLabels } from './map-html-labels.js';
 import { applyVectorThemeStyles } from './map-vector-theme-styles.js';
-import { addSurfaceWaterLayer } from './map-surface-water.js';
+import { addSurfaceWaterLayer, SUPPLEMENTAL_SURFACE_WATER_ENABLED } from './map-surface-water.js';
 import { createPlaceLabelFilterController, toExpression } from './map-place-label-filter.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { showToast } from '../components/toast-view.js'; // Might be needed for selectMapStyleByIndex
@@ -254,7 +254,9 @@ export function setupMapLayers(state) {
 
             const isLightMapMode = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
 
-            addSurfaceWaterLayer(state.map, isLightMapMode);
+            if (SUPPLEMENTAL_SURFACE_WATER_ENABLED) {
+                addSurfaceWaterLayer(state.map, isLightMapMode);
+            }
             applyVectorThemeStyles(state.map, isLightMapMode);
 
             // Set initial road network line opacity dynamically: semi-transparent white on satellite, solid default on dark

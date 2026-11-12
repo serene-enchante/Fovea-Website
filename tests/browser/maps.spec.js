@@ -295,8 +295,7 @@ test('records the active-dataset and tile request startup baseline', async ({ pa
     await page.waitForTimeout(1500);
 
     expect(datasetRequests.map(url => new URL(url).pathname.split('/').at(-1))).toEqual([
-        'Eugene-05-wgs84.geojson',
-        'eugene-lane-surface-water.geojson'
+        'Eugene-05-wgs84.geojson'
     ]);
     const scriptBytes = await page.evaluate(() => {
         const resources = performance.getEntriesByType('resource').filter(entry => {

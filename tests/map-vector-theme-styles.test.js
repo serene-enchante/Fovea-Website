@@ -22,7 +22,10 @@ test('applies light vector styles to land, parks, roads, and place labels', () =
     applyVectorThemeStyles(map, true);
 
     assert.equal(paint.get('background:background-color'), '#d9dce1');
-    assert.equal(paint.get('water:fill-color'), '#a8cbdf');
+    assert.deepEqual(paint.get('water:fill-color'), [
+        'interpolate', ['linear'], ['zoom'],
+        0, '#86b8cf', 6, '#8bbdd5', 10, '#97c4d8', 14, '#a8cbdf'
+    ]);
     assert.equal(paint.get('park_national_park:fill-color'), '#c8decb');
     assert.equal(paint.get('waterway:line-color'), '#6f9fb8');
     assert.deepEqual(paint.get('waterway:line-width'), [
@@ -40,7 +43,10 @@ test('applies dark vector styles to land, parks, roads, and place labels', () =>
     applyVectorThemeStyles(map, false);
 
     assert.equal(paint.get('background:background-color'), '#1a1b1e');
-    assert.equal(paint.get('water:fill-color'), '#263b49');
+    assert.deepEqual(paint.get('water:fill-color'), [
+        'interpolate', ['linear'], ['zoom'],
+        0, '#315d74', 6, '#2e5870', 10, '#2a4b60', 14, '#263b49'
+    ]);
     assert.equal(paint.get('park_national_park:fill-color'), '#161c18');
     assert.equal(paint.get('waterway:line-color'), '#4c7890');
     assert.deepEqual(paint.get('waterway:line-width'), [

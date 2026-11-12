@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { addSurfaceWaterLayer } from '../scripts/map/map-surface-water.js';
+import { addSurfaceWaterLayer, SUPPLEMENTAL_SURFACE_WATER_ENABLED } from '../scripts/map/map-surface-water.js';
+
+test('keeps supplemental water polygons disabled while basemap LOD is evaluated', () => {
+    assert.equal(SUPPLEMENTAL_SURFACE_WATER_ENABLED, false);
+});
 
 test('ships Fern Ridge Lake without the malformed river-area polygons', () => {
     const collection = JSON.parse(readFileSync(new URL('../geojson/eugene-lane-surface-water.geojson', import.meta.url)));

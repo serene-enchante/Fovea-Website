@@ -23,7 +23,10 @@ export function applyVectorThemeStyles(map, isLightMapMode) {
 
         // Water and waterways in soft sky-blue
         if (map.getLayer('water')) {
-            map.setPaintProperty('water', 'fill-color', '#a8cbdf');
+            map.setPaintProperty('water', 'fill-color', [
+                'interpolate', ['linear'], ['zoom'],
+                0, '#86b8cf', 6, '#8bbdd5', 10, '#97c4d8', 14, '#a8cbdf'
+            ]);
         }
         if (map.getLayer('waterway')) {
             map.setPaintProperty('waterway', 'line-color', '#6f9fb8');
@@ -97,7 +100,10 @@ export function applyVectorThemeStyles(map, isLightMapMode) {
 
         // Keep water polygons and larger river channels distinct from dark land.
         if (map.getLayer('water')) {
-            map.setPaintProperty('water', 'fill-color', '#263b49');
+            map.setPaintProperty('water', 'fill-color', [
+                'interpolate', ['linear'], ['zoom'],
+                0, '#315d74', 6, '#2e5870', 10, '#2a4b60', 14, '#263b49'
+            ]);
         }
 
         if (map.getLayer('waterway')) {

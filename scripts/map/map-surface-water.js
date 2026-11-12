@@ -1,5 +1,6 @@
 const SOURCE_ID = 'supplemental-surface-water';
 const FILL_LAYER_ID = 'supplemental-surface-water-fill';
+export const SUPPLEMENTAL_SURFACE_WATER_ENABLED = false;
 
 export function addSurfaceWaterLayer(map, isLightMapMode) {
     if (!map.getSource(SOURCE_ID)) {
