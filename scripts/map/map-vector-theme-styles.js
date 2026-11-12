@@ -26,7 +26,11 @@ export function applyVectorThemeStyles(map, isLightMapMode) {
             map.setPaintProperty('water', 'fill-color', '#a8cbdf');
         }
         if (map.getLayer('waterway')) {
-            map.setPaintProperty('waterway', 'line-color', '#8eb6cd');
+            map.setPaintProperty('waterway', 'line-color', '#6f9fb8');
+            map.setPaintProperty('waterway', 'line-width', [
+                'interpolate', ['linear'], ['zoom'],
+                7, 0.7, 10, 1.2, 12, 1.8, 14, 2.6, 16, 3.5
+            ]);
         }
 
         // Road names in pure black without dropshadows/halos
@@ -91,9 +95,17 @@ export function applyVectorThemeStyles(map, isLightMapMode) {
             }
         });
 
-        // Tweak waterway color for compatibility
+        // Keep water polygons and larger river channels distinct from dark land.
+        if (map.getLayer('water')) {
+            map.setPaintProperty('water', 'fill-color', '#263b49');
+        }
+
         if (map.getLayer('waterway')) {
-            map.setPaintProperty('waterway', 'line-color', '#242a30');
+            map.setPaintProperty('waterway', 'line-color', '#4c7890');
+            map.setPaintProperty('waterway', 'line-width', [
+                'interpolate', ['linear'], ['zoom'],
+                7, 0.7, 10, 1.2, 12, 1.8, 14, 2.6, 16, 3.5
+            ]);
         }
 
         // Substantially enlarge road names and brighten them
