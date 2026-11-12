@@ -33,7 +33,9 @@ export function addSurfaceWaterLayer(map, isLightMapMode) {
             id: FILL_LAYER_ID,
             type: 'fill',
             source: SOURCE_ID,
-            minzoom: 6,
+            // Keep the river corridors available when the map is zoomed out
+            // beyond the lake-detail threshold as well.
+            minzoom: 0,
             maxzoom: MAX_MAP_ZOOM,
             filter: ['>=', ['get', 'area_sq_km'], 1],
             paint: {

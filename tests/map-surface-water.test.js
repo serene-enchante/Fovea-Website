@@ -66,7 +66,7 @@ test('adds local water polygons below road layers with light theme styling', () 
     assert.match(map.sources.get('supplemental-surface-water').data, /eugene-lane-surface-water\.geojson$/);
     const layer = map.getLayer('supplemental-surface-water-fill');
     assert.equal(layer.beforeId, 'road_minor_fill');
-    assert.equal(layer.minzoom, 6);
+    assert.equal(layer.minzoom, 0);
     assert.equal(layer.maxzoom, 20);
     assert.deepEqual(layer.filter, ['>=', ['get', 'area_sq_km'], 1]);
     assert.equal(layer.paint['fill-color'], '#88bdd8');
