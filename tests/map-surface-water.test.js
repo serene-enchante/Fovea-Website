@@ -3,14 +3,23 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { addSurfaceWaterLayer } from '../scripts/map/map-surface-water.js';
 
-test('ships Fern Ridge Lake and polygonal river reaches in the supplemental dataset', () => {
+test('ships Fern Ridge Lake without the malformed river-area polygons', () => {
     const collection = JSON.parse(readFileSync(new URL('../geojson/eugene-lane-surface-water.geojson', import.meta.url)));
     const fernRidge = collection.features.find(feature =>
         feature.properties.kind === 'waterbody' && feature.properties.area_sq_km > 20
     );
     assert.ok(fernRidge, 'expected a large lake polygon for Fern Ridge');
     assert.equal(fernRidge.geometry.type, 'Polygon');
-    assert.ok(collection.features.some(feature => feature.properties.kind === 'river-area'));
+    assert.ok(collection.features.every(feature => feature.properties.kind === 'waterbody'));
+    const coordinates = [];
+    const visitCoordinates = value => {
+        if (Array.isArray(value) && typeof value[0] === 'number') coordinates.push(value);
+        else if (Array.isArray(value)) value.forEach(visitCoordinates);
+    };
+    collection.features.forEach(feature => visitCoordinates(feature.geometry.coordinates));
+    assert.ok(coordinates.every(([longitude, latitude]) =>
+        longitude >= -124 && longitude <= -122 && latitude >= 43 && latitude <= 45
+    ), 'expected WGS84 longitude/latitude coordinates in the Eugene area');
 });
 
 function createMap() {
