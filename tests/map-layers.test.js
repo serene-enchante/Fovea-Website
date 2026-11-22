@@ -146,7 +146,7 @@ test('applies the production light-theme feature colors and updates supplemental
         assert.deepEqual(featureStates, [[{ source: 'zones', id: '04' }, { selected: true }]]);
         assert.equal(classes.has('is-light-basemap'), true);
         assert.ok(JSON.stringify(paints.get('zones-fill:fill-opacity')).includes('0.15'));
-        assert.ok(JSON.stringify(paints.get('zones-fill:fill-color')).includes('#344650'));
+        assert.ok(JSON.stringify(paints.get('zones-fill:fill-color')).includes('#3b3b3b'));
         assert.equal(paints.get('zones-outline:line-color')[2], '#64b5f6');
     } finally {
         for (const key of stateKeys) {

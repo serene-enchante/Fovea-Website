@@ -83,7 +83,7 @@ export function updateAllFeatureStyles({ updateAdditionalLayers = () => {} } = {
     const noDataFillColor = isLightBasemap ? '#000000' : defaultFillColor;
     const noDataFillOpacity = isLightBasemap ? 0.04 : (isSatelliteBasemap ? 0.60 : 0.02);
     const noDataLineColor = isLightBasemap ? '#000000' : dimLineColor;
-    const unincorporatedFillColor = isLightBasemap ? '#344650' : '#111a21';
+    const unincorporatedFillColor = '#3b3b3b';
     const unincorporatedFillOpacity = isLightBasemap ? 0.26 : (isSatelliteBasemap ? 0.9 : 0.82);
 
     const hoverFillColor = isLightBasemap ? '#000000' : '#3f3f46';
