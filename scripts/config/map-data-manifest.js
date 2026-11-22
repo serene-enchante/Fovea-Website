@@ -26,22 +26,22 @@ export const MAP_DATASETS = Object.freeze({
     eugene: createDataset({
         id: 'eugene',
         label: 'Eugene Christmas Bird Count',
-        version: '05',
+        version: '06',
         schemaVersion: 1,
-        fileName: 'Eugene-05-wgs84.geojson',
-        sourceFile: 'geojson/Eugene-05-wgs84.qmd',
+        fileName: 'Eugene-06-wgs84.geojson',
+        sourceFile: 'geojson/Eugene-06.geojson',
         bounds: [-123.32828288852082, 43.96024965537785, -123.01206812392554, 44.17750212734705],
-        sha256: '8d8f19381391f75fee84ca41f64ed65bcbcb2687d061e0332d67dd8d50e9cfdf'
+        sha256: '2937f26936e2cf4985009368cad1f940fbfd8e10bf0ed9e71354183990c07f5b'
     }),
     florence: createDataset({
         id: 'florence',
         label: 'Florence Christmas Bird Count',
-        version: '00',
+        version: '03',
         schemaVersion: 1,
-        fileName: 'Florence-00-wgs84.geojson',
-        sourceFile: 'geojson/Florence-00.qmd',
+        fileName: 'Florence-03-wgs84.geojson',
+        sourceFile: 'geojson/Florence-03.geojson',
         bounds: [-124.22898764468006, 43.92593135812209, -123.92785884200298, 44.14317328631742],
-        sha256: 'beb27afc00de87e1073dc6194eb8700c05b0976d6cfa1239a25b5ae2794f2f1f'
+        sha256: '54f79b18eebbe29725d277875b7ab3672b9ce60e353b9b014e7d9ff50e2f061f'
     })
 });
 

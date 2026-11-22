@@ -1,4 +1,4 @@
-const GEOJSON_PATH = "../geojson/Eugene-05-wgs84.geojson";
+const GEOJSON_PATH = "../geojson/Eugene-06-wgs84.geojson";
 const CIRCLE_ID = "ecbc-circle";
 const FALLBACK_HERO_IMAGE = "../images/wetlands.webp";
 const VIEW_OPTIONS = ["map", "grid", "list"];

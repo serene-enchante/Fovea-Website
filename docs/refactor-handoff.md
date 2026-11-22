@@ -9,8 +9,9 @@ Updated: 2026-10-19
 - Latest refactor commit: `4d77ddb Move fullscreen action into map viewport module`
 - Latest handoff commit: `933b474 Record Pages deployment after export fix` (this checkpoint update supersedes it).
 - The user has asked to continue the refactor incrementally, run tests, and commit each step to `main`.
-- Eugene-05 is now the active Eugene dataset. The user-provided `geojson/Eugene-05-wgs84.geojson` and `geojson/Eugene-05-wgs84.qmd` are part of that site update.
-- Eugene-05 splits legacy Zone 19 into zones 19A and 19B; the active dataset contains 29 zones, and labels/counts must preserve the alphanumeric suffixes. Zone-specific descriptive copy has since been removed from the UI.
+- Eugene-06 is the active Eugene dataset. It contains 29 zones, including zones 19A and 19B, and labels/counts must preserve the alphanumeric suffixes.
+- Florence-03 is the active Florence dataset. Its 13 numbered zones plus the intentional non-birded `zid: 0` areas are served in WGS84; the latter are combined as zone 00.
+- User-provided source files `geojson/Eugene-06.geojson` and `geojson/Florence-03.geojson` are kept beside their WGS84 runtime datasets. Florence-03 is projected in EPSG:3648 and transformed for the map.
 - Preserve the separate, pre-existing edits to `geojson/Eugene-04-wgs84.geojson` and `geojson/Eugene-04-wgs84-10m.topojson`; do not stage them as part of unrelated work.
 
 ## Recent work

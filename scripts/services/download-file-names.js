@@ -14,11 +14,11 @@ export function getDownloadFilename({ currentFeature, currentId, circleId }, ext
     } else if (currentFeature === 'florence') {
         base = hasZoneSelection
             ? `Florence-Zone-${displayZoneId(currentId)}`
-            : 'Florence-00-wgs84';
+            : 'Florence-03-wgs84';
     } else {
         base = hasZoneSelection
             ? `Eugene-Zone-${displayZoneId(currentId)}`
-            : 'Eugene-05-wgs84';
+            : 'Eugene-06-wgs84';
     }
 
     return `${base}.${extension}`;

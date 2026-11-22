@@ -38,8 +38,8 @@ function jsonResponse(data, status = 200) {
 
 test('returns the canonical path for every map dataset', () => {
     assert.equal(getGeoDatasetPath('circles'), '../geojson/circles-wgs84.geojson');
-    assert.equal(getGeoDatasetPath('eugene'), '../geojson/Eugene-05-wgs84.geojson');
-    assert.equal(getGeoDatasetPath('florence'), '../geojson/Florence-00-wgs84.geojson');
+    assert.equal(getGeoDatasetPath('eugene'), '../geojson/Eugene-06-wgs84.geojson');
+    assert.equal(getGeoDatasetPath('florence'), '../geojson/Florence-03-wgs84.geojson');
     assert.throws(() => getGeoDatasetPath('unknown'), /Unknown map dataset/);
 });
 
@@ -64,10 +64,10 @@ test('loads and validates the requested datasets', async () => {
 
     assert.deepEqual(Object.keys(datasets), ['circles', 'florence']);
     assert.equal(datasets.circles.features[0].properties.cid, '../geojson/circles-wgs84.geojson');
-    assert.equal(datasets.florence.features[0].properties.zid, '../geojson/Florence-00-wgs84.geojson');
+    assert.equal(datasets.florence.features[0].properties.zid, '../geojson/Florence-03-wgs84.geojson');
     assert.deepEqual(requestedPaths, [
         '../geojson/circles-wgs84.geojson',
-        '../geojson/Florence-00-wgs84.geojson'
+        '../geojson/Florence-03-wgs84.geojson'
     ]);
 });
 
@@ -91,18 +91,18 @@ test('tries the next supplied path when a route-specific dataset path fails', as
     const requestedPaths = [];
     globalThis.fetch = async path => {
         requestedPaths.push(path);
-        return path === '../../geojson/Eugene-05-wgs84.geojson'
+        return path === '../../geojson/Eugene-06-wgs84.geojson'
             ? jsonResponse({}, 404)
             : jsonResponse(featureCollection('Eugene', 'eugene'));
     };
 
     const dataset = await loadGeoDataset('eugene', {
-        paths: ['../../geojson/Eugene-05-wgs84.geojson', '../geojson/Eugene-05-wgs84.geojson']
+        paths: ['../../geojson/Eugene-06-wgs84.geojson', '../geojson/Eugene-06-wgs84.geojson']
     });
 
     assert.deepEqual(requestedPaths, [
-        '../../geojson/Eugene-05-wgs84.geojson',
-        '../geojson/Eugene-05-wgs84.geojson'
+        '../../geojson/Eugene-06-wgs84.geojson',
+        '../geojson/Eugene-06-wgs84.geojson'
     ]);
     assert.equal(dataset.features[0].properties.zid, 'Eugene');
 });
@@ -201,7 +201,11 @@ test('active GeoJSON datasets satisfy their manifest-backed property and geometr
     const loaded = await loadGeoDatasets();
     assert.equal(loaded.circles.features.length, 4);
     assert.equal(loaded.eugene.features.length, 29);
-    assert.equal(loaded.florence.features.length, 13);
+    assert.equal(loaded.florence.features.length, 14);
+    const nonBirdedAreas = loaded.florence.features.find(feature => feature.properties.zid === '00');
+    assert.ok(nonBirdedAreas, 'preserve the intentional unbirded Florence areas as zone 00');
+    assert.equal(nonBirdedAreas.geometry.coordinates.length, 3,
+        'combine all three unbirded Florence areas into the zone 00 multipolygon');
 
     for (const dataset of Object.values(MAP_DATASETS)) {
         const file = await readFile(new URL(`../geojson/${dataset.fileName}`, import.meta.url));
