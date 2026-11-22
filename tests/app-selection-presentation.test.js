@@ -4,7 +4,10 @@ import test from 'node:test';
 import { getAppSelectionTitle, getSelectionThumbnail } from '../scripts/map/app-selection-presentation.js';
 
 const circleId = 'ecbc-circle';
-const features = [{ type: 'Feature', properties: { zid: '04' }, geometry: null }];
+const features = [
+    { type: 'Feature', properties: { zid: '04' }, geometry: null },
+    { type: 'Feature', properties: { zid: '00', name: 'Unincorporated Areas' }, geometry: null }
+];
 
 test('presents titles for overview, count-circle, and zone selections', () => {
     assert.deepEqual(
@@ -18,6 +21,10 @@ test('presents titles for overview, count-circle, and zone selections', () => {
     assert.deepEqual(
         getAppSelectionTitle({ features, currentFeature: 'eugene', currentId: '4', isCirclesFeature: false, circleId }),
         { targetName: 'Zone 04', circleName: 'Eugene Count Circle' }
+    );
+    assert.deepEqual(
+        getAppSelectionTitle({ features, currentFeature: 'florence', currentId: '00', isCirclesFeature: false, circleId }),
+        { targetName: 'Unincorporated Areas', circleName: 'Florence Count Circle' }
     );
 });
 

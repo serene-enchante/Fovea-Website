@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { showToast } from './toast-view.js';
-import { displayZoneId, normalizeZoneId } from '../utils/format-utils.js';
+import { getZoneDisplayName, normalizeZoneId } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { buildSuggestionFeatureCollection } from '../services/suggestion-annotations.js';
 import { sendFeedbackRequest } from '../services/feedback-client.js';
@@ -20,9 +20,9 @@ export function getSuggestSelectionLabel() {
         return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || (typeof normalizeZoneId === "function" && normalizeZoneId(zid) === normalizeZoneId(state.currentId)));
     });
     if (targetFeature && targetFeature.properties?.zid) {
-        return `Zone ${displayZoneId(targetFeature.properties.zid)}`;
+        return getZoneDisplayName(targetFeature.properties.zid);
     }
-    return `Zone ${displayZoneId(state.currentId)}`;
+    return getZoneDisplayName(state.currentId);
 }
 
 export function setupSuggestFormAndDrawing(closeAllModals) {

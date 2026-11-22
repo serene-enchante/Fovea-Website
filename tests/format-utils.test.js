@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { displayZoneId, formatArea, normalizeZoneId, zoneImagePath } from '../scripts/utils/format-utils.js';
+import { displayZoneId, formatArea, getZoneDisplayName, normalizeZoneId, zoneImagePath } from '../scripts/utils/format-utils.js';
 
 test('uses the expected zone image aliases', () => {
     assert.equal(zoneImagePath('06A'), '../images/zone-images/z06-01.webp');
@@ -18,4 +18,6 @@ test('normalizes and displays zone identifiers', () => {
     assert.equal(normalizeZoneId('004a'), '4A');
     assert.equal(normalizeZoneId(' 06B '), '6B');
     assert.equal(displayZoneId(' 06b '), '06B');
+    assert.equal(getZoneDisplayName('00'), 'Unincorporated Areas');
+    assert.equal(getZoneDisplayName('04'), 'Zone 04');
 });

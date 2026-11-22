@@ -25,6 +25,7 @@ test('renders zone rows in natural ID order and delegates hover and selection', 
     renderMapFeatureList({ appendChild: row => rows.push(row) }, {
         features: [
             { properties: { zid: '10' } },
+            { properties: { zid: '00', name: 'Unincorporated Areas' } },
             { properties: { zid: '2' } }
         ],
         currentId: '02',
@@ -33,10 +34,12 @@ test('renders zone rows in natural ID order and delegates hover and selection', 
         documentObject: createDocument()
     });
 
-    assert.deepEqual(rows.map(row => row['data-id']), ['2', '10']);
-    rows[0].listeners.mouseenter();
-    rows[0].listeners.mouseleave();
-    rows[0].listeners.click();
+    assert.deepEqual(rows.map(row => row['data-id']), ['00', '2', '10']);
+    assert.match(rows[0].innerHTML, /Unincorporated Areas/);
+    assert.doesNotMatch(rows[0].innerHTML, /Zone 00/);
+    rows[1].listeners.mouseenter();
+    rows[1].listeners.mouseleave();
+    rows[1].listeners.click();
     assert.deepEqual(featureStates, []);
     assert.deepEqual(selected, ['2']);
 });

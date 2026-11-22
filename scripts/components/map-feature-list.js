@@ -1,5 +1,5 @@
 import { CIRCLE_ID } from '../config/app-config.js';
-import { displayZoneId, normalizeZoneId, zoneImagePath } from '../utils/format-utils.js';
+import { getZoneDisplayName, normalizeZoneId, zoneImagePath } from '../utils/format-utils.js';
 
 const NO_DATA_CIRCLES = new Set(['Oakridge', 'Cottage Grove']);
 
@@ -69,12 +69,12 @@ export function renderMapFeatureList(listContainer, {
 
     sortedFeatures.forEach(feature => {
         const props = feature.properties || {};
-        const zid = displayZoneId(props.zid);
+        const zoneName = getZoneDisplayName(props.zid);
         const featureId = String(props.zid || '');
         const item = documentObject.createElement('div');
         item.className = 'tile-zone-item';
         item.setAttribute('data-id', featureId);
-        item.innerHTML = `<div class="tile-zone-item__thumb"><img src="${zoneImagePath(props.zid)}" alt="Zone ${zid}" loading="eager"></div><div class="tile-zone-item__info"><div class="tile-zone-item__title">Zone ${zid}</div></div>`;
+        item.innerHTML = `<div class="tile-zone-item__thumb"><img src="${zoneImagePath(props.zid)}" alt="${zoneName}" loading="eager"></div><div class="tile-zone-item__info"><div class="tile-zone-item__title">${zoneName}</div></div>`;
 
         const img = item.querySelector('img');
         if (img) img.addEventListener('error', () => { img.src = '../images/wetlands-thumb.webp'; });

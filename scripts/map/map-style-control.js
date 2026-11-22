@@ -1,5 +1,5 @@
 import { CIRCLE_ID } from '../config/app-config.js';
-import { displayZoneId, normalizeZoneId, zoneImagePath } from '../utils/format-utils.js';
+import { getZoneDisplayName, normalizeZoneId, zoneImagePath } from '../utils/format-utils.js';
 
 export function setupMapStyleControl({ topLeft, state, onSelectSubject, onSwitchBaseMap, notify = () => {}, fallbackImage = '../images/wetlands.webp', documentObject = globalThis.document }) {
     const layersDiv = documentObject.createElement("div");
@@ -105,11 +105,11 @@ export function setupMapStyleControl({ topLeft, state, onSelectSubject, onSwitch
                     const zid = f.properties?.zid;
                     return zid && (String(zid).toLowerCase() === String(state.currentId).toLowerCase() || normalizeZoneId(zid) === normalizeZoneId(state.currentId));
                 });
-                const zidDisplay = targetZone ? displayZoneId(targetZone.properties.zid) : state.currentId;
+                const zoneName = getZoneDisplayName(targetZone?.properties?.zid || state.currentId);
                 const zoneImg = zoneImagePath(state.currentId);
                 layers.push({
                     id: "selected-zone",
-                    name: `Zone ${zidDisplay}`,
+                    name: zoneName,
                     isChild: true,
                     image: zoneImg,
                     feature: targetZone,

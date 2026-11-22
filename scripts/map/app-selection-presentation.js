@@ -1,4 +1,4 @@
-import { displayZoneId } from '../utils/format-utils.js';
+import { getZoneDisplayName } from '../utils/format-utils.js';
 import { findFeatureByZoneId } from '../services/geo-selection.js';
 
 export function getSelectionThumbnail({ currentFeature, isCirclesFeature }) {
@@ -23,7 +23,7 @@ export function getAppSelectionTitle({ features = [], currentFeature, currentId,
 
     const targetFeature = findFeatureByZoneId(features, currentId);
     const zoneName = targetFeature?.properties?.zid
-        ? `Zone ${displayZoneId(targetFeature.properties.zid)}`
+        ? getZoneDisplayName(targetFeature.properties.zid)
         : 'Zone';
     return { targetName: zoneName, circleName };
 }

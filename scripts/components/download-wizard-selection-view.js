@@ -1,3 +1,5 @@
+import { getZoneDisplayName } from '../utils/format-utils.js';
+
 export function createDownloadWizardSelectionView({
     state,
     circles,
@@ -110,15 +112,17 @@ export function createDownloadWizardSelectionView({
         features.forEach(feature => {
             const zid = feature.properties?.zid || '0';
             const displayZid = String(zid).padStart(2, '0');
+            const zoneName = getZoneDisplayName(zid);
             const card = documentObject.createElement('div');
             card.className = 'wizard-item-card';
             card.setAttribute('role', 'button');
             card.setAttribute('tabindex', '0');
             card.dataset.zid = displayZid;
+            card.dataset.zoneName = zoneName.toLowerCase();
             card.innerHTML = `
                 <div class="wizard-item-card__left">
                     <div class="wizard-item-card__info">
-                        <h3 class="wizard-item-card__title">Zone ${displayZid}</h3>
+                        <h3 class="wizard-item-card__title">${zoneName}</h3>
                     </div>
                 </div>
                 <div class="wizard-item-card__arrow">
@@ -141,7 +145,7 @@ export function createDownloadWizardSelectionView({
         let visibleCount = 0;
         cards.forEach(card => {
             const zid = card.dataset.zid || '';
-            const title = `zone ${zid}`.toLowerCase();
+            const title = card.dataset.zoneName || `zone ${zid}`.toLowerCase();
             if (title.includes(query) || zid.includes(query)) {
                 card.style.display = 'flex';
                 visibleCount += 1;

@@ -1,7 +1,7 @@
 import { CIRCLE_ID } from '../config/app-config.js';
 import { FLORENCE_ZONE_BIRDS } from '../config/florence-zone-guide.js';
 import { getEbirdUrl } from '../services/ebird-links.js';
-import { displayZoneId, normalizeZoneId, zoneImagePath } from '../utils/format-utils.js';
+import { displayZoneId, getZoneDisplayName, normalizeZoneId, zoneImagePath } from '../utils/format-utils.js';
 
 export function renderSidebarOverview(listContainer, { state, isCirclesFeature, isCircle, targetFeature, onActivateTab = () => {}, onSelectBird = () => {}, onSelectCircle = () => {}, onSelectZone = () => {}, onFeatureHover = () => {}, onOpenImageLightbox = () => {}, documentObject = globalThis.document }) {
     const activateTab = onActivateTab;
@@ -88,11 +88,11 @@ export function renderSidebarOverview(listContainer, { state, isCirclesFeature, 
 
         sortedFeatures.forEach(feature => {
             const props = feature.properties || {};
-            const zid = displayZoneId(props.zid);
+            const zoneName = getZoneDisplayName(props.zid);
 
             previewTilesHtml += `
                 <div class="overview-preview-item" data-zid="${String(props.zid)}">
-                    <span class="overview-preview-item__name">Zone ${zid}</span>
+                    <span class="overview-preview-item__name">${zoneName}</span>
                 </div>
             `;
         });
@@ -109,9 +109,8 @@ export function renderSidebarOverview(listContainer, { state, isCirclesFeature, 
     } else {
         // --- 3. SPECIFIC ZONE OVERVIEW (Zone 04, etc.) ---
         const props = targetFeature.properties || {};
-        const zid = displayZoneId(props.zid);
         imgSrc = zoneImagePath(props.zid);
-        imgAlt = `Zone ${zid} Image`;
+        imgAlt = `${getZoneDisplayName(props.zid)} Image`;
     }
 
     overviewEl.innerHTML = `

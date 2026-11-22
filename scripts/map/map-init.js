@@ -1,5 +1,5 @@
 import { isPointInGeoJSONGeometry } from '../utils/geometry-math.js';
-import { displayZoneId } from '../utils/format-utils.js';
+import { getZoneDisplayName } from '../utils/format-utils.js';
 import { showToast } from '../components/toast-view.js';
 import { state } from '../state.js';
 import { getOriginalRoadColor, updateAllFeatureStyles } from './map-layers.js';
@@ -207,8 +207,7 @@ export function checkUserLocationZone(latlng, mapState = state, documentObject =
         if (mapState.isCirclesFeature) {
             zoneName = props.cid || "Circle";
         } else {
-            const zid = displayZoneId(props.zid);
-            zoneName = `Zone ${zid}`;
+            zoneName = getZoneDisplayName(props.zid);
         }
         badge.innerHTML = `<span class="map-location-badge__dot"></span><span>You are in ${zoneName}</span>`;
         badge.classList.add("is-visible");

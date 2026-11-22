@@ -1,5 +1,5 @@
 import { CIRCLE_ID } from '../config/app-config.js';
-import { normalizeZoneId, displayZoneId } from '../utils/format-utils.js';
+import { normalizeZoneId, getZoneDisplayName } from '../utils/format-utils.js';
 import { getBbox } from '../utils/geometry-math.js';
 import { showToast } from '../components/toast-view.js';
 
@@ -248,8 +248,7 @@ function runMapSelection(id, triggerMapZoom, animate, callbacks, selectionState,
                 backBtn.setAttribute("title", "Back to all circles");
             }
         } else {
-            const zid = displayZoneId(targetFeature.properties.zid);
-            renderHeader(`Zone ${zid}`);
+            renderHeader(getZoneDisplayName(targetFeature.properties.zid));
             if (backBtn) {
                 backBtn.disabled = false;
                 backBtn.classList.remove("is-disabled");

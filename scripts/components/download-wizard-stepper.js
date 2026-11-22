@@ -1,4 +1,5 @@
 import { activateDeferredImages } from '../utils/deferred-images.js';
+import { getZoneDisplayName } from '../utils/format-utils.js';
 
 export function createDownloadWizardStepper({
     state,
@@ -48,10 +49,11 @@ export function createDownloadWizardStepper({
                 if (state.selectedZone !== null) {
                     const zid = state.selectedZone?.properties?.zid;
                     const displayZid = zid ? String(zid).padStart(2, '0') : '00';
-                    if (labelEl) labelEl.textContent = `Zone ${displayZid}`;
+                    if (labelEl) labelEl.textContent = getZoneDisplayName(zid);
                     node.classList.add('is-selected-zone');
                     if (nodeEl) {
-                        nodeEl.innerHTML = `<span style="font-size: 0.76rem; font-weight: 800; color: #000000; line-height: 1;">${displayZid}</span>`;
+                        const markerText = state.selectedZone?.properties?.name === 'Unincorporated Areas' ? 'UA' : displayZid;
+                        nodeEl.innerHTML = `<span style="font-size: 0.76rem; font-weight: 800; color: #000000; line-height: 1;">${markerText}</span>`;
                     }
                 } else if (state.currentStep === 3 && state.selectedCircle) {
                     if (labelEl) labelEl.textContent = 'full circle';

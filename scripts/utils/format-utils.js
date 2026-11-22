@@ -12,6 +12,14 @@ export function displayZoneId(zid) {
     return String(zid || "").toUpperCase().trim();
 }
 
+export function getZoneDisplayName(zid) {
+    if (normalizeZoneId(zid) === "0") return "Unincorporated Areas";
+    let displayId = displayZoneId(zid);
+    const numericZone = displayId.match(/^(\d+)([A-Z]?)$/);
+    if (numericZone && numericZone[1].length < 2) displayId = `${numericZone[1].padStart(2, "0")}${numericZone[2]}`;
+    return displayId ? `Zone ${displayId}` : "Zone";
+}
+
 export function zoneImagePath(zoneId) {
     let zid = displayZoneId(zoneId);
     if (!zid) return FALLBACK_IMAGE;

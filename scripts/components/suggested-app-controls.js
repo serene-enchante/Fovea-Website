@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { showToast } from './toast-view.js';
-import { displayZoneId, normalizeZoneId } from '../utils/format-utils.js';
+import { getZoneDisplayName, normalizeZoneId } from '../utils/format-utils.js';
 import { closeAllModals } from './modal-view.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 import { setupAllAppsLiveSearch } from '../map/map-search.js';
@@ -91,9 +91,9 @@ export function updateAllAppsModalHeaderTitle() {
     return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || (typeof normalizeZoneId === "function" && normalizeZoneId(zid) === normalizeZoneId(state.currentId)));
   });
 
-  const zoneName = (targetFeature && targetFeature.properties?.zid) 
-    ? `Zone ${displayZoneId(targetFeature.properties.zid)}`
-    : "Zone";
+  const zoneName = (targetFeature && targetFeature.properties?.zid)
+    ? getZoneDisplayName(targetFeature.properties.zid)
+    : getZoneDisplayName(state.currentId);
 
   modalTitleEl.innerHTML = `Download <span class="avenza-target-name">${zoneName}</span> of the <span class="avenza-target-name">${circleName}</span> to compatible apps`;
 }
@@ -120,9 +120,9 @@ export function updateShareModalDescription() {
         return zid && (zid.toLowerCase() === state.currentId.toLowerCase() || (typeof normalizeZoneId === "function" && normalizeZoneId(zid) === normalizeZoneId(state.currentId)));
     });
 
-    const zoneName = (targetFeature && targetFeature.properties?.zid) 
-        ? `Zone ${displayZoneId(targetFeature.properties.zid)}`
-        : "Zone";
+    const zoneName = (targetFeature && targetFeature.properties?.zid)
+        ? getZoneDisplayName(targetFeature.properties.zid)
+        : getZoneDisplayName(state.currentId);
 
     descEl.innerHTML = `Copy the link to <span class="avenza-target-name">${zoneName}</span> of the <span class="avenza-target-name">${circleName}</span>:`;
 }

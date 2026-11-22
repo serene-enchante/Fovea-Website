@@ -133,6 +133,7 @@ export async function renderHeadlessMap(bounds, geojsonOverlay = null, maxZoom =
         if (geojsonOverlay && Array.isArray(geojsonOverlay.features)) {
             geojsonOverlay.features.forEach(f => {
                 const props = f.properties || {};
+                if (props.name === 'Unincorporated Areas') return;
                 let label = "";
                 let isCircle = false;
                 if (props.cid) {
@@ -369,7 +370,12 @@ export async function renderMapLayoutCanvas({
     if (hasSpecificZone) {
         ctx.fillStyle = "#dc2626";
         ctx.font = "bold 50px system-ui, -apple-system, sans-serif";
-        const subTitleText = `SURVEY ZONE ${displayZoneId(featureId)}`;
+        const selectedZone = geojsonOverlay?.features?.find(feature =>
+            feature.properties?.zid && normalizeZoneId(feature.properties.zid) === normalizeZoneId(featureId)
+        );
+        const subTitleText = selectedZone?.properties?.name === 'Unincorporated Areas'
+            ? selectedZone.properties.name
+            : `SURVEY ZONE ${displayZoneId(featureId)}`;
         ctx.fillText(subTitleText, mapMargin, mapMargin + 150);
     }
 

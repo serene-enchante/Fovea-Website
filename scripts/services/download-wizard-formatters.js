@@ -7,7 +7,9 @@ export function geojsonToKml(geojson, docName = "CBC Boundary") {
 
     features.forEach((feat, idx) => {
         const props = feat.properties || {};
-        const title = props.zid ? `Zone ${props.zid}` : props.cid ? `${props.cid} Circle` : `Feature ${idx + 1}`;
+        const title = props.name === 'Unincorporated Areas'
+            ? props.name
+            : props.zid ? `Zone ${props.zid}` : props.cid ? `${props.cid} Circle` : `Feature ${idx + 1}`;
         const desc = props.name || props.description || `Christmas Bird Count boundary for ${title}`;
         let geomKml = "";
 

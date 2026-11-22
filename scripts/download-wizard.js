@@ -229,7 +229,9 @@ function selectZone(zoneFeature = null) {
     if (summaryPill) {
         if (zoneFeature) {
             const zid = String(zoneFeature.properties?.zid || "0").padStart(2, "0");
-            summaryPill.textContent = `Zone ${zid}`;
+            summaryPill.textContent = zoneFeature.properties?.name === 'Unincorporated Areas'
+                ? zoneFeature.properties.name
+                : `Zone ${zid}`;
         } else {
             summaryPill.textContent = "Full Circle";
         }
@@ -247,7 +249,7 @@ function getExportGeoJSON() {
     if (state.selectedZone) {
         return {
             type: "FeatureCollection",
-            name: `${state.selectedCircle.name}-Zone-${state.selectedZone.properties.zid}`,
+            name: `${state.selectedCircle.name}-${state.selectedZone.properties.name === 'Unincorporated Areas' ? 'Unincorporated-Areas' : `Zone-${state.selectedZone.properties.zid}`}`,
             features: [state.selectedZone]
         };
     }

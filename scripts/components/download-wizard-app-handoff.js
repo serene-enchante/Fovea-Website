@@ -1,4 +1,5 @@
 import { loadJsZipLibrary } from '../map/map-vendor-loader.js';
+import { getZoneDisplayName } from '../utils/format-utils.js';
 
 export function createDownloadWizardAppHandoff({
     state,
@@ -98,7 +99,7 @@ export function createDownloadWizardAppHandoff({
         const targetName = documentObject.getElementById('avenza-target-name');
         if (targetName) {
             targetName.textContent = state.selectedZone
-                ? `Zone ${String(state.selectedZone.properties?.zid || '0').padStart(2, '0')}`
+                ? getZoneDisplayName(state.selectedZone.properties?.zid)
                 : (state.selectedCircle?.name || 'Count Circle');
         }
 

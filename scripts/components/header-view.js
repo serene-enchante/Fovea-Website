@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { normalizeZoneId, displayZoneId } from '../utils/format-utils.js';
+import { normalizeZoneId, getZoneDisplayName } from '../utils/format-utils.js';
 import { CIRCLE_ID } from '../config/app-config.js';
 
 // Note: updateHeaderLogo depends on 'state' and 'normalizeZoneId'.
@@ -116,8 +116,7 @@ export function updateDocumentTitle() {
         if (state.isBirdSelected && state.selectedBirdName) {
             document.title = `Fovea - ${featureName} - ${state.selectedBirdName}`;
         } else {
-            const zid = displayZoneId(state.currentId);
-            document.title = `Fovea - ${featureName} - Zone ${zid}`;
+            document.title = `Fovea - ${featureName} - ${getZoneDisplayName(state.currentId)}`;
         }
     } else {
         document.title = `Fovea - ${featureName}`;
