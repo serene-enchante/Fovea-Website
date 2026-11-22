@@ -11,31 +11,6 @@ import { findPointInsidePolygon, getBbox } from '../utils/geometry-math.js';
 import { CARTO_SUBDOMAINS, MAP_PROVIDER_URLS } from '../config/map-provider-config.js';
 
 const UNINCORPORATED_ZONE_ID = '00';
-const UNINCORPORATED_HATCH_LIGHT = 'unincorporated-hatch-light';
-const UNINCORPORATED_HATCH_DARK = 'unincorporated-hatch-dark';
-
-function addUnincorporatedHatchImages(map) {
-    if (typeof document === 'undefined' || typeof map.addImage !== 'function') return;
-    [
-        [UNINCORPORATED_HATCH_LIGHT, '#24343d'],
-        [UNINCORPORATED_HATCH_DARK, '#c3d5df']
-    ].forEach(([id, color]) => {
-        if (map.hasImage?.(id)) return;
-        const canvas = document.createElement('canvas');
-        canvas.width = canvas.height = 12;
-        const context = canvas.getContext('2d');
-        if (!context) return;
-        context.strokeStyle = color;
-        context.lineWidth = 2;
-        context.beginPath();
-        context.moveTo(-3, 12);
-        context.lineTo(12, -3);
-        context.moveTo(3, 15);
-        context.lineTo(15, 3);
-        context.stroke();
-        map.addImage(id, context.getImageData(0, 0, 12, 12), { pixelRatio: 2 });
-    });
-}
 
 export { rebuildHtmlLabels, updateLabelZoomVisibility } from './map-html-labels.js';
 
@@ -146,12 +121,6 @@ export function updateAllFeatureStyles({ updateAdditionalLayers = () => {} } = {
         ]);
         state.map.setPaintProperty('zones-fill', 'fill-color-transition', { duration: 0 });
         state.map.setPaintProperty('zones-fill', 'fill-opacity-transition', { duration: 0 });
-    }
-
-    if (state.map.getLayer('zones-unincorporated-hatch')) {
-        state.map.setPaintProperty('zones-unincorporated-hatch', 'fill-pattern',
-            isLightBasemap ? UNINCORPORATED_HATCH_LIGHT : UNINCORPORATED_HATCH_DARK);
-        state.map.setPaintProperty('zones-unincorporated-hatch', 'fill-opacity', 0.78);
     }
 
     if (state.map.getLayer('zones-outline')) {
@@ -364,7 +333,6 @@ export function selectMapStyleByIndex(index, {
 
 
 export function addZoneFeatureLayers(map, geojsonData) {
-    addUnincorporatedHatchImages(map);
     map.addSource('zones', {
         type: 'geojson',
         data: geojsonData,
@@ -386,17 +354,6 @@ export function addZoneFeatureLayers(map, geojsonData) {
             ],
             'fill-color-transition': { duration: 0 },
             'fill-opacity-transition': { duration: 0 }
-        }
-    });
-
-    addLayer({
-        id: 'zones-unincorporated-hatch',
-        type: 'fill',
-        source: 'zones',
-        filter: ['==', ['get', 'feature_id'], UNINCORPORATED_ZONE_ID],
-        paint: {
-            'fill-pattern': UNINCORPORATED_HATCH_DARK,
-            'fill-opacity': 0.78
         }
     });
 

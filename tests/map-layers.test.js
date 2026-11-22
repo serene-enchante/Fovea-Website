@@ -73,38 +73,13 @@ test('adds the GeoJSON source and production zone layers below place labels', ()
     assert.equal(source.value.data, data);
     assert.equal(source.value.promoteId, 'feature_id');
     assert.deepEqual(layers.map(({ layer }) => layer.id), [
-        'zones-fill', 'zones-unincorporated-hatch', 'zones-outline', 'zones-outline-highlight', 'zones-collision-labels'
+        'zones-fill', 'zones-outline', 'zones-outline-highlight', 'zones-collision-labels'
     ]);
     assert.ok(layers.every(item => item.beforeId === 'place_hamlet'));
-    assert.deepEqual(layers[1].layer.filter, ['==', ['get', 'feature_id'], '00']);
-    assert.equal(layers[1].layer.paint['fill-pattern'], 'unincorporated-hatch-dark');
     assert.deepEqual(layers[0].layer.paint['fill-opacity'], [
         'case', ['boolean', ['feature-state', 'selected'], false], 0.0,
         ['match', ['get', 'cid'], 'Oakridge', 0.02, 'Cottage Grove', 0.02, 0.07]
     ]);
-});
-
-test('registers theme-specific diagonal hatch images for unincorporated areas', () => {
-    const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
-    const imageIds = [];
-    const fakeContext = {
-        beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
-        getImageData: (x, y, width, height) => ({ width, height, data: new Uint8ClampedArray(width * height * 4) })
-    };
-    try {
-        globalThis.document = { createElement: () => ({ getContext: () => fakeContext }) };
-        addZoneFeatureLayers({
-            addImage: id => imageIds.push(id),
-            hasImage: () => false,
-            addSource() {},
-            addLayer() {},
-            getLayer: () => null
-        }, { type: 'FeatureCollection', features: [] });
-        assert.deepEqual(imageIds, ['unincorporated-hatch-light', 'unincorporated-hatch-dark']);
-    } finally {
-        if (originalDocument) Object.defineProperty(globalThis, 'document', originalDocument);
-        else delete globalThis.document;
-    }
 });
 
 test('groups features by their active ID and builds matching HTML label data', () => {
@@ -151,7 +126,7 @@ test('applies the production light-theme feature colors and updates supplemental
         Object.assign(state, {
             map: {
                 getSource: id => id === 'zones' ? {} : null,
-                getLayer: id => ['zones-fill', 'zones-unincorporated-hatch', 'zones-outline', 'zones-outline-highlight'].includes(id) ? { id } : null,
+                getLayer: id => ['zones-fill', 'zones-outline', 'zones-outline-highlight'].includes(id) ? { id } : null,
                 setFeatureState: (...args) => featureStates.push(args),
                 setPaintProperty: (layer, property, value) => paints.set(`${layer}:${property}`, value)
             },
@@ -172,7 +147,6 @@ test('applies the production light-theme feature colors and updates supplemental
         assert.equal(classes.has('is-light-basemap'), true);
         assert.ok(JSON.stringify(paints.get('zones-fill:fill-opacity')).includes('0.15'));
         assert.ok(JSON.stringify(paints.get('zones-fill:fill-color')).includes('#344650'));
-        assert.equal(paints.get('zones-unincorporated-hatch:fill-pattern'), 'unincorporated-hatch-light');
         assert.equal(paints.get('zones-outline:line-color')[2], '#64b5f6');
     } finally {
         for (const key of stateKeys) {
