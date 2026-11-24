@@ -41,7 +41,7 @@ export const MAP_DATASETS = Object.freeze({
         fileName: 'Florence-03-wgs84.geojson',
         sourceFile: 'geojson/Florence-03.geojson',
         bounds: [-124.22898764468006, 43.92593135812209, -123.92785884200298, 44.14317328631742],
-        sha256: '9af7bfb0a393ac355fa105e0f266372f3849db1947394868eac86adadc373d8a'
+        sha256: 'd13b4e6894932805b59fad8985435546f6bdaf7cf457c18d7a2cf975a77d3905'
     })
 });
 

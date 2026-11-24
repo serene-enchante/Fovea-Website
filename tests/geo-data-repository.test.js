@@ -202,6 +202,9 @@ test('active GeoJSON datasets satisfy their manifest-backed property and geometr
     assert.equal(loaded.circles.features.length, 4);
     assert.equal(loaded.eugene.features.length, 29);
     assert.equal(loaded.florence.features.length, 14);
+    const florenceFeatureIds = loaded.florence.features.map(feature => feature.properties.fid);
+    assert.equal(new Set(florenceFeatureIds).size, florenceFeatureIds.length,
+        'keep active Florence feature IDs unique for GIS exports');
     const nonBirdedAreas = loaded.florence.features.find(feature => feature.properties.zid === '00');
     assert.ok(nonBirdedAreas, 'preserve the intentional unbirded Florence areas as zone 00');
     assert.equal(nonBirdedAreas.geometry.coordinates.length, 3,
