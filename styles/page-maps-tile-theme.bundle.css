@@ -807,6 +807,26 @@ body.theme-light .maps-tile-download-item {
     border: none !important;
 }
 
+[data-theme="light"] .maps-tile-download-capsule,
+html.theme-light .maps-tile-download-capsule,
+body.theme-light .maps-tile-download-capsule {
+    background: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .maps-tile-download-print,
+html.theme-light .maps-tile-download-print,
+body.theme-light .maps-tile-download-print {
+    color: #111827 !important;
+    border-left-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .maps-tile-download-print:hover,
+html.theme-light .maps-tile-download-print:hover,
+body.theme-light .maps-tile-download-print:hover {
+    background: rgba(0, 0, 0, 0.12) !important;
+    color: #000000 !important;
+}
+
 [data-theme="light"] .maps-tile-download-item:hover,
 html.theme-light .maps-tile-download-item:hover,
 body.theme-light .maps-tile-download-item:hover {
