@@ -297,7 +297,7 @@ test('renders HTML labels with the production light-theme default-basemap colors
         rebuildHtmlLabels();
 
         assert.equal(label.style.color, '#000000');
-        assert.equal(label.style.textShadow, 'none');
+        assert.equal(label.style.textShadow, '0 0 2px rgba(255,255,255,0.95), 0 0 4px rgba(255,255,255,0.75)');
         rebuildHtmlLabels();
         assert.equal(createCount, 1, 'existing label elements are reused across updates');
         assert.equal(label.style.left, '21px', 'reused labels receive the new projected position');

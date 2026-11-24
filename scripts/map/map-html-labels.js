@@ -99,9 +99,8 @@ export function rebuildHtmlLabels() {
         setStyleIfChanged(el, 'opacity', fontSize > 0 ? '1' : '0');
         setStyleIfChanged(el, 'pointerEvents', 'none');
         setStyleIfChanged(el, 'color', isLightBasemap ? '#000000' : '#c8c8c8');
-        setStyleIfChanged(el, 'textShadow', isLightBasemap
-            ? 'none'
-            : '0 0 4px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)');
+        setStyleIfChanged(el, 'textShadow',
+            '0 0 2px rgba(255,255,255,0.95), 0 0 4px rgba(255,255,255,0.75)');
     });
 }
 

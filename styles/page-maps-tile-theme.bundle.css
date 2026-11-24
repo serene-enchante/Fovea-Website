@@ -760,7 +760,7 @@ html.theme-light .map-zone-label,
 body.theme-light .map-zone-label,
 .is-light-basemap .map-zone-label {
     color: #000000 !important;
-    text-shadow: none !important;
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.95), 0 0 4px rgba(255, 255, 255, 0.75) !important;
 }
 
 /* ==========================================================================
