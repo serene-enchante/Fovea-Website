@@ -3075,6 +3075,47 @@ body.has-active-modal .maps-tile-header__actions {
     box-sizing: border-box;
 }
 
+.maps-tile-download-capsule {
+    display: inline-flex;
+    align-items: stretch;
+    overflow: hidden;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.maps-tile-download-capsule .maps-tile-download-item {
+    border-radius: 20px 0 0 20px !important;
+}
+
+.maps-tile-download-print {
+    display: inline-grid;
+    place-items: center;
+    min-width: 34px;
+    padding: 0 0.55rem;
+    border: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0 20px 20px 0;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.maps-tile-download-print:hover {
+    background: rgba(var(--accent-rgb), 0.22);
+    color: var(--accent-primary);
+}
+
+.maps-tile-download-print:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: -2px;
+}
+
+.maps-tile-download-print:disabled {
+    cursor: wait;
+    opacity: 0.55;
+}
+
 .maps-tile-download-item:hover,
 .maps-tile-download-item.is-active:hover {
     background: rgba(var(--accent-rgb), 0.22) !important;

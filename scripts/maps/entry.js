@@ -70,7 +70,7 @@ function switchBaseMap(baseMapId) {
     return applyBaseMap(baseMapId, { state, updateStyles: updateAllFeatureStyles });
 }
 
-const { downloadGeoPdf, downloadGeoTiff } = createMapLayoutDownloadActions({
+const { downloadGeoPdf, downloadGeoTiff, printRaster } = createMapLayoutDownloadActions({
     hasCachedLayout: hasCachedLayoutCanvas,
     renderLayout: getOrRenderLayoutCanvas,
     getFilename: getActiveDownloadFilename,
@@ -225,6 +225,7 @@ async function init() {
             shareFile: handleSpatialFileShare,
             downloadPdf: button => downloadGeoPdf(button),
             downloadTiff: button => downloadGeoTiff(button),
+            printRaster: button => printRaster(button),
             documentObject: document,
             windowObject: window,
             navigatorObject: navigator,

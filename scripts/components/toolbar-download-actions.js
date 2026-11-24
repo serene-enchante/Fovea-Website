@@ -8,6 +8,7 @@ export function createToolbarDownloadActions({
     renderLayout,
     downloadPdf,
     downloadTiff,
+    printRaster = () => {},
     convertCanvasToTiff,
     shareFile,
     notify,
@@ -43,7 +44,8 @@ export function createToolbarDownloadActions({
         shareFile: share = shareFile,
         notify: notifyUser = notify,
         downloadPdf: exportPdf = downloadPdf,
-        downloadTiff: exportTiff = downloadTiff
+        downloadTiff: exportTiff = downloadTiff,
+        printRaster: print = printRaster
     } = {}) {
         const geojsonBtn = documentObject.getElementById('download-geojson');
         if (geojsonBtn) {
@@ -110,6 +112,11 @@ export function createToolbarDownloadActions({
 
         const geotiffBtn = documentObject.getElementById('download-geotiff');
         if (geotiffBtn) geotiffBtn.addEventListener('click', async () => exportTiff(geotiffBtn));
+
+        for (const id of ['print-geopdf', 'print-geotiff']) {
+            const printBtn = documentObject.getElementById(id);
+            if (printBtn) printBtn.addEventListener('click', async () => print(printBtn));
+        }
     }
 
     async function generateAppSpatialBlob(formatKey) {

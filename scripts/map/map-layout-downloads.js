@@ -56,5 +56,47 @@ export function createMapLayoutDownloadActions({
         notify(`Exported ${filename}`);
     }
 
-    return { downloadGeoPdf, downloadGeoTiff };
+    async function printRaster(triggerButton = null) {
+        const printWindow = windowObject?.open?.('', '_blank');
+        if (!printWindow) {
+            notify('Allow pop-ups to print this map.');
+            return;
+        }
+
+        if (triggerButton) {
+            triggerButton.disabled = true;
+            triggerButton.classList?.add('is-preparing');
+        }
+
+        try {
+            if (!hasCachedLayout()) notify('Rendering map layout...');
+            const canvas = await renderLayout();
+            const document = printWindow.document;
+            document.open();
+            document.write('<!doctype html><html><head><title>Print map</title><style>@page{size:landscape;margin:8mm}html,body{margin:0;width:100%;height:100%;display:grid;place-items:center}img{display:block;max-width:100%;max-height:100%;object-fit:contain}</style></head><body><img alt="Map layout"></body></html>');
+            document.close();
+            const image = document.querySelector('img');
+            image.onload = () => {
+                printWindow.addEventListener?.('afterprint', () => printWindow.close(), { once: true });
+                printWindow.focus?.();
+                printWindow.print();
+            };
+            image.onerror = () => {
+                printWindow.close();
+                notify('Error preparing map for printing.');
+            };
+            image.src = canvas.toDataURL('image/png');
+        } catch (error) {
+            printWindow.close?.();
+            console.error('Map printing failed:', error);
+            notify('Error preparing map for printing.');
+        } finally {
+            if (triggerButton) {
+                triggerButton.disabled = false;
+                triggerButton.classList?.remove('is-preparing');
+            }
+        }
+    }
+
+    return { downloadGeoPdf, downloadGeoTiff, printRaster };
 }

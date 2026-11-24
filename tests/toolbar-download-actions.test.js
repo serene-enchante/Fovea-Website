@@ -15,6 +15,8 @@ function makeHarness(overrides = {}) {
     const buttons = Object.fromEntries(
         ['geojson', 'kmz', 'gpx', 'geopdf', 'geotiff'].map(format => [`download-${format}`, makeElement()])
     );
+    buttons['print-geopdf'] = makeElement();
+    buttons['print-geotiff'] = makeElement();
     const calls = [];
     const state = { allFeatures: ['features'], currentId: '04', currentFeature: 'eugene', isCirclesFeature: false };
     const geojson = { type: 'FeatureCollection', features: [{ properties: { name: 'Test Area' } }] };
@@ -31,6 +33,7 @@ function makeHarness(overrides = {}) {
         },
         downloadPdf: button => calls.push(['pdf', button]),
         downloadTiff: button => calls.push(['tiff', button]),
+        printRaster: button => calls.push(['print', button]),
         convertCanvasToTiff: () => new Blob(['tiff'], { type: 'image/tiff' }),
         shareFile: async (...args) => calls.push(['share', ...args]),
         notify: message => calls.push(['notify', message]),
@@ -76,6 +79,8 @@ test('spatial download controls share generated files and delegate PDF/TIFF acti
     await h.buttons['download-gpx'].click(clickEvent);
     await h.buttons['download-geopdf'].click();
     await h.buttons['download-geotiff'].click();
+    await h.buttons['print-geopdf'].click();
+    await h.buttons['print-geotiff'].click();
 
     const shares = h.calls.filter(([kind]) => kind === 'share');
     assert.equal(shares.length, 2);
@@ -90,6 +95,10 @@ test('spatial download controls share generated files and delegate PDF/TIFF acti
     assert.deepEqual(h.calls.filter(([kind]) => kind === 'pdf' || kind === 'tiff'), [
         ['pdf', h.buttons['download-geopdf']],
         ['tiff', h.buttons['download-geotiff']]
+    ]);
+    assert.deepEqual(h.calls.filter(([kind]) => kind === 'print'), [
+        ['print', h.buttons['print-geopdf']],
+        ['print', h.buttons['print-geotiff']]
     ]);
 });
 

@@ -21,6 +21,7 @@ export function setupMapPageUi({
     shareFile,
     downloadPdf,
     downloadTiff,
+    printRaster,
     documentObject = globalThis.document,
     windowObject = globalThis.window,
     navigatorObject = globalThis.navigator,
@@ -32,6 +33,7 @@ export function setupMapPageUi({
         notify,
         downloadPdf,
         downloadTiff,
+        printRaster,
         closeModals: () => closeModalsView({ onBeforeClose: cancelDownloadViewPreload })
     });
     setupSearch({ state, documentObject, windowObject, setMobileSnapState });

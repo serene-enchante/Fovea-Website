@@ -57,6 +57,7 @@ export function setupActionButtons({
     notify = showToast,
     downloadPdf = button => downloadGeoPdf(getActiveDownloadFilename("pdf"), button),
     downloadTiff = button => downloadGeoTiff(getActiveDownloadFilename("tif"), button),
+    printRaster = () => {},
     closeModals = closeAllModals
 } = {}) {
     const closeAllModals = closeModals;
@@ -350,7 +351,7 @@ export function setupActionButtons({
             });
         });
 
-        setupSpatialDownloadButtons({ shareFile, notify, downloadPdf, downloadTiff });
+        setupSpatialDownloadButtons({ shareFile, notify, downloadPdf, downloadTiff, printRaster });
 
     }
 

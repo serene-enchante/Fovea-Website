@@ -99,3 +99,35 @@ test('falls back to a PNG when jsPDF is unavailable', async () => {
         ['notify', 'Exported map-layout.png']
     ]);
 });
+
+test('prints the shared raster layout in a print window instead of downloading it', async () => {
+    const calls = [];
+    const image = {
+        set src(value) { calls.push(['image-src', value]); this.onload(); }
+    };
+    const printWindow = {
+        document: {
+            open() { calls.push(['document-open']); },
+            write(html) { calls.push(['document-write', html]); },
+            close() { calls.push(['document-close']); },
+            querySelector() { return image; }
+        },
+        addEventListener() {}, focus() {}, print() { calls.push(['print']); }, close() {}
+    };
+    const actions = createMapLayoutDownloadActions({
+        hasCachedLayout: () => false,
+        renderLayout: async () => ({ toDataURL: type => `data:${type}` }),
+        getFilename: extension => `map.${extension}`,
+        convertCanvasToTiff() {},
+        shareFile() { assert.fail('printing should not download/share a file'); },
+        notify: message => calls.push(['notify', message]),
+        windowObject: { open: (...args) => { calls.push(['open', ...args]); return printWindow; } }
+    });
+
+    await actions.printRaster();
+
+    assert.deepEqual(calls.map(call => call[0]), [
+        'open', 'notify', 'document-open', 'document-write', 'document-close', 'image-src', 'print'
+    ]);
+    assert.equal(calls.find(call => call[0] === 'image-src')[1], 'data:image/png');
+});
