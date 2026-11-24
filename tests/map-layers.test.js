@@ -190,11 +190,14 @@ test('uses stronger zone styling on Street and Topo basemaps', () => {
         for (const baseLayer of ['esri-street', 'esri-topo']) {
             state.currentBaseLayer = baseLayer;
             updateAllFeatureStyles();
-            assert.ok(JSON.stringify(paints.get('zones-fill:fill-color')).includes('#164e78'), `${baseLayer} zone fill color`);
+            const fillColor = JSON.stringify(paints.get('zones-fill:fill-color'));
             const fillOpacity = JSON.stringify(paints.get('zones-fill:fill-opacity'));
+            assert.ok(fillColor.includes('#164e78'), `${baseLayer} zone fill color`);
+            assert.ok(!fillColor.includes('hoverAlpha'), `${baseLayer} resting fill color must not depend on hover state`);
             assert.ok(fillOpacity.includes('0.14'), `${baseLayer} zone fill opacity`);
-            assert.ok(!fillOpacity.includes('0.035'), `${baseLayer} zone fill should not fade at rest`);
-            assert.ok(JSON.stringify(paints.get('zones-fill:fill-opacity')).includes('0.22'), `${baseLayer} selected fill opacity`);
+            assert.ok(fillOpacity.includes('0.22'), `${baseLayer} selected fill opacity`);
+            assert.ok(!fillOpacity.includes('hoverAlpha') && !fillOpacity.includes('proximity'),
+                `${baseLayer} resting fill opacity must not depend on hover state`);
             assert.ok(JSON.stringify(paints.get('zones-outline:line-width')).includes('2.2'), `${baseLayer} outline width`);
         }
     } finally {

@@ -102,28 +102,35 @@ export function updateAllFeatureStyles({ updateAdditionalLayers = () => {} } = {
     const unselectedOutlineOpacity = isLightBasemap ? 1.0 : (isSatelliteBasemap ? 0.70 : 0.18);
 
     if (state.map.getLayer('zones-fill')) {
+        const regularFillColor = isEsriLightBasemap
+            ? ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], noDataFillColor, defaultFillColor]
+            : ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
+                0, ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], noDataFillColor, defaultFillColor],
+                1, hoverFillColor
+            ];
         state.map.setPaintProperty('zones-fill', 'fill-color', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], selectedFillColor,
             ['==', ['get', 'feature_id'], UNINCORPORATED_ZONE_ID], unincorporatedFillColor,
-            ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
-                0, ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], noDataFillColor, defaultFillColor],
-                1, hoverFillColor
-            ]
+            ...regularFillColor
         ]);
+
         const dimFillOpacity = isEsriLightBasemap ? defaultFillOpacity : defaultFillOpacity * 0.25;
         const dimNoDataFillOpacity = isEsriLightBasemap ? noDataFillOpacity : noDataFillOpacity * 0.25;
-        state.map.setPaintProperty('zones-fill', 'fill-opacity', [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false], selectedFillOpacity,
-            ['==', ['get', 'feature_id'], UNINCORPORATED_ZONE_ID], unincorporatedFillOpacity,
-            ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
+        const regularFillOpacity = isEsriLightBasemap
+            ? ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], noDataFillOpacity, defaultFillOpacity]
+            : ['interpolate', ['linear'], ['coalesce', ['feature-state', 'hoverAlpha'], 0],
                 0, ['interpolate', ['linear'], ['coalesce', ['feature-state', 'proximity'], 0],
                     0, ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], dimNoDataFillOpacity, dimFillOpacity],
                     1, ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], noDataFillOpacity, defaultFillOpacity]
                 ],
                 1, ['match', ['get', 'cid'], ['Oakridge', 'Cottage Grove'], noDataHoverFillOpacity, hoverFillOpacity]
-            ]
+            ];
+        state.map.setPaintProperty('zones-fill', 'fill-opacity', [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false], selectedFillOpacity,
+            ['==', ['get', 'feature_id'], UNINCORPORATED_ZONE_ID], unincorporatedFillOpacity,
+            ...regularFillOpacity
         ]);
         state.map.setPaintProperty('zones-fill', 'fill-color-transition', { duration: 0 });
         state.map.setPaintProperty('zones-fill', 'fill-opacity-transition', { duration: 0 });
