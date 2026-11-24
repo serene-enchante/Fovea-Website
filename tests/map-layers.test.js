@@ -38,7 +38,7 @@ test('registers all raster sources and makes only the selected base layer visibl
     const map = {
         addSource(id, source) { sources.set(id, source); },
         addLayer(layer, beforeId) { layers.push({ layer, beforeId }); },
-        getLayer(id) { return ['tunnel_service_case'].includes(id) ? { id } : undefined; }
+        getLayer(id) { return ['tunnel_service_case', 'place_hamlet'].includes(id) ? { id } : undefined; }
     };
 
     addRasterBaseLayers(map, 'esri-topo');
@@ -54,7 +54,8 @@ test('registers all raster sources and makes only the selected base layer visibl
         ['base-dark-raster', 'none']
     ]);
     assert.equal(layers[0].beforeId, 'tunnel_service_case');
-    assert.equal(layers[1].beforeId, undefined);
+    assert.equal(layers[1].beforeId, 'place_hamlet');
+    assert.equal(layers[2].beforeId, 'place_hamlet');
 });
 
 test('adds the GeoJSON source and production zone layers below place labels', () => {

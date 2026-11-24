@@ -215,10 +215,14 @@ export function addRasterBaseLayers(map, activeLayerId = 'dark') {
     const satelliteUnderlayId = map.getLayer('tunnel_service_case') ? 'tunnel_service_case'
         : map.getLayer('road_service_case') ? 'road_service_case'
             : map.getLayer('waterway_label') ? 'waterway_label' : undefined;
+    // Keep the detailed Esri raster backdrops below the zone layers. The zones
+    // are inserted before this style label layer after the map loads.
+    const streetTopoUnderlayId = ['place_hamlet', 'place_label', 'waterway_label']
+        .find(layerId => map.getLayer(layerId)) || undefined;
     const layers = [
         { id: 'base-satellite', source: 'satellite-tiles', visibleFor: 'satellite', beforeId: satelliteUnderlayId },
-        { id: 'base-esri-street', source: 'esri-street-tiles', visibleFor: 'esri-street' },
-        { id: 'base-esri-topo', source: 'esri-topo-tiles', visibleFor: 'esri-topo' },
+        { id: 'base-esri-street', source: 'esri-street-tiles', visibleFor: 'esri-street', beforeId: streetTopoUnderlayId },
+        { id: 'base-esri-topo', source: 'esri-topo-tiles', visibleFor: 'esri-topo', beforeId: streetTopoUnderlayId },
         { id: 'base-dark-raster', source: 'dark-tiles', visibleFor: 'dark-raster' }
     ];
     layers.forEach(({ id, source, visibleFor, beforeId }) => {
