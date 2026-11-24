@@ -193,7 +193,15 @@ test('uses stronger zone styling on Street and Topo basemaps', () => {
             updateAllFeatureStyles();
             const fillColor = JSON.stringify(paints.get('zones-fill:fill-color'));
             const fillOpacity = JSON.stringify(paints.get('zones-fill:fill-opacity'));
+            const fillColorExpression = paints.get('zones-fill:fill-color');
+            const fillOpacityExpression = paints.get('zones-fill:fill-opacity');
             assert.ok(fillColor.includes('#164e78'), `${baseLayer} zone fill color`);
+            assert.deepEqual(fillColorExpression[1], ['==', ['get', 'feature_id'], '00'],
+                `${baseLayer} unincorporated zone keeps its dark fill even when selected`);
+            assert.deepEqual(fillOpacityExpression[1], ['==', ['get', 'feature_id'], '00'],
+                `${baseLayer} unincorporated zone keeps its fill opacity even when selected`);
+            assert.equal(fillColorExpression[2], '#3b3b3b');
+            assert.equal(fillOpacityExpression[2], 0.35);
             assert.ok(!fillColor.includes('hoverAlpha'), `${baseLayer} resting fill color must not depend on hover state`);
             assert.ok(fillOpacity.includes('0.14'), `${baseLayer} zone fill opacity`);
             assert.ok(fillOpacity.includes('0.22'), `${baseLayer} selected fill opacity`);

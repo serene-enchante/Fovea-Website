@@ -110,8 +110,8 @@ export function updateAllFeatureStyles({ updateAdditionalLayers = () => {} } = {
             ];
         state.map.setPaintProperty('zones-fill', 'fill-color', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], selectedFillColor,
             ['==', ['get', 'feature_id'], UNINCORPORATED_ZONE_ID], unincorporatedFillColor,
+            ['boolean', ['feature-state', 'selected'], false], selectedFillColor,
             ...regularFillColor
         ]);
 
@@ -128,8 +128,8 @@ export function updateAllFeatureStyles({ updateAdditionalLayers = () => {} } = {
             ];
         state.map.setPaintProperty('zones-fill', 'fill-opacity', [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], selectedFillOpacity,
             ['==', ['get', 'feature_id'], UNINCORPORATED_ZONE_ID], unincorporatedFillOpacity,
+            ['boolean', ['feature-state', 'selected'], false], selectedFillOpacity,
             ...regularFillOpacity
         ]);
         state.map.setPaintProperty('zones-fill', 'fill-color-transition', { duration: 0 });
