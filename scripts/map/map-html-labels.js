@@ -101,10 +101,10 @@ export function rebuildHtmlLabels() {
         setStyleIfChanged(el, 'fontSize', `${fontSize}px`);
         setStyleIfChanged(el, 'opacity', fontSize > 0 ? '1' : '0');
         setStyleIfChanged(el, 'pointerEvents', 'none');
-        setStyleIfChanged(el, 'color', isLightBasemap ? '#000000' : (isSatelliteBasemap ? '#ffffff' : '#c8c8c8'));
-        setStyleIfChanged(el, 'textShadow', isSatelliteBasemap
-            ? '0 0 2px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.75)'
-            : '0 0 2px rgba(255,255,255,0.95), 0 0 4px rgba(255,255,255,0.75)');
+        setStyleIfChanged(el, 'color', isLightBasemap ? '#000000' : '#ffffff');
+        setStyleIfChanged(el, 'textShadow', isLightBasemap
+            ? '0 0 2px rgba(255,255,255,0.95), 0 0 4px rgba(255,255,255,0.75)'
+            : '0 0 2px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.75)');
     });
 }
 

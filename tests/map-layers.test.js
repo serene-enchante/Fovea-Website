@@ -268,6 +268,7 @@ test('renders HTML labels with the production light-theme default-basemap colors
     const labels = [];
     let createCount = 0;
     let projectionCount = 0;
+    let theme = 'light';
     const overlay = {
         querySelectorAll: () => labels,
         querySelector: () => { throw new Error('labels should be looked up from the overlay cache'); },
@@ -277,7 +278,7 @@ test('renders HTML labels with the production light-theme default-basemap colors
     try {
         globalThis.document = {
             body: { classList: { contains: () => false } },
-            documentElement: { getAttribute: name => name === 'data-theme' ? 'light' : null },
+            documentElement: { getAttribute: name => name === 'data-theme' ? theme : null },
             getElementById: () => overlay,
             createElement: () => { createCount += 1; return label; }
         };
@@ -309,6 +310,10 @@ test('renders HTML labels with the production light-theme default-basemap colors
         state.currentBaseLayer = 'default';
         rebuildHtmlLabels();
         assert.equal(label.className, 'map-zone-label', 'Satellite override is removed after switching basemaps');
+        theme = 'dark';
+        rebuildHtmlLabels();
+        assert.equal(label.style.color, '#ffffff');
+        assert.equal(label.style.textShadow, '0 0 2px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.75)');
     } finally {
         for (const key of stateKeys) {
             if (originalState[key] === undefined) delete state[key];
