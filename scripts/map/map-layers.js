@@ -89,8 +89,11 @@ export function updateAllFeatureStyles({ updateAdditionalLayers = () => {} } = {
     const noDataFillColor = isEsriLightBasemap ? '#164e78' : (isLightBasemap ? '#000000' : defaultFillColor);
     const noDataFillOpacity = isEsriLightBasemap ? 0.14 : (isLightBasemap ? 0.04 : (isSatelliteBasemap ? 0.60 : 0.02));
     const noDataLineColor = isLightBasemap ? '#000000' : dimLineColor;
-    const unincorporatedFillColor = '#3b3b3b';
-    const unincorporatedFillOpacity = 0.35;
+    // A neutral charcoal reads as a dark gray on light maps. On the dark
+    // default map, use a deeper charcoal and higher opacity so the zone is
+    // visibly darker than the surrounding lightly filled zones.
+    const unincorporatedFillColor = isLightBasemap ? '#3b3b3b' : '#1d1d1d';
+    const unincorporatedFillOpacity = isLightBasemap ? 0.35 : 0.85;
 
     const hoverFillColor = isEsriLightBasemap ? '#0e3f60' : (isLightBasemap ? '#000000' : '#3f3f46');
     const hoverFillOpacity = isEsriLightBasemap ? 0.2 : (isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.88 : 0.05));

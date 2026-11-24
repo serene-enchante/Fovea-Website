@@ -219,6 +219,50 @@ test('uses stronger zone styling on Street and Topo basemaps', () => {
     }
 });
 
+test('keeps unincorporated zones visibly charcoal on the dark default basemap', () => {
+    const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+    const stateKeys = ['map', 'allFeatures', 'isCirclesFeature', 'currentFeature', 'currentId', 'currentBaseLayer', 'labelData'];
+    const originalState = Object.fromEntries(stateKeys.map(key => [key, state[key]]));
+    const paints = new Map();
+
+    try {
+        globalThis.document = {
+            body: { classList: { add() {}, remove() {}, contains: () => false } },
+            documentElement: { getAttribute: () => 'dark' },
+            querySelector: () => null,
+            getElementById: () => null
+        };
+        Object.assign(state, {
+            map: {
+                getSource: id => id === 'zones' ? {} : null,
+                getLayer: id => ['zones-fill', 'zones-outline'].includes(id) ? { id } : null,
+                setFeatureState() {},
+                setPaintProperty: (layer, property, value) => paints.set(`${layer}:${property}`, value)
+            },
+            allFeatures: [],
+            isCirclesFeature: false,
+            currentFeature: 'florence',
+            currentId: '01',
+            currentBaseLayer: 'default',
+            labelData: []
+        });
+
+        updateAllFeatureStyles();
+
+        const fillColor = paints.get('zones-fill:fill-color');
+        const fillOpacity = paints.get('zones-fill:fill-opacity');
+        assert.deepEqual(fillColor.slice(1, 3), [['==', ['get', 'feature_id'], '00'], '#1d1d1d']);
+        assert.deepEqual(fillOpacity.slice(1, 3), [['==', ['get', 'feature_id'], '00'], 0.85]);
+    } finally {
+        for (const key of stateKeys) {
+            if (originalState[key] === undefined) delete state[key];
+            else state[key] = originalState[key];
+        }
+        if (originalDocument) Object.defineProperty(globalThis, 'document', originalDocument);
+        else delete globalThis.document;
+    }
+});
+
 test('renders HTML labels with the production light-theme default-basemap colors', () => {
     const originals = ['document', 'window'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
     const stateKeys = ['map', 'labelData', 'isCirclesFeature', 'currentFeature', 'currentBaseLayer'];
