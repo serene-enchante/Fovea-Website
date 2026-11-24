@@ -74,9 +74,10 @@ test('adds the GeoJSON source and production zone layers below place labels', ()
     assert.equal(source.value.data, data);
     assert.equal(source.value.promoteId, 'feature_id');
     assert.deepEqual(layers.map(({ layer }) => layer.id), [
-        'zones-fill', 'zones-outline', 'zones-outline-highlight', 'zones-collision-labels'
+        'zones-fill', 'zones-unincorporated-fill', 'zones-outline', 'zones-outline-highlight', 'zones-collision-labels'
     ]);
     assert.ok(layers.every(item => item.beforeId === 'place_hamlet'));
+    assert.deepEqual(layers[1].layer.filter, ['==', ['get', 'zid'], '00']);
     assert.deepEqual(layers[0].layer.paint['fill-opacity'], [
         'case', ['boolean', ['feature-state', 'selected'], false], 0.0,
         ['match', ['get', 'cid'], 'Oakridge', 0.02, 'Cottage Grove', 0.02, 0.07]
@@ -127,7 +128,7 @@ test('applies the production light-theme feature colors and updates supplemental
         Object.assign(state, {
             map: {
                 getSource: id => id === 'zones' ? {} : null,
-                getLayer: id => ['zones-fill', 'zones-outline', 'zones-outline-highlight'].includes(id) ? { id } : null,
+                getLayer: id => ['zones-fill', 'zones-unincorporated-fill', 'zones-outline', 'zones-outline-highlight'].includes(id) ? { id } : null,
                 setFeatureState: (...args) => featureStates.push(args),
                 setPaintProperty: (layer, property, value) => paints.set(`${layer}:${property}`, value)
             },
@@ -147,8 +148,8 @@ test('applies the production light-theme feature colors and updates supplemental
         assert.deepEqual(featureStates, [[{ source: 'zones', id: '04' }, { selected: true }]]);
         assert.equal(classes.has('is-light-basemap'), true);
         assert.ok(JSON.stringify(paints.get('zones-fill:fill-opacity')).includes('0.15'));
-        assert.ok(JSON.stringify(paints.get('zones-fill:fill-color')).includes('#3b3b3b'));
-        assert.ok(JSON.stringify(paints.get('zones-fill:fill-opacity')).includes('0.35'));
+        assert.equal(paints.get('zones-unincorporated-fill:fill-color'), '#3b3b3b');
+        assert.equal(paints.get('zones-unincorporated-fill:fill-opacity'), 0.35);
         assert.equal(paints.get('zones-outline:line-color')[2], '#64b5f6');
     } finally {
         for (const key of stateKeys) {
@@ -176,7 +177,7 @@ test('uses stronger zone styling on Street and Topo basemaps', () => {
         Object.assign(state, {
             map: {
                 getSource: id => id === 'zones' ? {} : null,
-                getLayer: id => ['zones-fill', 'zones-outline'].includes(id) ? { id } : null,
+                getLayer: id => ['zones-fill', 'zones-unincorporated-fill', 'zones-outline'].includes(id) ? { id } : null,
                 setFeatureState() {},
                 setPaintProperty: (layer, property, value) => paints.set(`${layer}:${property}`, value)
             },
@@ -196,12 +197,10 @@ test('uses stronger zone styling on Street and Topo basemaps', () => {
             const fillColorExpression = paints.get('zones-fill:fill-color');
             const fillOpacityExpression = paints.get('zones-fill:fill-opacity');
             assert.ok(fillColor.includes('#164e78'), `${baseLayer} zone fill color`);
-            assert.deepEqual(fillColorExpression[1], ['==', ['get', 'feature_id'], '00'],
-                `${baseLayer} unincorporated zone keeps its dark fill even when selected`);
-            assert.deepEqual(fillOpacityExpression[1], ['==', ['get', 'feature_id'], '00'],
-                `${baseLayer} unincorporated zone keeps its fill opacity even when selected`);
-            assert.equal(fillColorExpression[2], '#3b3b3b');
-            assert.equal(fillOpacityExpression[2], 0.35);
+            assert.ok(!JSON.stringify(fillColorExpression).includes('"zid"'),
+                `${baseLayer} unincorporated fill is independent from selected fill styling`);
+            assert.equal(paints.get('zones-unincorporated-fill:fill-color'), '#3b3b3b');
+            assert.equal(paints.get('zones-unincorporated-fill:fill-opacity'), 0.35);
             assert.ok(!fillColor.includes('hoverAlpha'), `${baseLayer} resting fill color must not depend on hover state`);
             assert.ok(fillOpacity.includes('0.14'), `${baseLayer} zone fill opacity`);
             assert.ok(fillOpacity.includes('0.22'), `${baseLayer} selected fill opacity`);
@@ -235,7 +234,7 @@ test('keeps unincorporated zones visibly charcoal on the dark default basemap', 
         Object.assign(state, {
             map: {
                 getSource: id => id === 'zones' ? {} : null,
-                getLayer: id => ['zones-fill', 'zones-outline'].includes(id) ? { id } : null,
+                getLayer: id => ['zones-fill', 'zones-unincorporated-fill', 'zones-outline'].includes(id) ? { id } : null,
                 setFeatureState() {},
                 setPaintProperty: (layer, property, value) => paints.set(`${layer}:${property}`, value)
             },
@@ -249,10 +248,8 @@ test('keeps unincorporated zones visibly charcoal on the dark default basemap', 
 
         updateAllFeatureStyles();
 
-        const fillColor = paints.get('zones-fill:fill-color');
-        const fillOpacity = paints.get('zones-fill:fill-opacity');
-        assert.deepEqual(fillColor.slice(1, 3), [['==', ['get', 'feature_id'], '00'], '#1d1d1d']);
-        assert.deepEqual(fillOpacity.slice(1, 3), [['==', ['get', 'feature_id'], '00'], 0.85]);
+        assert.equal(paints.get('zones-unincorporated-fill:fill-color'), '#444444');
+        assert.equal(paints.get('zones-unincorporated-fill:fill-opacity'), 0.8);
     } finally {
         for (const key of stateKeys) {
             if (originalState[key] === undefined) delete state[key];
