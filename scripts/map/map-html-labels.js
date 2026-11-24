@@ -77,12 +77,14 @@ export function rebuildHtmlLabels() {
         let el = labelsById.get(String(id));
         if (!el) {
             el = document.createElement('div');
-            el.className = 'map-zone-label';
             el.dataset.labelId = id;
             el.textContent = text;
             overlay.appendChild(el);
             labelsById.set(String(id), el);
         }
+        el.className = isSatelliteBasemap
+            ? 'map-zone-label map-zone-label--satellite'
+            : 'map-zone-label';
 
         // Font size: interpolate with zoom
         let fontSize = 0;

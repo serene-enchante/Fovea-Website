@@ -300,11 +300,15 @@ test('renders HTML labels with the production light-theme default-basemap colors
         assert.equal(label.style.textShadow, '0 0 2px rgba(255,255,255,0.95), 0 0 4px rgba(255,255,255,0.75)');
         state.currentBaseLayer = 'satellite';
         rebuildHtmlLabels();
+        assert.equal(label.className, 'map-zone-label map-zone-label--satellite');
         assert.equal(label.style.color, '#ffffff');
         assert.equal(label.style.textShadow, '0 0 2px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.75)');
         rebuildHtmlLabels();
         assert.equal(createCount, 1, 'existing label elements are reused across updates');
         assert.equal(label.style.left, '22px', 'reused labels receive the new projected position');
+        state.currentBaseLayer = 'default';
+        rebuildHtmlLabels();
+        assert.equal(label.className, 'map-zone-label', 'Satellite override is removed after switching basemaps');
     } finally {
         for (const key of stateKeys) {
             if (originalState[key] === undefined) delete state[key];
