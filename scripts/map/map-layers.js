@@ -51,7 +51,8 @@ export function updateAllFeatureStyles({ updateAdditionalLayers = () => {} } = {
 
     // Determine geometry styling based on active basemap (thick black outline & transparent deep blue fill for Light Mode/Esri Street/Topo, white for Dark/Satellite)
     const isLightModeTheme = document.body.classList.contains("theme-light") || (document.documentElement.getAttribute("data-theme") === "light");
-    const isLightBasemap = state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo" || (state.currentBaseLayer === "default" && isLightModeTheme);
+    const isEsriLightBasemap = state.currentBaseLayer === "esri-street" || state.currentBaseLayer === "esri-topo";
+    const isLightBasemap = isEsriLightBasemap || (state.currentBaseLayer === "default" && isLightModeTheme);
     const isSatelliteBasemap = state.currentBaseLayer === "satellite";
     const mapWrapper = document.getElementById("map-wrapper");
     const mapArea = document.querySelector(".maps-tile-map-area");
@@ -68,7 +69,12 @@ export function updateAllFeatureStyles({ updateAdditionalLayers = () => {} } = {
     let defaultFillColor = '#ffffff';
     let defaultFillOpacity = 0.07;
 
-    if (isLightBasemap) {
+    if (isEsriLightBasemap) {
+        // Give zone polygons enough separation from detailed Street and Topo tiles
+        // while leaving the underlying roads and terrain visible.
+        defaultFillColor = '#164e78';
+        defaultFillOpacity = 0.14;
+    } else if (isLightBasemap) {
         defaultFillColor = '#000000';
         defaultFillOpacity = 0.04;
     } else if (isSatelliteBasemap) {
@@ -78,20 +84,20 @@ export function updateAllFeatureStyles({ updateAdditionalLayers = () => {} } = {
 
     const defaultLineColor = isLightBasemap ? '#000000' : '#ffffff';
     const dimLineColor = isLightBasemap ? '#000000' : 'rgba(255, 255, 255, 0.25)';
-    const defaultLineWidth = isLightBasemap ? 1.8 : 1.0;
+    const defaultLineWidth = isEsriLightBasemap ? 2.2 : (isLightBasemap ? 1.8 : 1.0);
 
-    const noDataFillColor = isLightBasemap ? '#000000' : defaultFillColor;
-    const noDataFillOpacity = isLightBasemap ? 0.04 : (isSatelliteBasemap ? 0.60 : 0.02);
+    const noDataFillColor = isEsriLightBasemap ? '#164e78' : (isLightBasemap ? '#000000' : defaultFillColor);
+    const noDataFillOpacity = isEsriLightBasemap ? 0.14 : (isLightBasemap ? 0.04 : (isSatelliteBasemap ? 0.60 : 0.02));
     const noDataLineColor = isLightBasemap ? '#000000' : dimLineColor;
     const unincorporatedFillColor = '#3b3b3b';
     const unincorporatedFillOpacity = 0.35;
 
-    const hoverFillColor = isLightBasemap ? '#000000' : '#3f3f46';
-    const hoverFillOpacity = isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.88 : 0.05);
-    const noDataHoverFillOpacity = isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.75 : 0.02);
+    const hoverFillColor = isEsriLightBasemap ? '#0e3f60' : (isLightBasemap ? '#000000' : '#3f3f46');
+    const hoverFillOpacity = isEsriLightBasemap ? 0.2 : (isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.88 : 0.05));
+    const noDataHoverFillOpacity = isEsriLightBasemap ? 0.2 : (isLightBasemap ? 0.10 : (isSatelliteBasemap ? 0.75 : 0.02));
 
     const selectedFillColor = getThemeAccent();
-    const selectedFillOpacity = isLightBasemap ? 0.15 : 0.0;
+    const selectedFillOpacity = isEsriLightBasemap ? 0.22 : (isLightBasemap ? 0.15 : 0.0);
     const selectedLineColor = isLightBasemap ? getThemeAccent() : getThemeAccentLight();
     const unselectedOutlineOpacity = isLightBasemap ? 1.0 : (isSatelliteBasemap ? 0.70 : 0.18);
 
@@ -105,8 +111,8 @@ export function updateAllFeatureStyles({ updateAdditionalLayers = () => {} } = {
                 1, hoverFillColor
             ]
         ]);
-        const dimFillOpacity = defaultFillOpacity * 0.25;
-        const dimNoDataFillOpacity = noDataFillOpacity * 0.25;
+        const dimFillOpacity = isEsriLightBasemap ? defaultFillOpacity : defaultFillOpacity * 0.25;
+        const dimNoDataFillOpacity = isEsriLightBasemap ? noDataFillOpacity : noDataFillOpacity * 0.25;
         state.map.setPaintProperty('zones-fill', 'fill-opacity', [
             'case',
             ['boolean', ['feature-state', 'selected'], false], selectedFillOpacity,

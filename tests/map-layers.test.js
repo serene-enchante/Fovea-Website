@@ -159,6 +159,54 @@ test('applies the production light-theme feature colors and updates supplemental
     }
 });
 
+test('uses stronger zone styling on Street and Topo basemaps', () => {
+    const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+    const stateKeys = ['map', 'allFeatures', 'isCirclesFeature', 'currentFeature', 'currentId', 'currentBaseLayer', 'labelData'];
+    const originalState = Object.fromEntries(stateKeys.map(key => [key, state[key]]));
+    const paints = new Map();
+
+    try {
+        globalThis.document = {
+            body: { classList: { add() {}, remove() {}, contains: () => false } },
+            documentElement: { getAttribute: () => 'dark' },
+            querySelector: () => null,
+            getElementById: () => null
+        };
+        Object.assign(state, {
+            map: {
+                getSource: id => id === 'zones' ? {} : null,
+                getLayer: id => ['zones-fill', 'zones-outline'].includes(id) ? { id } : null,
+                setFeatureState() {},
+                setPaintProperty: (layer, property, value) => paints.set(`${layer}:${property}`, value)
+            },
+            allFeatures: [],
+            isCirclesFeature: false,
+            currentFeature: 'eugene',
+            currentId: '04',
+            currentBaseLayer: 'esri-street',
+            labelData: []
+        });
+
+        for (const baseLayer of ['esri-street', 'esri-topo']) {
+            state.currentBaseLayer = baseLayer;
+            updateAllFeatureStyles();
+            assert.ok(JSON.stringify(paints.get('zones-fill:fill-color')).includes('#164e78'), `${baseLayer} zone fill color`);
+            const fillOpacity = JSON.stringify(paints.get('zones-fill:fill-opacity'));
+            assert.ok(fillOpacity.includes('0.14'), `${baseLayer} zone fill opacity`);
+            assert.ok(!fillOpacity.includes('0.035'), `${baseLayer} zone fill should not fade at rest`);
+            assert.ok(JSON.stringify(paints.get('zones-fill:fill-opacity')).includes('0.22'), `${baseLayer} selected fill opacity`);
+            assert.ok(JSON.stringify(paints.get('zones-outline:line-width')).includes('2.2'), `${baseLayer} outline width`);
+        }
+    } finally {
+        for (const key of stateKeys) {
+            if (originalState[key] === undefined) delete state[key];
+            else state[key] = originalState[key];
+        }
+        if (originalDocument) Object.defineProperty(globalThis, 'document', originalDocument);
+        else delete globalThis.document;
+    }
+});
+
 test('renders HTML labels with the production light-theme default-basemap colors', () => {
     const originals = ['document', 'window'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
     const stateKeys = ['map', 'labelData', 'isCirclesFeature', 'currentFeature', 'currentBaseLayer'];
